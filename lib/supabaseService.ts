@@ -171,6 +171,7 @@ function transformDealFromDB(dbDeal: any): Deal {
         category_tr: dbDeal.category_tr,
         originalPrice: parseFloat(dbDeal.original_price),
         discountedPrice: parseFloat(dbDeal.discounted_price),
+        discountPercentage: dbDeal.discount_percentage ? parseFloat(dbDeal.discount_percentage) : undefined,
         requiredTier: dbDeal.required_tier as SubscriptionTier,
         isExternal: dbDeal.is_external,
         vendor: dbDeal.vendor,
