@@ -58,6 +58,7 @@ export interface SubscriptionPlan {
   name: string;
   name_tr: string;
   price: number;
+  price_tr: number;
   redemptionsPerMonth: number;
   features: string[];
   features_tr: string[];

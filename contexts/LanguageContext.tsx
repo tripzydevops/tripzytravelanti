@@ -23,13 +23,13 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Check browser language
     const browserLang = navigator.language.toLowerCase();
 
-    // Only use English if browser is set to English
-    if (browserLang.startsWith('en')) {
-      return 'en';
+    // Use Turkish if browser is set to Turkish
+    if (browserLang.startsWith('tr')) {
+      return 'tr';
     }
 
-    // Default to Turkish for all other cases (including Turkish users)
-    return 'tr';
+    // Default to English for all other cases (Global)
+    return 'en';
   };
 
   const [language, setLanguage] = useState<Language>(getInitialLanguage());
