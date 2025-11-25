@@ -38,6 +38,7 @@ export interface Deal {
   category_tr: string;
   originalPrice: number;
   discountedPrice: number;
+  discountPercentage?: number;
   requiredTier: SubscriptionTier;
   isExternal: boolean;
   vendor: string;

@@ -49,7 +49,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const title = language === 'tr' ? deal.title_tr : deal.title;
   const description = language === 'tr' ? deal.description_tr : deal.description;
-  const discount = deal.originalPrice > 0 ? Math.round(((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100) : 0;
+  const discount = deal.discountPercentage && deal.discountPercentage > 0
+    ? deal.discountPercentage
+    : (deal.originalPrice > 0 ? Math.round(((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100) : 0);
 
   const calculateDaysLeft = (expiryDate: string) => {
     const now = new Date();
@@ -136,8 +138,14 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           <StarRating rating={deal.rating} ratingCount={deal.ratingCount} t={t} />
           <div className="flex justify-between items-baseline mt-3">
             <div className="flex items-baseline space-x-2">
-              <p className="text-2xl font-bold text-gradient">${deal.discountedPrice}</p>
-              <p className="text-sm font-medium text-brand-text-muted line-through">${deal.originalPrice}</p>
+              {deal.originalPrice > 0 ? (
+                <>
+                  <p className="text-2xl font-bold text-gradient">${deal.discountedPrice}</p>
+                  <p className="text-sm font-medium text-brand-text-muted line-through">${deal.originalPrice}</p>
+                </>
+              ) : (
+                <p className="text-2xl font-bold text-gradient">{discount}% OFF</p>
+              )}
             </div>
             <p className={`text-xs font-semibold ${daysLeftText === t('expired') ? 'text-red-500' : 'text-brand-text-muted'} whitespace-nowrap`}>
               {daysLeftText}

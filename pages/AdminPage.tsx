@@ -47,6 +47,7 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
   validity_tr: '',
   termsUrl: '#',
   redemptionCode: '',
+  discountPercentage: undefined,
 };
 
 const EMPTY_USER: User = {
@@ -86,7 +87,6 @@ const AdminPage: React.FC = () => {
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [dealFormData, setDealFormData] = useState<Omit<Deal, 'expiresAt'>>(EMPTY_DEAL);
   const [expiresInDays, setExpiresInDays] = useState<number | string>('');
-  const [discountPercentage, setDiscountPercentage] = useState<number | string>('');
   const [neverExpires, setNeverExpires] = useState(false);
   const [isTranslating, setIsTranslating] = useState({ title: false, description: false });
   const [lastEditedField, setLastEditedField] = useState<string | null>(null);
@@ -184,30 +184,23 @@ const AdminPage: React.FC = () => {
     setDealFormData(prev => {
       const updated = { ...prev, [name]: newValue };
 
-      // Auto-calculate discounted price if discount percentage changes
-      if (name === 'originalPrice' && discountPercentage) {
+      // Auto-calculate discounted price if discount percentage changes AND original price is set
+      if (name === 'discountPercentage' && updated.originalPrice > 0) {
+        const discount = parseFloat(value);
+        if (!isNaN(discount)) {
+          updated.discountedPrice = Number((updated.originalPrice * (1 - discount / 100)).toFixed(2));
+        }
+      }
+      // Auto-calculate discounted price if original price changes AND discount percentage is set
+      else if (name === 'originalPrice' && updated.discountPercentage) {
         const price = parseFloat(value);
-        const discount = typeof discountPercentage === 'number' ? discountPercentage : parseFloat(discountPercentage);
+        const discount = updated.discountPercentage;
         if (!isNaN(price) && !isNaN(discount)) {
           updated.discountedPrice = Number((price * (1 - discount / 100)).toFixed(2));
         }
       }
       return updated;
     });
-  };
-
-  const handleDiscountPercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setDiscountPercentage(val);
-    const discount = parseFloat(val);
-    const original = dealFormData.originalPrice;
-
-    if (!isNaN(discount) && !isNaN(original)) {
-      setDealFormData(prev => ({
-        ...prev,
-        discountedPrice: Number((original * (1 - discount / 100)).toFixed(2))
-      }));
-    }
   };
 
   const handleEditDealClick = (deal: Deal) => {
@@ -221,12 +214,10 @@ const AdminPage: React.FC = () => {
       setExpiresInDays(diffDays > 0 ? diffDays : '');
     }
 
-    // Calculate discount percentage
-    if (deal.originalPrice > 0 && deal.discountedPrice < deal.originalPrice) {
+    // Calculate discount percentage if missing and prices exist
+    if (!deal.discountPercentage && deal.originalPrice > 0 && deal.discountedPrice < deal.originalPrice) {
       const discount = ((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100;
-      setDiscountPercentage(Math.round(discount));
-    } else {
-      setDiscountPercentage('');
+      setDealFormData(prev => ({ ...prev, discountPercentage: Math.round(discount) }));
     }
 
     setIsDealFormVisible(true); window.scrollTo(0, 0);
@@ -237,7 +228,7 @@ const AdminPage: React.FC = () => {
   };
 
   const resetDealForm = () => {
-    setEditingDeal(null); setDealFormData(EMPTY_DEAL); setExpiresInDays(''); setDiscountPercentage(''); setNeverExpires(false); setIsDealFormVisible(false); setLastEditedField(null);
+    setEditingDeal(null); setDealFormData(EMPTY_DEAL); setExpiresInDays(''); setNeverExpires(false); setIsDealFormVisible(false); setLastEditedField(null);
   };
 
   const handleDealSubmit = async (e: React.FormEvent) => {
@@ -389,7 +380,7 @@ const AdminPage: React.FC = () => {
                   <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label><select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"><option>Dining</option><option>Wellness</option><option>Travel</option></select></div>
                   <div className="grid grid-cols-3 gap-4">
                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={discountPercentage} onChange={handleDiscountPercentageChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                   </div>
                   <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
