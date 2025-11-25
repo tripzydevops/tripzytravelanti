@@ -19,16 +19,15 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import MyDealsPage from './pages/MyDealsPage';
 import Chatbot from './components/Chatbot';
-import AdBanner from './components/AdBanner';
 
 function AppContent() {
-  const { isAdBannerVisible, isChatbotVisible } = useLayout();
+  const { isChatbotVisible } = useLayout();
   const { user } = useAuth();
 
   return (
     <SearchProvider>
       <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
-        <main className={`flex-grow ${user ? 'pb-40' : ''}`}>
+        <main className={`flex-grow ${user ? 'pb-24' : ''}`}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
@@ -62,7 +61,6 @@ function AppContent() {
             />
           </Routes>
         </main>
-        {isAdBannerVisible && user && <AdBanner />}
         {isChatbotVisible && user && <Chatbot />}
         {user && <BottomNav />}
       </div>

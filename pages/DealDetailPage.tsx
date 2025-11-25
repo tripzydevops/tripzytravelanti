@@ -94,18 +94,16 @@ const DealDetailPage: React.FC = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { setAdBannerVisible, setChatbotVisible } = useLayout();
+  const { setChatbotVisible } = useLayout();
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
-    setAdBannerVisible(false);
     setChatbotVisible(false);
     return () => {
-      setAdBannerVisible(true);
       setChatbotVisible(true);
     };
-  }, [setAdBannerVisible, setChatbotVisible]);
+  }, [setChatbotVisible]);
 
   const deal = useMemo(() => id ? getDealById(id) : undefined, [id, getDealById]);
 

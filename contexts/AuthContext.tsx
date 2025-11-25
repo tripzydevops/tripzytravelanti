@@ -1,222 +1,373 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { User, SubscriptionTier, UserNotificationPreferences } from '../types';
+import { supabase } from '../lib/supabaseClient';
+import {
+  getUserProfile,
+  updateUserProfile,
+  getAllUsers,
+  deleteUserProfile,
+  saveDeal,
+  unsaveDeal,
+  getDirectReferrals,
+  getReferralChain,
+  getReferralNetwork,
+} from '../lib/supabaseService';
 
 interface AuthContextType {
   user: User | null;
   users: User[];
-  login: (user: User) => void;
-  logout: () => void;
-  updateTier: (tier: SubscriptionTier) => void;
-  updateUserDetails: (details: { name: string; email: string }) => void;
-  updateUserAvatar: (avatarUrl: string) => void;
-  updateUser: (user: User) => void;
-  deleteUser: (userId: string) => void;
-  saveDealForUser: (dealId: string) => void;
-  unsaveDealForUser: (dealId: string) => void;
-  addExtraRedemptions: (userId: string, amount: number) => void;
-  updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => void;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateTier: (tier: SubscriptionTier) => Promise<void>;
+  updateUserDetails: (details: { name: string; email: string }) => Promise<void>;
+  updateUserAvatar: (avatarUrl: string) => Promise<void>;
+  updateUser: (user: User) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
+  saveDealForUser: (dealId: string) => Promise<void>;
+  unsaveDealForUser: (dealId: string) => Promise<void>;
+  addExtraRedemptions: (userId: string, amount: number) => Promise<void>;
+  updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data
-const mockUsers: User[] = [
-  {
-    id: 'admin-001',
-    name: 'Admin User',
-    email: 'admin@tripzy.com',
-    tier: SubscriptionTier.VIP,
-    isAdmin: true,
-    savedDeals: ['3', '6'],
-    avatarUrl: 'https://i.pravatar.cc/150?u=admin@tripzy.com',
-    referrals: ['user-001'],
-    referralChain: [],
-    referralNetwork: ['user-001', 'user-002'],
-    extraRedemptions: 5,
-    notificationPreferences: {
-      newDeals: true,
-      expiringDeals: true,
-    },
-  },
-  {
-    id: 'user-001',
-    name: 'Alice Johnson',
-    email: 'alice@example.com',
-    tier: SubscriptionTier.PREMIUM,
-    savedDeals: ['1', '2', '4'],
-    referredBy: 'admin-001',
-    referrals: ['user-002'],
-    referralChain: ['admin-001'],
-    referralNetwork: ['user-002'],
-    extraRedemptions: 0,
-    notificationPreferences: {
-      newDeals: true,
-      expiringDeals: true,
-    },
-  },
-  {
-    id: 'user-002',
-    name: 'Bob Smith',
-    email: 'bob@example.com',
-    tier: SubscriptionTier.BASIC,
-    savedDeals: [],
-    referredBy: 'user-001',
-    referrals: [],
-    referralChain: ['admin-001', 'user-001'],
-    referralNetwork: [],
-    extraRedemptions: 0,
-    notificationPreferences: {
-      newDeals: false,
-      expiringDeals: true,
-    },
-  },
-  {
-    id: 'user-003',
-    name: 'Charlie Brown',
-    email: 'charlie@example.com',
-    tier: SubscriptionTier.FREE,
-    savedDeals: ['5'],
-    referralChain: [],
-    referralNetwork: [],
-    extraRedemptions: 10,
-    notificationPreferences: {
-      newDeals: true,
-      expiringDeals: false,
-    },
-  },
-];
-
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(mockUsers[0]); // Log in admin by default
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const login = useCallback((userData: User) => {
-    // This is a mock login. It finds a user by email from our mock list.
-    const foundUser = users.find(u => u.email === userData.email)
-    if (foundUser) {
-        setUser(foundUser);
-    } else {
-        // If user not in list (e.g., social login), just set them as current user
-        // but don't add to the manageable list for this demo.
-        setUser(userData);
+  // Load user profile from Supabase
+  const loadUserProfile = useCallback(async (userId: string) => {
+    try {
+      const profile = await getUserProfile(userId);
+      if (profile) {
+        // Fetch referral data
+        const [referrals, referralChain, referralNetwork] = await Promise.all([
+          getDirectReferrals(userId),
+          getReferralChain(userId),
+          getReferralNetwork(userId),
+        ]);
+
+        const fullProfile: User = {
+          ...profile,
+          referrals,
+          referralChain,
+          referralNetwork,
+        };
+
+        setUser(fullProfile);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
     }
-  }, [users]);
-
-  const logout = useCallback(() => {
-    setUser(null);
   }, []);
 
-  const updateTier = useCallback((tier: SubscriptionTier) => {
-    setUser((currentUser) => {
-      if (currentUser) {
-        const updatedUser = { ...currentUser, tier };
-        // also update in the main users list
-        setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        return updatedUser;
+  // Listen to auth state changes
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
       }
-      return null;
+      setLoading(false);
     });
-  }, []);
 
-  const updateUserDetails = useCallback((details: { name: string; email: string }) => {
-    setUser((currentUser) => {
-      if (currentUser) {
-        const updatedUser = { ...currentUser, ...details };
-        // also update in the main users list
-        setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        return updatedUser;
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else {
+        setUser(null);
       }
-      return null;
     });
-  }, []);
 
-  const updateUserAvatar = useCallback((avatarUrl: string) => {
-    setUser((currentUser) => {
-      if (currentUser) {
-        const updatedUser = { ...currentUser, avatarUrl };
-        setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        return updatedUser;
+    return () => subscription.unsubscribe();
+  }, [loadUserProfile]);
+
+  // Load all users (for admin)
+  useEffect(() => {
+    const loadAllUsers = async () => {
+      if (user?.isAdmin) {
+        const allUsers = await getAllUsers();
+        setUsers(allUsers);
       }
-      return null;
-    });
+    };
+
+    loadAllUsers();
+  }, [user?.isAdmin]);
+
+  // Sign up new user
+  const signup = useCallback(async (email: string, password: string, name: string) => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create profile
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: authData.user.id,
+          name,
+          email,
+          tier: SubscriptionTier.FREE,
+        });
+
+        if (profileError) throw profileError;
+
+        // Load the new profile
+        await loadUserProfile(authData.user.id);
+      }
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  }, [loadUserProfile]);
+
+  // Login user
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        await loadUserProfile(data.user.id);
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
+      throw error;
+    }
+  }, [loadUserProfile]);
+
+  // Logout user
+  const logout = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+    } catch (error) {
+      console.error('Error logging out:', error);
+      throw error;
+    }
   }, []);
 
+  // Update subscription tier
+  const updateTier = useCallback(async (tier: SubscriptionTier) => {
+    if (!user) return;
 
-  // For Admin
-  const updateUser = useCallback((updatedUser: User) => {
-    setUsers(currentUsers =>
-      currentUsers.map(u => (u.id === updatedUser.id ? updatedUser : u))
-    );
-    if (user && user.id === updatedUser.id) {
-        setUser(updatedUser);
+    try {
+      await updateUserProfile(user.id, { tier });
+      setUser((currentUser) => (currentUser ? { ...currentUser, tier } : null));
+
+      // Update in users list if admin
+      setUsers((currentUsers) =>
+        currentUsers.map((u) => (u.id === user.id ? { ...u, tier } : u))
+      );
+    } catch (error) {
+      console.error('Error updating tier:', error);
+      throw error;
     }
   }, [user]);
 
-  const deleteUser = useCallback((userId: string) => {
-    setUsers(currentUsers => currentUsers.filter(u => u.id !== userId));
+  // Update user details
+  const updateUserDetails = useCallback(async (details: { name: string; email: string }) => {
+    if (!user) return;
+
+    try {
+      await updateUserProfile(user.id, details);
+      setUser((currentUser) => (currentUser ? { ...currentUser, ...details } : null));
+
+      // Update in users list if admin
+      setUsers((currentUsers) =>
+        currentUsers.map((u) => (u.id === user.id ? { ...u, ...details } : u))
+      );
+    } catch (error) {
+      console.error('Error updating user details:', error);
+      throw error;
+    }
+  }, [user]);
+
+  // Update user avatar
+  const updateUserAvatar = useCallback(async (avatarUrl: string) => {
+    if (!user) return;
+
+    try {
+      await updateUserProfile(user.id, { avatar_url: avatarUrl });
+      setUser((currentUser) => (currentUser ? { ...currentUser, avatarUrl } : null));
+
+      // Update in users list if admin
+      setUsers((currentUsers) =>
+        currentUsers.map((u) => (u.id === user.id ? { ...u, avatarUrl } : u))
+      );
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      throw error;
+    }
+  }, [user]);
+
+  // Update user (for admin)
+  const updateUser = useCallback(async (updatedUser: User) => {
+    try {
+      await updateUserProfile(updatedUser.id, {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        tier: updatedUser.tier,
+        avatar_url: updatedUser.avatarUrl,
+        extra_redemptions: updatedUser.extraRedemptions,
+        notification_preferences: updatedUser.notificationPreferences,
+      });
+
+      setUsers((currentUsers) =>
+        currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+      );
+
+      if (user && user.id === updatedUser.id) {
+        setUser(updatedUser);
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  }, [user]);
+
+  // Delete user (for admin)
+  const deleteUser = useCallback(async (userId: string) => {
+    try {
+      await deleteUserProfile(userId);
+      setUsers((currentUsers) => currentUsers.filter((u) => u.id !== userId));
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
   }, []);
 
-  const saveDealForUser = useCallback((dealId: string) => {
-    setUser((currentUser) => {
-      if (!currentUser) return null;
-      const newSavedDeals = [...new Set([...(currentUser.savedDeals || []), dealId])];
-      const updatedUser = { ...currentUser, savedDeals: newSavedDeals };
-      setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-      return updatedUser;
-    });
-  }, []);
+  // Save deal for user
+  const saveDealForUser = useCallback(async (dealId: string) => {
+    if (!user) return;
 
-  const unsaveDealForUser = useCallback((dealId: string) => {
-    setUser((currentUser) => {
-      if (!currentUser) return null;
-      const newSavedDeals = (currentUser.savedDeals || []).filter(id => id !== dealId);
-      const updatedUser = { ...currentUser, savedDeals: newSavedDeals };
-      setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-      return updatedUser;
-    });
-  }, []);
-  
-  const addExtraRedemptions = useCallback((userId: string, amount: number) => {
-    setUsers(currentUsers => {
-        const newUsers = currentUsers.map(u => {
-            if (u.id === userId) {
-                const updatedUser = {
-                    ...u,
-                    extraRedemptions: (u.extraRedemptions || 0) + amount,
-                };
-                // If the updated user is the currently logged-in user, update the user state as well
-                if (user && user.id === userId) {
-                    setUser(updatedUser);
-                }
-                return updatedUser;
-            }
-            return u;
-        });
-        return newUsers;
-    });
-}, [user]);
-
-  const updateUserNotificationPreferences = useCallback((prefs: Partial<UserNotificationPreferences>) => {
-    setUser(currentUser => {
+    try {
+      await saveDeal(user.id, dealId);
+      setUser((currentUser) => {
         if (!currentUser) return null;
-        const updatedUser = {
-            ...currentUser,
-            notificationPreferences: {
-                ...currentUser.notificationPreferences,
-                newDeals: currentUser.notificationPreferences?.newDeals ?? true,
-                expiringDeals: currentUser.notificationPreferences?.expiringDeals ?? true,
-                ...prefs,
-            }
-        };
-        setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+        const newSavedDeals = [...new Set([...(currentUser.savedDeals || []), dealId])];
+        const updatedUser = { ...currentUser, savedDeals: newSavedDeals };
+        setUsers((currentUsers) =>
+          currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+        );
         return updatedUser;
-    });
-  }, []);
+      });
+    } catch (error) {
+      console.error('Error saving deal:', error);
+      throw error;
+    }
+  }, [user]);
 
+  // Unsave deal for user
+  const unsaveDealForUser = useCallback(async (dealId: string) => {
+    if (!user) return;
+
+    try {
+      await unsaveDeal(user.id, dealId);
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+        const newSavedDeals = (currentUser.savedDeals || []).filter((id) => id !== dealId);
+        const updatedUser = { ...currentUser, savedDeals: newSavedDeals };
+        setUsers((currentUsers) =>
+          currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+        );
+        return updatedUser;
+      });
+    } catch (error) {
+      console.error('Error unsaving deal:', error);
+      throw error;
+    }
+  }, [user]);
+
+  // Add extra redemptions
+  const addExtraRedemptions = useCallback(async (userId: string, amount: number) => {
+    try {
+      const targetUser = users.find((u) => u.id === userId);
+      if (!targetUser) return;
+
+      const newRedemptions = (targetUser.extraRedemptions || 0) + amount;
+      await updateUserProfile(userId, { extra_redemptions: newRedemptions });
+
+      setUsers((currentUsers) =>
+        currentUsers.map((u) =>
+          u.id === userId ? { ...u, extraRedemptions: newRedemptions } : u
+        )
+      );
+
+      if (user && user.id === userId) {
+        setUser((currentUser) =>
+          currentUser ? { ...currentUser, extraRedemptions: newRedemptions } : null
+        );
+      }
+    } catch (error) {
+      console.error('Error adding extra redemptions:', error);
+      throw error;
+    }
+  }, [users, user]);
+
+  // Update notification preferences
+  const updateUserNotificationPreferences = useCallback(async (prefs: Partial<UserNotificationPreferences>) => {
+    if (!user) return;
+
+    try {
+      const updatedPrefs = {
+        ...user.notificationPreferences,
+        newDeals: user.notificationPreferences?.newDeals ?? true,
+        expiringDeals: user.notificationPreferences?.expiringDeals ?? true,
+        ...prefs,
+      };
+
+      await updateUserProfile(user.id, { notification_preferences: updatedPrefs });
+
+      setUser((currentUser) =>
+        currentUser ? { ...currentUser, notificationPreferences: updatedPrefs } : null
+      );
+
+      setUsers((currentUsers) =>
+        currentUsers.map((u) =>
+          u.id === user.id ? { ...u, notificationPreferences: updatedPrefs } : u
+        )
+      );
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      throw error;
+    }
+  }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, users, login, logout, updateTier, updateUserDetails, updateUserAvatar, updateUser, deleteUser, saveDealForUser, unsaveDealForUser, addExtraRedemptions, updateUserNotificationPreferences }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        users,
+        loading,
+        login,
+        signup,
+        logout,
+        updateTier,
+        updateUserDetails,
+        updateUserAvatar,
+        updateUser,
+        deleteUser,
+        saveDealForUser,
+        unsaveDealForUser,
+        addExtraRedemptions,
+        updateUserNotificationPreferences,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
