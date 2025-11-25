@@ -13,7 +13,26 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
+  // Detect browser language and default to Turkish unless user is from English-speaking region
+  const getInitialLanguage = (): Language => {
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage === 'en' || savedLanguage === 'tr') {
+      return savedLanguage as Language;
+    }
+
+    // Check browser language
+    const browserLang = navigator.language.toLowerCase();
+
+    // Only use English if browser is set to English
+    if (browserLang.startsWith('en')) {
+      return 'en';
+    }
+
+    // Default to Turkish for all other cases (including Turkish users)
+    return 'tr';
+  };
+
+  const [language, setLanguage] = useState<Language>(getInitialLanguage());
 
   const toggleLanguage = useCallback(() => {
     setLanguage((prevLang) => (prevLang === 'en' ? 'tr' : 'en'));
@@ -28,7 +47,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         return key; // Return key if translation not found
       }
     }
-    
+
     let resultString = result as string;
     if (params) {
       Object.keys(params).forEach(pKey => {
