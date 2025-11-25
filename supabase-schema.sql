@@ -133,23 +133,28 @@ ALTER TABLE deal_redemptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscription_tiers ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
 CREATE POLICY "Public profiles are viewable by everyone"
   ON profiles FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
 -- Deals Policies
+DROP POLICY IF EXISTS "Deals are viewable by everyone" ON deals;
 CREATE POLICY "Deals are viewable by everyone"
   ON deals FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Only admins can insert deals" ON deals;
 CREATE POLICY "Only admins can insert deals"
   ON deals FOR INSERT
   WITH CHECK (
@@ -159,6 +164,7 @@ CREATE POLICY "Only admins can insert deals"
     )
   );
 
+DROP POLICY IF EXISTS "Only admins can update deals" ON deals;
 CREATE POLICY "Only admins can update deals"
   ON deals FOR UPDATE
   USING (
@@ -168,6 +174,7 @@ CREATE POLICY "Only admins can update deals"
     )
   );
 
+DROP POLICY IF EXISTS "Only admins can delete deals" ON deals;
 CREATE POLICY "Only admins can delete deals"
   ON deals FOR DELETE
   USING (
@@ -178,37 +185,45 @@ CREATE POLICY "Only admins can delete deals"
   );
 
 -- Saved Deals Policies
+DROP POLICY IF EXISTS "Users can view own saved deals" ON saved_deals;
 CREATE POLICY "Users can view own saved deals"
   ON saved_deals FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own saved deals" ON saved_deals;
 CREATE POLICY "Users can insert own saved deals"
   ON saved_deals FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own saved deals" ON saved_deals;
 CREATE POLICY "Users can delete own saved deals"
   ON saved_deals FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Referrals Policies
+DROP POLICY IF EXISTS "Users can view referrals they're involved in" ON referrals;
 CREATE POLICY "Users can view referrals they're involved in"
   ON referrals FOR SELECT
   USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
 
+DROP POLICY IF EXISTS "Users can create referrals" ON referrals;
 CREATE POLICY "Users can create referrals"
   ON referrals FOR INSERT
   WITH CHECK (auth.uid() = referrer_id);
 
 -- Deal Redemptions Policies
+DROP POLICY IF EXISTS "Users can view own redemptions" ON deal_redemptions;
 CREATE POLICY "Users can view own redemptions"
   ON deal_redemptions FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own redemptions" ON deal_redemptions;
 CREATE POLICY "Users can insert own redemptions"
   ON deal_redemptions FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Subscription Tiers Policies
+DROP POLICY IF EXISTS "Subscription tiers are viewable by everyone" ON subscription_tiers;
 CREATE POLICY "Subscription tiers are viewable by everyone"
   ON subscription_tiers FOR SELECT
   USING (true);
