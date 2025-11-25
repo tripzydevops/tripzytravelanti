@@ -262,6 +262,12 @@ export const translations = {
     newDealNotificationTitle: 'New Deal Available!',
     expiringDealNotificationTitle: 'Deal Expiring Soon!',
     expiringDealNotificationBody: 'Your saved deal \'{dealTitle}\' expires in 1 day.',
+    // Terms and Conditions
+    generalTerms: 'General Terms',
+    termsPoint1: 'This offer is valid only for registered users with the required subscription tier.',
+    termsPoint2: 'The deal cannot be combined with other offers or promotions.',
+    termsPoint3: 'The vendor reserves the right to refuse service if terms are violated.',
+    termsPoint4: 'Redemption codes are single-use and non-transferable.',
   },
   tr: {
     // Header
@@ -521,5 +527,11 @@ export const translations = {
     newDealNotificationTitle: 'Yeni Fırsat Mevcut!',
     expiringDealNotificationTitle: 'Fırsatın Süresi Dolmak Üzere!',
     expiringDealNotificationBody: 'Kaydedilen \'{dealTitle}\' fırsatınızın süresi 1 gün içinde doluyor.',
+    // Terms and Conditions
+    generalTerms: 'Genel Koşullar',
+    termsPoint1: 'Bu teklif yalnızca gerekli abonelik seviyesine sahip kayıtlı kullanıcılar için geçerlidir.',
+    termsPoint2: 'Fırsat diğer teklifler veya promosyonlarla birleştirilemez.',
+    termsPoint3: 'Satıcı, şartların ihlal edilmesi durumunda hizmeti reddetme hakkını saklı tutar.',
+    termsPoint4: 'Kullanım kodları tek kullanımlıktır ve devredilemez.',
   },
 };

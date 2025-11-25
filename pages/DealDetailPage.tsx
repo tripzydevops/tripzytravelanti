@@ -97,6 +97,7 @@ const DealDetailPage: React.FC = () => {
   const { setChatbotVisible } = useLayout();
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   useEffect(() => {
     setChatbotVisible(false);
@@ -162,6 +163,15 @@ const DealDetailPage: React.FC = () => {
     }
 
     setIsShareModalOpen(true);
+  };
+
+  const handleTermsClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // If termsUrl is just '#' or empty, show modal instead
+    if (!deal.termsUrl || deal.termsUrl === '#' || deal.termsUrl.trim() === '') {
+      e.preventDefault();
+      setIsTermsModalOpen(true);
+    }
+    // Otherwise, let the link navigate normally to external URL
   };
 
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -259,10 +269,11 @@ const DealDetailPage: React.FC = () => {
           {/* Terms Link */}
           <div className="mb-6">
             <a
-              href={deal.termsUrl}
+              href={deal.termsUrl || '#'}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand-primary hover:text-brand-secondary text-sm font-medium underline"
+              onClick={handleTermsClick}
+              className="text-brand-primary hover:text-brand-secondary text-sm font-medium underline cursor-pointer"
             >
               {t('viewTermsAndConditions')}
             </a>
@@ -314,6 +325,39 @@ const DealDetailPage: React.FC = () => {
         shareUrl={shareUrl}
         dealTitle={title}
       />
+
+      {/* Terms and Conditions Modal */}
+      <Modal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+        title={t('viewTermsAndConditions')}
+      >
+        <div className="space-y-4 text-sm text-gray-700 dark:text-brand-text-muted">
+          <div>
+            <h4 className="font-semibold text-gray-900 dark:text-brand-text-light mb-2">{t('usageLimit')}</h4>
+            <p>{language === 'tr' ? deal.usageLimit_tr : deal.usageLimit}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900 dark:text-brand-text-light mb-2">{t('validity')}</h4>
+            <p>{language === 'tr' ? deal.validity_tr : deal.validity}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900 dark:text-brand-text-light mb-2">{t('generalTerms')}</h4>
+            <ul className="list-disc list-inside space-y-1">
+              <li>{t('termsPoint1')}</li>
+              <li>{t('termsPoint2')}</li>
+              <li>{t('termsPoint3')}</li>
+              <li>{t('termsPoint4')}</li>
+            </ul>
+          </div>
+          <button
+            onClick={() => setIsTermsModalOpen(false)}
+            className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold py-3 px-6 rounded-lg hover:shadow-lg transition-all"
+          >
+            {t('close')}
+          </button>
+        </div>
+      </Modal>
 
     </div>
   );
