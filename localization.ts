@@ -68,7 +68,7 @@ export const translations = {
     bottomNavHome: 'Home',
     bottomNavDeals: 'Deals',
     bottomNavMyDeals: 'My Deals',
-    bottomNavPlan: 'Plan',
+    bottomNavTravel: 'Travel',
     bottomNavProfile: 'Profile',
     bottomNavAdmin: 'Admin',
     // Profile Page
@@ -317,7 +317,7 @@ export const translations = {
     bottomNavHome: 'Anasayfa',
     bottomNavDeals: 'Fırsatlar',
     bottomNavMyDeals: 'Fırsatlarım',
-    bottomNavPlan: 'Planla',
+    bottomNavTravel: 'Seyahat',
     bottomNavProfile: 'Profil',
     bottomNavAdmin: 'Yönetici',
     // Profile Page
@@ -491,7 +491,7 @@ export const translations = {
     redemptionsToAdd: 'Eklenecek Sayı',
     addRedemptions: 'Ekle',
     redemptionsAddedSuccess: 'Bonus kullanım hakları eklendi!',
-     // AI Chatbot
+    // AI Chatbot
     aiDealFinderTitle: 'YZ Fırsat Bulucu',
     aiGreeting: 'Merhaba! Bugün mükemmel fırsatı bulmanıza nasıl yardımcı olabilirim? Bana "rahatlatıcı bir spa fırsatı bul" veya "en yüksek puanlı seyahat fırsatlarını göster" gibi şeyler sorabilirsiniz.',
     aiChatPlaceholder: 'Fırsatlar hakkında soru sor...',

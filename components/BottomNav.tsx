@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { HomeIcon, SparklesIcon, UserIcon, ShieldCheckIcon, BookmarkIcon } from './Icons';
+import { HomeIcon, Globe, UserIcon, ShieldCheckIcon, BookmarkIcon } from './Icons';
 
 const BottomNav: React.FC = () => {
   const { t } = useLanguage();
@@ -11,11 +11,11 @@ const BottomNav: React.FC = () => {
   const navItems = [
     { path: '/', label: t('bottomNavHome'), icon: HomeIcon, admin: false },
     { path: '/my-deals', label: t('bottomNavMyDeals'), icon: BookmarkIcon, admin: false },
-    { path: '/plan', label: t('bottomNavPlan'), icon: SparklesIcon, admin: false },
+    { path: '/travel', label: t('bottomNavTravel'), icon: Globe, admin: false },
     { path: '/profile', label: t('bottomNavProfile'), icon: UserIcon, admin: false },
     { path: '/admin', label: t('bottomNavAdmin'), icon: ShieldCheckIcon, admin: true },
   ];
-  
+
   const accessibleNavItems = navItems.filter(item => !item.admin || (item.admin && user?.isAdmin));
 
 
@@ -30,7 +30,7 @@ const BottomNav: React.FC = () => {
             key={item.path}
             to={item.path}
             end={item.path === '/'} // for exact matching on home route
-            className={({ isActive }) => 
+            className={({ isActive }) =>
               `flex flex-col items-center justify-center w-full pt-3 pb-2 transition-colors duration-200 ${isActive ? activeClassName : inactiveClassName} hover:text-brand-primary`
             }
           >

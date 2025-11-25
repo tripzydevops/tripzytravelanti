@@ -12,6 +12,7 @@ import SubscriptionsPage from './pages/SubscriptionsPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import BottomNav from './components/BottomNav';
+import TravelPage from './pages/TravelPage';
 import TripPlannerPage from './pages/TripPlannerPage';
 import DealDetailPage from './pages/DealDetailPage';
 import AdminPage from './pages/AdminPage';
@@ -42,6 +43,7 @@ function AppContent() {
               }
             />
             <Route path="/deals/:id" element={<DealDetailPage />} />
+            <Route path="/travel" element={<TravelPage />} />
             <Route path="/plan" element={<TripPlannerPage />} />
             <Route
               path="/profile"
