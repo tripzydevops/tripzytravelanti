@@ -44,6 +44,21 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS deals (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
+  title_tr TEXT NOT NULL,
+  description TEXT NOT NULL,
+  description_tr TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  category TEXT NOT NULL,
+  category_tr TEXT NOT NULL,
+  original_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  discounted_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  discount_percentage DECIMAL(5, 2),
+  required_tier TEXT NOT NULL DEFAULT 'FREE' REFERENCES subscription_tiers(id),
+  is_external BOOLEAN DEFAULT FALSE,
+  vendor TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  rating DECIMAL(2, 1) DEFAULT 0,
+  rating_count INTEGER DEFAULT 0,
   usage_limit TEXT,
   usage_limit_tr TEXT,
   validity TEXT,
@@ -53,6 +68,14 @@ CREATE TABLE IF NOT EXISTS deals (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Safely add discount_percentage if it doesn't exist (for existing tables)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'deals' AND column_name = 'discount_percentage') THEN
+        ALTER TABLE deals ADD COLUMN discount_percentage DECIMAL(5, 2);
+    END IF;
+END $$;
 
 -- Saved Deals Table (User Bookmarks)
 CREATE TABLE IF NOT EXISTS saved_deals (
