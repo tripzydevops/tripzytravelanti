@@ -85,7 +85,6 @@ const AdminPage: React.FC = () => {
   const [isDealFormVisible, setIsDealFormVisible] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [dealFormData, setDealFormData] = useState<Omit<Deal, 'expiresAt'>>(EMPTY_DEAL);
-  const [dealFormData, setDealFormData] = useState<Omit<Deal, 'expiresAt'>>(EMPTY_DEAL);
   const [expiresInDays, setExpiresInDays] = useState<number | string>('');
   const [discountPercentage, setDiscountPercentage] = useState<number | string>('');
   const [neverExpires, setNeverExpires] = useState(false);
@@ -217,8 +216,6 @@ const AdminPage: React.FC = () => {
     if (isFarFuture(deal.expiresAt)) {
       setNeverExpires(true); setExpiresInDays(7);
     } else {
-      setNeverExpires(false);
-      const diffDays = Math.ceil((new Date(deal.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
       setNeverExpires(false);
       const diffDays = Math.ceil((new Date(deal.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
       setExpiresInDays(diffDays > 0 ? diffDays : '');
