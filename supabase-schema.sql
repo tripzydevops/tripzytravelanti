@@ -108,12 +108,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_deals_updated_at ON deals;
 CREATE TRIGGER update_deals_updated_at BEFORE UPDATE ON deals
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_subscription_tiers_updated_at ON subscription_tiers;
 CREATE TRIGGER update_subscription_tiers_updated_at BEFORE UPDATE ON subscription_tiers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
