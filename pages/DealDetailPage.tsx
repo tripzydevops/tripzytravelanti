@@ -164,85 +164,145 @@ const DealDetailPage: React.FC = () => {
     setIsShareModalOpen(true);
   };
 
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
   return (
-    <div className="bg-brand-bg text-white min-h-screen pb-32">
+    <div className="bg-white dark:bg-brand-bg min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-20 glass border-b border-white/10">
-        <div className="mx-auto px-4 h-16 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-brand-text-light hover:scale-110 transition-transform" aria-label="Go back">
+      <header className="sticky top-0 z-20 bg-white dark:bg-brand-bg border-b border-gray-200 dark:border-white/10">
+        <div className="mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-900 dark:text-brand-text-light hover:scale-110 transition-transform" aria-label="Go back">
             <ChevronLeftIcon className="h-6 w-6" />
           </button>
-          <h1 className="text-lg font-heading font-semibold text-brand-text-light absolute left-1/2 -translate-x-1/2 truncate max-w-[60vw]">
-            {t('dealDetailsTitle')}
-          </h1>
-          <button onClick={handleShare} className="p-2 -mr-2 text-brand-text-light hover:scale-110 transition-transform" aria-label={t('shareDeal')}>
+          <button onClick={handleShare} className="p-2 -mr-2 text-gray-900 dark:text-brand-text-light hover:scale-110 transition-transform" aria-label={t('shareDeal')}>
             <ShareIcon className="h-6 w-6" />
           </button>
         </div>
       </header>
 
-      <main className="animate-fade-in">
+      <main className="animate-fade-in pb-24">
         {/* Hero Image */}
-        <div className="relative h-80 overflow-hidden">
+        <div className="relative h-64 overflow-hidden">
           <img
             src={deal.imageUrl}
             alt={title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-transparent to-transparent"></div>
         </div>
 
-        <div className="container mx-auto px-4 -mt-8 relative z-10">
-          {/* Title Card */}
-          <div className="card mb-6 animate-slide-up">
-            <div className="flex items-start justify-between mb-3">
-              <h2 className="text-3xl font-heading font-bold text-brand-text-light flex-1">{title}</h2>
-              {deal.rating && (
-                <div className="ml-4 flex items-center gap-1 bg-brand-primary/20 px-3 py-1 rounded-lg">
-                  <span className="text-yellow-400">★</span>
-                  <span className="font-semibold">{deal.rating}</span>
+        <div className="container mx-auto px-4 py-6">
+          {/* Brand Logo and Title Section */}
+          <div className="flex items-start gap-4 mb-6">
+            {/* Brand Logo Circle */}
+            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-lg">
+              <span className="text-2xl font-bold text-white">{deal.vendor.charAt(0)}</span>
+            </div>
+
+            {/* Title and Vendor */}
+            <div className="flex-1">
+              <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-brand-text-light mb-1">{title}</h2>
+              <p className="text-sm text-gray-600 dark:text-brand-text-muted">{deal.vendor}</p>
+            </div>
+          </div>
+
+          {/* Description with Read More */}
+          <div className="mb-6">
+            <p className={`text-gray-700 dark:text-brand-text-muted leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+              {description}
+            </p>
+            {description.length > 150 && (
+              <button
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="text-brand-primary hover:text-brand-secondary font-medium text-sm mt-2"
+              >
+                {showFullDescription ? t('readLess') : t('readMore')}
+              </button>
+            )}
+          </div>
+
+          {/* Offer Details */}
+          <div className="bg-gray-50 dark:bg-brand-surface rounded-xl p-4 mb-6">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-brand-text-light mb-3">{t('offerDetails')}</h3>
+            <div className="space-y-3">
+              {/* Discount */}
+              {(deal.discountPercentage || deal.originalPrice > 0) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('discount')}</span>
+                  <span className="text-lg font-bold text-brand-primary">
+                    {deal.discountPercentage ? `${deal.discountPercentage}% OFF` : `$${deal.originalPrice - deal.discountedPrice} OFF`}
+                  </span>
+                </div>
+              )}
+
+              {/* Usage Limit */}
+              {(deal.usageLimit || deal.usageLimit_tr) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('usageLimit')}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-brand-text-light">
+                    {language === 'tr' ? deal.usageLimit_tr : deal.usageLimit}
+                  </span>
+                </div>
+              )}
+
+              {/* Validity */}
+              {(deal.validity || deal.validity_tr) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('validity')}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-brand-text-light">
+                    {language === 'tr' ? deal.validity_tr : deal.validity}
+                  </span>
                 </div>
               )}
             </div>
-            <p className="text-base text-brand-text-muted leading-relaxed">{description}</p>
           </div>
 
-          {/* Deal Information Card */}
-          <div className="card">
-            <h3 className="text-xl font-heading font-bold text-brand-text-light mb-4">{t('dealInformation')}</h3>
-            <div className="space-y-4">
-              {dealInfo.map((item, index) => (
-                <div key={item.label} className={`flex justify-between items-start gap-4 ${index < dealInfo.length - 1 ? 'pb-4 border-b border-white/5' : ''}`}>
-                  <span className="text-brand-text-muted text-sm">{item.label}</span>
-                  <span className="font-semibold text-right text-brand-text-light text-sm">{item.value}</span>
-                </div>
-              ))}
-            </div>
+          {/* Terms Link */}
+          <div className="mb-6">
+            <a
+              href={deal.termsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-primary hover:text-brand-secondary text-sm font-medium underline"
+            >
+              {t('viewTermsAndConditions')}
+            </a>
           </div>
         </div>
       </main>
 
-      {/* Sticky Redeem Button Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-lg p-4 z-10 border-t border-white/10">
+      {/* Sticky Use Coupon Button Footer */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-brand-bg border-t border-gray-200 dark:border-white/10 p-4 z-10">
         <button
           onClick={() => setIsRedeemModalOpen(true)}
-          className="btn-primary w-full text-lg shadow-2xl shadow-brand-primary/50"
+          className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
         >
-          {t('redeem')}
+          {t('useCoupon')}
         </button>
       </footer>
 
+      {/* Redeem Modal */}
       <Modal
         isOpen={isRedeemModalOpen}
         onClose={() => setIsRedeemModalOpen(false)}
-        title={t('redeemDealTitle')}
+        title={t('yourCouponCode')}
       >
         <div className="text-center">
-          <p className="text-sm text-brand-text-muted mb-4">{t('yourRedemptionCode')}</p>
-          <div className="bg-brand-surface border-2 border-dashed border-brand-primary/30 rounded-xl py-6 px-4 mb-6">
-            <p className="text-4xl font-mono font-bold tracking-widest text-gradient">{deal.redemptionCode}</p>
+          <p className="text-sm text-gray-600 dark:text-brand-text-muted mb-4">{t('showThisCodeAtCheckout')}</p>
+          <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 border-2 border-dashed border-brand-primary/30 rounded-xl py-8 px-4 mb-6">
+            <p className="text-4xl font-mono font-bold tracking-widest text-gradient mb-2">{deal.redemptionCode}</p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(deal.redemptionCode);
+              }}
+              className="text-sm text-brand-primary hover:text-brand-secondary font-medium mt-2"
+            >
+              {t('copyCode')}
+            </button>
           </div>
-          <button onClick={() => setIsRedeemModalOpen(false)} className="btn-primary w-full">
+          <button
+            onClick={() => setIsRedeemModalOpen(false)}
+            className="w-full bg-gray-100 dark:bg-brand-surface text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-200 dark:hover:bg-brand-surface/80 transition-colors"
+          >
             {t('close')}
           </button>
         </div>
