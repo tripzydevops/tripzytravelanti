@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useDeals } from '../contexts/DealContext';
+import { useAuth } from '../contexts/AuthContext';
 import DealCard from '../components/DealCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
@@ -10,6 +12,7 @@ const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const { deals } = useDeals();
+  const { user } = useAuth();
   const {
     searchQuery,
     setSearchQuery,
@@ -106,6 +109,18 @@ const HomePage: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-brand-bg"></div>
         </div>
 
+        {/* Login Button for Unauthenticated Users */}
+        {!user && (
+          <div className="absolute top-4 right-4 z-20">
+            <Link
+              to="/login"
+              className="px-6 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-semibold hover:bg-white/20 transition-all shadow-lg"
+            >
+              {t('login') || 'Login'}
+            </Link>
+          </div>
+        )}
+
         {/* Hero Content */}
         <div className="relative z-10 container mx-auto px-4 text-center animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-heading font-bold text-white mb-4 drop-shadow-lg">
@@ -184,8 +199,8 @@ const HomePage: React.FC = () => {
                 key={cat.key}
                 onClick={() => setCategoryFilter(cat.key as any)}
                 className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-lg hover:scale-105 ${categoryFilter === cat.key
-                    ? 'bg-gradient-primary text-white shadow-brand-primary/50'
-                    : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
+                  ? 'bg-gradient-primary text-white shadow-brand-primary/50'
+                  : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
                   }`}
               >
                 {cat.name}
@@ -203,8 +218,8 @@ const HomePage: React.FC = () => {
                 key={filter.value}
                 onClick={() => setRatingFilter(filter.value)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
-                    ? 'bg-brand-primary text-white shadow-lg'
-                    : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
+                  ? 'bg-brand-primary text-white shadow-lg'
+                  : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
                   }`}
               >
                 {filter.label}
