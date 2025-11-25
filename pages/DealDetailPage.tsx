@@ -239,7 +239,7 @@ const DealDetailPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('discount')}</span>
                   <span className="text-lg font-bold text-brand-primary">
-                    {deal.discountPercentage ? `${deal.discountPercentage}% OFF` : `$${deal.originalPrice - deal.discountedPrice} OFF`}
+                    {deal.discountPercentage ? `${deal.discountPercentage}%` : `$${deal.originalPrice - deal.discountedPrice}`}
                   </span>
                 </div>
               )}
