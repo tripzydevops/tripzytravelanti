@@ -417,6 +417,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...user.notificationPreferences,
         newDeals: user.notificationPreferences?.newDeals ?? true,
         expiringDeals: user.notificationPreferences?.expiringDeals ?? true,
+        generalNotifications: user.notificationPreferences?.generalNotifications ?? true,
         ...prefs,
       };
 

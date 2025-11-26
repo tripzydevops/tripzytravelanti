@@ -17,7 +17,7 @@ export const useNotificationSimulation = (
   const firstLoadRef = useRef(true);
 
   useEffect(() => {
-    if (!isSubscribed || !user) return;
+    if (!isSubscribed || !user || user.notificationPreferences?.generalNotifications === false) return;
 
     const checkNotifications = () => {
       // 1. Check for expiring saved deals
@@ -30,7 +30,7 @@ export const useNotificationSimulation = (
           const expiry = new Date(deal.expiresAt);
           const diffTime = expiry.getTime() - now.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
+
           if (diffDays === 1 && !notifiedDeals[deal.id]) {
             const dealTitle = language === 'tr' ? deal.title_tr : deal.title;
             showNotification(
@@ -46,7 +46,7 @@ export const useNotificationSimulation = (
       // 2. Check for new deals
       if (user.notificationPreferences?.newDeals && deals.length > 0) {
         const lastSeenCount = parseInt(localStorage.getItem(LAST_SEEN_DEAL_COUNT_KEY) || '0', 10);
-        
+
         if (firstLoadRef.current) {
           // On first load, just set the count, don't notify
           localStorage.setItem(LAST_SEEN_DEAL_COUNT_KEY, deals.length.toString());

@@ -9,6 +9,7 @@ export enum SubscriptionTier {
 export interface UserNotificationPreferences {
   newDeals: boolean;
   expiringDeals: boolean;
+  generalNotifications: boolean;
 }
 
 export interface Redemption {

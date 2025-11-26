@@ -13,6 +13,7 @@ import {
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
+import { SUBSCRIPTION_PRICES, TIER_NAMES } from '../lib/constants';
 
 const ProfilePage: React.FC = () => {
   const { user, logout, updateUserDetails, updateUserAvatar, deleteUser, updateUserNotificationPreferences } = useAuth();
@@ -31,7 +32,7 @@ const ProfilePage: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
   const [settings, setSettings] = useState({
-    notifications: true,
+    notifications: user?.notificationPreferences?.generalNotifications ?? true,
     location: false,
     biometrics: true,
   });
@@ -41,11 +42,21 @@ const ProfilePage: React.FC = () => {
       setName(user.name);
       setEmail(user.email);
       setMobile(user.mobile || '');
+      setSettings(prev => ({
+        ...prev,
+        notifications: user.notificationPreferences?.generalNotifications ?? true
+      }));
     }
   }, [user]);
 
   const handleToggle = (key: keyof typeof settings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    setSettings(prev => {
+      const newValue = !prev[key];
+      if (key === 'notifications') {
+        updateUserNotificationPreferences({ generalNotifications: newValue });
+      }
+      return { ...prev, [key]: newValue };
+    });
   };
 
   const handleSaveChanges = (e: React.FormEvent) => {
@@ -236,7 +247,12 @@ const ProfilePage: React.FC = () => {
         <div className="p-4 space-y-3">
           <div className="flex justify-between items-center text-sm">
             <p className="text-gray-500 dark:text-brand-text-muted">{t('currentPlanLabel')}</p>
-            <p className="text-gray-800 dark:text-brand-text-light font-semibold">{t('premiumPlanWithPrice')}</p>
+            <p className="text-gray-800 dark:text-brand-text-light font-semibold">
+              {t('planWithPrice', {
+                plan: TIER_NAMES[user.tier] || user.tier,
+                price: (SUBSCRIPTION_PRICES[user.tier]?.[language] || 0).toString() + (language === 'tr' ? ' TL' : '$')
+              })}
+            </p>
           </div>
 
           {/* Redemption Info */}
