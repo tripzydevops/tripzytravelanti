@@ -7,6 +7,7 @@ import { useContent } from '../contexts/ContentContext';
 import { Deal, User, SubscriptionTier, PageContent } from '../types';
 import { SpinnerIcon } from '../components/Icons';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
+import ImageUpload from '../components/ImageUpload';
 
 const getExpiryDate = (days: number): string => {
   const date = new Date();
@@ -382,7 +383,19 @@ const AdminPage: React.FC = () => {
                   <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleTrLabel')}</label><div className="relative"><input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
                   <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionLabel')}</label><div className="relative"><textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description_tr' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
                   <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionTrLabel')}</label><div className="relative"><textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label><input type="text" name="imageUrl" value={dealFormData.imageUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /><p className="text-xs text-gray-500 dark:text-brand-text-muted mt-1">{t('imageUrlOptionalHint')}</p></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label>
+                    <ImageUpload
+                      value={dealFormData.imageUrl}
+                      onChange={(base64) => setDealFormData(prev => ({ ...prev, imageUrl: base64 }))}
+                      placeholder={t('imageUrlOptionalHint') || "Upload Deal Image"}
+                    />
+                    {/* Fallback text input for external URLs if needed, or just keep it simple */}
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 mb-1">Or enter URL manually:</p>
+                      <input type="text" name="imageUrl" value={dealFormData.imageUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-xs" placeholder="https://..." />
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label><select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"><option>Dining</option><option>Wellness</option><option>Travel</option></select></div>
@@ -659,7 +672,7 @@ const ContentManager: React.FC = () => {
         ))}
       </div>
 
-      {Object.entries(pageContent).map(([sectionKey, items]) => (
+      {Object.entries(pageContent).map(([sectionKey, items]: [string, PageContent[]]) => (
         <section key={sectionKey} className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
           <h3 className="text-xl font-bold mb-4 capitalize text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2">{sectionKey} Section</h3>
           <div className="space-y-6">
@@ -683,13 +696,21 @@ const ContentManager: React.FC = () => {
                   </div>
                   {item.content_type === 'image' ? (
                     <div className="space-y-2">
-                      <input
-                        type="text"
+                      <ImageUpload
                         value={editingContent[`${item.id}-content_value`] ?? item.content_value}
-                        onChange={(e) => handleContentChange(item.id, 'content_value', e.target.value)}
-                        className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm"
+                        onChange={(base64) => handleContentChange(item.id, 'content_value', base64)}
+                        placeholder="Upload Content Image"
                       />
-                      <img src={editingContent[`${item.id}-content_value`] ?? item.content_value} alt="Preview" className="h-20 object-cover rounded" />
+                      <div className="mt-1">
+                        <p className="text-xs text-gray-500 mb-1">Or enter URL:</p>
+                        <input
+                          type="text"
+                          value={editingContent[`${item.id}-content_value`] ?? item.content_value}
+                          onChange={(e) => handleContentChange(item.id, 'content_value', e.target.value)}
+                          className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm"
+                          placeholder="https://..."
+                        />
+                      </div>
                     </div>
                   ) : (
                     <textarea
@@ -837,7 +858,15 @@ const FlightRouteManager: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Image URL</label>
-              <input type="text" value={formData.imageUrl} onChange={e => setFormData({ ...formData, imageUrl: e.target.value })} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />
+              <ImageUpload
+                value={formData.imageUrl}
+                onChange={(base64) => setFormData({ ...formData, imageUrl: base64 })}
+                placeholder="Upload Route Image"
+              />
+              <div className="mt-1">
+                <p className="text-xs text-gray-500 mb-1">Or enter URL:</p>
+                <input type="text" value={formData.imageUrl} onChange={e => setFormData({ ...formData, imageUrl: e.target.value })} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-xs" placeholder="https://..." />
+              </div>
             </div>
             <div className="md:col-span-2 flex justify-end gap-4 mt-4">
               <button type="button" onClick={() => { setIsFormVisible(false); setEditingRoute(null); }} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">Cancel</button>
