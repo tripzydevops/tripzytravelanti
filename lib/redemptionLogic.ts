@@ -1,12 +1,16 @@
 import { User, SubscriptionTier } from '../types';
 
-export const TIER_LIMITS: Record<SubscriptionTier, number> = {
-    [SubscriptionTier.NONE]: 0,
-    [SubscriptionTier.FREE]: 1,
-    [SubscriptionTier.BASIC]: 5,
-    [SubscriptionTier.PREMIUM]: 20,
-    [SubscriptionTier.VIP]: Infinity,
-};
+import { SUBSCRIPTION_PLANS } from '../constants';
+
+export const TIER_LIMITS: Record<SubscriptionTier, number> = SUBSCRIPTION_PLANS.reduce((acc, plan) => {
+    acc[plan.tier] = plan.redemptionsPerMonth;
+    return acc;
+}, {} as Record<SubscriptionTier, number>);
+
+// Ensure NONE tier is handled if not in plans
+if (!(SubscriptionTier.NONE in TIER_LIMITS)) {
+    TIER_LIMITS[SubscriptionTier.NONE] = 0;
+}
 
 export const calculateRemainingRedemptions = (user: User) => {
     if (!user) return { used: 0, total: 0, remaining: 0 };

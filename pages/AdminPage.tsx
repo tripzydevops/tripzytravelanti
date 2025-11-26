@@ -454,6 +454,7 @@ const AdminPage: React.FC = () => {
                   <div><label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label><input type="text" id="name" name="name" value={userFormData.name} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                   <div><label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label><input type="email" id="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                   <div><label htmlFor="tier" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('tier')}</label><select id="tier" name="tier" value={userFormData.tier} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
+                  <div><label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile'}</label><input type="tel" id="mobile" name="mobile" value={userFormData.mobile || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -549,6 +550,7 @@ const AdminPage: React.FC = () => {
                     <tr>
                       <th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th>
                       <th scope="col" className="px-6 py-3">{t('emailLabel')}</th>
+                      <th scope="col" className="px-6 py-3">{t('mobileLabel') || 'Mobile'}</th>
                       <th scope="col" className="px-6 py-3">{t('tier')}</th>
                       <th scope="col" className="px-6 py-3">Redemptions Left</th>
                       <th scope="col" className="px-6 py-3">Renews On</th>
@@ -566,6 +568,7 @@ const AdminPage: React.FC = () => {
                             {user.name}{user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
                           </th>
                           <td className="px-6 py-4">{user.email}</td>
+                          <td className="px-6 py-4">{user.mobile || '-'}</td>
                           <td className="px-6 py-4">{user.tier}</td>
                           <td className="px-6 py-4">
                             <span className={`font-semibold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>

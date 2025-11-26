@@ -19,21 +19,6 @@ CREATE TABLE IF NOT EXISTS subscription_tiers (
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
-  tier TEXT NOT NULL DEFAULT 'FREE' REFERENCES subscription_tiers(id),
-  is_admin BOOLEAN DEFAULT FALSE,
-  avatar_url TEXT,
-  referred_by UUID REFERENCES profiles(id) ON DELETE
-  SET NULL,
-    extra_redemptions INTEGER DEFAULT 0,
-    notification_preferences JSONB DEFAULT '{"newDeals": true, "expiringDeals": true}',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE TABLE IF NOT EXISTS deals (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  title_tr TEXT NOT NULL,
   description TEXT NOT NULL,
   description_tr TEXT NOT NULL,
   image_url TEXT NOT NULL,

@@ -33,6 +33,7 @@ export interface User {
   extraRedemptions?: number;
   notificationPreferences?: UserNotificationPreferences;
   redemptions?: Redemption[];
+  mobile?: string;
 }
 
 export interface Deal {

@@ -232,7 +232,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   // Update user details
-  const updateUserDetails = useCallback(async (details: { name: string; email: string }) => {
+  const updateUserDetails = useCallback(async (details: { name: string; email: string; mobile?: string }) => {
     if (!user) return;
 
     try {
@@ -277,6 +277,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         avatar_url: updatedUser.avatarUrl,
         extra_redemptions: updatedUser.extraRedemptions,
         notification_preferences: updatedUser.notificationPreferences,
+        mobile: updatedUser.mobile,
       });
 
       setUsers((currentUsers) =>

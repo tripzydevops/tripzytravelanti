@@ -23,6 +23,7 @@ const ProfilePage: React.FC = () => {
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [mobile, setMobile] = useState(user?.mobile || '');
   const [showSuccess, setShowSuccess] = useState('');
   const [isChangePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [isDeleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
@@ -39,6 +40,7 @@ const ProfilePage: React.FC = () => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
+      setMobile(user.mobile || '');
     }
   }, [user]);
 
@@ -48,8 +50,8 @@ const ProfilePage: React.FC = () => {
 
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
-    if (user && (name !== user.name || email !== user.email)) {
-      updateUserDetails({ name, email });
+    if (user && (name !== user.name || email !== user.email || mobile !== (user.mobile || ''))) {
+      updateUserDetails({ name, email, mobile });
       setShowSuccess(t('profileUpdatedSuccess'));
       setTimeout(() => setShowSuccess(''), 3000);
     }
@@ -313,6 +315,17 @@ const ProfilePage: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               required
               className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
+            <input
+              type="tel"
+              id="mobile"
+              value={mobile}
+              onChange={e => setMobile(e.target.value)}
+              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              placeholder="+90 555 123 45 67"
             />
           </div>
           <div className="flex justify-end">

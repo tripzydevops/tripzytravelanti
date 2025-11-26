@@ -39,6 +39,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
             userId: r.user_id,
             redeemedAt: r.redeemed_at
         })) || [],
+        mobile: data.mobile,
     };
 }
 
@@ -50,7 +51,9 @@ export async function updateUserProfile(
         tier: SubscriptionTier;
         avatar_url: string;
         extra_redemptions: number;
+        extra_redemptions: number;
         notification_preferences: any;
+        mobile: string;
     }>
 ) {
     const { data, error } = await supabase
@@ -99,6 +102,7 @@ export async function getAllUsers(): Promise<User[]> {
             userId: r.user_id,
             redeemedAt: r.redeemed_at
         })) || [],
+        mobile: user.mobile,
     }));
 }
 
