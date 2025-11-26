@@ -175,13 +175,21 @@ const DealDetailPage: React.FC = () => {
   return (
     <div className="bg-white dark:bg-brand-bg min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-white dark:bg-brand-bg border-b border-gray-200 dark:border-white/10">
+      <header className="sticky top-0 z-20 bg-white/80 dark:bg-brand-bg/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
         <div className="mx-auto px-4 h-14 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-900 dark:text-brand-text-light hover:scale-110 transition-transform" aria-label="Go back">
-            <ChevronLeftIcon className="h-6 w-6" />
+          <button
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 text-gray-700 dark:text-brand-text-light"
+            aria-label="Go back"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
           </button>
-          <button onClick={handleShare} className="p-2 -mr-2 text-gray-900 dark:text-brand-text-light hover:scale-110 transition-transform" aria-label={t('shareDeal')}>
-            <ShareIcon className="h-6 w-6" />
+          <button
+            onClick={handleShare}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 border border-brand-primary/20 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 text-brand-primary"
+            aria-label={t('shareDeal')}
+          >
+            <ShareIcon className="h-5 w-5" />
           </button>
         </div>
       </header>
