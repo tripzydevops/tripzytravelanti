@@ -301,7 +301,13 @@ const DealDetailPage: React.FC = () => {
       {/* Sticky Use Coupon Button Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-brand-bg border-t border-gray-200 dark:border-white/10 p-4 z-10">
         <button
-          onClick={() => setIsRedeemModalOpen(true)}
+          onClick={() => {
+            if (!user) {
+              navigate('/login');
+            } else {
+              setIsRedeemModalOpen(true);
+            }
+          }}
           className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
         >
           {t('useCoupon')}

@@ -171,15 +171,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           <CardContent />
         </div>
       ) : (
-        !user ? (
-          <div className="flex flex-col flex-grow" onClick={() => navigate('/login')}>
-            <CardContent />
-          </div>
-        ) : (
-          <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow">
-            <CardContent />
-          </Link>
-        )
+        <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow">
+          <CardContent />
+        </Link>
       )}
     </div>
   );
