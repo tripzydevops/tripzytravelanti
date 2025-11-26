@@ -19,7 +19,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ plan, isCurrent }) 
     if (!user) {
       navigate('/login');
     } else {
-      updateTier(plan.tier);
+      navigate(`/checkout?tier=${plan.tier}`);
     }
   };
 
@@ -53,8 +53,8 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ plan, isCurrent }) 
         onClick={handleSubscribe}
         disabled={isCurrent}
         className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors duration-300 ${isCurrent
-            ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
-            : 'bg-brand-primary hover:bg-opacity-80'
+          ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+          : 'bg-brand-primary hover:bg-opacity-80'
           }`}
       >
         {isCurrent ? t('currentPlan') : t('subscribe')}

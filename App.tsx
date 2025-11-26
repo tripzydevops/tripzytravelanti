@@ -22,6 +22,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import MyDealsPage from './pages/MyDealsPage';
 import Chatbot from './components/Chatbot';
+import CheckoutPage from './pages/CheckoutPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 function AppContent() {
   const { isChatbotVisible } = useLayout();
@@ -42,6 +44,22 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
+            <Route
+              path="/checkout"
+              element={
+                <AuthenticatedRoute>
+                  <CheckoutPage />
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <AuthenticatedRoute>
+                  <PaymentSuccessPage />
+                </AuthenticatedRoute>
+              }
+            />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/deals" element={<HomePage />} />
             <Route

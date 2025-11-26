@@ -349,70 +349,73 @@ const ProfilePage: React.FC = () => {
       </SettingsSection>
 
       {/* Profile Information Section */}
-      <SettingsSection title={t('profileInfo')}>
-        <form onSubmit={handleSaveChanges} className="p-4 space-y-4">
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label>
-            <input
-              type="text"
-              id="fullName"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              required
-              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
-            <input
-              type="tel"
-              id="mobile"
-              value={mobile}
-              onChange={e => setMobile(e.target.value)}
-              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              placeholder="+90 555 123 45 67"
-            />
-          </div>
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label>
-            <input
-              type="text"
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              placeholder={t('addressPlaceholder')}
-            />
-          </div>
-          <div>
-            <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label>
-            <input
-              type="text"
-              id="billingAddress"
-              value={billingAddress}
-              onChange={(e) => setBillingAddress(e.target.value)}
-              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              placeholder={t('billingAddressPlaceholder')}
-            />
-          </div>
-          <div className="flex justify-end">
-            <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
-              {t('saveChanges')}
-            </button>
-          </div>
-        </form>
-      </SettingsSection>
+      <section className="mb-6">
+        <h2 className="text-sm font-semibold text-gray-500 dark:text-brand-text-muted uppercase tracking-wider px-4 mb-2">{t('profileInfo')}</h2>
+        <div className="bg-white dark:bg-brand-surface rounded-lg shadow-sm">
+          <form onSubmit={handleSaveChanges} className="p-4 space-y-4">
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label>
+              <input
+                type="text"
+                id="fullName"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
+              <input
+                type="tel"
+                id="mobile"
+                value={mobile}
+                onChange={e => setMobile(e.target.value)}
+                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                placeholder="+90 555 123 45 67"
+              />
+            </div>
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label>
+              <input
+                type="text"
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                placeholder={t('addressPlaceholder')}
+              />
+            </div>
+            <div>
+              <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label>
+              <input
+                type="text"
+                id="billingAddress"
+                value={billingAddress}
+                onChange={(e) => setBillingAddress(e.target.value)}
+                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                placeholder={t('billingAddressPlaceholder')}
+              />
+            </div>
+            <div className="flex justify-end">
+              <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
+                {t('saveChanges')}
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
 
       {/* Account Section */}
       <SettingsSection title={t('accountSection')}>
