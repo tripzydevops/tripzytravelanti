@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { SubscriptionTier } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle } from '../components/Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon } from '../components/Icons';
 import Modal from '../components/Modal';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
@@ -15,6 +15,8 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.PREMIUM]: 3,
   [SubscriptionTier.VIP]: 4,
 };
+
+// ... (rest of the file until header)
 
 // --- Share Modal Component ---
 interface ShareModalProps {
@@ -186,10 +188,10 @@ const DealDetailPage: React.FC = () => {
           </button>
           <button
             onClick={handleShare}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 border border-brand-primary/20 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 text-brand-primary"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300"
             aria-label={t('shareDeal')}
           >
-            <ShareIcon className="h-5 w-5" />
+            <PremiumShareIcon className="h-5 w-5" />
           </button>
         </div>
       </header>
