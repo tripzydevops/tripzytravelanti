@@ -50,6 +50,13 @@ const CheckoutPage: React.FC = () => {
     const planPrice = language === 'tr' ? selectedPlan.price_tr : selectedPlan.price;
     const currencySymbol = language === 'tr' ? '₺' : '$';
 
+    // Calculate prorated amount for upgrades
+    const currentPlan = user ? SUBSCRIPTION_PLANS.find(p => p.tier === user.tier) : null;
+    const currentPrice = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
+    const isUpgrade = currentPlan && planPrice > currentPrice;
+    const priceDifference = isUpgrade ? planPrice - currentPrice : planPrice;
+    const amountToBill = priceDifference;
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-brand-bg py-12">
             <div className="container mx-auto px-4 max-w-4xl">
@@ -60,16 +67,33 @@ const CheckoutPage: React.FC = () => {
                     <div className="md:col-span-1 order-2 md:order-1">
                         <div className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('orderSummary') || 'Order Summary'}</h2>
-                            <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                                <div>
-                                    <h3 className="font-medium text-gray-900 dark:text-white">{planName}</h3>
-                                    <p className="text-sm text-gray-500 dark:text-brand-text-muted">{t('monthlySubscription') || 'Monthly Subscription'}</p>
+                            
+                            {isUpgrade && currentPlan && (
+                                <div className="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                                    <div className="flex justify-between items-center text-sm text-gray-600 dark:text-brand-text-muted mb-2">
+                                        <span>{t('currentPlan') || 'Current Plan'}: {language === 'tr' ? currentPlan.name_tr : currentPlan.name}</span>
+                                        <span>{currencySymbol}{currentPrice.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm font-medium text-gray-900 dark:text-white">
+                                        <span>{t('upgradeTo') || 'Upgrade to'}: {planName}</span>
+                                        <span>{currencySymbol}{planPrice.toFixed(2)}</span>
+                                    </div>
                                 </div>
-                                <span className="font-bold text-gray-900 dark:text-white">{currencySymbol}{planPrice}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white">
-                                <span>{t('total') || 'Total'}</span>
-                                <span>{currencySymbol}{planPrice}</span>
+                            )}
+                            
+                            {!isUpgrade && (
+                                <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                                    <div>
+                                        <h3 className="font-medium text-gray-900 dark:text-white">{planName}</h3>
+                                        <p className="text-sm text-gray-500 dark:text-brand-text-muted">{t('monthlySubscription') || 'Monthly Subscription'}</p>
+                                    </div>
+                                    <span className="font-bold text-gray-900 dark:text-white">{currencySymbol}{planPrice.toFixed(2)}</span>
+                                </div>
+                            )}
+                            
+                            <div className="flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white mb-6">
+                                <span>{isUpgrade ? (t('amountDue') || 'Amount Due Today') : (t('total') || 'Total')}</span>
+                                <span className="text-brand-primary">{currencySymbol}{amountToBill.toFixed(2)}</span>
                             </div>
 
                             <div className="mt-6">
@@ -205,7 +229,7 @@ const CheckoutPage: React.FC = () => {
                                             </>
                                         ) : (
                                             <>
-                                                {t('payNow') || 'Pay Now'} {currencySymbol}{planPrice}
+                                                {t('payNow') || 'Pay Now'} {currencySymbol}{amountToBill.toFixed(2)}
                                             </>
                                         )}
                                     </button>
