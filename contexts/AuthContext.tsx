@@ -145,7 +145,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, [loadUserProfile]);
 
-  // ... (loadAllUsers useEffect remains same)
+  // Load all users if admin
+  useEffect(() => {
+    if (user?.isAdmin) {
+      getAllUsers().then(setUsers).catch(console.error);
+    }
+  }, [user?.isAdmin]);
 
   // Sign up new user
   const signup = useCallback(async (email: string, password: string, name: string) => {
