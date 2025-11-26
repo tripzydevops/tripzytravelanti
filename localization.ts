@@ -299,6 +299,7 @@ export const translations = {
     dontShowAgain: "Don't show this again",
     confirmRedeem: 'Redeem',
     cancelRedeem: 'Cancel',
+    recommendedForYou: 'Recommended for You',
   },
   tr: {
     // Header
@@ -593,5 +594,6 @@ export const translations = {
     dontShowAgain: "Bunu tekrar gösterme",
     confirmRedeem: 'Kullan',
     cancelRedeem: 'İptal',
+    recommendedForYou: 'Sizin İçin Önerilenler',
   },
 };

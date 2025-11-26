@@ -9,6 +9,8 @@ import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import Onboarding from '../components/Onboarding';
+import { getAIRecommendations } from '../lib/recommendationLogic';
+import { Deal } from '../types';
 
 const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 
@@ -151,6 +153,27 @@ const HomePage: React.FC = () => {
     console.log('User preferences:', preferences);
   };
 
+  const [recommendations, setRecommendations] = React.useState<Deal[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (user && deals.length > 0) {
+        setLoadingRecommendations(true);
+        try {
+          const recs = await getAIRecommendations(user, deals);
+          setRecommendations(recs);
+        } catch (error) {
+          console.error("Failed to fetch recommendations", error);
+        } finally {
+          setLoadingRecommendations(false);
+        }
+      }
+    };
+
+    fetchRecommendations();
+  }, [user, deals]);
+
   return (
     <div className="min-h-screen">
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
@@ -248,6 +271,31 @@ const HomePage: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+
+        {/* Recommendations Section */}
+        {user && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-brand-text-light mb-4 flex items-center gap-2">
+              <span className="text-2xl">✨</span> {t('recommendedForYou') || 'Recommended for You'}
+            </h2>
+            {loadingRecommendations ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
+                ))}
+              </div>
+            ) : recommendations.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {recommendations.map(deal => (
+                  <DealCard key={deal.id} deal={deal} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-brand-text-muted italic">Start exploring deals to get personalized recommendations!</p>
+            )}
+          </section>
+        )}
+
         {/* Category Filters - Horizontal Scroll */}
         <div className="mb-8">
           <h3 className="text-sm font-semibold text-brand-text-muted mb-3">{displayCategoriesTitle || t('categories') || 'Categories'}</h3>

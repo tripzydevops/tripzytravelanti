@@ -8,6 +8,7 @@ import { Deal, User, SubscriptionTier, PageContent } from '../types';
 import { SpinnerIcon } from '../components/Icons';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import ImageUpload from '../components/ImageUpload';
+import Modal from '../components/Modal';
 
 const getExpiryDate = (days: number): string => {
   const date = new Date();
@@ -103,6 +104,7 @@ const AdminPage: React.FC = () => {
   const [userFormData, setUserFormData] = useState<User>(EMPTY_USER);
   const [dealToAdd, setDealToAdd] = useState<string>('');
   const [redemptionsToAdd, setRedemptionsToAdd] = useState(0);
+  const [viewingRedemptionsForUser, setViewingRedemptionsForUser] = useState<User | null>(null);
 
 
   const sortedDeals = useMemo(() => {
@@ -577,6 +579,7 @@ const AdminPage: React.FC = () => {
                           </td>
                           <td className="px-6 py-4">{renewalDate}</td>
                           <td className="px-6 py-4 text-right space-x-2">
+                            <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
                             <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
                             <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
                           </td>
@@ -588,6 +591,46 @@ const AdminPage: React.FC = () => {
               </div>
             </div>
           </section>
+
+          {/* User Redemptions Modal */}
+          <Modal
+            isOpen={!!viewingRedemptionsForUser}
+            onClose={() => setViewingRedemptionsForUser(null)}
+            title={`${viewingRedemptionsForUser?.name}'s Redemptions`}
+          >
+            <div className="p-4">
+              {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
+                <div className="space-y-4">
+                  {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
+                    const deal = deals.find(d => d.id === redemption.dealId);
+                    return (
+                      <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
+                        </p>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
+                          <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
+                          {deal && <span>Code: {deal.redemptionCode}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
+                  No redemptions found for this user.
+                </p>
+              )}
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setViewingRedemptionsForUser(null)}
+                  className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  {t('close')}
+                </button>
+              </div>
+            </div>
+          </Modal>
         </>
       )}
 
