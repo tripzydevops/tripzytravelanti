@@ -11,6 +11,13 @@ export interface UserNotificationPreferences {
   expiringDeals: boolean;
 }
 
+export interface Redemption {
+  id: string;
+  dealId: string;
+  userId: string;
+  redeemedAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -25,6 +32,7 @@ export interface User {
   referralNetwork?: string[]; // Descendants: [referred user, their referred user, ...]
   extraRedemptions?: number;
   notificationPreferences?: UserNotificationPreferences;
+  redemptions?: Redemption[];
 }
 
 export interface Deal {

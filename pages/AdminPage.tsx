@@ -519,23 +519,52 @@ const AdminPage: React.FC = () => {
             </section>
           )}
 
+          import {calculateRemainingRedemptions, getNextRenewalDate} from '../lib/redemptionLogic';
+
+          // ... (keep existing imports)
+
+          // ... (inside AdminPage component)
+
           <section>
             <h2 className="text-2xl font-bold mb-4">{t('allUsers')}</h2>
             <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
-                  <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg"><tr><th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th><th scope="col" className="px-6 py-3">{t('emailLabel')}</th><th scope="col" className="px-6 py-3">{t('tier')}</th><th scope="col" className="px-6 py-3 text-right">{t('actions')}</th></tr></thead>
+                  <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
+                    <tr>
+                      <th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th>
+                      <th scope="col" className="px-6 py-3">{t('emailLabel')}</th>
+                      <th scope="col" className="px-6 py-3">{t('tier')}</th>
+                      <th scope="col" className="px-6 py-3">Redemptions Left</th>
+                      <th scope="col" className="px-6 py-3">Renews On</th>
+                      <th scope="col" className="px-6 py-3 text-right">{t('actions')}</th>
+                    </tr>
+                  </thead>
                   <tbody>
-                    {sortedUsers.map(user => (
-                      <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{user.name}{user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}</th>
-                        <td className="px-6 py-4">{user.email}</td><td className="px-6 py-4">{user.tier}</td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
-                          <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
-                        </td>
-                      </tr>
-                    ))}
+                    {sortedUsers.map(user => {
+                      const { remaining, total } = calculateRemainingRedemptions(user);
+                      const renewalDate = getNextRenewalDate().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
+
+                      return (
+                        <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
+                            {user.name}{user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
+                          </th>
+                          <td className="px-6 py-4">{user.email}</td>
+                          <td className="px-6 py-4">{user.tier}</td>
+                          <td className="px-6 py-4">
+                            <span className={`font-semibold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
+                              {total === Infinity ? '∞' : `${remaining} / ${total}`}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">{renewalDate}</td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
+                            <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

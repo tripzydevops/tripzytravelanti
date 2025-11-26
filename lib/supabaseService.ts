@@ -10,7 +10,8 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         .from('profiles')
         .select(`
       *,
-      saved_deals:saved_deals(deal_id)
+      saved_deals:saved_deals(deal_id),
+      deal_redemptions:deal_redemptions(id, deal_id, user_id, redeemed_at)
     `)
         .eq('id', userId)
         .single();
@@ -32,6 +33,12 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         referredBy: data.referred_by,
         extraRedemptions: data.extra_redemptions,
         notificationPreferences: data.notification_preferences,
+        redemptions: data.deal_redemptions?.map((r: any) => ({
+            id: r.id,
+            dealId: r.deal_id,
+            userId: r.user_id,
+            redeemedAt: r.redeemed_at
+        })) || [],
     };
 }
 
@@ -66,7 +73,8 @@ export async function getAllUsers(): Promise<User[]> {
         .from('profiles')
         .select(`
       *,
-      saved_deals:saved_deals(deal_id)
+      saved_deals:saved_deals(deal_id),
+      deal_redemptions:deal_redemptions(id, deal_id, user_id, redeemed_at)
     `);
 
     if (error) {
@@ -85,6 +93,12 @@ export async function getAllUsers(): Promise<User[]> {
         referredBy: user.referred_by,
         extraRedemptions: user.extra_redemptions,
         notificationPreferences: user.notification_preferences,
+        redemptions: user.deal_redemptions?.map((r: any) => ({
+            id: r.id,
+            dealId: r.deal_id,
+            userId: r.user_id,
+            redeemedAt: r.redeemed_at
+        })) || [],
     }));
 }
 
