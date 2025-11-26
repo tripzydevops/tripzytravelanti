@@ -6,6 +6,7 @@ import DealCard from '../components/DealCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon } from '../components/Icons';
+import FlightSearchWidget from '../components/FlightSearchWidget';
 
 const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 
@@ -201,13 +202,7 @@ const HomePage: React.FC = () => {
             {categories.map(cat => (
               <button
                 key={cat.key}
-                onClick={() => {
-                  if (cat.key === 'Flights') {
-                    navigate('/flights');
-                  } else {
-                    setCategoryFilter(cat.key as any);
-                  }
-                }}
+                onClick={() => setCategoryFilter(cat.key as any)}
                 className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-lg hover:scale-105 ${categoryFilter === cat.key
                   ? 'bg-gradient-primary text-white shadow-brand-primary/50'
                   : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
@@ -220,39 +215,52 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Rating Filters */}
-        <div className="flex items-center space-x-4 mb-8">
-          <h3 className="text-sm font-semibold text-brand-text-muted whitespace-nowrap">{t('filterByRating')}:</h3>
-          <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
-            {ratingFilters.map(filter => (
-              <button
-                key={filter.value}
-                onClick={() => setRatingFilter(filter.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
-                  ? 'bg-brand-primary text-white shadow-lg'
-                  : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
-                  }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Deals Section */}
-        <section>
-          <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
-            {t('featuredDeals')}
-          </h2>
-          {filteredDeals.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDeals.map(deal => (
-                <DealCard key={deal.id} deal={deal} />
+        {categoryFilter !== 'Flights' && (
+          <div className="flex items-center space-x-4 mb-8">
+            <h3 className="text-sm font-semibold text-brand-text-muted whitespace-nowrap">{t('filterByRating')}:</h3>
+            <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+              {ratingFilters.map(filter => (
+                <button
+                  key={filter.value}
+                  onClick={() => setRatingFilter(filter.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
+                    ? 'bg-brand-primary text-white shadow-lg'
+                    : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
+                    }`}
+                >
+                  {filter.label}
+                </button>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-16">
-              <p className="text-xl text-brand-text-muted">{t('noResults')}</p>
+          </div>
+        )}
+
+        {/* Deals Section or Flight Widget */}
+        <section>
+          {categoryFilter === 'Flights' ? (
+            <div className="animate-fade-in">
+              <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
+                {t('findFlightsTitle') || 'Find the Best Flight Deals'}
+              </h2>
+              <FlightSearchWidget />
             </div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
+                {t('featuredDeals')}
+              </h2>
+              {filteredDeals.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredDeals.map(deal => (
+                    <DealCard key={deal.id} deal={deal} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-xl text-brand-text-muted">{t('noResults')}</p>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>
