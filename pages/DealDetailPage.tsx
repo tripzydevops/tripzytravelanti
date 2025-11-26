@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { SubscriptionTier } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon } from '../components/Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle } from '../components/Icons';
 import Modal from '../components/Modal';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
@@ -26,61 +26,69 @@ interface ShareModalProps {
 
 const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, shareUrl, dealTitle }) => {
   const { t } = useLanguage();
-  const [showInstagramHint, setShowInstagramHint] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const handleInstagramShare = () => {
+  const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl).then(() => {
-      setShowInstagramHint(true);
-      setTimeout(() => setShowInstagramHint(false), 3000);
-      window.open('https://www.instagram.com', '_blank', 'noopener,noreferrer');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
+  const handleInstagramShare = () => {
+    handleCopyLink();
+    window.open('https://www.instagram.com', '_blank', 'noopener,noreferrer');
+  };
+
   const socialPlatforms = [
-    { name: 'Facebook', icon: <FacebookLogo className="w-8 h-8 text-[#1877F2]" />, action: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, isLink: true },
-    { name: 'WhatsApp', icon: <WhatsappIcon className="w-8 h-8 text-[#25D366]" />, action: `https://api.whatsapp.com/send?text=${encodeURIComponent(dealTitle + '\n' + shareUrl)}`, isLink: true },
-    { name: 'Telegram', icon: <TelegramIcon className="w-8 h-8 text-[#0088cc]" />, action: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(dealTitle)}`, isLink: true },
-    { name: 'Instagram', icon: <InstagramIcon className="w-8 h-8" />, action: handleInstagramShare, isLink: false },
+    { name: 'WhatsApp', icon: <WhatsappIcon className="w-8 h-8 text-white" />, action: `https://api.whatsapp.com/send?text=${encodeURIComponent(dealTitle + '\n' + shareUrl)}`, isLink: true, bg: 'bg-[#25D366]' },
+    { name: 'Telegram', icon: <TelegramIcon className="w-8 h-8 text-white" />, action: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(dealTitle)}`, isLink: true, bg: 'bg-[#0088cc]' },
+    { name: 'Facebook', icon: <FacebookLogo className="w-8 h-8 text-white" />, action: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, isLink: true, bg: 'bg-[#1877F2]' },
+    { name: 'Instagram', icon: <InstagramIcon className="w-8 h-8 text-white" />, action: handleInstagramShare, isLink: false, bg: 'bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045]' },
+    { name: t('copyLink'), icon: copied ? <CheckCircle className="w-8 h-8 text-white" /> : <LinkIcon className="w-8 h-8 text-white" />, action: handleCopyLink, isLink: false, bg: 'bg-gray-600' },
   ];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('shareDeal')}>
-      <div className="flex flex-wrap justify-center gap-4">
-        {socialPlatforms.map(platform => {
+      <div className="grid grid-cols-3 gap-6 py-4">
+        {socialPlatforms.map((platform, index) => {
+          const content = (
+            <>
+              <div className={`w-14 h-14 rounded-2xl ${platform.bg} flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200`}>
+                {platform.icon}
+              </div>
+              <span className="text-xs font-medium text-gray-700 dark:text-brand-text-muted text-center mt-2">{platform.name}</span>
+            </>
+          );
+
           if (platform.isLink) {
             return (
               <a
-                key={platform.name}
+                key={index}
                 href={platform.action as string}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-2 text-center text-brand-text-muted hover:opacity-80 transition-opacity w-20"
+                className="flex flex-col items-center group"
               >
-                <div className="w-16 h-16 rounded-full bg-brand-surface flex items-center justify-center hover:scale-110 transition-transform">
-                  {platform.icon}
-                </div>
-                <span className="text-xs font-medium">{platform.name}</span>
+                {content}
               </a>
             );
           }
           return (
             <button
-              key={platform.name}
+              key={index}
               onClick={platform.action as () => void}
-              className="flex flex-col items-center gap-2 text-center text-brand-text-muted hover:opacity-80 transition-opacity w-20"
+              className="flex flex-col items-center group"
             >
-              <div className="w-16 h-16 rounded-full bg-brand-surface flex items-center justify-center hover:scale-110 transition-transform">
-                {platform.icon}
-              </div>
-              <span className="text-xs font-medium">{platform.name}</span>
+              {content}
             </button>
-          )
+          );
         })}
       </div>
-      {showInstagramHint && (
-        <p className="text-center text-sm text-brand-text-muted mt-4">
-          {t('instagramShareHint')}
-        </p>
+      {copied && (
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium animate-fade-in">
+          {t('linkCopied')}
+        </div>
       )}
     </Modal>
   );
@@ -144,24 +152,7 @@ const DealDetailPage: React.FC = () => {
   ];
 
   const handleShare = async () => {
-    const shareData = {
-      title,
-      text: description,
-      url: shareUrl,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-        console.error('Web Share API failed:', error);
-      }
-    }
-
+    // Always open custom modal for consistent premium experience
     setIsShareModalOpen(true);
   };
 
@@ -277,7 +268,7 @@ const DealDetailPage: React.FC = () => {
           <div className="flex justify-center mb-6">
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 text-brand-primary font-medium hover:text-brand-secondary transition-colors py-2 px-4 rounded-full bg-brand-primary/5 hover:bg-brand-primary/10"
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2"
             >
               <ShareIcon className="w-5 h-5" />
               {t('shareDeal')}
