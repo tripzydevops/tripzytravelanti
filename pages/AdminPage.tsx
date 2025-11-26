@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Deal, User, SubscriptionTier } from '../types';
 import { SpinnerIcon } from '../components/Icons';
+import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 
 const getExpiryDate = (days: number): string => {
   const date = new Date();
@@ -519,7 +520,7 @@ const AdminPage: React.FC = () => {
             </section>
           )}
 
-          import {calculateRemainingRedemptions, getNextRenewalDate} from '../lib/redemptionLogic';
+
 
           // ... (keep existing imports)
 

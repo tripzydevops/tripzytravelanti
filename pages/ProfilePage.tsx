@@ -12,6 +12,7 @@ import {
 } from '../components/Icons';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
+import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 
 const ProfilePage: React.FC = () => {
   const { user, logout, updateUserDetails, updateUserAvatar, deleteUser, updateUserNotificationPreferences } = useAuth();
@@ -222,11 +223,7 @@ const ProfilePage: React.FC = () => {
         )}
       </section>
 
-      import {calculateRemainingRedemptions, getNextRenewalDate} from '../lib/redemptionLogic';
 
-      // ... (keep existing imports)
-
-      // ... (inside ProfilePage component)
 
       {/* Subscription Info Card */}
       <SettingsSection title={t('subscriptionInfo')}>
