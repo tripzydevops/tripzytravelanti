@@ -29,6 +29,8 @@ const HomePage: React.FC = () => {
 
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
   const [recentSearches, setRecentSearches] = React.useState<string[]>([]);
+  const [flightWidgetParams, setFlightWidgetParams] = React.useState<{ origin?: string, destination?: string, departDate?: string }>({});
+  const flightWidgetRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     try {
@@ -100,6 +102,17 @@ const HomePage: React.FC = () => {
 
     return queryMatch && categoryMatch && ratingMatch;
   });
+
+  const flightRoutes = deals.filter(d => d.category === 'FlightWidget');
+
+  const handleRouteClick = (route: any) => {
+    setFlightWidgetParams({
+      origin: route.vendor,
+      destination: route.redemptionCode,
+      departDate: route.expiresAt
+    });
+    flightWidgetRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const { content, getContent } = useContent();
   const { language } = useLanguage();
@@ -261,7 +274,34 @@ const HomePage: React.FC = () => {
               <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
                 {displayFlightsTitle || t('findFlightsTitle') || 'Find the Best Flight Deals'}
               </h2>
-              <FlightSearchWidget />
+              <div ref={flightWidgetRef}>
+                <FlightSearchWidget {...flightWidgetParams} />
+              </div>
+
+              {flightRoutes.length > 0 && (
+                <div className="mt-12">
+                  <h3 className="text-2xl font-bold text-brand-text-light mb-6">Popular Routes</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {flightRoutes.map(route => (
+                      <button
+                        key={route.id}
+                        onClick={() => handleRouteClick(route)}
+                        className="group relative h-48 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 text-left w-full"
+                      >
+                        <img src={route.imageUrl} alt={route.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 p-4 w-full">
+                          <h4 className="text-white font-bold text-lg mb-1">{route.title}</h4>
+                          <div className="flex justify-between items-end">
+                            <span className="text-white/80 text-sm">{route.expiresAt}</span>
+                            <span className="text-brand-secondary font-bold text-xl">From ${route.discountedPrice}</span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>
