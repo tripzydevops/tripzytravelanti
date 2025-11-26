@@ -13,6 +13,7 @@ import {
   getDirectReferrals,
   getReferralChain,
   getReferralNetwork,
+  redeemDeal,
 } from '../lib/supabaseService';
 
 interface AuthContextType {
@@ -29,6 +30,7 @@ interface AuthContextType {
   deleteUser: (userId: string) => Promise<void>;
   saveDealForUser: (dealId: string) => Promise<void>;
   unsaveDealForUser: (dealId: string) => Promise<void>;
+  redeemDeal: (dealId: string) => Promise<void>;
   addExtraRedemptions: (userId: string, amount: number) => Promise<void>;
   updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -346,6 +348,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
+  // Redeem deal
+  const handleRedeemDeal = useCallback(async (dealId: string) => {
+    if (!user) return;
+
+    try {
+      await redeemDeal(user.id, dealId);
+
+      // Update local state
+      const newRedemption = {
+        id: crypto.randomUUID(), // Temporary ID until refresh
+        dealId,
+        userId: user.id,
+        redeemedAt: new Date().toISOString()
+      };
+
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+        const updatedRedemptions = [...(currentUser.redemptions || []), newRedemption];
+        const updatedUser = { ...currentUser, redemptions: updatedRedemptions };
+
+        // Update in users list if admin
+        setUsers((currentUsers) =>
+          currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+        );
+
+        return updatedUser;
+      });
+
+    } catch (error) {
+      console.error('Error redeeming deal:', error);
+      throw error;
+    }
+  }, [user]);
+
   // Add extra redemptions
   const addExtraRedemptions = useCallback(async (userId: string, amount: number) => {
     try {
@@ -437,6 +473,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteUser,
         saveDealForUser,
         unsaveDealForUser,
+        redeemDeal: handleRedeemDeal,
         addExtraRedemptions,
         updateUserNotificationPreferences,
         signInWithGoogle,

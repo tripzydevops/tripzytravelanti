@@ -103,14 +103,28 @@ const DealDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getDealById } = useDeals();
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, redeemDeal } = useAuth();
   const navigate = useNavigate();
   const { setChatbotVisible } = useLayout();
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [hasRated, setHasRated] = useState(false);
   const { rateDeal } = useDeals();
+
+  const handleRedeemConfirm = async (dontShowAgain: boolean) => {
+    if (deal) {
+      try {
+        await redeemDeal(deal.id);
+        setIsWarningModalOpen(false);
+        setIsRedeemModalOpen(true);
+      } catch (error) {
+        console.error('Failed to redeem deal:', error);
+        // Optionally show error toast
+      }
+    }
+  };
 
   useEffect(() => {
     setChatbotVisible(false);
@@ -343,7 +357,13 @@ const DealDetailPage: React.FC = () => {
             if (!user) {
               navigate('/login');
             } else {
-              setIsRedeemModalOpen(true);
+              const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
+              if (dontShowAgain) {
+                // If user opted out of warning, redeem immediately
+                handleRedeemConfirm(false);
+              } else {
+                setIsWarningModalOpen(true);
+              }
             }
           }}
           className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
@@ -352,7 +372,53 @@ const DealDetailPage: React.FC = () => {
         </button>
       </footer>
 
-      {/* Redeem Modal */}
+      {/* Warning Modal */}
+      <Modal
+        isOpen={isWarningModalOpen}
+        onClose={() => setIsWarningModalOpen(false)}
+        title={t('redemptionWarningTitle')}
+      >
+        <div className="p-4">
+          <p className="text-gray-600 dark:text-brand-text-muted mb-6">
+            {t('redemptionWarningBody')}
+          </p>
+
+          <div className="flex items-center mb-6">
+            <input
+              type="checkbox"
+              id="dontShowAgain"
+              className="w-4 h-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary"
+              onChange={(e) => {
+                if (e.target.checked) {
+                  localStorage.setItem('dontShowRedemptionWarning', 'true');
+                } else {
+                  localStorage.removeItem('dontShowRedemptionWarning');
+                }
+              }}
+            />
+            <label htmlFor="dontShowAgain" className="ml-2 text-sm text-gray-600 dark:text-brand-text-muted">
+              {t('dontShowAgain')}
+            </label>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setIsWarningModalOpen(false)}
+              className="flex-1 bg-gray-100 dark:bg-brand-surface text-gray-800 dark:text-brand-text-light font-semibold py-3 px-6 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              {t('cancelRedeem')}
+            </button>
+            <button
+              onClick={() => handleRedeemConfirm(localStorage.getItem('dontShowRedemptionWarning') === 'true')}
+              className="flex-1 bg-brand-primary text-white font-semibold py-3 px-6 rounded-lg hover:bg-opacity-90 transition-colors"
+            >
+              {t('confirmRedeem')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Redeem Modal (Coupon Code) */}
       <Modal
         isOpen={isRedeemModalOpen}
         onClose={() => setIsRedeemModalOpen(false)}
