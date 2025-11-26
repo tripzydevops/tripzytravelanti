@@ -165,18 +165,7 @@ const ProfilePage: React.FC = () => {
     return null;
   }
 
-  const handleThemeChange = () => {
-    const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system'];
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
-  };
 
-  const getCurrentThemeName = () => {
-    if (theme === 'light') return t('themeLight');
-    if (theme === 'dark') return t('themeDark');
-    return t('themeSystem');
-  };
 
   const getInitials = (name: string) => {
     if (!name) return '';
