@@ -165,13 +165,18 @@ const DealDetailPage: React.FC = () => {
     setIsShareModalOpen(true);
   };
 
+  const isTermsUrl = (url: string) => {
+    return /^(http|https):\/\//i.test(url);
+  };
+
   const handleTermsClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // If termsUrl is just '#' or empty, show modal instead
-    if (!deal.termsUrl || deal.termsUrl === '#' || deal.termsUrl.trim() === '') {
-      e.preventDefault();
+    e.preventDefault();
+
+    if (deal.termsUrl && isTermsUrl(deal.termsUrl)) {
+      window.open(deal.termsUrl, '_blank', 'noopener,noreferrer');
+    } else {
       setIsTermsModalOpen(true);
     }
-    // Otherwise, let the link navigate normally to external URL
   };
 
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -270,8 +275,6 @@ const DealDetailPage: React.FC = () => {
           <div className="mb-6">
             <a
               href={deal.termsUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
               onClick={handleTermsClick}
               className="text-brand-primary hover:text-brand-secondary text-sm font-medium underline cursor-pointer"
             >
@@ -343,12 +346,17 @@ const DealDetailPage: React.FC = () => {
           </div>
           <div>
             <h4 className="font-semibold text-gray-900 dark:text-brand-text-light mb-2">{t('generalTerms')}</h4>
-            <ul className="list-disc list-inside space-y-1">
-              <li>{t('termsPoint1')}</li>
-              <li>{t('termsPoint2')}</li>
-              <li>{t('termsPoint3')}</li>
-              <li>{t('termsPoint4')}</li>
-            </ul>
+
+            {deal.termsUrl && !isTermsUrl(deal.termsUrl) && deal.termsUrl !== '#' ? (
+              <p className="whitespace-pre-wrap">{deal.termsUrl}</p>
+            ) : (
+              <ul className="list-disc list-inside space-y-1">
+                <li>{t('termsPoint1')}</li>
+                <li>{t('termsPoint2')}</li>
+                <li>{t('termsPoint3')}</li>
+                <li>{t('termsPoint4')}</li>
+              </ul>
+            )}
           </div>
           <button
             onClick={() => setIsTermsModalOpen(false)}

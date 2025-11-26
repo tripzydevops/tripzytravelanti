@@ -58,9 +58,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         if (error) {
-          console.error('Error creating profile:', error);
-          alert(`Error creating user profile: ${error.message}. Please contact support.`);
-          return;
+          // If error is duplicate key (23505), it means profile already exists, so we can proceed.
+          // Otherwise, report the error.
+          if (error.code !== '23505') {
+            console.error('Error creating profile:', error);
+            alert(`Error creating user profile: ${error.message}. Please contact support.`);
+            return;
+          }
         }
 
         // Fetch the newly created profile
