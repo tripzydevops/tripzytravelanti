@@ -8,6 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
+import Onboarding from '../components/Onboarding';
 
 const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 
@@ -132,8 +133,28 @@ const HomePage: React.FC = () => {
   const displayFeaturedDealsTitle = language === 'tr' ? (featuredDealsTitle?.content_value_tr || featuredDealsTitle?.content_value) : featuredDealsTitle?.content_value;
   const displayFlightsTitle = language === 'tr' ? (flightsTitle?.content_value_tr || flightsTitle?.content_value) : flightsTitle?.content_value;
 
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
+
+  React.useEffect(() => {
+    const onboardingCompleted = localStorage.getItem('tripzy_onboarding_completed');
+    if (!onboardingCompleted) {
+      // Small delay to ensure smooth entrance
+      const timer = setTimeout(() => setShowOnboarding(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleOnboardingComplete = (preferences: any) => {
+    localStorage.setItem('tripzy_onboarding_completed', 'true');
+    setShowOnboarding(false);
+    // Ideally, we would save these preferences to the user profile if logged in
+    console.log('User preferences:', preferences);
+  };
+
   return (
     <div className="min-h-screen">
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}

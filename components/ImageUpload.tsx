@@ -1,41 +1,69 @@
 import React, { useState, useRef } from 'react';
 import { SpinnerIcon, TrashIcon } from './Icons';
+import { supabase } from '../lib/supabaseClient';
 
 interface ImageUploadProps {
     value?: string;
-    onChange: (base64: string) => void;
+    onChange: (url: string) => void;
     placeholder?: string;
     className?: string;
+    bucketName?: string;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, placeholder = "Upload Image", className = "" }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+    value,
+    onChange,
+    placeholder = "Upload Image",
+    className = "",
+    bucketName = "deals"
+}) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFile = (file: File) => {
+    const handleFile = async (file: File) => {
         if (!file.type.startsWith('image/')) {
             alert('Please upload an image file');
             return;
         }
 
-        // 2MB limit
-        if (file.size > 2 * 1024 * 1024) {
-            alert('File size must be less than 2MB');
+        // 5MB limit
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
             return;
         }
 
         setIsLoading(true);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            onChange(reader.result as string);
+
+        try {
+            // Generate a unique file name
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // Upload to Supabase
+            const { error: uploadError } = await supabase.storage
+                .from(bucketName)
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            // Get Public URL
+            const { data } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(filePath);
+
+            if (data) {
+                onChange(data.publicUrl);
+            }
+        } catch (error: any) {
+            console.error('Error uploading image:', error);
+            alert(error.message || 'Failed to upload image');
+        } finally {
             setIsLoading(false);
-        };
-        reader.onerror = () => {
-            alert('Failed to read file');
-            setIsLoading(false);
-        };
-        reader.readAsDataURL(file);
+        }
     };
 
     const onDragOver = (e: React.DragEvent) => {
@@ -92,7 +120,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, placeholder 
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center text-brand-text-muted">
                         <SpinnerIcon className="w-8 h-8 animate-spin mb-2 text-brand-primary" />
-                        <span>Processing...</span>
+                        <span>Uploading...</span>
                     </div>
                 ) : value ? (
                     <div className="relative group">
@@ -116,7 +144,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, placeholder 
                     <div className="text-gray-500 dark:text-brand-text-muted">
                         <p className="font-medium mb-1">{placeholder}</p>
                         <p className="text-xs">Drag & drop or click to upload</p>
-                        <p className="text-xs mt-2 opacity-70">Max 2MB</p>
+                        <p className="text-xs mt-2 opacity-70">Max 5MB</p>
                     </div>
                 )}
             </div>

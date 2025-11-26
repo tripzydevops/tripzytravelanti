@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export type CategoryFilter = 'All' | 'Dining' | 'Wellness' | 'Travel';
+export type CategoryFilter = 'All' | 'Dining' | 'Wellness' | 'Travel' | 'Flights';
 
 interface SearchContextType {
   searchQuery: string;
@@ -39,8 +39,8 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [navigate]);
 
   return (
-    <SearchContext.Provider value={{ 
-      searchQuery, 
+    <SearchContext.Provider value={{
+      searchQuery,
       setSearchQuery,
       categoryFilter,
       setCategoryFilter,

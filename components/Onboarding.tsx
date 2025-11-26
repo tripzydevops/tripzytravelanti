@@ -18,6 +18,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         budget: 'moderate',
     });
 
+    const totalSteps = 5;
+
     const travelStyles = [
         { key: 'beach' as const, emoji: '🏖️', label: t('travelStyleBeach') || 'Beach & Relaxation' },
         { key: 'mountain' as const, emoji: '⛰️', label: t('travelStyleMountain') || 'Mountain & Nature' },
@@ -32,96 +34,126 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     ];
 
     const handleNext = () => {
-        if (step === 1) {
-            setStep(2);
+        if (step < totalSteps) {
+            setStep(step + 1);
         } else {
             onComplete(preferences);
         }
     };
 
+    const handleSkip = () => {
+        onComplete(preferences);
+    };
+
+    const renderBenefitSlide = (titleKey: string, descKey: string, emoji: string) => (
+        <div className="animate-slide-up text-center">
+            <div className="text-6xl mb-6 animate-bounce-slow">{emoji}</div>
+            <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-4">
+                {t(titleKey)}
+            </h2>
+            <p className="text-lg text-brand-text-muted mb-8">
+                {t(descKey)}
+            </p>
+        </div>
+    );
+
     return (
-        <div className="fixed inset-0 bg-brand-bg z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="max-w-md w-full">
+        <div className="fixed inset-0 bg-brand-bg/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="max-w-md w-full bg-white dark:bg-brand-surface rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+                {/* Background Decoration */}
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-primary to-brand-secondary"></div>
+
                 {/* Progress Indicator */}
-                <div className="flex gap-2 mb-8">
-                    <div className={`h-1 flex-1 rounded-full transition-all ${step >= 1 ? 'bg-brand-primary' : 'bg-brand-surface'}`}></div>
-                    <div className={`h-1 flex-1 rounded-full transition-all ${step >= 2 ? 'bg-brand-primary' : 'bg-brand-surface'}`}></div>
+                <div className="flex gap-2 mb-8 justify-center">
+                    {[...Array(totalSteps)].map((_, i) => (
+                        <div
+                            key={i}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${i + 1 === step ? 'w-8 bg-brand-primary' :
+                                i + 1 < step ? 'w-2 bg-brand-primary/50' : 'w-2 bg-gray-200 dark:bg-gray-700'
+                                }`}
+                        ></div>
+                    ))}
                 </div>
 
-                {step === 1 && (
-                    <div className="animate-slide-up">
-                        <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-2">
-                            {t('onboardingWelcome') || 'Welcome to Tripzy! ✨'}
-                        </h2>
-                        <p className="text-brand-text-muted mb-8">
-                            {t('onboardingTravelStyleQuestion') || 'What\'s your ideal travel style?'}
-                        </p>
+                {/* Content */}
+                <div className="min-h-[300px] flex flex-col justify-center">
+                    {step === 1 && renderBenefitSlide('onboardingBenefit1Title', 'onboardingBenefit1Desc', '🌍')}
+                    {step === 2 && renderBenefitSlide('onboardingBenefit2Title', 'onboardingBenefit2Desc', '🎟️')}
+                    {step === 3 && renderBenefitSlide('onboardingBenefit3Title', 'onboardingBenefit3Desc', '⭐')}
 
-                        <div className="grid grid-cols-2 gap-4 mb-8">
-                            {travelStyles.map((style) => (
-                                <button
-                                    key={style.key}
-                                    onClick={() => setPreferences({ ...preferences, travelStyle: style.key })}
-                                    className={`card text-center p-6 transition-all duration-300 hover:scale-105 ${preferences.travelStyle === style.key
-                                            ? 'ring-2 ring-brand-primary shadow-lg shadow-brand-primary/30'
+                    {step === 4 && (
+                        <div className="animate-slide-up">
+                            <h2 className="text-2xl font-heading font-bold text-brand-text-light mb-2 text-center">
+                                {t('onboardingWelcome')}
+                            </h2>
+                            <p className="text-brand-text-muted mb-6 text-center">
+                                {t('onboardingTravelStyleQuestion')}
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {travelStyles.map((style) => (
+                                    <button
+                                        key={style.key}
+                                        onClick={() => setPreferences({ ...preferences, travelStyle: style.key })}
+                                        className={`card text-center p-4 transition-all duration-300 hover:scale-105 ${preferences.travelStyle === style.key
+                                            ? 'ring-2 ring-brand-primary shadow-lg shadow-brand-primary/30 bg-brand-primary/5'
                                             : 'hover:border-brand-primary/50'
-                                        }`}
-                                >
-                                    <div className="text-5xl mb-3">{style.emoji}</div>
-                                    <div className="text-sm font-semibold text-brand-text-light">{style.label}</div>
-                                </button>
-                            ))}
+                                            }`}
+                                    >
+                                        <div className="text-4xl mb-2">{style.emoji}</div>
+                                        <div className="text-sm font-semibold text-brand-text-light">{style.label}</div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {step === 2 && (
-                    <div className="animate-slide-up">
-                        <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-2">
-                            {t('onboardingBudgetQuestion') || 'What\'s your budget preference?'}
-                        </h2>
-                        <p className="text-brand-text-muted mb-8">
-                            {t('onboardingBudgetSubtitle') || 'We\'ll show you the best deals for your style'}
-                        </p>
+                    {step === 5 && (
+                        <div className="animate-slide-up">
+                            <h2 className="text-2xl font-heading font-bold text-brand-text-light mb-2 text-center">
+                                {t('onboardingBudgetQuestion')}
+                            </h2>
+                            <p className="text-brand-text-muted mb-6 text-center">
+                                {t('onboardingBudgetSubtitle')}
+                            </p>
 
-                        <div className="space-y-4 mb-8">
-                            {budgetOptions.map((option) => (
-                                <button
-                                    key={option.key}
-                                    onClick={() => setPreferences({ ...preferences, budget: option.key })}
-                                    className={`card w-full text-left p-6 transition-all duration-300 hover:scale-[1.02] ${preferences.budget === option.key
-                                            ? 'ring-2 ring-brand-primary shadow-lg shadow-brand-primary/30'
+                            <div className="space-y-3">
+                                {budgetOptions.map((option) => (
+                                    <button
+                                        key={option.key}
+                                        onClick={() => setPreferences({ ...preferences, budget: option.key })}
+                                        className={`card w-full text-left p-4 transition-all duration-300 hover:scale-[1.02] ${preferences.budget === option.key
+                                            ? 'ring-2 ring-brand-primary shadow-lg shadow-brand-primary/30 bg-brand-primary/5'
                                             : 'hover:border-brand-primary/50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-4xl">{option.emoji}</div>
-                                        <div className="flex-1">
-                                            <div className="text-lg font-semibold text-brand-text-light mb-1">{option.label}</div>
-                                            <div className="text-sm text-brand-text-muted">{option.description}</div>
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-3xl">{option.emoji}</div>
+                                            <div className="flex-1">
+                                                <div className="text-base font-semibold text-brand-text-light">{option.label}</div>
+                                                <div className="text-xs text-brand-text-muted">{option.description}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </button>
-                            ))}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {/* Navigation Buttons */}
-                <div className="flex gap-4">
-                    {step > 1 && (
-                        <button
-                            onClick={() => setStep(step - 1)}
-                            className="px-6 py-3 rounded-xl font-semibold text-brand-text-light bg-brand-surface hover:bg-brand-surface/80 transition-all"
-                        >
-                            {t('back') || 'Back'}
-                        </button>
-                    )}
+                <div className="flex gap-4 mt-8">
+                    <button
+                        onClick={handleSkip}
+                        className="px-4 py-3 rounded-xl font-medium text-brand-text-muted hover:text-brand-text-light transition-colors"
+                    >
+                        {t('skip')}
+                    </button>
                     <button
                         onClick={handleNext}
-                        className="btn-primary flex-1"
+                        className="btn-primary flex-1 shadow-lg shadow-brand-primary/25"
                     >
-                        {step === 2 ? (t('getStarted') || 'Get Started') : (t('next') || 'Next')}
+                        {step === totalSteps ? t('getStarted') : t('next')}
                     </button>
                 </div>
             </div>
