@@ -23,7 +23,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, signInWithGoogle } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -44,10 +44,19 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setError('');
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      setError('Failed to sign in with Google.');
+    }
+  };
+
   const handleSocialLogin = () => {
-    // TODO: Implement social login with Supabase OAuth
-    // For now, show a message that it's not implemented
-    setError('Social login coming soon! Please use email login.');
+    // TODO: Implement other social logins
+    setError('This social login method is coming soon!');
   };
 
   const SocialLoginOptions = () => (
@@ -76,7 +85,7 @@ const LoginPage: React.FC = () => {
           <FacebookIcon className="h-6 w-6" />
           {t('signInWithFacebook')}
         </button>
-        <button onClick={handleSocialLogin} className="w-full flex items-center justify-center gap-x-3 py-3 px-4 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white font-bold text-base border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300">
+        <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-x-3 py-3 px-4 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white font-bold text-base border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300">
           <GoogleIcon className="h-6 w-6" />
           {t('signInWithGoogle')}
         </button>

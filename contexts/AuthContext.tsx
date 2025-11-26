@@ -29,6 +29,7 @@ interface AuthContextType {
   unsaveDealForUser: (dealId: string) => Promise<void>;
   addExtraRedemptions: (userId: string, amount: number) => Promise<void>;
   updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -348,6 +349,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
+  // Sign in with Google
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -366,6 +383,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         unsaveDealForUser,
         addExtraRedemptions,
         updateUserNotificationPreferences,
+        signInWithGoogle,
       }}
     >
       {children}
