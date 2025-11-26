@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (error) {
           console.error('Error creating profile:', error);
+          alert(`Error creating user profile: ${error.message}. Please contact support.`);
           return;
         }
 
@@ -57,9 +58,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Listen to auth state changes
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        loadUserProfile(session.user);
+        await loadUserProfile(session.user);
       }
       setLoading(false);
     });
@@ -67,9 +68,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        loadUserProfile(session.user);
+        // We don't await here to avoid blocking UI updates on auth change events, 
+        // but for initial load (above) it's important.
+        await loadUserProfile(session.user);
       } else {
         setUser(null);
       }
