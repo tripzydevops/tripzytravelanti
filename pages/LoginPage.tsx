@@ -214,13 +214,13 @@ const LoginPage: React.FC = () => {
         <div className="relative z-10 flex flex-col justify-end p-16 text-white max-w-2xl">
           <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-medium">
             <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse" />
-            Over 10,000+ active travelers
+            {t('loginHeroBadge')}
           </div>
           <h2 className="text-5xl font-heading font-bold mb-6 leading-tight">
-            Unlock the world's best travel secrets.
+            {t('loginHeroTitle')}
           </h2>
           <p className="text-xl text-white/80 leading-relaxed">
-            Join our community of explorers and get access to exclusive deals, hidden gems, and premium experiences at unbeatable prices.
+            {t('loginHeroSubtitle')}
           </p>
         </div>
       </div>

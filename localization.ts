@@ -54,6 +54,9 @@ export const translations = {
     privacyPolicy: "Privacy Policy",
     and: "and",
     or: "OR",
+    loginHeroBadge: "Over 10,000+ active travelers",
+    loginHeroTitle: "Unlock the world's best travel secrets.",
+    loginHeroSubtitle: "Join our community of explorers and get access to exclusive deals, hidden gems, and premium experiences at unbeatable prices.",
     // Deal Card
     expiresIn: 'Expires in',
     days: 'days',
@@ -320,7 +323,10 @@ export const translations = {
     termsOfService: "Kullanım Koşullarımızı",
     privacyPolicy: "Gizlilik Politikamızı",
     and: "ve",
-    or: "VEYOR",
+    or: "VEYA",
+    loginHeroBadge: "10.000'den fazla aktif gezgin",
+    loginHeroTitle: "Dünyanın en iyi seyahat sırlarını keşfedin.",
+    loginHeroSubtitle: "Kaşifler topluluğumuza katılın; özel fırsatlara, gizli kalmış güzelliklere ve eşsiz deneyimlere rakipsiz fiyatlarla erişin.",
     // Deal Card
     expiresIn: 'Son',
     days: 'gün',
