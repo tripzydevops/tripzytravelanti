@@ -24,6 +24,7 @@ export const translations = {
     allRatings: 'All',
     // Categories
     categoryAll: 'All',
+    categoryFlights: 'Flights',
     categoryDining: 'Dining',
     categoryWellness: 'Wellness',
     categoryTravel: 'Travel',
@@ -289,6 +290,7 @@ export const translations = {
     allRatings: 'Tümü',
     // Categories
     categoryAll: 'Tümü',
+    categoryFlights: 'Uçuşlar',
     categoryDining: 'Yemek',
     categoryWellness: 'Sağlık',
     categoryTravel: 'Seyahat',
