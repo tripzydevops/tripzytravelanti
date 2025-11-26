@@ -189,6 +189,10 @@ const ProfilePage: React.FC = () => {
   };
 
 
+
+  const { remaining, total } = calculateRemainingRedemptions(user);
+  const renewalDate = getNextRenewalDate().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
+
   return (
     <div className="container mx-auto px-4 pt-6 pb-24">
       <header className="text-center mb-6">
@@ -236,24 +240,16 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Redemption Info */}
-          {(() => {
-            const { remaining, total } = calculateRemainingRedemptions(user);
-            const renewalDate = getNextRenewalDate().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
-            return (
-              <>
-                <div className="flex justify-between items-center text-sm">
-                  <p className="text-gray-500 dark:text-brand-text-muted">{t('redemptionsLeft') || 'Redemptions Left'}</p>
-                  <p className={`font-bold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
-                    {total === Infinity ? '∞' : `${remaining} / ${total}`}
-                  </p>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <p className="text-gray-500 dark:text-brand-text-muted">{t('renewsOn') || 'Renews On'}</p>
-                  <p className="text-gray-800 dark:text-brand-text-light font-semibold">{renewalDate}</p>
-                </div>
-              </>
-            );
-          })()}
+          <div className="flex justify-between items-center text-sm">
+            <p className="text-gray-500 dark:text-brand-text-muted">{t('redemptionsLeft') || 'Redemptions Left'}</p>
+            <p className={`font-bold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
+              {total === Infinity ? '∞' : `${remaining} / ${total}`}
+            </p>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <p className="text-gray-500 dark:text-brand-text-muted">{t('renewsOn') || 'Renews On'}</p>
+            <p className="text-gray-800 dark:text-brand-text-light font-semibold">{renewalDate}</p>
+          </div>
 
           {(user.extraRedemptions ?? 0) > 0 && (
             <div className="flex justify-between items-center text-sm">
