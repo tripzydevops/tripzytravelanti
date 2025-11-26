@@ -28,6 +28,7 @@ export const translations = {
     categoryDining: 'Dining',
     categoryWellness: 'Wellness',
     categoryTravel: 'Travel',
+    findFlightsTitle: 'FLIGHTS DISCOVERY',
     // Subscriptions Page
     subscriptionsTitle: 'Choose Your Plan',
     subscriptionsSubtitle: 'Unlock more deals and exclusive perks with our subscription tiers.',
@@ -294,6 +295,7 @@ export const translations = {
     categoryDining: 'Yemek',
     categoryWellness: 'Sağlık',
     categoryTravel: 'Seyahat',
+    findFlightsTitle: 'UÇUŞ KEŞFİ',
     // Subscriptions Page
     subscriptionsTitle: 'Planınızı Seçin',
     subscriptionsSubtitle: 'Abonelik seviyelerimizle daha fazla fırsatın ve özel avantajların kilidini açın.',
