@@ -300,6 +300,7 @@ export const translations = {
     confirmRedeem: 'Redeem',
     cancelRedeem: 'Cancel',
     recommendedForYou: 'Recommended for You',
+    startExploringForRecommendations: 'Start exploring deals to get personalized recommendations!',
   },
   tr: {
     // Header
@@ -595,5 +596,6 @@ export const translations = {
     confirmRedeem: 'Kullan',
     cancelRedeem: 'İptal',
     recommendedForYou: 'Sizin İçin Önerilenler',
+    startExploringForRecommendations: 'Kişiselleştirilmiş öneriler almak için fırsatları keşfetmeye başlayın!',
   },
 };

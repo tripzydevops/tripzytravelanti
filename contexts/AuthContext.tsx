@@ -33,6 +33,7 @@ interface AuthContextType {
   redeemDeal: (dealId: string) => Promise<void>;
   addExtraRedemptions: (userId: string, amount: number) => Promise<void>;
   updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
+  updateAllUsersNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 }
 
@@ -438,6 +439,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
+  // Update notification preferences for all users (admin only)
+  const updateAllUsersNotificationPreferences = useCallback(async (prefs: Partial<UserNotificationPreferences>) => {
+    if (!user?.isAdmin) return;
+
+    try {
+      // In a real app, this should be a backend function or edge function to avoid N requests
+      // For now, we'll iterate through all users
+      const updates = users.map(async (u) => {
+        const updatedPrefs = {
+          ...u.notificationPreferences,
+          newDeals: u.notificationPreferences?.newDeals ?? true,
+          expiringDeals: u.notificationPreferences?.expiringDeals ?? true,
+          generalNotifications: u.notificationPreferences?.generalNotifications ?? true,
+          ...prefs,
+        };
+
+        await updateUserProfile(u.id, { notification_preferences: updatedPrefs });
+        return { id: u.id, prefs: updatedPrefs };
+      });
+
+      const results = await Promise.all(updates);
+
+      setUsers((currentUsers) =>
+        currentUsers.map((u) => {
+          const update = results.find(r => r.id === u.id);
+          return update ? { ...u, notificationPreferences: update.prefs } : u;
+        })
+      );
+
+      // Also update current user if they are in the list
+      if (results.find(r => r.id === user.id)) {
+        setUser(prev => prev ? { ...prev, notificationPreferences: results.find(r => r.id === user.id)!.prefs } : null);
+      }
+
+    } catch (error) {
+      console.error('Error updating all users notification preferences:', error);
+      throw error;
+    }
+  }, [user, users]);
+
   // Sign in with Google
   const signInWithGoogle = useCallback(async () => {
     try {
@@ -477,6 +518,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         redeemDeal: handleRedeemDeal,
         addExtraRedemptions,
         updateUserNotificationPreferences,
+        updateAllUsersNotificationPreferences,
         signInWithGoogle,
       }}
     >

@@ -291,7 +291,7 @@ const HomePage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-brand-text-muted italic">Start exploring deals to get personalized recommendations!</p>
+              <p className="text-brand-text-muted italic">{t('startExploringForRecommendations')}</p>
             )}
           </section>
         )}
