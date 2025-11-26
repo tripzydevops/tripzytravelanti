@@ -436,7 +436,7 @@ const ProfilePage: React.FC = () => {
       <SettingsSection title={t('appPreferencesSection')}>
         <SettingsItem icon={<LocationMarkerIcon className="w-6 h-6" />} title={t('locationServices')} subtitle={t('locationServicesSubtitle')} action={<Toggle checked={settings.location} onChange={() => handleToggle('location')} />} />
         <SettingsItem icon={<FingerPrintIcon className="w-6 h-6" />} title={t('biometricAuth')} subtitle={t('biometricAuthSubtitle')} action={<Toggle checked={settings.biometrics} onChange={() => handleToggle('biometrics')} />} />
-        <SettingsItem onClick={handleThemeChange} icon={<MoonIcon className="w-6 h-6" />} title={t('themeSelection')} subtitle={getCurrentThemeName()} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
+        <SettingsItem icon={<MoonIcon className="w-6 h-6" />} title={t('darkMode')} action={<Toggle checked={theme === 'dark'} onChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />} />
         <SettingsItem
           icon={<BellIcon className="w-6 h-6" />}
           title={t('pushNotifications')}

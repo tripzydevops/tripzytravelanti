@@ -281,6 +281,8 @@ const AdminPage: React.FC = () => {
       referralChain: user.referralChain || [],
       referralNetwork: user.referralNetwork || [],
       extraRedemptions: user.extraRedemptions || 0,
+      address: user.address || '',
+      billingAddress: user.billingAddress || '',
     });
     setDealToAdd('');
     setRedemptionsToAdd(0);
@@ -457,6 +459,8 @@ const AdminPage: React.FC = () => {
                   <div><label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label><input type="email" id="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                   <div><label htmlFor="tier" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('tier')}</label><select id="tier" name="tier" value={userFormData.tier} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
                   <div><label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile'}</label><input type="tel" id="mobile" name="mobile" value={userFormData.mobile || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                  <div className="md:col-span-2"><label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label><input type="text" id="address" name="address" value={userFormData.address || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                  <div className="md:col-span-2"><label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label><input type="text" id="billingAddress" name="billingAddress" value={userFormData.billingAddress || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
