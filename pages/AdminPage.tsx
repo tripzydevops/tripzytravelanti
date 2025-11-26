@@ -3,7 +3,8 @@ import { GoogleGenAI } from "@google/genai";
 import { useDeals } from '../contexts/DealContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Deal, User, SubscriptionTier } from '../types';
+import { useContent } from '../contexts/ContentContext';
+import { Deal, User, SubscriptionTier, PageContent } from '../types';
 import { SpinnerIcon } from '../components/Icons';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 
