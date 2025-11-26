@@ -135,12 +135,13 @@ const DealDetailPage: React.FC = () => {
   const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
 
   useEffect(() => {
-    if (userTierLevel < requiredTierLevel) {
+    // Allow access if deal is FREE, even if user is not logged in (tier 0)
+    if (userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
       navigate('/');
     }
-  }, [userTierLevel, requiredTierLevel, navigate]);
+  }, [userTierLevel, requiredTierLevel, navigate, deal.requiredTier]);
 
-  if (userTierLevel < requiredTierLevel) {
+  if (userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
     return null;
   }
 
