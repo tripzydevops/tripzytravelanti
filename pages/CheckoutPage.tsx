@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { SUBSCRIPTION_PLANS } from '../constants';
 import { SubscriptionTier } from '../types';
-import { CheckCircle, CreditCardIcon, Lock } from '../components/Icons';
+import { CheckCircle, Lock } from '../components/Icons';
 
 const CheckoutPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -97,19 +97,21 @@ const CheckoutPage: React.FC = () => {
                                     type="button"
                                     onClick={() => setPaymentMethod('stripe')}
                                     className={`flex-1 py-3 px-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${paymentMethod === 'stripe'
-                                            ? 'border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
-                                    <CreditCardIcon className="w-5 h-5 text-gray-700 dark:text-white" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-700 dark:text-white">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                                    </svg>
                                     <span className="font-medium text-gray-900 dark:text-white">Credit Card (Stripe)</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setPaymentMethod('iyzico')}
                                     className={`flex-1 py-3 px-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${paymentMethod === 'iyzico'
-                                            ? 'border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
                                     <span className="font-bold text-blue-600 dark:text-blue-400">iyzico</span>
@@ -146,7 +148,9 @@ const CheckoutPage: React.FC = () => {
                                             className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-bg text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                             placeholder="0000 0000 0000 0000"
                                         />
-                                        <CreditCardIcon className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400 absolute left-3 top-2.5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                                        </svg>
                                     </div>
                                 </div>
 
