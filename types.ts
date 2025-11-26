@@ -85,3 +85,20 @@ export interface PageContent {
   content_value_tr?: string;
   content_type: 'text' | 'image' | 'rich_text';
 }
+
+export interface PaymentTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  status: 'success' | 'failed' | 'pending';
+  paymentMethod: 'stripe' | 'iyzico';
+  tier: SubscriptionTier;
+  taxId: string;
+  transactionId?: string;
+  errorMessage?: string;
+  createdAt: string;
+  // Populated fields
+  userName?: string;
+  userEmail?: string;
+}

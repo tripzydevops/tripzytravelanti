@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
+import { triggerConfetti } from '../utils/confetti';
 import { useDeals } from '../contexts/DealContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -119,6 +121,8 @@ const DealDetailPage: React.FC = () => {
         await redeemDeal(deal.id);
         setIsWarningModalOpen(false);
         setIsRedeemModalOpen(true);
+        // Trigger confetti celebration
+        setTimeout(() => triggerConfetti('burst'), 300);
       } catch (error) {
         console.error('Failed to redeem deal:', error);
         // Optionally show error toast
