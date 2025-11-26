@@ -1,6 +1,40 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
-// ... imports
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
+import { User, SubscriptionTier, UserNotificationPreferences } from '../types';
+import { supabase } from '../lib/supabaseClient';
+import {
+  getUserProfile,
+  updateUserProfile,
+  getAllUsers,
+  deleteUserProfile,
+  saveDeal,
+  unsaveDeal,
+  getDirectReferrals,
+  getReferralChain,
+  getReferralNetwork,
+} from '../lib/supabaseService';
+
+interface AuthContextType {
+  user: User | null;
+  users: User[];
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateTier: (tier: SubscriptionTier) => Promise<void>;
+  updateUserDetails: (details: { name: string; email: string }) => Promise<void>;
+  updateUserAvatar: (avatarUrl: string) => Promise<void>;
+  updateUser: (user: User) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
+  saveDealForUser: (dealId: string) => Promise<void>;
+  unsaveDealForUser: (dealId: string) => Promise<void>;
+  addExtraRedemptions: (userId: string, amount: number) => Promise<void>;
+  updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
