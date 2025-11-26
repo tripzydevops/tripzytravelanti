@@ -71,3 +71,13 @@ export interface SubscriptionPlan {
   features: string[];
   features_tr: string[];
 }
+
+export interface PageContent {
+  id: string;
+  page_key: string;
+  section_key: string;
+  content_key: string;
+  content_value: string;
+  content_value_tr?: string;
+  content_type: 'text' | 'image' | 'rich_text';
+}

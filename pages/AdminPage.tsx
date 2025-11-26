@@ -79,7 +79,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const AdminPage: React.FC = () => {
   // Common
   const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'deals' | 'users'>('deals');
+  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content'>('deals');
   const [showSuccess, setShowSuccess] = useState('');
 
   // Deals Management
@@ -356,6 +356,9 @@ const AdminPage: React.FC = () => {
         <button onClick={() => setActiveTab('users')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 ${activeTab === 'users' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           {t('manageUsers')}
         </button>
+        <button onClick={() => setActiveTab('content')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 ${activeTab === 'content' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
+          Manage Content
+        </button>
       </div>
 
       {activeTab === 'deals' && (
@@ -520,12 +523,6 @@ const AdminPage: React.FC = () => {
             </section>
           )}
 
-
-
-          // ... (keep existing imports)
-
-          // ... (inside AdminPage component)
-
           <section>
             <h2 className="text-2xl font-bold mb-4">{t('allUsers')}</h2>
             <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
@@ -573,9 +570,147 @@ const AdminPage: React.FC = () => {
           </section>
         </>
       )}
+
+      {activeTab === 'content' && (
+        <ContentManager />
+      )}
+
       {showSuccess && (
         <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
           {showSuccess}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Sub-component for Content Management
+const ContentManager: React.FC = () => {
+  const { content, updateContent, loading } = useContent();
+  const { t } = useLanguage();
+  const [selectedPage, setSelectedPage] = useState<string>('home');
+  const [editingContent, setEditingContent] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Group content by page and section
+  const groupedContent = useMemo(() => {
+    const grouped: Record<string, Record<string, PageContent[]>> = {};
+    content.forEach(item => {
+      if (!grouped[item.page_key]) grouped[item.page_key] = {};
+      if (!grouped[item.page_key][item.section_key]) grouped[item.page_key][item.section_key] = [];
+      grouped[item.page_key][item.section_key].push(item);
+    });
+    return grouped;
+  }, [content]);
+
+  const handleContentChange = (id: string, field: 'content_value' | 'content_value_tr', value: string) => {
+    setEditingContent(prev => ({ ...prev, [`${id}-${field}`]: value }));
+  };
+
+  const handleSave = async (item: PageContent) => {
+    setIsSaving(true);
+    try {
+      const newValue = editingContent[`${item.id}-content_value`] ?? item.content_value;
+      const newValueTr = editingContent[`${item.id}-content_value_tr`] ?? item.content_value_tr;
+
+      await updateContent({
+        ...item,
+        content_value: newValue,
+        content_value_tr: newValueTr
+      });
+
+      // Clear local edit state for this item
+      setEditingContent(prev => {
+        const newState = { ...prev };
+        delete newState[`${item.id}-content_value`];
+        delete newState[`${item.id}-content_value_tr`];
+        return newState;
+      });
+    } catch (error) {
+      console.error('Failed to save content', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center"><SpinnerIcon className="w-8 h-8 mx-auto text-brand-primary animate-spin" /></div>;
+
+  const pageContent = groupedContent[selectedPage] || {};
+
+  return (
+    <div className="space-y-8">
+      <div className="flex space-x-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+        {Object.keys(groupedContent).map(page => (
+          <button
+            key={page}
+            onClick={() => setSelectedPage(page)}
+            className={`px-4 py-2 rounded-md capitalize ${selectedPage === page ? 'bg-brand-primary text-white' : 'bg-gray-100 dark:bg-brand-surface text-gray-700 dark:text-brand-text-light hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+
+      {Object.entries(pageContent).map(([sectionKey, items]) => (
+        <section key={sectionKey} className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
+          <h3 className="text-xl font-bold mb-4 capitalize text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2">{sectionKey} Section</h3>
+          <div className="space-y-6">
+            {items.map(item => (
+              <div key={item.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-brand-bg rounded-lg">
+                <div className="md:col-span-2 flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-gray-500 dark:text-brand-text-muted uppercase tracking-wider">{item.content_key}</span>
+                  <button
+                    onClick={() => handleSave(item)}
+                    disabled={isSaving || (!editingContent[`${item.id}-content_value`] && !editingContent[`${item.id}-content_value_tr`])}
+                    className="text-sm bg-brand-secondary text-brand-bg px-3 py-1 rounded hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-brand-text-muted mb-1">English</label>
+                  {item.content_type === 'image' ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={editingContent[`${item.id}-content_value`] ?? item.content_value}
+                        onChange={(e) => handleContentChange(item.id, 'content_value', e.target.value)}
+                        className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm"
+                      />
+                      <img src={editingContent[`${item.id}-content_value`] ?? item.content_value} alt="Preview" className="h-20 object-cover rounded" />
+                    </div>
+                  ) : (
+                    <textarea
+                      value={editingContent[`${item.id}-content_value`] ?? item.content_value}
+                      onChange={(e) => handleContentChange(item.id, 'content_value', e.target.value)}
+                      className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm h-24"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-brand-text-muted mb-1">Turkish</label>
+                  {item.content_type === 'image' ? (
+                    <p className="text-sm text-gray-400 italic">Images are shared across languages currently.</p>
+                  ) : (
+                    <textarea
+                      value={editingContent[`${item.id}-content_value_tr`] ?? (item.content_value_tr || '')}
+                      onChange={(e) => handleContentChange(item.id, 'content_value_tr', e.target.value)}
+                      className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm h-24"
+                      placeholder="Add Turkish translation..."
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {Object.keys(pageContent).length === 0 && (
+        <div className="text-center py-12 text-gray-500 dark:text-brand-text-muted">
+          No editable content found for this page.
         </div>
       )}
     </div>

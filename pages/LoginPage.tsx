@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useContent } from '../contexts/ContentContext';
 import { ChevronLeftIcon } from '../components/Icons';
 
 // --- SVG Icons for Social Login ---
@@ -58,14 +59,32 @@ const LoginPage: React.FC = () => {
     setError('This social login method is coming soon!');
   };
 
+  const { content, getContent } = useContent();
+  const { language } = useLanguage();
+
+  // Dynamic Content
+  const heroTitle = getContent('login', 'hero', 'title');
+  const heroSubtitle = getContent('login', 'hero', 'subtitle');
+  const heroBadge = getContent('login', 'hero', 'badge');
+  const heroImage = getContent('login', 'hero', 'image_url');
+  const formTitle = getContent('login', 'form', 'title');
+  const formSubtitle = getContent('login', 'form', 'subtitle');
+
+  const displayHeroTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
+  const displayHeroSubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
+  const displayHeroBadge = language === 'tr' ? (heroBadge?.content_value_tr || heroBadge?.content_value) : heroBadge?.content_value;
+  const displayHeroImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
+  const displayFormTitle = language === 'tr' ? (formTitle?.content_value_tr || formTitle?.content_value) : formTitle?.content_value;
+  const displayFormSubtitle = language === 'tr' ? (formSubtitle?.content_value_tr || formSubtitle?.content_value) : formSubtitle?.content_value;
+
   const SocialLoginOptions = () => (
     <div className="w-full max-w-md space-y-8 animate-fade-in">
       <div className="text-center">
         <h1 className="text-4xl font-heading font-bold text-gray-900 dark:text-white tracking-tight">
-          {t('letsGetYouStarted')}
+          {displayFormTitle || t('letsGetYouStarted')}
         </h1>
         <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-          {t('yourNextAdventure')}
+          {displayFormSubtitle || t('yourNextAdventure')}
         </p>
       </div>
 
@@ -205,7 +224,7 @@ const LoginPage: React.FC = () => {
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-110"
           style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop")',
+            backgroundImage: `url("${displayHeroImage}")`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -214,13 +233,13 @@ const LoginPage: React.FC = () => {
         <div className="relative z-10 flex flex-col justify-end p-16 text-white max-w-2xl">
           <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-medium">
             <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse" />
-            {t('loginHeroBadge')}
+            {displayHeroBadge || t('loginHeroBadge')}
           </div>
           <h2 className="text-5xl font-heading font-bold mb-6 leading-tight">
-            {t('loginHeroTitle')}
+            {displayHeroTitle || t('loginHeroTitle')}
           </h2>
           <p className="text-xl text-white/80 leading-relaxed">
-            {t('loginHeroSubtitle')}
+            {displayHeroSubtitle || t('loginHeroSubtitle')}
           </p>
         </div>
       </div>
@@ -229,7 +248,7 @@ const LoginPage: React.FC = () => {
       <div className="w-full lg:w-1/2 xl:w-1/3 flex flex-col justify-center items-center p-8 lg:p-12 relative">
         {/* Mobile Background (visible only on small screens) */}
         <div className="lg:hidden absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021")' }} />
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${displayHeroImage}")` }} />
           <div className="absolute inset-0 bg-white/90 dark:bg-brand-bg/95 backdrop-blur-sm" />
         </div>
 

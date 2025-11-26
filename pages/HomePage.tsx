@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDeals } from '../contexts/DealContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useContent } from '../contexts/ContentContext';
 import DealCard from '../components/DealCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
@@ -100,6 +101,24 @@ const HomePage: React.FC = () => {
     return queryMatch && categoryMatch && ratingMatch;
   });
 
+  const { content, getContent } = useContent();
+  const { language } = useLanguage();
+
+  // Get dynamic content
+  const heroTitle = getContent('home', 'hero', 'title');
+  const heroSubtitle = getContent('home', 'hero', 'subtitle');
+  const heroImage = getContent('home', 'hero', 'image_url');
+  const categoriesTitle = getContent('home', 'categories', 'title');
+  const featuredDealsTitle = getContent('home', 'featured_deals', 'title');
+  const flightsTitle = getContent('home', 'flights', 'title');
+
+  const displayTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
+  const displaySubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
+  const displayImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070';
+  const displayCategoriesTitle = language === 'tr' ? (categoriesTitle?.content_value_tr || categoriesTitle?.content_value) : categoriesTitle?.content_value;
+  const displayFeaturedDealsTitle = language === 'tr' ? (featuredDealsTitle?.content_value_tr || featuredDealsTitle?.content_value) : featuredDealsTitle?.content_value;
+  const displayFlightsTitle = language === 'tr' ? (flightsTitle?.content_value_tr || flightsTitle?.content_value) : flightsTitle?.content_value;
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -108,7 +127,7 @@ const HomePage: React.FC = () => {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070')`,
+            backgroundImage: `url('${displayImage}')`,
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-brand-bg"></div>
@@ -129,10 +148,10 @@ const HomePage: React.FC = () => {
         {/* Hero Content */}
         <div className="relative z-10 container mx-auto px-4 text-center animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-heading font-bold text-white mb-4 drop-shadow-lg">
-            {t('heroTitle') || 'Discover the World for Less'}
+            {displayTitle || t('heroTitle') || 'Discover the World for Less'}
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-8 drop-shadow-md">
-            {t('heroSubtitle') || 'Exclusive travel deals and discounts at your fingertips'}
+            {displaySubtitle || t('heroSubtitle') || 'Exclusive travel deals and discounts at your fingertips'}
           </p>
 
           {/* Glassmorphism Search Bar */}
@@ -197,7 +216,7 @@ const HomePage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Category Filters - Horizontal Scroll */}
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-brand-text-muted mb-3">{t('categories') || 'Categories'}</h3>
+          <h3 className="text-sm font-semibold text-brand-text-muted mb-3">{displayCategoriesTitle || t('categories') || 'Categories'}</h3>
           <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map(cat => (
               <button
@@ -240,14 +259,14 @@ const HomePage: React.FC = () => {
           {categoryFilter === 'Flights' ? (
             <div className="animate-fade-in">
               <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
-                {t('findFlightsTitle') || 'Find the Best Flight Deals'}
+                {displayFlightsTitle || t('findFlightsTitle') || 'Find the Best Flight Deals'}
               </h2>
               <FlightSearchWidget />
             </div>
           ) : (
             <>
               <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
-                {t('featuredDeals')}
+                {displayFeaturedDealsTitle || t('featuredDeals')}
               </h2>
               {filteredDeals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
