@@ -23,7 +23,15 @@ import Chatbot from './components/Chatbot';
 
 function AppContent() {
   const { isChatbotVisible } = useLayout();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <SearchProvider>
