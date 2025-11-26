@@ -40,6 +40,8 @@ export async function getUserProfile(userId: string): Promise<User | null> {
             redeemedAt: r.redeemed_at
         })) || [],
         mobile: data.mobile,
+        address: data.address,
+        billingAddress: data.billing_address,
     };
 }
 
@@ -51,9 +53,10 @@ export async function updateUserProfile(
         tier: SubscriptionTier;
         avatar_url: string;
         extra_redemptions: number;
-        extra_redemptions: number;
         notification_preferences: any;
         mobile: string;
+        address: string;
+        billing_address: string;
     }>
 ) {
     const { data, error } = await supabase
@@ -328,4 +331,12 @@ export async function getUserRedemptions(userId: string): Promise<any[]> {
     }
 
     return data;
+}
+
+export async function updatePassword(password: string) {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+        console.error('Error updating password:', error);
+        throw error;
+    }
 }

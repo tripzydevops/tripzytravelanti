@@ -35,6 +35,8 @@ export interface User {
   notificationPreferences?: UserNotificationPreferences;
   redemptions?: Redemption[];
   mobile?: string;
+  address?: string;
+  billingAddress?: string;
 }
 
 export interface Deal {

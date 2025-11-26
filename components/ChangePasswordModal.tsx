@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -10,21 +11,25 @@ interface ChangePasswordModalProps {
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, onSave }) => {
   const { t } = useLanguage();
+  const { updatePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (newPassword !== confirmPassword) {
       setError(t('passwordMismatchError'));
       return;
     }
-    // In a real app, you would make an API call here.
-    // For this demo, we'll just simulate success.
-    setError('');
-    onSave();
-    onClose();
+
+    try {
+      await updatePassword(newPassword);
+      setError('');
+      onSave();
+      onClose();
+    } catch (err) {
+      setError(t('passwordUpdateError'));
+    }
   };
 
   const handleClose = () => {
@@ -40,7 +45,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('currentPasswordLabel')}</label>
-          <input 
+          <input
             type="password"
             value={currentPassword}
             onChange={e => setCurrentPassword(e.target.value)}
@@ -49,7 +54,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('newPasswordLabel')}</label>
-          <input 
+          <input
             type="password"
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
@@ -58,7 +63,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('confirmNewPasswordLabel')}</label>
-          <input 
+          <input
             type="password"
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}

@@ -98,7 +98,7 @@ const AdminPage: React.FC = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // Users Management
-  const { user: loggedInUser, users, updateUser, deleteUser, addExtraRedemptions } = useAuth();
+  const { user: loggedInUser, users, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAuth();
   const [isUserFormVisible, setIsUserFormVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userFormData, setUserFormData] = useState<User>(EMPTY_USER);
@@ -600,6 +600,42 @@ const AdminPage: React.FC = () => {
               </form>
             </section>
           )}
+
+          <section className="mb-8 bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
+            <h2 className="text-xl font-bold mb-4">Global User Actions</h2>
+            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-brand-bg rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex-grow">
+                <h3 className="font-semibold text-gray-900 dark:text-white">Master Notification Switch</h3>
+                <p className="text-sm text-gray-500 dark:text-brand-text-muted">Enable or disable notifications for ALL users. This overrides individual settings.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to ENABLE notifications for ALL users?')) {
+                      updateAllUsersNotificationPreferences({ generalNotifications: true });
+                      setShowSuccess('Notifications enabled for all users');
+                      setTimeout(() => setShowSuccess(''), 3000);
+                    }
+                  }}
+                  className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Enable All
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to DISABLE notifications for ALL users?')) {
+                      updateAllUsersNotificationPreferences({ generalNotifications: false });
+                      setShowSuccess('Notifications disabled for all users');
+                      setTimeout(() => setShowSuccess(''), 3000);
+                    }
+                  }}
+                  className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Disable All
+                </button>
+              </div>
+            </div>
+          </section>
 
           <section>
             <h2 className="text-2xl font-bold mb-4">{t('allUsers')}</h2>

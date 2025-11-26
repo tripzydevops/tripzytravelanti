@@ -15,6 +15,57 @@ import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import { SUBSCRIPTION_PRICES, TIER_NAMES } from '../lib/constants';
 
+const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <section className="mb-6">
+    <h2 className="text-sm font-semibold text-gray-500 dark:text-brand-text-muted uppercase tracking-wider px-4 mb-2">{title}</h2>
+    <div className="bg-white dark:bg-brand-surface rounded-lg shadow-sm">
+      {children}
+    </div>
+  </section>
+);
+
+const Toggle: React.FC<{ checked: boolean; onChange: () => void, disabled?: boolean }> = ({ checked, onChange, disabled }) => (
+  <button onClick={onChange} disabled={disabled} className={`relative w-12 h-6 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${checked ? 'bg-brand-primary' : 'bg-gray-300 dark:bg-gray-600'} ${disabled ? 'cursor-not-allowed' : ''}`} aria-checked={checked} role="switch">
+    <span className={`block w-5 h-5 bg-white rounded-full transform transition-transform duration-300 ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+  </button>
+);
+
+const LanguageSelector: React.FC<{ lang: string; onToggle: () => void }> = ({ lang, onToggle }) => (
+  <div className="flex items-center bg-gray-100 dark:bg-brand-bg p-1 rounded-md">
+    <button onClick={lang === 'tr' ? onToggle : undefined} className={`px-3 py-1 text-sm font-semibold rounded ${lang === 'en' ? 'bg-white dark:bg-brand-surface text-gray-800 dark:text-brand-text-light' : 'text-gray-500 dark:text-brand-text-muted'}`}>EN</button>
+    <button onClick={lang === 'en' ? onToggle : undefined} className={`px-3 py-1 text-sm font-semibold rounded ${lang === 'tr' ? 'bg-white dark:bg-brand-surface text-gray-800 dark:text-brand-text-light' : 'text-gray-500 dark:text-brand-text-muted'}`}>TR</button>
+  </div>
+);
+
+const SettingsItem: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string; action?: React.ReactNode; isLast?: boolean, danger?: boolean, onClick?: () => void }> = ({ icon, title, subtitle, action, isLast, danger, onClick }) => {
+  const commonClasses = `w-full flex items-center p-4 text-left ${!isLast ? 'border-b border-gray-200 dark:border-gray-700' : ''} first:rounded-t-lg last:rounded-b-lg group`;
+
+  const content = (
+    <>
+      <div className="mr-4 text-gray-500 dark:text-brand-text-muted">{icon}</div>
+      <div className="flex-grow">
+        <p className={danger ? "text-red-500 dark:text-red-400" : "text-gray-800 dark:text-brand-text-light"}>{title}</p>
+        {subtitle && <p className="text-xs text-gray-500 dark:text-brand-text-muted">{subtitle}</p>}
+      </div>
+      <div className="ml-4">{action}</div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button onClick={onClick} className={`${commonClasses} hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={commonClasses}>
+      {content}
+    </div>
+  );
+};
+
 const ProfilePage: React.FC = () => {
   const { user, logout, updateUserDetails, updateUserAvatar, deleteUser, updateUserNotificationPreferences } = useAuth();
   const { t, language, toggleLanguage } = useLanguage();
@@ -25,6 +76,8 @@ const ProfilePage: React.FC = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [mobile, setMobile] = useState(user?.mobile || '');
+  const [address, setAddress] = useState(user?.address || '');
+  const [billingAddress, setBillingAddress] = useState(user?.billingAddress || '');
   const [showSuccess, setShowSuccess] = useState('');
   const [isChangePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [isDeleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
@@ -42,6 +95,8 @@ const ProfilePage: React.FC = () => {
       setName(user.name);
       setEmail(user.email);
       setMobile(user.mobile || '');
+      setAddress(user.address || '');
+      setBillingAddress(user.billingAddress || '');
       setSettings(prev => ({
         ...prev,
         notifications: user.notificationPreferences?.generalNotifications ?? true
@@ -338,6 +393,28 @@ const ProfilePage: React.FC = () => {
               onChange={e => setMobile(e.target.value)}
               className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
               placeholder="+90 555 123 45 67"
+            />
+          </div>
+          <div>
+            <label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label>
+            <input
+              type="text"
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              placeholder={t('addressPlaceholder')}
+            />
+          </div>
+          <div>
+            <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label>
+            <input
+              type="text"
+              id="billingAddress"
+              value={billingAddress}
+              onChange={(e) => setBillingAddress(e.target.value)}
+              className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              placeholder={t('billingAddressPlaceholder')}
             />
           </div>
           <div className="flex justify-end">

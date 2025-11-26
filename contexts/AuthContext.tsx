@@ -14,6 +14,7 @@ import {
   getReferralChain,
   getReferralNetwork,
   redeemDeal,
+  updatePassword,
 } from '../lib/supabaseService';
 
 interface AuthContextType {
@@ -24,8 +25,9 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   updateTier: (tier: SubscriptionTier) => Promise<void>;
-  updateUserDetails: (details: { name: string; email: string }) => Promise<void>;
+  updateUserDetails: (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string }) => Promise<void>;
   updateUserAvatar: (avatarUrl: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   updateUser: (user: User) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   saveDealForUser: (dealId: string) => Promise<void>;
@@ -235,22 +237,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   // Update user details
-  const updateUserDetails = useCallback(async (details: { name: string; email: string; mobile?: string }) => {
+  const updateUserDetails = useCallback(async (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string }) => {
     if (!user) return;
-
     try {
-      await updateUserProfile(user.id, details);
+      await updateUserProfile(user.id, {
+        name: details.name,
+        email: details.email,
+        mobile: details.mobile,
+        address: details.address,
+        billing_address: details.billingAddress,
+      });
       setUser((currentUser) => (currentUser ? { ...currentUser, ...details } : null));
-
-      // Update in users list if admin
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => (u.id === user.id ? { ...u, ...details } : u))
-      );
     } catch (error) {
       console.error('Error updating user details:', error);
       throw error;
     }
   }, [user]);
+
+  const handleUpdatePassword = useCallback(async (password: string) => {
+    try {
+      await updatePassword(password);
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error;
+    }
+  }, []);
 
   // Update user avatar
   const updateUserAvatar = useCallback(async (avatarUrl: string) => {
@@ -520,6 +531,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateUserNotificationPreferences,
         updateAllUsersNotificationPreferences,
         signInWithGoogle,
+        updatePassword: handleUpdatePassword,
       }}
     >
       {children}
