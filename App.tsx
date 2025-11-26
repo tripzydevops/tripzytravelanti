@@ -35,6 +35,12 @@ function AppContent() {
 
   return (
     <SearchProvider>
+      {/* DEBUG OVERLAY */}
+      <div style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)', color: 'lime', padding: '10px', fontSize: '12px' }}>
+        <p>Loading: {String(loading)}</p>
+        <p>User: {user ? user.email : 'null'}</p>
+        <p>Path: {window.location.hash}</p>
+      </div>
       <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
         <main className={`flex-grow ${user ? 'pb-24' : ''}`}>
           <Routes>
