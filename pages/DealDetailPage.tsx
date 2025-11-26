@@ -244,7 +244,9 @@ const DealDetailPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('discount')}</span>
                   <span className="text-lg font-bold text-brand-primary">
-                    {deal.discountPercentage ? `${deal.discountPercentage}%` : `$${deal.originalPrice - deal.discountedPrice}`}
+                    {deal.discountPercentage
+                      ? (language === 'tr' ? `%${deal.discountPercentage}` : `${deal.discountPercentage}%`)
+                      : `$${deal.originalPrice - deal.discountedPrice}`}
                   </span>
                 </div>
               )}
@@ -269,6 +271,17 @@ const DealDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Share Button */}
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 text-brand-primary font-medium hover:text-brand-secondary transition-colors py-2 px-4 rounded-full bg-brand-primary/5 hover:bg-brand-primary/10"
+            >
+              <ShareIcon className="w-5 h-5" />
+              {t('shareDeal')}
+            </button>
           </div>
 
           {/* Terms Link */}
