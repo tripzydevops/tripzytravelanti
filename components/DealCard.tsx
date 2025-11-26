@@ -44,7 +44,13 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
   const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
-  const isLocked = userTierLevel < requiredTierLevel;
+
+  // Logic update: Guests see FREE tier deals as unlocked, but others as locked.
+  let isLocked = userTierLevel < requiredTierLevel;
+  if (!user && deal.requiredTier === SubscriptionTier.FREE) {
+    isLocked = false;
+  }
+
   const isSaved = user?.savedDeals?.includes(deal.id) ?? false;
 
   const title = language === 'tr' ? deal.title_tr : deal.title;
@@ -115,7 +121,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {isLocked && (
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4 text-center z-10">
             <Lock className="w-10 h-10 mb-3 text-brand-secondary" />
-            <span className="font-semibold text-sm">{t('lockedDeal')} {deal.requiredTier} {t('toUnlock')}</span>
+            <span className="font-semibold text-sm">
+              {!user ? t('loginToUnlock') : `${t('lockedDeal')} ${deal.requiredTier} ${t('toUnlock')}`}
+            </span>
           </div>
         )}
       </div>
@@ -159,13 +167,19 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   return (
     <div className="card overflow-hidden flex flex-col hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 cursor-pointer">
       {isLocked ? (
-        <div className="flex flex-col flex-grow" onClick={() => navigate('/subscriptions')}>
+        <div className="flex flex-col flex-grow" onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}>
           <CardContent />
         </div>
       ) : (
-        <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow">
-          <CardContent />
-        </Link>
+        !user ? (
+          <div className="flex flex-col flex-grow" onClick={() => navigate('/login')}>
+            <CardContent />
+          </div>
+        ) : (
+          <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow">
+            <CardContent />
+          </Link>
+        )
       )}
     </div>
   );
