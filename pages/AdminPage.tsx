@@ -9,6 +9,7 @@ import { SpinnerIcon } from '../components/Icons';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import ImageUpload from '../components/ImageUpload';
 import Modal from '../components/Modal';
+import PaymentTransactionTable from '../components/PaymentTransactionTable';
 
 const getExpiryDate = (days: number): string => {
   const date = new Date();
@@ -82,7 +83,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const AdminPage: React.FC = () => {
   // Common
   const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes'>('deals');
+  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments'>('deals');
   const [showSuccess, setShowSuccess] = useState('');
 
   // Deals Management
@@ -367,6 +368,9 @@ const AdminPage: React.FC = () => {
         </button>
         <button onClick={() => setActiveTab('flight_routes')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 ${activeTab === 'flight_routes' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           Flight Routes
+        </button>
+        <button onClick={() => setActiveTab('payments')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 ${activeTab === 'payments' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
+          {t('paymentTransactions') || 'Payment Transactions'}
         </button>
       </div>
 
@@ -738,6 +742,10 @@ const AdminPage: React.FC = () => {
 
       {activeTab === 'flight_routes' && (
         <FlightRouteManager />
+      )}
+
+      {activeTab === 'payments' && (
+        <PaymentTransactionTable />
       )}
 
       {showSuccess && (

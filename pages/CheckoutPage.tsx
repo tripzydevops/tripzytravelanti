@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { SUBSCRIPTION_PLANS } from '../constants';
 import { SubscriptionTier } from '../types';
 import { CheckCircle, Lock } from '../components/Icons';
+import { createPaymentTransaction, updatePaymentTransactionStatus } from '../lib/paymentService';
 
 const CheckoutPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -34,16 +35,60 @@ const CheckoutPage: React.FC = () => {
         e.preventDefault();
         setIsProcessing(true);
 
-        // Simulate API call delay
-        setTimeout(async () => {
-            try {
-                await updateTier(selectedPlan.tier);
-                navigate('/payment-success', { state: { planName: language === 'tr' ? selectedPlan.name_tr : selectedPlan.name } });
-            } catch (error) {
-                console.error('Payment failed:', error);
-                setIsProcessing(false);
+        try {
+            // Create a pending payment transaction
+            const { data: transaction, error: transactionError } = await createPaymentTransaction({
+                userId: user.id,
+                amount: amountToBill,
+                currency: language === 'tr' ? 'TRY' : 'USD',
+                paymentMethod,
+                tier: selectedPlan.tier,
+            });
+
+            if (transactionError || !transaction) {
+                throw new Error('Failed to create payment transaction');
             }
-        }, 2000);
+
+            // Simulate payment processing delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Mock payment processing - in production, this would call Stripe/Iyzico
+            const mockPaymentSuccess = true; // Simulate successful payment
+            const mockTransactionId = `${paymentMethod.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            if (mockPaymentSuccess) {
+                // Update transaction status to success
+                await updatePaymentTransactionStatus(
+                    transaction.id,
+                    'success',
+                    mockTransactionId
+                );
+
+                // Update user tier
+                await updateTier(selectedPlan.tier);
+
+                // Navigate to success page
+                navigate('/payment-success', {
+                    state: {
+                        planName: language === 'tr' ? selectedPlan.name_tr : selectedPlan.name,
+                        transactionId: transaction.id
+                    }
+                });
+            } else {
+                // Update transaction status to failed
+                await updatePaymentTransactionStatus(
+                    transaction.id,
+                    'failed',
+                    undefined,
+                    'Payment declined by provider'
+                );
+                throw new Error('Payment failed');
+            }
+        } catch (error) {
+            console.error('Payment failed:', error);
+            setIsProcessing(false);
+            // TODO: Show error toast to user
+        }
     };
 
     const planName = language === 'tr' ? selectedPlan.name_tr : selectedPlan.name;
@@ -67,7 +112,7 @@ const CheckoutPage: React.FC = () => {
                     <div className="md:col-span-1 order-2 md:order-1">
                         <div className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('orderSummary') || 'Order Summary'}</h2>
-                            
+
                             {isUpgrade && currentPlan && (
                                 <div className="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
                                     <div className="flex justify-between items-center text-sm text-gray-600 dark:text-brand-text-muted mb-2">
@@ -80,7 +125,7 @@ const CheckoutPage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            
+
                             {!isUpgrade && (
                                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
                                     <div>
@@ -90,7 +135,7 @@ const CheckoutPage: React.FC = () => {
                                     <span className="font-bold text-gray-900 dark:text-white">{currencySymbol}{planPrice.toFixed(2)}</span>
                                 </div>
                             )}
-                            
+
                             <div className="flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white mb-6">
                                 <span>{isUpgrade ? (t('amountDue') || 'Amount Due Today') : (t('total') || 'Total')}</span>
                                 <span className="text-brand-primary">{currencySymbol}{amountToBill.toFixed(2)}</span>

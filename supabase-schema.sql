@@ -56,20 +56,7 @@ CREATE TABLE IF NOT EXISTS referrals (
   referrer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   referred_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(referrer_id, referred_id)
-);
--- Deal Redemptions Table
-CREATE TABLE IF NOT EXISTS deal_redemptions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
-  redeemed_at TIMESTAMPTZ DEFAULT NOW()
-);
--- Page Content (CMS)
-CREATE TABLE IF NOT EXISTS page_content (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  page_key TEXT NOT NULL,
-  section_key TEXT NOT NULL,
+  UNIQUE(referrer_id, referred_id) section_key TEXT NOT NULL,
   content_key TEXT NOT NULL,
   content_value TEXT NOT NULL,
   content_value_tr TEXT,
@@ -276,6 +263,29 @@ CREATE POLICY "Only admins can delete page content" ON page_content FOR DELETE U
       AND profiles.is_admin = true
   )
 );
+-- Payment Transactions Policies
+ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own payment transactions" ON payment_transactions;
+CREATE POLICY "Users can view own payment transactions" ON payment_transactions FOR
+SELECT USING (
+    (
+      SELECT auth.uid()
+    ) = user_id
+  );
+DROP POLICY IF EXISTS "Users can insert own payment transactions" ON payment_transactions;
+CREATE POLICY "Users can insert own payment transactions" ON payment_transactions FOR
+INSERT WITH CHECK (
+    (
+      SELECT auth.uid()
+    ) = user_id
+  );
+DROP POLICY IF EXISTS "Users can update own payment transactions" ON payment_transactions;
+CREATE POLICY "Users can update own payment transactions" ON payment_transactions FOR
+UPDATE USING (
+    (
+      SELECT auth.uid()
+    ) = user_id
+  );
 -- =====================================================
 -- FUNCTIONS
 -- =====================================================
