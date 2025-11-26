@@ -263,7 +263,7 @@ const ProfilePage: React.FC = () => {
           )}
           <div className="flex justify-between items-center text-sm">
             <p className="text-gray-500 dark:text-brand-text-muted">{t('nextBillLabel')}</p>
-            <p className="text-gray-800 dark:text-brand-text-light font-semibold">November 14, 2024</p>
+            <p className="text-gray-800 dark:text-brand-text-light font-semibold">{renewalDate}</p>
           </div>
           <div className="flex justify-between items-center text-sm">
             <p className="text-gray-500 dark:text-brand-text-muted">{t('paymentMethodLabel')}</p>
