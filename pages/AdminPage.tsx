@@ -483,6 +483,64 @@ const AdminPage: React.FC = () => {
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold mb-3">Notification Preferences</h3>
+                  <div className="space-y-3 p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="generalNotifications" className="text-sm text-gray-700 dark:text-brand-text-light">General Notifications (Master Switch)</label>
+                      <input
+                        type="checkbox"
+                        id="generalNotifications"
+                        checked={userFormData.notificationPreferences?.generalNotifications ?? true}
+                        onChange={(e) => setUserFormData(prev => ({
+                          ...prev,
+                          notificationPreferences: {
+                            ...prev.notificationPreferences,
+                            generalNotifications: e.target.checked,
+                            newDeals: prev.notificationPreferences?.newDeals ?? true,
+                            expiringDeals: prev.notificationPreferences?.expiringDeals ?? true
+                          }
+                        }))}
+                        className="h-5 w-5 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
+                      <label htmlFor="newDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">New Deals</label>
+                      <input
+                        type="checkbox"
+                        id="newDeals"
+                        checked={userFormData.notificationPreferences?.newDeals ?? true}
+                        disabled={userFormData.notificationPreferences?.generalNotifications === false}
+                        onChange={(e) => setUserFormData(prev => ({
+                          ...prev,
+                          notificationPreferences: {
+                            ...prev.notificationPreferences!,
+                            newDeals: e.target.checked
+                          }
+                        }))}
+                        className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
+                      <label htmlFor="expiringDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">Expiring Deals</label>
+                      <input
+                        type="checkbox"
+                        id="expiringDeals"
+                        checked={userFormData.notificationPreferences?.expiringDeals ?? true}
+                        disabled={userFormData.notificationPreferences?.generalNotifications === false}
+                        onChange={(e) => setUserFormData(prev => ({
+                          ...prev,
+                          notificationPreferences: {
+                            ...prev.notificationPreferences!,
+                            expiringDeals: e.target.checked
+                          }
+                        }))}
+                        className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-semibold mb-3">{t('manageSavedDeals')}</h3>
                   <div className="space-y-2 mb-4">
                     {userSavedDeals.length > 0 ? (

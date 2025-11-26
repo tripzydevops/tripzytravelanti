@@ -1,4 +1,4 @@
-import { SubscriptionTier } from './types';
+import { SubscriptionTier } from '../types';
 
 export const SUBSCRIPTION_PRICES = {
     [SubscriptionTier.NONE]: { en: 0, tr: 0 },
