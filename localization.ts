@@ -209,7 +209,7 @@ export const translations = {
     useCoupon: 'Use Coupon',
     yourCouponCode: 'Your Coupon Code',
     showThisCodeAtCheckout: 'Show this code at checkout',
-    copyCode: 'Copy Code',
+
     viewTermsAndConditions: 'View Terms & Conditions',
     discount: 'Discount',
     discountedPriceLabel: 'Discounted Price ($)',
@@ -474,7 +474,7 @@ export const translations = {
     useCoupon: 'Kuponu Kullan',
     yourCouponCode: 'Kupon Kodunuz',
     showThisCodeAtCheckout: 'Bu kodu ödeme sırasında gösterin',
-    copyCode: 'Kodu Kopyala',
+
     viewTermsAndConditions: 'Şartlar ve Koşulları Görüntüle',
     discount: 'İndirim',
     discountedPriceLabel: 'İndirimli Fiyat ($)',
