@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Otherwise, report the error.
           if (error.code !== '23505') {
             console.error('Error creating profile:', error);
-            alert(`Error creating user profile: ${error.message}. Please contact support.`);
+            // Don't block execution with alert
             return;
           }
         }
@@ -95,12 +95,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Listen to auth state changes
   useEffect(() => {
+    let mounted = true;
+
+    // Safety timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth loading timed out, forcing loading to false');
+        setLoading(false);
+      }
+    }, 5000);
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        await loadUserProfile(session.user);
+        try {
+          await loadUserProfile(session.user);
+        } catch (err) {
+          console.error('Error loading profile in initial session:', err);
+        }
       }
-      setLoading(false);
+      if (mounted) {
+        setLoading(false);
+        clearTimeout(loadingTimeout);
+      }
+    }).catch(err => {
+      console.error('Error getting session:', err);
+      if (mounted) {
+        setLoading(false);
+        clearTimeout(loadingTimeout);
+      }
     });
 
     // Listen for auth changes
@@ -108,15 +131,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        // We don't await here to avoid blocking UI updates on auth change events, 
-        // but for initial load (above) it's important.
-        await loadUserProfile(session.user);
+        // We don't await here to avoid blocking UI updates on auth change events
+        loadUserProfile(session.user).catch(console.error);
       } else {
         setUser(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(loadingTimeout);
+      subscription.unsubscribe();
+    };
   }, [loadUserProfile]);
 
   // ... (loadAllUsers useEffect remains same)

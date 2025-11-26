@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDeals } from '../contexts/DealContext';
 import { useAuth } from '../contexts/AuthContext';
 import DealCard from '../components/DealCard';
@@ -11,6 +11,7 @@ const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 
 const HomePage: React.FC = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { deals } = useDeals();
   const { user } = useAuth();
   const {
@@ -21,6 +22,8 @@ const HomePage: React.FC = () => {
     ratingFilter,
     setRatingFilter,
   } = useSearch();
+
+  // ... (keep existing state and effects)
 
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
   const [recentSearches, setRecentSearches] = React.useState<string[]>([]);
@@ -69,6 +72,7 @@ const HomePage: React.FC = () => {
 
   const categories = [
     { key: 'All', name: t('categoryAll') },
+    { key: 'Flights', name: t('categoryFlights') || 'Flights' },
     { key: 'Dining', name: t('categoryDining') },
     { key: 'Wellness', name: t('categoryWellness') },
     { key: 'Travel', name: t('categoryTravel') },
@@ -197,7 +201,13 @@ const HomePage: React.FC = () => {
             {categories.map(cat => (
               <button
                 key={cat.key}
-                onClick={() => setCategoryFilter(cat.key as any)}
+                onClick={() => {
+                  if (cat.key === 'Flights') {
+                    navigate('/flights');
+                  } else {
+                    setCategoryFilter(cat.key as any);
+                  }
+                }}
                 className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-lg hover:scale-105 ${categoryFilter === cat.key
                   ? 'bg-gradient-primary text-white shadow-brand-primary/50'
                   : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'

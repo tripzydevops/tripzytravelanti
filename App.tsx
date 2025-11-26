@@ -8,6 +8,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider, useLayout } from './contexts/LayoutContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import HomePage from './pages/HomePage';
+import FlightsPage from './pages/FlightsPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
@@ -51,6 +52,7 @@ function AppContent() {
               }
             />
             <Route path="/deals/:id" element={<DealDetailPage />} />
+            <Route path="/flights" element={<FlightsPage />} />
             <Route path="/travel" element={<TravelPage />} />
             <Route path="/plan" element={<TripPlannerPage />} />
             <Route
