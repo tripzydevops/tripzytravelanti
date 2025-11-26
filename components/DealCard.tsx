@@ -100,7 +100,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         />
         {discount > 0 && !isLocked && (
           <div className="absolute top-3 left-3 bg-gradient-to-r from-brand-secondary to-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-10 animate-zoom">
-            {discount}% OFF
+            {discount}%
           </div>
         )}
         {user && !isLocked && (
@@ -144,7 +144,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
                   <p className="text-sm font-medium text-brand-text-muted line-through">${deal.originalPrice}</p>
                 </>
               ) : (
-                <p className="text-2xl font-bold text-gradient">{discount}% OFF</p>
+                <p className="text-2xl font-bold text-gradient">{discount}%</p>
               )}
             </div>
             <p className={`text-xs font-semibold ${daysLeftText === t('expired') ? 'text-red-500' : 'text-brand-text-muted'} whitespace-nowrap`}>
