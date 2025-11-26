@@ -190,6 +190,7 @@ export const translations = {
     rateThisDeal: 'Rate this deal',
     submitRating: 'Submit Rating',
     ratingSubmittedSuccess: 'Thank you for your rating!',
+    redeemToRate: 'Redeem this deal to rate it',
     dealSaved: 'Saved',
     dealSave: 'Save',
     dealDetailsTitle: 'Deal Details',
@@ -292,6 +293,12 @@ export const translations = {
     termsPoint2: 'The deal cannot be combined with other offers or promotions.',
     termsPoint3: 'The vendor reserves the right to refuse service if terms are violated.',
     termsPoint4: 'Redemption codes are single-use and non-transferable.',
+    // Redemption Warning
+    redemptionWarningTitle: 'Confirm Redemption',
+    redemptionWarningBody: 'This will use one of your monthly redemptions. Are you sure you want to proceed?',
+    dontShowAgain: "Don't show this again",
+    confirmRedeem: 'Redeem',
+    cancelRedeem: 'Cancel',
   },
   tr: {
     // Header
@@ -477,6 +484,7 @@ export const translations = {
     rateThisDeal: 'Bu fırsatı değerlendir',
     submitRating: 'Değerlendirmeyi Gönder',
     ratingSubmittedSuccess: 'Değerlendirmeniz için teşekkür ederiz!',
+    redeemToRate: 'Değerlendirmek için bu fırsatı kullanın',
     dealSaved: 'Kaydedildi',
     dealSave: 'Kaydet',
     dealDetailsTitle: 'Fırsat Detayları',
@@ -579,5 +587,11 @@ export const translations = {
     termsPoint2: 'Fırsat diğer teklifler veya promosyonlarla birleştirilemez.',
     termsPoint3: 'Satıcı, şartların ihlal edilmesi durumunda hizmeti reddetme hakkını saklı tutar.',
     termsPoint4: 'Kullanım kodları tek kullanımlıktır ve devredilemez.',
+    // Redemption Warning
+    redemptionWarningTitle: 'Kullanımı Onayla',
+    redemptionWarningBody: 'Bu işlem aylık kullanım haklarınızdan birini düşecektir. Devam etmek istiyor musunuz?',
+    dontShowAgain: "Bunu tekrar gösterme",
+    confirmRedeem: 'Kullan',
+    cancelRedeem: 'İptal',
   },
 };

@@ -7,6 +7,7 @@ import { useLayout } from '../contexts/LayoutContext';
 import { SubscriptionTier } from '../types';
 import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon } from '../components/Icons';
 import Modal from '../components/Modal';
+import StarRatingInput from '../components/StarRatingInput';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.NONE]: 0,
@@ -108,6 +109,8 @@ const DealDetailPage: React.FC = () => {
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
+  const { rateDeal } = useDeals();
 
   useEffect(() => {
     setChatbotVisible(false);
@@ -170,6 +173,13 @@ const DealDetailPage: React.FC = () => {
       window.open(deal.termsUrl, '_blank', 'noopener,noreferrer');
     } else {
       setIsTermsModalOpen(true);
+    }
+  };
+
+  const handleRate = async (rating: number) => {
+    if (deal && !hasRated) {
+      await rateDeal(deal.id, rating);
+      setHasRated(true);
     }
   };
 
@@ -273,6 +283,33 @@ const DealDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Rating Section */}
+          <div className="bg-white dark:bg-brand-surface border border-gray-100 dark:border-white/5 rounded-xl p-6 mb-6 shadow-sm text-center">
+            {hasRated ? (
+              <div className="animate-fade-in">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                <p className="text-brand-text-light font-medium">{t('ratingSubmittedSuccess')}</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-brand-text-light mb-4">{t('rateThisDeal')}</h3>
+                <StarRatingInput
+                  onRate={handleRate}
+                  disabled={!user || (user && !user.redemptions?.some(r => r.dealId === deal.id))}
+                />
+                {!user ? (
+                  <p className="text-xs text-brand-text-muted mt-2">
+                    {t('loginToUnlock')}
+                  </p>
+                ) : user && !user.redemptions?.some(r => r.dealId === deal.id) ? (
+                  <p className="text-xs text-brand-text-muted mt-2">
+                    {t('redeemToRate')}
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
 
           {/* Share Button */}
