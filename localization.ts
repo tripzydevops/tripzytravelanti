@@ -29,7 +29,7 @@ export const translations = {
     travelStyleCity: 'City & Culture',
     travelStyleAdventure: 'Adventure & Sports',
     onboardingQuote: 'Travel is the only thing you buy that makes you richer.',
-    onboardingTravelStyleSubtitle: 'Select your preferred way to travel',
+    onboardingTravelStyleSubtitle: 'What excites you the most? Select one or more.',
     welcome: 'Welcome',
     searchPlaceholder: 'Search for deals',
     // Home Page
@@ -354,7 +354,7 @@ export const translations = {
     travelStyleCity: 'Şehir & Kültür',
     travelStyleAdventure: 'Macera & Spor',
     onboardingQuote: 'Seyahat, satın alıp da sizi zenginleştiren tek şeydir.',
-    onboardingTravelStyleSubtitle: 'Tercih ettiğiniz seyahat tarzını seçin',
+    onboardingTravelStyleSubtitle: 'Sizi en çok ne heyecanlandırır? Birini veya birkaçını seçin.',
     welcome: 'Hoş geldiniz',
     searchPlaceholder: 'Fırsatları ara',
     // Home Page

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ChevronRightIcon, CheckCircle, SunIcon, MountainIcon, BuildingOfficeIcon, Compass } from './Icons';
+import { CheckCircle, ChevronRightIcon } from './Icons';
 
 interface OnboardingProps {
     onComplete: (preferences: UserPreferences) => void;
@@ -38,10 +38,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }, []);
 
     const travelStyles = [
-        { key: 'beach' as const, icon: SunIcon, label: t('travelStyleBeach') || 'Beach & Relaxation', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop' },
-        { key: 'mountain' as const, icon: MountainIcon, label: t('travelStyleMountain') || 'Mountain & Nature', image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?q=80&w=2072&auto=format&fit=crop' },
-        { key: 'city' as const, icon: BuildingOfficeIcon, label: t('travelStyleCity') || 'City & Culture', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop' },
-        { key: 'adventure' as const, icon: Compass, label: t('travelStyleAdventure') || 'Adventure & Sports', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop' },
+        { key: 'beach' as const, emoji: '🏖️', label: t('travelStyleBeach') || 'Beach & Relaxation', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop' },
+        { key: 'mountain' as const, emoji: '🏔️', label: t('travelStyleMountain') || 'Mountain & Nature', image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?q=80&w=2072&auto=format&fit=crop' },
+        { key: 'city' as const, emoji: '🏙️', label: t('travelStyleCity') || 'City & Culture', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop' },
+        { key: 'adventure' as const, emoji: '🪂', label: t('travelStyleAdventure') || 'Adventure & Sports', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop' },
     ];
 
     const budgetOptions = [
@@ -76,13 +76,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     };
 
     const variants = {
-        enter: { opacity: 0, x: 50 },
-        center: { opacity: 1, x: 0 },
-        exit: { opacity: 0, x: -50 },
+        enter: { opacity: 0, y: 20 },
+        center: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -20 },
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black font-sans">
             {/* Dynamic Background */}
             <motion.div
                 key={step}
@@ -95,48 +95,26 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
                     style={{ backgroundImage: `url(${getBackgroundImage()})` }}
                 />
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-[4px]" />
             </motion.div>
 
-            {/* Content Card */}
-            <div className="relative z-10 w-full max-w-5xl h-full md:h-auto md:min-h-[600px] flex flex-col md:flex-row bg-white/10 backdrop-blur-xl rounded-none md:rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+            {/* Glassmorphism Card */}
+            <div className="relative z-10 w-full max-w-4xl mx-4 md:mx-0 bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                <div className="p-8 md:p-12 flex flex-col items-center text-center">
 
-                {/* Left Panel - Progress & Info */}
-                <div className="w-full md:w-1/3 p-8 md:p-12 flex flex-col justify-between bg-black/20 text-white border-b md:border-b-0 md:border-r border-white/10">
-                    <div>
-                        <div className="flex items-center gap-2 mb-8">
-                            <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center font-bold text-white">
-                                T
-                            </div>
-                            <span className="font-bold text-xl tracking-tight">Tripzy</span>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="flex gap-2">
-                                {[...Array(totalSteps)].map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={`h-1.5 rounded-full transition-all duration-500 ${i + 1 <= step ? 'w-8 bg-brand-primary' : 'w-2 bg-white/20'
-                                            }`}
-                                    />
-                                ))}
-                            </div>
-                            <p className="text-white/60 text-sm font-medium">
-                                {t('step')} {step} / {totalSteps}
-                            </p>
-                        </div>
+                    {/* Progress Bar */}
+                    <div className="flex gap-2 mb-8">
+                        {[...Array(totalSteps)].map((_, i) => (
+                            <div
+                                key={i}
+                                className={`h-1.5 rounded-full transition-all duration-500 ${i + 1 <= step ? 'w-12 bg-white' : 'w-12 bg-white/30'
+                                    }`}
+                            />
+                        ))}
                     </div>
 
-                    <div className="hidden md:block">
-                        <p className="text-white/80 text-sm leading-relaxed">
-                            "{t('onboardingQuote') || 'Travel is the only thing you buy that makes you richer.'}"
-                        </p>
-                    </div>
-                </div>
-
-                {/* Right Panel - Interactive Content */}
-                <div className="w-full md:w-2/3 p-8 md:p-12 flex flex-col bg-white/5">
-                    <div className="flex-1 flex items-center">
+                    {/* Content Area */}
+                    <div className="w-full max-w-2xl min-h-[400px] flex flex-col justify-center">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={step}
@@ -144,71 +122,72 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                 initial="enter"
                                 animate="center"
                                 exit="exit"
-                                transition={{ duration: 0.4, ease: "easeInOut" }}
+                                transition={{ duration: 0.4, ease: "easeOut" }}
                                 className="w-full"
                             >
                                 {step === 1 && (
-                                    <div className="text-center md:text-left">
-                                        <div className="text-6xl mb-6 animate-bounce-slow inline-block">🌍</div>
-                                        <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-8xl mb-6 animate-bounce-slow">🌍</div>
+                                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight drop-shadow-lg">
                                             {t('onboardingBenefit1Title')}
                                         </h2>
-                                        <p className="text-xl text-white/80 leading-relaxed">
+                                        <p className="text-xl text-white/90 leading-relaxed max-w-lg mx-auto drop-shadow-md">
                                             {t('onboardingBenefit1Desc')}
                                         </p>
                                     </div>
                                 )}
 
                                 {step === 2 && (
-                                    <div className="text-center md:text-left">
-                                        <div className="text-6xl mb-6 animate-bounce-slow inline-block">🎟️</div>
-                                        <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-8xl mb-6 animate-bounce-slow">🎟️</div>
+                                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight drop-shadow-lg">
                                             {t('onboardingBenefit2Title')}
                                         </h2>
-                                        <p className="text-xl text-white/80 leading-relaxed">
+                                        <p className="text-xl text-white/90 leading-relaxed max-w-lg mx-auto drop-shadow-md">
                                             {t('onboardingBenefit2Desc')}
                                         </p>
                                     </div>
                                 )}
 
                                 {step === 3 && (
-                                    <div className="text-center md:text-left">
-                                        <div className="text-6xl mb-6 animate-bounce-slow inline-block">⭐</div>
-                                        <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-8xl mb-6 animate-bounce-slow">⭐</div>
+                                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight drop-shadow-lg">
                                             {t('onboardingBenefit3Title')}
                                         </h2>
-                                        <p className="text-xl text-white/80 leading-relaxed">
+                                        <p className="text-xl text-white/90 leading-relaxed max-w-lg mx-auto drop-shadow-md">
                                             {t('onboardingBenefit3Desc')}
                                         </p>
                                     </div>
                                 )}
 
                                 {step === 4 && (
-                                    <div>
-                                        <h2 className="text-3xl font-bold text-white mb-2 text-center md:text-left">
+                                    <div className="flex flex-col items-center w-full">
+                                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
                                             {t('onboardingTravelStyleQuestion')}
                                         </h2>
-                                        <p className="text-white/60 mb-8 text-center md:text-left">
-                                            {t('onboardingTravelStyleSubtitle') || 'Select your preferred way to travel'}
+                                        <p className="text-white/80 mb-8 text-lg drop-shadow-md">
+                                            {t('onboardingTravelStyleSubtitle')}
                                         </p>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                                             {travelStyles.map((style) => (
                                                 <button
                                                     key={style.key}
                                                     onClick={() => setPreferences({ ...preferences, travelStyle: style.key })}
-                                                    className={`group relative p-4 rounded-xl border transition-all duration-300 overflow-hidden ${preferences.travelStyle === style.key
-                                                        ? 'border-brand-primary bg-brand-primary/20 shadow-[0_0_20px_rgba(0,169,145,0.3)]'
+                                                    className={`group relative p-6 rounded-2xl border transition-all duration-300 overflow-hidden flex items-center gap-4 ${preferences.travelStyle === style.key
+                                                        ? 'border-white bg-white/20 shadow-[0_0_30px_rgba(255,255,255,0.2)]'
                                                         : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                                                         }`}
                                                 >
-                                                    <div className="flex flex-col items-center justify-center relative z-10">
-                                                        <style.icon className={`w-12 h-12 mb-3 transition-transform duration-300 group-hover:scale-110 ${preferences.travelStyle === style.key ? 'text-brand-primary' : 'text-white'
-                                                            }`} />
-                                                        <span className="text-sm font-semibold text-white">{style.label}</span>
+                                                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
+                                                        {style.emoji}
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="text-lg font-bold text-white block">{style.label}</span>
                                                     </div>
                                                     {preferences.travelStyle === style.key && (
-                                                        <div className="absolute top-2 right-2 text-brand-primary">
-                                                            <CheckCircle className="w-5 h-5" />
+                                                        <div className="absolute top-4 right-4 text-white">
+                                                            <CheckCircle className="w-6 h-6" />
                                                         </div>
                                                     )}
                                                 </button>
@@ -218,30 +197,30 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                 )}
 
                                 {step === 5 && (
-                                    <div>
-                                        <h2 className="text-3xl font-bold text-white mb-2 text-center md:text-left">
+                                    <div className="flex flex-col items-center w-full">
+                                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
                                             {t('onboardingBudgetQuestion')}
                                         </h2>
-                                        <p className="text-white/60 mb-8 text-center md:text-left">
+                                        <p className="text-white/80 mb-8 text-lg drop-shadow-md">
                                             {t('onboardingBudgetSubtitle')}
                                         </p>
-                                        <div className="space-y-4">
+                                        <div className="space-y-4 w-full max-w-lg mx-auto">
                                             {budgetOptions.map((option) => (
                                                 <button
                                                     key={option.key}
                                                     onClick={() => setPreferences({ ...preferences, budget: option.key })}
-                                                    className={`w-full flex items-center p-4 rounded-xl border transition-all duration-300 ${preferences.budget === option.key
-                                                        ? 'border-brand-primary bg-brand-primary/20 shadow-[0_0_20px_rgba(0,169,145,0.3)]'
+                                                    className={`w-full flex items-center p-5 rounded-2xl border transition-all duration-300 ${preferences.budget === option.key
+                                                        ? 'border-white bg-white/20 shadow-[0_0_30px_rgba(255,255,255,0.2)]'
                                                         : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                                                         }`}
                                                 >
-                                                    <span className="text-3xl mr-4">{option.emoji}</span>
+                                                    <span className="text-4xl mr-5">{option.emoji}</span>
                                                     <div className="flex-1 text-left">
-                                                        <div className="text-white font-semibold">{option.label}</div>
-                                                        <div className="text-white/50 text-sm">{option.description}</div>
+                                                        <div className="text-white font-bold text-lg">{option.label}</div>
+                                                        <div className="text-white/60 text-sm">{option.description}</div>
                                                     </div>
                                                     {preferences.budget === option.key && (
-                                                        <div className="text-brand-primary">
+                                                        <div className="text-white">
                                                             <CheckCircle className="w-6 h-6" />
                                                         </div>
                                                     )}
@@ -254,13 +233,19 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         </AnimatePresence>
                     </div>
 
-                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
+                    {/* Footer Navigation */}
+                    <div className="w-full flex items-center justify-between mt-12 pt-6 border-t border-white/10">
                         <button
                             onClick={handleSkip}
-                            className="text-white/50 hover:text-white text-sm font-medium transition-colors px-4 py-2"
+                            className="text-white/70 hover:text-white text-base font-medium transition-colors px-6 py-2"
                         >
                             {t('skip')}
                         </button>
+
+                        <div className="text-white/50 text-sm italic hidden md:block">
+                            "{t('onboardingQuote')}"
+                        </div>
+
                         <button
                             onClick={handleNext}
                             className="group flex items-center gap-2 bg-brand-primary hover:bg-brand-secondary text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-brand-primary/20 hover:shadow-brand-primary/40 hover:scale-105"
