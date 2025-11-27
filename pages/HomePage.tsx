@@ -393,7 +393,7 @@ const HomePage: React.FC = () => {
 
               {flightRoutes.length > 0 && (
                 <div className="mt-12">
-                  <h3 className="text-2xl font-bold text-brand-text-light mb-6">Popular Routes</h3>
+                  <h3 className="text-2xl font-bold text-brand-text-light mb-6">{t('popularRoutes')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {flightRoutes.map(route => (
                       <button
@@ -406,8 +406,12 @@ const HomePage: React.FC = () => {
                         <div className="absolute bottom-0 left-0 p-4 w-full">
                           <h4 className="text-white font-bold text-lg mb-1">{route.title}</h4>
                           <div className="flex justify-between items-end">
-                            <span className="text-white/80 text-sm">{route.expiresAt}</span>
-                            <span className="text-brand-secondary font-bold text-xl">From ${route.discountedPrice}</span>
+                            <span className="text-white/80 text-sm">
+                              {new Date(route.expiresAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                            <span className="text-brand-secondary font-bold text-xl">
+                              {t('fromPrice').replace('{{price}}', route.discountedPrice.toString())}
+                            </span>
                           </div>
                         </div>
                       </button>

@@ -49,6 +49,8 @@ export const translations = {
     categoryWellness: 'Wellness',
     categoryTravel: 'Travel',
     findFlightsTitle: 'FLIGHTS DISCOVERY',
+    popularRoutes: 'Popular Routes',
+    fromPrice: 'From ${{price}}',
     // Subscriptions Page
     subscriptionsTitle: 'Choose Your Plan',
     subscriptionsSubtitle: 'Unlock more deals and exclusive perks with our subscription tiers.',
@@ -383,6 +385,8 @@ export const translations = {
     categoryWellness: 'Sağlık',
     categoryTravel: 'Seyahat',
     findFlightsTitle: 'UÇUŞ KEŞFİ',
+    popularRoutes: 'Popüler Rotalar',
+    fromPrice: '${{price}}\'den Başlayan Fiyatlarla',
     // Subscriptions Page
     subscriptionsTitle: 'Planınızı Seçin',
     subscriptionsSubtitle: 'Abonelik seviyelerimizle daha fazla fırsatın ve özel avantajların kilidini açın.',
