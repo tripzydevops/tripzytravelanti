@@ -25,16 +25,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setLoading(true);
       const fetchedDeals = await getAllDeals();
-
-      // Mock location data for demo purposes (Random points around Istanbul)
-      // Center: 41.0082, 28.9784
-      const enrichedDeals = fetchedDeals.map(deal => ({
-        ...deal,
-        latitude: 41.0082 + (Math.random() - 0.5) * 0.1, // +/- ~5km
-        longitude: 28.9784 + (Math.random() - 0.5) * 0.1
-      }));
-
-      setDeals(enrichedDeals);
+      setDeals(fetchedDeals);
     } catch (error) {
       console.error('Error loading deals:', error);
     } finally {
@@ -122,6 +113,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           validity_tr: newDeal.validity_tr,
           terms_url: newDeal.termsUrl,
           redemption_code: newDeal.redemptionCode,
+          latitude: newDeal.latitude,
+          longitude: newDeal.longitude,
         })
         .select()
         .single();
@@ -164,6 +157,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           validity_tr: updatedDeal.validity_tr,
           terms_url: updatedDeal.termsUrl,
           redemption_code: updatedDeal.redemptionCode,
+          latitude: updatedDeal.latitude,
+          longitude: updatedDeal.longitude,
         })
         .eq('id', updatedDeal.id);
 
