@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import React, { useState, useEffect, useCallback } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDeal } from '../../lib/supabaseService';
@@ -64,7 +64,7 @@ const CreateDealPage: React.FC = () => {
     const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
         if (!text.trim()) return '';
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
             const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
             const response = await ai.models.generateContent({ model: 'gemini-2.0-flash-exp', contents: prompt });
             return response.text().trim();

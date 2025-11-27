@@ -164,7 +164,7 @@ const AdminPage: React.FC = () => {
   const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
     if (!text.trim()) return '';
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
       const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
       const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       return response.text.trim();
@@ -277,7 +277,7 @@ const AdminPage: React.FC = () => {
     if (!finalImageUrl) {
       setIsGeneratingImage(true);
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
         const prompt = `A vibrant, high-quality promotional image for a travel and lifestyle deal titled: "${dealFormData.title}". Category: ${dealFormData.category}. The image should be appealing for a deals website.`;
         const response = await ai.models.generateImages({ model: 'imagen-4.0-generate-001', prompt, config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '4:3' } });
         if (response.generatedImages?.[0]) {
@@ -517,6 +517,7 @@ const AdminPage: React.FC = () => {
                         <td className="px-6 py-4">{deal.category}</td>
                         <td className="px-6 py-4">${deal.discountedPrice}</td>
                         <td className="px-6 py-4 text-right space-x-2">
+                          <button onClick={() => setEditingDeal(deal)} className="font-medium text-blue-600 hover:underline">View Details</button>
                           <button onClick={() => handleApproveDeal(deal.id)} className="font-medium text-green-600 hover:underline">Approve</button>
                           <button onClick={() => handleRejectDeal(deal.id)} className="font-medium text-red-600 hover:underline">Reject</button>
                         </td>
@@ -527,6 +528,66 @@ const AdminPage: React.FC = () => {
               </table>
             </div>
           </div>
+
+          {/* Deal Details Modal */}
+          {editingDeal && activeTab === 'pending_approvals' && (
+            <Modal onClose={() => setEditingDeal(null)} title="Deal Details">
+              <div className="space-y-4">
+                {editingDeal.imageUrl && (
+                  <img src={editingDeal.imageUrl} alt={editingDeal.title} className="w-full h-48 object-cover rounded-lg" />
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Title (EN)</h3>
+                    <p>{editingDeal.title}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Title (TR)</h3>
+                    <p>{editingDeal.title_tr || '-'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Description (EN)</h3>
+                    <p className="text-sm">{editingDeal.description}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Description (TR)</h3>
+                    <p className="text-sm">{editingDeal.description_tr || '-'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Original Price</h3>
+                    <p>${editingDeal.originalPrice}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Discounted Price</h3>
+                    <p>${editingDeal.discountedPrice} ({editingDeal.discountPercentage}%)</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Category</h3>
+                    <p>{editingDeal.category}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500">Expires At</h3>
+                    <p>{new Date(editingDeal.expiresAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button
+                    onClick={() => { handleRejectDeal(editingDeal.id); setEditingDeal(null); }}
+                    className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => { handleApproveDeal(editingDeal.id); setEditingDeal(null); }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Approve
+                  </button>
+                </div>
+              </div>
+            </Modal>
+          )}
         </section>
       )}
 
