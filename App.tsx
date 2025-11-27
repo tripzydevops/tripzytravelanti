@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -100,6 +100,13 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
+
+        {/* Partner Portal Routes */}
+        <Route path="/partner" element={<PartnerLayout />}>
+          <Route index element={<Navigate to="/partner/dashboard" replace />} />
+          <Route path="dashboard" element={<PartnerDashboard />} />
+          <Route path="scan" element={<PartnerScanPage />} />
+        </Route>
       </Routes>
     </AnimatePresence>
   );
