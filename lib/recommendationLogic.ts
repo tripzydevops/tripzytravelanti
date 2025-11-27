@@ -72,13 +72,13 @@ export function analyzeUserPreferences(user: User, allDeals: Deal[]): UserAnalys
 /**
  * Uses Gemini to recommend deals based on the user's profile and available deals.
  */
-export async function getAIRecommendations(user: User, allDeals: Deal[]): Promise<Deal[]> {
+export async function getAIRecommendations(
+    user: User,
+    allDeals: Deal[],
+    preferences?: { travelStyle: string; budget: string }
+): Promise<Deal[]> {
     // 1. Analyze user
     const analysis = analyzeUserPreferences(user, allDeals);
-
-    // If no history, return random or popular deals (fallback logic handled by caller or here)
-    // For now, let's try to get recommendations even with empty history if possible, 
-    // but better to filter out deals they've already used/saved to avoid redundancy.
 
     const redeemedOrSavedIds = new Set([
         ...(user.savedDeals || []),
@@ -90,20 +90,20 @@ export async function getAIRecommendations(user: User, allDeals: Deal[]): Promis
     if (candidateDeals.length === 0) return [];
 
     // 2. Construct Prompt
-    // We'll send a simplified version of deals to save tokens
     const dealsJson = candidateDeals.map(d => ({
         id: d.id,
         title: d.title,
         category: d.category,
         price: d.discountedPrice,
         vendor: d.vendor,
-        description: d.description.substring(0, 100) // Truncate for brevity
+        description: d.description.substring(0, 100)
     }));
 
     const userProfile = {
         favorites: analysis.favoriteCategories,
         avgSpend: analysis.averageSpending,
-        topVendors: analysis.preferredVendors
+        topVendors: analysis.preferredVendors,
+        explicitPreferences: preferences // Add explicit preferences to profile
     };
 
     const prompt = `
@@ -116,7 +116,12 @@ export async function getAIRecommendations(user: User, allDeals: Deal[]): Promis
     ${JSON.stringify(dealsJson, null, 2)}
 
     Task:
-    Select the top 3 deals that this user would be most interested in based on their profile.
+    Select the top 3 deals that this user would be most interested in.
+    
+    Prioritize deals that match the user's explicit preferences:
+    - Travel Style: ${preferences?.travelStyle || 'Any'}
+    - Budget: ${preferences?.budget || 'Any'}
+
     If the profile is empty, select 3 diverse and popular-sounding deals.
     
     Return ONLY a JSON array of the 3 matching deal IDs. Example: ["123", "456", "789"]
@@ -131,23 +136,41 @@ export async function getAIRecommendations(user: User, allDeals: Deal[]): Promis
         });
 
         const text = response.text.trim();
-        // Clean up potential markdown code blocks
         const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
         const recommendedIds: string[] = JSON.parse(cleanJson);
 
-        // 4. Map back to full deal objects
         const recommendations = allDeals.filter(d => recommendedIds.includes(d.id));
         return recommendations;
 
     } catch (error) {
         console.error("AI Recommendation failed:", error);
-        // Fallback: Return top 3 deals from favorite category, or just first 3
-        if (analysis.favoriteCategories.length > 0) {
-            return candidateDeals
+
+        // Fallback Logic
+        let fallbackDeals = candidateDeals;
+
+        // Filter by travel style if available (simple keyword match on category or description)
+        if (preferences?.travelStyle) {
+            const style = preferences.travelStyle.toLowerCase();
+            const styleMatches = fallbackDeals.filter(d =>
+                d.category.toLowerCase().includes(style) ||
+                d.description.toLowerCase().includes(style) ||
+                (style === 'beach' && (d.title.toLowerCase().includes('beach') || d.title.toLowerCase().includes('resort'))) ||
+                (style === 'mountain' && (d.title.toLowerCase().includes('mountain') || d.title.toLowerCase().includes('ski'))) ||
+                (style === 'city' && (d.title.toLowerCase().includes('city') || d.title.toLowerCase().includes('hotel'))) ||
+                (style === 'adventure' && (d.title.toLowerCase().includes('adventure') || d.title.toLowerCase().includes('tour')))
+            );
+            if (styleMatches.length > 0) {
+                fallbackDeals = styleMatches;
+            }
+        }
+
+        // Then filter by favorites if we still have generic deals
+        if (analysis.favoriteCategories.length > 0 && fallbackDeals.length === candidateDeals.length) {
+            return fallbackDeals
                 .filter(d => analysis.favoriteCategories.includes(d.category))
                 .slice(0, 3);
         }
-        return candidateDeals.slice(0, 3);
+
+        return fallbackDeals.slice(0, 3);
     }
 }

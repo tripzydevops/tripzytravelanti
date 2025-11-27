@@ -148,9 +148,10 @@ const HomePage: React.FC = () => {
 
   const handleOnboardingComplete = (preferences: any) => {
     localStorage.setItem('tripzy_onboarding_completed', 'true');
+    localStorage.setItem('tripzy_user_preferences', JSON.stringify(preferences));
     setShowOnboarding(false);
-    // Ideally, we would save these preferences to the user profile if logged in
-    console.log('User preferences:', preferences);
+    // Trigger re-fetch of recommendations with new preferences
+    window.location.reload();
   };
 
   const [recommendations, setRecommendations] = React.useState<Deal[]>([]);
@@ -161,7 +162,11 @@ const HomePage: React.FC = () => {
       if (user && deals.length > 0) {
         setLoadingRecommendations(true);
         try {
-          const recs = await getAIRecommendations(user, deals);
+          // Get stored preferences
+          const storedPrefs = localStorage.getItem('tripzy_user_preferences');
+          const preferences = storedPrefs ? JSON.parse(storedPrefs) : undefined;
+
+          const recs = await getAIRecommendations(user, deals, preferences);
           setRecommendations(recs);
         } catch (error) {
           console.error("Failed to fetch recommendations", error);
