@@ -13,11 +13,22 @@ export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
         return [];
     }
 
-    return (data || []).map(plan => ({
-        ...plan,
-        redemptionsPerMonth: plan.redemptions_per_period,
-        billingPeriod: plan.billing_period
-    }));
+    return (data || []).map(plan => {
+        let redemptionsPerMonth = plan.redemptions_per_period;
+
+        // Handle unlimited
+        if (plan.redemptions_per_period >= 999999) {
+            redemptionsPerMonth = Infinity;
+        } else if (plan.billing_period === 'yearly') {
+            redemptionsPerMonth = Math.floor(plan.redemptions_per_period / 12);
+        }
+
+        return {
+            ...plan,
+            redemptionsPerMonth,
+            billingPeriod: plan.billing_period
+        };
+    });
 };
 
 export const getAllSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
@@ -31,11 +42,22 @@ export const getAllSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => 
         return [];
     }
 
-    return (data || []).map(plan => ({
-        ...plan,
-        redemptionsPerMonth: plan.redemptions_per_period,
-        billingPeriod: plan.billing_period
-    }));
+    return (data || []).map(plan => {
+        let redemptionsPerMonth = plan.redemptions_per_period;
+
+        // Handle unlimited
+        if (plan.redemptions_per_period >= 999999) {
+            redemptionsPerMonth = Infinity;
+        } else if (plan.billing_period === 'yearly') {
+            redemptionsPerMonth = Math.floor(plan.redemptions_per_period / 12);
+        }
+
+        return {
+            ...plan,
+            redemptionsPerMonth,
+            billingPeriod: plan.billing_period
+        };
+    });
 };
 
 export const createSubscriptionPlan = async (plan: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'>) => {
