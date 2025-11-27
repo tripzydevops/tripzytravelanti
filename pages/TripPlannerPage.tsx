@@ -39,7 +39,7 @@ const TripPlannerPage: React.FC = () => {
     setItinerary('');
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
       const interestsList = Array.from(interests).join(', ');
       const prompt = `Create a detailed travel itinerary for a trip to ${destination} for ${duration} days. The traveler is interested in ${interestsList}. 

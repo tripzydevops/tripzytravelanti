@@ -36,7 +36,7 @@ export const useChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const ai = useMemo(() => new GoogleGenAI({ apiKey: process.env.API_KEY }), []);
+  const ai = useMemo(() => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY }), []);
 
   const chat = useMemo(() => {
     return ai.chats.create({
@@ -55,13 +55,13 @@ export const useChatbot = () => {
 
     try {
       const response = await chat.sendMessage({ message: text });
-      
+
       if (response.functionCalls && response.functionCalls.length > 0) {
         const functionCall = response.functionCalls[0];
-        
+
         if (functionCall.name === 'findDeals') {
           const { searchQuery, category, minRating } = functionCall.args;
-          
+
           // Execute the function
           applyFiltersAndNavigate({
             searchQuery: searchQuery as string,
@@ -73,12 +73,12 @@ export const useChatbot = () => {
           const functionResponse = await chat.sendMessage({
             message: '', // The message can be empty when sending a function response.
             functionResponses: {
-                id: functionCall.id,
-                name: functionCall.name,
-                response: { result: "Successfully applied the filters. The user can now see the results." }
+              id: functionCall.id,
+              name: functionCall.name,
+              response: { result: "Successfully applied the filters. The user can now see the results." }
             }
           });
-          
+
           setMessages(prev => [...prev, { role: 'model', text: functionResponse.text }]);
         }
       } else {
@@ -92,7 +92,7 @@ export const useChatbot = () => {
       setIsLoading(false);
     }
   };
-  
+
   const startChat = () => {
     setMessages([{ role: 'model', text: t('aiGreeting') }]);
   };

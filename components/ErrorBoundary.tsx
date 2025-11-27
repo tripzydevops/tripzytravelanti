@@ -51,7 +51,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                                 Go to Home
                             </button>
                         </div>
-                        {process.env.NODE_ENV === 'development' && this.state.error && (
+                        {import.meta.env.DEV && this.state.error && (
                             <div className="mt-8 text-left">
                                 <details className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-auto max-h-48">
                                     <summary className="text-sm font-medium text-red-600 dark:text-red-400 cursor-pointer">Error Details</summary>
