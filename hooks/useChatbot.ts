@@ -43,6 +43,7 @@ export const useChatbot = () => {
   }, []);
 
   const chat = useMemo(() => {
+    if (!ai) return null;
     return ai.chats.create({
       model: 'gemini-2.5-flash',
       config: {
@@ -56,6 +57,12 @@ export const useChatbot = () => {
     setIsLoading(true);
     const userMessage: Message = { role: 'user', text };
     setMessages(prev => [...prev, userMessage]);
+
+    if (!chat) {
+      setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, I'm currently offline (API Key missing). Please try again later." }]);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await chat.sendMessage({ message: text });
