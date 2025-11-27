@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDeal } from '../../lib/supabaseService';
 import { SubscriptionTier } from '../../types';
-import { ArrowLeft, Save, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Sparkles } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
+
+// Helper for debounce
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+}
 
 const CreateDealPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isTranslating, setIsTranslating] = useState({ title: false, description: false });
+    const [neverExpires, setNeverExpires] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -34,6 +51,43 @@ const CreateDealPage: React.FC = () => {
         redemptionCode: '',
     });
 
+    // Translation Logic
+    const debouncedTitle = useDebounce(formData.title, 1000);
+    const debouncedDescription = useDebounce(formData.description, 1000);
+
+    const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
+        if (!text.trim()) return '';
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
+            const response = await ai.models.generateContent({ model: 'gemini-2.0-flash-exp', contents: prompt });
+            return response.text().trim();
+        } catch (error) { console.error('Translation failed:', error); return ''; }
+    }, []);
+
+    useEffect(() => {
+        if (debouncedTitle && !formData.title_tr) {
+            (async () => {
+                setIsTranslating(p => ({ ...p, title: true }));
+                const tr = await translateText(debouncedTitle, 'Turkish');
+                if (tr) setFormData(p => ({ ...p, title_tr: tr }));
+                setIsTranslating(p => ({ ...p, title: false }));
+            })();
+        }
+    }, [debouncedTitle, translateText]);
+
+    useEffect(() => {
+        if (debouncedDescription && !formData.description_tr) {
+            (async () => {
+                setIsTranslating(p => ({ ...p, description: true }));
+                const tr = await translateText(debouncedDescription, 'Turkish');
+                if (tr) setFormData(p => ({ ...p, description_tr: tr }));
+                setIsTranslating(p => ({ ...p, description: false }));
+            })();
+        }
+    }, [debouncedDescription, translateText]);
+
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
@@ -41,7 +95,42 @@ const CreateDealPage: React.FC = () => {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
         } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            setFormData(prev => {
+                const updated = { ...prev, [name]: value };
+
+                // Smart Pricing Logic
+                if (name === 'originalPrice') {
+                    const original = parseFloat(value);
+                    const discount = parseFloat(updated.discountPercentage);
+                    const discounted = parseFloat(updated.discountedPrice);
+
+                    if (!isNaN(original)) {
+                        // If we have a percentage, update the discounted price
+                        if (!isNaN(discount) && discount > 0) {
+                            updated.discountedPrice = (original * (1 - discount / 100)).toFixed(2);
+                        }
+                        // If we have a discounted price but no percentage (or 0), update percentage
+                        else if (!isNaN(discounted)) {
+                            updated.discountPercentage = (((original - discounted) / original) * 100).toFixed(0);
+                        }
+                    }
+                } else if (name === 'discountedPrice') {
+                    const discounted = parseFloat(value);
+                    const original = parseFloat(updated.originalPrice);
+                    if (!isNaN(discounted) && !isNaN(original) && original > 0) {
+                        updated.discountPercentage = (((original - discounted) / original) * 100).toFixed(0);
+                    }
+                } else if (name === 'discountPercentage') {
+                    const discount = parseFloat(value);
+                    const original = parseFloat(updated.originalPrice);
+                    // If original price exists, calculate discounted price
+                    if (!isNaN(discount) && !isNaN(original) && original > 0) {
+                        updated.discountedPrice = (original * (1 - discount / 100)).toFixed(2);
+                    }
+                }
+
+                return updated;
+            });
         }
     };
 
@@ -52,14 +141,34 @@ const CreateDealPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        // Validation: Either (Original & Discounted) OR (Percentage) must be set
+        const original = parseFloat(formData.originalPrice);
+        const discounted = parseFloat(formData.discountedPrice);
+        const percentage = parseFloat(formData.discountPercentage);
+
+        const hasPrice = !isNaN(original) && !isNaN(discounted) && original > 0;
+        const hasPercentage = !isNaN(percentage) && percentage > 0;
+
+        if (!hasPrice && !hasPercentage) {
+            setError('Please enter either a Price (Original & Discounted) OR a Discount Percentage.');
+            setLoading(false);
+            return;
+        }
+
         try {
+            // Handle Never Expires
+            const finalExpiresAt = neverExpires ?
+                new Date(new Date().setFullYear(new Date().getFullYear() + 100)).toISOString() :
+                formData.expiresAt;
+
             await createDeal({
                 ...formData,
-                originalPrice: parseFloat(formData.originalPrice),
-                discountedPrice: parseFloat(formData.discountedPrice),
-                discountPercentage: formData.discountPercentage ? parseFloat(formData.discountPercentage) : undefined,
+                originalPrice: hasPrice ? original : 0,
+                discountedPrice: hasPrice ? discounted : 0,
+                discountPercentage: percentage || 0,
                 partnerId: user.id,
                 status: 'pending',
+                expiresAt: finalExpiresAt,
                 rating: 0,
                 ratingCount: 0
             });
@@ -95,7 +204,10 @@ const CreateDealPage: React.FC = () => {
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (English)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Title (English)
+                                {isTranslating.title && <span className="ml-2 text-xs text-brand-primary animate-pulse">Translating...</span>}
+                            </label>
                             <input
                                 type="text"
                                 name="title"
@@ -119,7 +231,10 @@ const CreateDealPage: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (English)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Description (English)
+                            {isTranslating.description && <span className="ml-2 text-xs text-brand-primary animate-pulse">Translating...</span>}
+                        </label>
                         <textarea
                             name="description"
                             required
@@ -148,7 +263,6 @@ const CreateDealPage: React.FC = () => {
                             <input
                                 type="number"
                                 name="originalPrice"
-                                required
                                 min="0"
                                 step="0.01"
                                 value={formData.originalPrice}
@@ -161,7 +275,6 @@ const CreateDealPage: React.FC = () => {
                             <input
                                 type="number"
                                 name="discountedPrice"
-                                required
                                 min="0"
                                 step="0.01"
                                 value={formData.discountedPrice}
@@ -170,7 +283,7 @@ const CreateDealPage: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount % (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount %</label>
                             <input
                                 type="number"
                                 name="discountPercentage"
@@ -182,6 +295,9 @@ const CreateDealPage: React.FC = () => {
                             />
                         </div>
                     </div>
+                    <p className="text-xs text-gray-500 -mt-4">
+                        Enter either a specific price (Original & Discounted) OR just a Discount Percentage.
+                    </p>
 
                     {/* Image & Category */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -231,17 +347,33 @@ const CreateDealPage: React.FC = () => {
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
+                            <p className="text-xs text-gray-500 mt-1">
+                                This code will be used to generate a QR code for the user.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date</label>
                             <input
                                 type="date"
                                 name="expiresAt"
-                                required
+                                required={!neverExpires}
+                                disabled={neverExpires}
                                 value={formData.expiresAt}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             />
+                            <div className="flex items-center mt-2">
+                                <input
+                                    type="checkbox"
+                                    id="neverExpires"
+                                    checked={neverExpires}
+                                    onChange={(e) => setNeverExpires(e.target.checked)}
+                                    className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
+                                />
+                                <label htmlFor="neverExpires" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                                    Never Expires
+                                </label>
+                            </div>
                         </div>
                     </div>
 
