@@ -37,6 +37,7 @@ export interface User {
   mobile?: string;
   address?: string;
   billingAddress?: string;
+  subscriptionStartDate?: string; // For yearly renewal tracking
 }
 
 export interface Deal {
@@ -74,6 +75,7 @@ export interface SubscriptionPlan {
   price: number;
   price_tr: number;
   redemptionsPerMonth: number;
+  billingPeriod: 'yearly'; // Billing period
   features: string[];
   features_tr: string[];
 }

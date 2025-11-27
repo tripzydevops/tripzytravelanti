@@ -13,7 +13,7 @@ import {
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
-import { SUBSCRIPTION_PRICES, TIER_NAMES } from '../lib/constants';
+import { SUBSCRIPTION_PLANS } from '../constants';
 import { useSearch } from '../contexts/SearchContext';
 import InvoiceModal from '../components/InvoiceModal';
 import { getUserTransactions } from '../lib/supabaseService';
@@ -219,7 +219,7 @@ const ProfilePage: React.FC = () => {
   const referralCode = `TRIPZY-${user.id.substring(0, 6).toUpperCase()}`;
 
   const { remaining, total } = calculateRemainingRedemptions(user);
-  const renewalDate = getNextRenewalDate().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
+  const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
 
   return (
     <div className="container mx-auto px-4 pt-6 pb-24">
@@ -265,10 +265,13 @@ const ProfilePage: React.FC = () => {
           <div className="flex justify-between items-center text-sm">
             <p className="text-gray-500 dark:text-brand-text-muted">{t('currentPlanLabel')}</p>
             <p className="text-gray-800 dark:text-brand-text-light font-semibold">
-              {t('planWithPrice', {
-                plan: TIER_NAMES[user.tier] || user.tier,
-                price: (SUBSCRIPTION_PRICES[user.tier]?.[language] || 0).toString() + (language === 'tr' ? ' TL' : '$')
-              })}
+              {(() => {
+                const currentPlan = SUBSCRIPTION_PLANS.find(p => p.tier === user.tier);
+                const planName = currentPlan ? (language === 'tr' ? currentPlan.name_tr : currentPlan.name) : user.tier;
+                const price = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
+                const currency = language === 'tr' ? 'TL' : '$';
+                return t('planWithPrice', { plan: planName, price: `${currency}${price}/year` });
+              })()}
             </p>
           </div>
 

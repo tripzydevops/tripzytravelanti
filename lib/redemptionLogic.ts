@@ -32,8 +32,26 @@ export const calculateRemainingRedemptions = (user: User) => {
     return { used: usedThisMonth, total, remaining };
 };
 
-export const getNextRenewalDate = (): Date => {
+export const getNextRenewalDate = (user?: User): Date => {
+    if (!user?.subscriptionStartDate) {
+        // Fallback: if no subscription start date, use 1 year from now
+        const now = new Date();
+        const oneYearLater = new Date(now);
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        return oneYearLater;
+    }
+
+    const subscriptionStart = new Date(user.subscriptionStartDate);
     const now = new Date();
-    // Renewal is always on the 1st of the next month
-    return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    // Calculate the next renewal date (1 year from subscription start)
+    let nextRenewal = new Date(subscriptionStart);
+    nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
+
+    // If that date has passed, add another year
+    while (nextRenewal <= now) {
+        nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
+    }
+
+    return nextRenewal;
 };

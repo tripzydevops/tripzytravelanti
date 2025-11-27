@@ -8,6 +8,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     price: 0,
     price_tr: 0,
     redemptionsPerMonth: 3,
+    billingPeriod: 'yearly',
     features: [
       'Access to select local deals',
       'Personalized deal alerts',
@@ -23,9 +24,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     tier: SubscriptionTier.BASIC,
     name: 'Basic',
     name_tr: 'Temel',
-    price: 9.99,
-    price_tr: 349.99,
+    price: 119.88, // $9.99 × 12
+    price_tr: 4199.88, // 349.99 TL × 12
     redemptionsPerMonth: 10,
+    billingPeriod: 'yearly',
     features: ['Access to local dining deals', 'Weekly newsletter', 'Standard support'],
     features_tr: ['Yerel yemek fırsatlarına erişim', 'Haftalık bülten', 'Standart destek'],
   },
@@ -33,9 +35,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     tier: SubscriptionTier.PREMIUM,
     name: 'Premium',
     name_tr: 'Premium',
-    price: 19.99,
-    price_tr: 699.99,
+    price: 239.88, // $19.99 × 12
+    price_tr: 8399.88, // 699.99 TL × 12
     redemptionsPerMonth: 30,
+    billingPeriod: 'yearly',
     features: ['All Basic features', 'Exclusive travel deals', 'Early access to new deals', 'Priority support'],
     features_tr: ['Tüm Temel özellikler', 'Özel seyahat fırsatları', 'Yeni fırsatlara erken erişim', 'Öncelikli destek'],
   },
@@ -43,9 +46,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     tier: SubscriptionTier.VIP,
     name: 'VIP',
     name_tr: 'VIP',
-    price: 49.99,
-    price_tr: 1699.99,
+    price: 599.88, // $49.99 × 12
+    price_tr: 20399.88, // 1699.99 TL × 12
     redemptionsPerMonth: Infinity,
+    billingPeriod: 'yearly',
     features: ['All Premium features', 'AI-powered trip planning', 'Concierge service', 'Partner event invitations'],
     features_tr: ['Tüm Premium özellikler', 'Yapay zeka destekli gezi planlama', 'Konsiyerj hizmeti', 'Partner etkinlik davetiyeleri'],
   },
