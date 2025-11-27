@@ -24,6 +24,7 @@ import AdminPage from './pages/AdminPage';
 import PartnerLayout from './components/layouts/PartnerLayout';
 import PartnerDashboard from './pages/partner/PartnerDashboard';
 import PartnerScanPage from './pages/partner/PartnerScanPage';
+import CreateDealPage from './pages/partner/CreateDealPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import MyDealsPage from './pages/MyDealsPage';
@@ -105,6 +106,7 @@ function AnimatedRoutes() {
         <Route path="/partner" element={<PartnerLayout />}>
           <Route index element={<Navigate to="/partner/dashboard" replace />} />
           <Route path="dashboard" element={<PartnerDashboard />} />
+          <Route path="create-deal" element={<CreateDealPage />} />
           <Route path="scan" element={<PartnerScanPage />} />
         </Route>
       </Routes>

@@ -75,6 +75,8 @@ export interface Deal {
   redemptionCode: string;
   latitude?: number;
   longitude?: number;
+  partnerId?: string;
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface SubscriptionPlan {

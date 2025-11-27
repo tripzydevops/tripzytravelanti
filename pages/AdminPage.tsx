@@ -7,6 +7,7 @@ import { useContent } from '../contexts/ContentContext';
 import { Deal, User, SubscriptionTier, PageContent } from '../types';
 import { SpinnerIcon } from '../components/Icons';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
+import { getPendingDeals, updateDealStatus } from '../lib/supabaseService';
 import ImageUpload from '../components/ImageUpload';
 import Modal from '../components/Modal';
 import PaymentTransactionTable from '../components/PaymentTransactionTable';
@@ -85,7 +86,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const AdminPage: React.FC = () => {
   // Common
   const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments'>('deals');
+  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals'>('deals');
   const [showSuccess, setShowSuccess] = useState('');
 
   // Deals Management
@@ -108,6 +109,35 @@ const AdminPage: React.FC = () => {
   const [dealToAdd, setDealToAdd] = useState<string>('');
   const [redemptionsToAdd, setRedemptionsToAdd] = useState(0);
   const [viewingRedemptionsForUser, setViewingRedemptionsForUser] = useState<User | null>(null);
+
+  // Pending Approvals
+  const [pendingDeals, setPendingDeals] = useState<Deal[]>([]);
+
+  useEffect(() => {
+    if (activeTab === 'pending_approvals') {
+      loadPendingDeals();
+    }
+  }, [activeTab]);
+
+  const loadPendingDeals = async () => {
+    const deals = await getPendingDeals();
+    setPendingDeals(deals);
+  };
+
+  const handleApproveDeal = async (dealId: string) => {
+    if (window.confirm('Approve this deal?')) {
+      await updateDealStatus(dealId, 'approved');
+      loadPendingDeals();
+      // Optionally refresh main deals list if needed, but they are separate contexts usually
+    }
+  };
+
+  const handleRejectDeal = async (dealId: string) => {
+    if (window.confirm('Reject this deal?')) {
+      await updateDealStatus(dealId, 'rejected');
+      loadPendingDeals();
+    }
+  };
 
 
   const sortedDeals = useMemo(() => {
@@ -444,7 +474,61 @@ const AdminPage: React.FC = () => {
         <button onClick={() => setActiveTab('payments')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'payments' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           {t('paymentTransactions') || 'Payment Transactions'}
         </button>
+        <button onClick={() => setActiveTab('pending_approvals')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'pending_approvals' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
+          Pending Approvals
+          {pendingDeals.length > 0 && (
+            <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingDeals.length}</span>
+          )}
+        </button>
       </div>
+
+      {activeTab === 'pending_approvals' && (
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Pending Approvals</h2>
+          <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
+                <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
+                  <tr>
+                    <th scope="col" className="px-6 py-3">Title</th>
+                    <th scope="col" className="px-6 py-3">Partner</th>
+                    <th scope="col" className="px-6 py-3">Category</th>
+                    <th scope="col" className="px-6 py-3">Price</th>
+                    <th scope="col" className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingDeals.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-brand-text-muted">
+                        No pending deals.
+                      </td>
+                    </tr>
+                  ) : (
+                    pendingDeals.map(deal => (
+                      <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
+                          <div className="flex items-center">
+                            {deal.imageUrl && <img src={deal.imageUrl} alt="" className="w-8 h-8 rounded object-cover mr-2" />}
+                            {deal.title}
+                          </div>
+                        </th>
+                        <td className="px-6 py-4">{deal.vendor}</td>
+                        <td className="px-6 py-4">{deal.category}</td>
+                        <td className="px-6 py-4">${deal.discountedPrice}</td>
+                        <td className="px-6 py-4 text-right space-x-2">
+                          <button onClick={() => handleApproveDeal(deal.id)} className="font-medium text-green-600 hover:underline">Approve</button>
+                          <button onClick={() => handleRejectDeal(deal.id)} className="font-medium text-red-600 hover:underline">Reject</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
 
       {activeTab === 'subscriptions' && (
         <>

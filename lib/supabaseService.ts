@@ -207,7 +207,93 @@ function transformDealFromDB(dbDeal: any): Deal {
         validity_tr: dbDeal.validity_tr,
         termsUrl: dbDeal.terms_url,
         redemptionCode: dbDeal.redemption_code,
+        partnerId: dbDeal.partner_id,
+        status: dbDeal.status,
     };
+}
+
+export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount'>) {
+    const dbDeal = {
+        title: deal.title,
+        title_tr: deal.title_tr,
+        description: deal.description,
+        description_tr: deal.description_tr,
+        image_url: deal.imageUrl,
+        category: deal.category,
+        category_tr: deal.category_tr,
+        original_price: deal.originalPrice,
+        discounted_price: deal.discountedPrice,
+        discount_percentage: deal.discountPercentage,
+        required_tier: deal.requiredTier,
+        is_external: deal.isExternal,
+        vendor: deal.vendor,
+        expires_at: deal.expiresAt,
+        usage_limit: deal.usageLimit,
+        usage_limit_tr: deal.usageLimit_tr,
+        validity: deal.validity,
+        validity_tr: deal.validity_tr,
+        terms_url: deal.termsUrl,
+        redemption_code: deal.redemptionCode,
+        partner_id: deal.partnerId,
+        status: deal.status || 'pending',
+        rating: 0,
+        rating_count: 0
+    };
+
+    const { data, error } = await supabase
+        .from('deals')
+        .insert(dbDeal)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating deal:', error);
+        throw error;
+    }
+
+    return transformDealFromDB(data);
+}
+
+export async function getDealsByPartner(partnerId: string): Promise<Deal[]> {
+    const { data, error } = await supabase
+        .from('deals')
+        .select('*')
+        .eq('partner_id', partnerId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching partner deals:', error);
+        return [];
+    }
+
+    return data.map(transformDealFromDB);
+}
+
+export async function updateDealStatus(dealId: string, status: 'approved' | 'rejected') {
+    const { error } = await supabase
+        .from('deals')
+        .update({ status })
+        .eq('id', dealId);
+
+    if (error) {
+        console.error('Error updating deal status:', error);
+        throw error;
+    }
+}
+
+export async function getPendingDeals(): Promise<Deal[]> {
+    const { data, error } = await supabase
+        .from('deals')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching pending deals:', error);
+        return [];
+    }
+
+    return data.map(transformDealFromDB);
 }
 
 // =====================================================
