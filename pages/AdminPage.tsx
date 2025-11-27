@@ -10,6 +10,7 @@ import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemp
 import { getPendingDeals, updateDealStatus } from '../lib/supabaseService';
 import ImageUpload from '../components/ImageUpload';
 import Modal from '../components/Modal';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import PaymentTransactionTable from '../components/PaymentTransactionTable';
 
 const getExpiryDate = (days: number): string => {
@@ -86,7 +87,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const AdminPage: React.FC = () => {
   // Common
   const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals'>('deals');
+  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'analytics'>('analytics');
   const [showSuccess, setShowSuccess] = useState('');
 
   // Deals Management
@@ -460,6 +461,9 @@ const AdminPage: React.FC = () => {
       </header>
 
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+        <button onClick={() => setActiveTab('analytics')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'analytics' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
+          Analytics
+        </button>
         <button onClick={() => setActiveTab('deals')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'deals' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           {t('manageDeals')}
         </button>
@@ -484,578 +488,603 @@ const AdminPage: React.FC = () => {
             <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingDeals.length}</span>
           )}
         </button>
+
       </div>
 
-      {activeTab === 'pending_approvals' && (
-        <section>
-          <h2 className="text-2xl font-bold mb-4">Pending Approvals</h2>
-          <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
-                <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
-                  <tr>
-                    <th scope="col" className="px-6 py-3">Title</th>
-                    <th scope="col" className="px-6 py-3">Partner</th>
-                    <th scope="col" className="px-6 py-3">Category</th>
-                    <th scope="col" className="px-6 py-3">Price</th>
-                    <th scope="col" className="px-6 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingDeals.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-brand-text-muted">
-                        No pending deals.
-                      </td>
-                    </tr>
-                  ) : (
-                    pendingDeals.map(deal => (
-                      <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
-                          <div className="flex items-center">
-                            {deal.imageUrl && <img src={deal.imageUrl} alt="" className="w-8 h-8 rounded object-cover mr-2" />}
-                            {deal.title}
-                          </div>
-                        </th>
-                        <td className="px-6 py-4">{deal.vendor}</td>
-                        <td className="px-6 py-4">{deal.category}</td>
-                        <td className="px-6 py-4">${deal.discountedPrice}</td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button onClick={() => setEditingDeal(deal)} className="font-medium text-blue-600 hover:underline">View Details</button>
-                          <button onClick={() => handleApproveDeal(deal.id)} className="font-medium text-green-600 hover:underline">Approve</button>
-                          <button onClick={() => handleRejectDeal(deal.id)} className="font-medium text-red-600 hover:underline">Reject</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Deal Details Modal */}
-          {editingDeal && activeTab === 'pending_approvals' && (
-            <Modal isOpen={!!editingDeal} onClose={() => setEditingDeal(null)} title="Deal Details">
-              <div className="space-y-4">
-                {editingDeal.imageUrl && (
-                  <img src={editingDeal.imageUrl} alt={editingDeal.title} className="w-full h-48 object-cover rounded-lg" />
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Title (EN)</h3>
-                    <p>{editingDeal.title}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Title (TR)</h3>
-                    <p>{editingDeal.title_tr || '-'}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Description (EN)</h3>
-                    <p className="text-sm">{editingDeal.description}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Description (TR)</h3>
-                    <p className="text-sm">{editingDeal.description_tr || '-'}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Original Price</h3>
-                    <p>${editingDeal.originalPrice}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Discounted Price</h3>
-                    <p>${editingDeal.discountedPrice} ({editingDeal.discountPercentage}%)</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Category</h3>
-                    <p>{editingDeal.category}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500">Expires At</h3>
-                    <p>{new Date(editingDeal.expiresAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <button
-                    onClick={() => { handleRejectDeal(editingDeal.id); setEditingDeal(null); }}
-                    className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => { handleApproveDeal(editingDeal.id); setEditingDeal(null); }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    Approve
-                  </button>
-                </div>
-              </div>
-            </Modal>
-          )}
-        </section>
-      )}
-
-      {activeTab === 'subscriptions' && (
-        <>
-          {!isSubscriptionFormVisible && (
-            <button onClick={() => { setEditingPlan(null); setPlanFormData({ tier: '', name: '', name_tr: '', price: 0, price_tr: 0, redemptions_per_period: 0, features: [], features_tr: [], is_active: true }); setIsSubscriptionFormVisible(true); }} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
-              Add Plan
-            </button>
-          )}
-
-          {isSubscriptionFormVisible && (
-            <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
-              <h2 className="text-2xl font-bold mb-4">{editingPlan ? 'Edit Plan' : 'Add Plan'}</h2>
-              <form onSubmit={handlePlanSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium mb-1">Tier Key (Unique)</label><input type="text" value={planFormData.tier} onChange={e => setPlanFormData({ ...planFormData, tier: e.target.value })} className="w-full p-2 border rounded" required /></div>
-                  <div><label className="block text-sm font-medium mb-1">Redemptions/Year</label><input type="number" value={planFormData.redemptions_per_period} onChange={e => setPlanFormData({ ...planFormData, redemptions_per_period: parseInt(e.target.value) })} className="w-full p-2 border rounded" required /></div>
-                  <div><label className="block text-sm font-medium mb-1">Name (EN)</label><input type="text" value={planFormData.name} onChange={e => setPlanFormData({ ...planFormData, name: e.target.value })} className="w-full p-2 border rounded" required /></div>
-                  <div><label className="block text-sm font-medium mb-1">Name (TR)</label><input type="text" value={planFormData.name_tr} onChange={e => setPlanFormData({ ...planFormData, name_tr: e.target.value })} className="w-full p-2 border rounded" required /></div>
-                  <div><label className="block text-sm font-medium mb-1">Price (USD)</label><input type="number" step="0.01" value={planFormData.price} onChange={e => setPlanFormData({ ...planFormData, price: parseFloat(e.target.value) })} className="w-full p-2 border rounded" required /></div>
-                  <div><label className="block text-sm font-medium mb-1">Price (TL)</label><input type="number" step="0.01" value={planFormData.price_tr} onChange={e => setPlanFormData({ ...planFormData, price_tr: parseFloat(e.target.value) })} className="w-full p-2 border rounded" required /></div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Features (EN) - JSON Array</label>
-                    <textarea value={JSON.stringify(planFormData.features)} onChange={e => { try { setPlanFormData({ ...planFormData, features: JSON.parse(e.target.value) }); } catch (err) { } }} className="w-full p-2 border rounded h-24" />
-                    <p className="text-xs text-gray-500">Enter as valid JSON array, e.g. ["Feature 1", "Feature 2"]</p>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Features (TR) - JSON Array</label>
-                    <textarea value={JSON.stringify(planFormData.features_tr)} onChange={e => { try { setPlanFormData({ ...planFormData, features_tr: JSON.parse(e.target.value) }); } catch (err) { } }} className="w-full p-2 border rounded h-24" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-4">
-                  <button type="button" onClick={() => setIsSubscriptionFormVisible(false)} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-                  <button type="submit" className="px-4 py-2 bg-brand-primary text-white rounded">Save</button>
-                </div>
-              </form>
-            </section>
-          )}
-
-          <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 dark:bg-brand-bg">
-                <tr>
-                  <th className="px-6 py-3">Tier</th>
-                  <th className="px-6 py-3">Name</th>
-                  <th className="px-6 py-3">Price</th>
-                  <th className="px-6 py-3">Redemptions</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptionPlans.map(plan => (
-                  <tr key={plan.id} className="border-b">
-                    <td className="px-6 py-4">{plan.tier}</td>
-                    <td className="px-6 py-4">{plan.name} / {plan.name_tr}</td>
-                    <td className="px-6 py-4">${plan.price} / ₺{plan.price_tr}</td>
-                    <td className="px-6 py-4">{plan.redemptions_per_period}</td>
-                    <td className="px-6 py-4">{plan.is_active ? 'Active' : 'Inactive'}</td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:underline">Edit</button>
-                      {plan.is_active && <button onClick={() => handleDeletePlanClick(plan.id)} className="text-red-500 hover:underline">Deactivate</button>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {activeTab === 'deals' && (
-        <>
-          {!isDealFormVisible && (
-            <button onClick={() => setIsDealFormVisible(true)} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
-              {t('addDeal')}
-            </button>
-          )}
-
-          {isDealFormVisible && (
-            <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
-              <h2 className="text-2xl font-bold mb-4">{editingDeal ? t('editDeal') : t('addDeal')}</h2>
-              <form onSubmit={handleDealSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleLabel')}</label><div className="relative"><input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title_tr' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleTrLabel')}</label><div className="relative"><input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionLabel')}</label><div className="relative"><textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description_tr' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionTrLabel')}</label><div className="relative"><textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label>
-                    <ImageUpload
-                      value={dealFormData.imageUrl}
-                      onChange={(base64) => setDealFormData(prev => ({ ...prev, imageUrl: base64 }))}
-                      placeholder={t('imageUrlOptionalHint') || "Upload Deal Image"}
-                    />
-                    {/* Fallback text input for external URLs if needed, or just keep it simple */}
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 mb-1">Or enter URL manually:</p>
-                      <input type="text" name="imageUrl" value={dealFormData.imageUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-xs" placeholder="https://..." />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label><select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"><option>Dining</option><option>Wellness</option><option>Travel</option></select></div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
-                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  </div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('vendorLabel')}</label><input type="text" name="vendor" value={dealFormData.vendor} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitLabel')}</label><input type="text" name="usageLimit" value={dealFormData.usageLimit} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitTrLabel')}</label><input type="text" name="usageLimit_tr" value={dealFormData.usageLimit_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityLabel')}</label><input type="text" name="validity" value={dealFormData.validity} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityTrLabel')}</label><input type="text" name="validity_tr" value={dealFormData.validity_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('termsUrlLabel')}</label><input type="text" name="termsUrl" value={dealFormData.termsUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label><input type="text" name="redemptionCode" value={dealFormData.redemptionCode} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('expiresInDaysLabel')}</label><input type="number" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required disabled={neverExpires} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:cursor-not-allowed" /></div>
-                  <div className="flex items-center space-x-2"><input type="checkbox" id="neverExpires" name="neverExpires" checked={neverExpires} onChange={e => setNeverExpires(e.target.checked)} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="neverExpires" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">{t('neverExpires')}</label></div>
-                  <div className="flex items-center space-x-2 pt-5"><input type="checkbox" id="isExternal" name="isExternal" checked={dealFormData.isExternal} onChange={handleDealInputChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="isExternal" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">Is External Deal?</label></div>
-
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="col-span-2 text-sm font-semibold text-gray-700 dark:text-brand-text-light">Location (Optional)</div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Latitude</label>
-                      <input type="number" step="any" name="latitude" value={dealFormData.latitude || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 41.0082" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Longitude</label>
-                      <input type="number" step="any" name="longitude" value={dealFormData.longitude || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 28.9784" />
-                    </div>
-                  </div>
-                </div>
-                <div className="md:col-span-2 flex justify-end gap-4 mt-4">
-                  <button type="button" onClick={resetDealForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button>
-                  <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex items-center justify-center disabled:bg-gray-500 w-44" disabled={isSaving}>
-                    {isSaving ? (
-                      <><SpinnerIcon className="w-5 h-5 mr-2" /><span>{isGeneratingImage ? t('generatingImage') : t('saving')}</span></>
-                    ) : (
-                      editingDeal ? t('updateDeal') : t('saveDeal')
-                    )}
-                  </button>
-                </div>
-              </form>
-            </section>
-          )}
-
+      {
+        activeTab === 'analytics' && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">{t('allDeals')}</h2>
-            <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
-                  <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg"><tr><th scope="col" className="px-6 py-3">Title</th><th scope="col" className="px-6 py-3">Category</th><th scope="col" className="px-6 py-3">Price</th><th scope="col" className="px-6 py-3">Discount</th><th scope="col" className="px-6 py-3">Tier</th><th scope="col" className="px-6 py-3 text-right">Actions</th></tr></thead>
-                  <tbody>{sortedDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4">{deal.requiredTier}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
-                </table>
-              </div>
-            </div>
+            <AnalyticsDashboard />
           </section>
-        </>
-      )}
+        )
+      }
 
-      {activeTab === 'users' && (
-        <>
-          {isUserFormVisible && (
-            <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
-              <h2 className="text-2xl font-bold mb-4">{t('editUser')}</h2>
-              <form onSubmit={handleUserFormSubmit} className="space-y-4 max-w-2xl">
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div><label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label><input type="text" id="name" name="name" value={userFormData.name} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label><input type="email" id="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div><label htmlFor="tier" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('tier')}</label><select id="tier" name="tier" value={userFormData.tier} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
-                  <div><label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile'}</label><input type="tel" id="mobile" name="mobile" value={userFormData.mobile || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div className="md:col-span-2"><label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label><input type="text" id="address" name="address" value={userFormData.address || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                  <div className="md:col-span-2"><label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label><input type="text" id="billingAddress" name="billingAddress" value={userFormData.billingAddress || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold mb-3">{t('addExtraRedemptions')}</h3>
-                  <div className="p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
-                    <p className="text-sm text-gray-600 dark:text-brand-text-muted mb-2">{t('currentBonusRedemptions')}: <span className="font-bold text-lg text-gray-900 dark:text-white">{userFormData.extraRedemptions || 0}</span></p>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={redemptionsToAdd}
-                        onChange={e => setRedemptionsToAdd(Math.max(0, parseInt(e.target.value, 10)))}
-                        placeholder={t('redemptionsToAdd')}
-                        className="flex-grow bg-white dark:bg-brand-surface rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddRedemptions}
-                        disabled={!redemptionsToAdd || redemptionsToAdd <= 0}
-                        className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-                        {t('addRedemptions')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold mb-3">Notification Preferences</h3>
-                  <div className="space-y-3 p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="generalNotifications" className="text-sm text-gray-700 dark:text-brand-text-light">General Notifications (Master Switch)</label>
-                      <input
-                        type="checkbox"
-                        id="generalNotifications"
-                        checked={userFormData.notificationPreferences?.generalNotifications ?? true}
-                        onChange={(e) => setUserFormData(prev => ({
-                          ...prev,
-                          notificationPreferences: {
-                            ...prev.notificationPreferences,
-                            generalNotifications: e.target.checked,
-                            newDeals: prev.notificationPreferences?.newDeals ?? true,
-                            expiringDeals: prev.notificationPreferences?.expiringDeals ?? true
-                          }
-                        }))}
-                        className="h-5 w-5 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
-                      <label htmlFor="newDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">New Deals</label>
-                      <input
-                        type="checkbox"
-                        id="newDeals"
-                        checked={userFormData.notificationPreferences?.newDeals ?? true}
-                        disabled={userFormData.notificationPreferences?.generalNotifications === false}
-                        onChange={(e) => setUserFormData(prev => ({
-                          ...prev,
-                          notificationPreferences: {
-                            ...prev.notificationPreferences!,
-                            newDeals: e.target.checked
-                          }
-                        }))}
-                        className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
-                      <label htmlFor="expiringDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">Expiring Deals</label>
-                      <input
-                        type="checkbox"
-                        id="expiringDeals"
-                        checked={userFormData.notificationPreferences?.expiringDeals ?? true}
-                        disabled={userFormData.notificationPreferences?.generalNotifications === false}
-                        onChange={(e) => setUserFormData(prev => ({
-                          ...prev,
-                          notificationPreferences: {
-                            ...prev.notificationPreferences!,
-                            expiringDeals: e.target.checked
-                          }
-                        }))}
-                        className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold mb-3">{t('manageSavedDeals')}</h3>
-                  <div className="space-y-2 mb-4">
-                    {userSavedDeals.length > 0 ? (
-                      userSavedDeals.map(deal => (
-                        <div key={deal.id} className="flex justify-between items-center bg-gray-100 dark:bg-brand-bg p-2 rounded-md">
-                          <p className="text-sm text-gray-800 dark:text-brand-text-light">{language === 'tr' ? deal.title_tr : deal.title}</p>
-                          <button type="button" onClick={() => handleRemoveDealFromUser(deal.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 font-semibold">{t('remove')}</button>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500 dark:text-brand-text-muted italic">{t('noSavedDealsForUser')}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
-                      <option value="">{t('selectDeal')}</option>
-                      {deals.map(deal => (
-                        <option key={deal.id} value={deal.id} disabled={userFormData.savedDeals?.includes(deal.id)}>
-                          {language === 'tr' ? deal.title_tr : deal.title}
-                        </option>
-                      ))}
-                    </select>
-                    <button type="button" onClick={handleAddDealToUser} disabled={!dealToAdd} className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-                      {t('add')}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">{t('referralChainLabel')}</h3>
-                    <div className="bg-gray-100 dark:bg-brand-bg p-3 rounded-md text-sm text-gray-800 dark:text-brand-text-light min-h-[40px] flex items-center">
-                      {(userFormData.referralChain?.length ?? 0) > 0 ? (
-                        <span>{userFormData.referralChain?.map(id => userIdToNameMap[id] || 'Unknown').join(' → ')}</span>
-                      ) : (
-                        <p className="italic text-gray-500 dark:text-brand-text-muted">{t('topOfChain')}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">{t('referralNetworkLabel')}</h3>
-                    <div className="bg-gray-100 dark:bg-brand-bg p-3 rounded-md text-sm text-gray-800 dark:text-brand-text-light min-h-[40px]">
-                      {(userFormData.referralNetwork?.length ?? 0) > 0 ? (
-                        <ul className="list-disc list-inside space-y-1">
-                          {userFormData.referralNetwork?.map(id => (
-                            <li key={id}>{userIdToNameMap[id] || 'Unknown User'}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="italic text-gray-500 dark:text-brand-text-muted">{t('noNetwork')}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-4 pt-4"><button type="button" onClick={resetUserForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button><button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">{t('updateUser')}</button></div>
-              </form>
-            </section>
-          )}
-
-          <section className="mb-8 bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-bold mb-4">Global User Actions</h2>
-            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-brand-bg rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex-grow">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Master Notification Switch</h3>
-                <p className="text-sm text-gray-500 dark:text-brand-text-muted">Enable or disable notifications for ALL users. This overrides individual settings.</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to ENABLE notifications for ALL users?')) {
-                      updateAllUsersNotificationPreferences({ generalNotifications: true });
-                      setShowSuccess('Notifications enabled for all users');
-                      setTimeout(() => setShowSuccess(''), 3000);
-                    }
-                  }}
-                  className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  Enable All
-                </button>
-                <button
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to DISABLE notifications for ALL users?')) {
-                      updateAllUsersNotificationPreferences({ generalNotifications: false });
-                      setShowSuccess('Notifications disabled for all users');
-                      setTimeout(() => setShowSuccess(''), 3000);
-                    }
-                  }}
-                  className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                >
-                  Disable All
-                </button>
-              </div>
-            </div>
-          </section>
-
+      {
+        activeTab === 'pending_approvals' && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">{t('allUsers')}</h2>
+            <h2 className="text-2xl font-bold mb-4">Pending Approvals</h2>
             <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
                   <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                     <tr>
-                      <th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th>
-                      <th scope="col" className="px-6 py-3">{t('emailLabel')}</th>
-                      <th scope="col" className="px-6 py-3">{t('mobileLabel') || 'Mobile'}</th>
-                      <th scope="col" className="px-6 py-3">{t('tier')}</th>
-                      <th scope="col" className="px-6 py-3">Redemptions Left</th>
-                      <th scope="col" className="px-6 py-3">Renews On</th>
-                      <th scope="col" className="px-6 py-3 text-right">{t('actions')}</th>
+                      <th scope="col" className="px-6 py-3">Title</th>
+                      <th scope="col" className="px-6 py-3">Partner</th>
+                      <th scope="col" className="px-6 py-3">Category</th>
+                      <th scope="col" className="px-6 py-3">Price</th>
+                      <th scope="col" className="px-6 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedUsers.map(user => {
-                      const { remaining, total } = calculateRemainingRedemptions(user);
-                      const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
-
-                      return (
-                        <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    {pendingDeals.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-brand-text-muted">
+                          No pending deals.
+                        </td>
+                      </tr>
+                    ) : (
+                      pendingDeals.map(deal => (
+                        <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                           <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
-                            {user.name}{user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
+                            <div className="flex items-center">
+                              {deal.imageUrl && <img src={deal.imageUrl} alt="" className="w-8 h-8 rounded object-cover mr-2" />}
+                              {deal.title}
+                            </div>
                           </th>
-                          <td className="px-6 py-4">{user.email}</td>
-                          <td className="px-6 py-4">{user.mobile || '-'}</td>
-                          <td className="px-6 py-4">{user.tier}</td>
-                          <td className="px-6 py-4">
-                            <span className={`font-semibold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
-                              {total === Infinity ? '∞' : `${remaining} / ${total}`}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">{renewalDate}</td>
+                          <td className="px-6 py-4">{deal.vendor}</td>
+                          <td className="px-6 py-4">{deal.category}</td>
+                          <td className="px-6 py-4">${deal.discountedPrice}</td>
                           <td className="px-6 py-4 text-right space-x-2">
-                            <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
-                            <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
-                            <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
+                            <button onClick={() => setEditingDeal(deal)} className="font-medium text-blue-600 hover:underline">View Details</button>
+                            <button onClick={() => handleApproveDeal(deal.id)} className="font-medium text-green-600 hover:underline">Approve</button>
+                            <button onClick={() => handleRejectDeal(deal.id)} className="font-medium text-red-600 hover:underline">Reject</button>
                           </td>
                         </tr>
-                      );
-                    })}
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
-          </section>
 
-          {/* User Redemptions Modal */}
-          <Modal
-            isOpen={!!viewingRedemptionsForUser}
-            onClose={() => setViewingRedemptionsForUser(null)}
-            title={`${viewingRedemptionsForUser?.name}'s Redemptions`}
-          >
-            <div className="p-4">
-              {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
+            {/* Deal Details Modal */}
+            {editingDeal && activeTab === 'pending_approvals' && (
+              <Modal isOpen={!!editingDeal} onClose={() => setEditingDeal(null)} title="Deal Details">
                 <div className="space-y-4">
-                  {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
-                    const deal = deals.find(d => d.id === redemption.dealId);
-                    return (
-                      <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
-                        </p>
-                        <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
-                          <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
-                          {deal && <span>Code: {deal.redemptionCode}</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {editingDeal.imageUrl && (
+                    <img src={editingDeal.imageUrl} alt={editingDeal.title} className="w-full h-48 object-cover rounded-lg" />
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Title (EN)</h3>
+                      <p>{editingDeal.title}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Title (TR)</h3>
+                      <p>{editingDeal.title_tr || '-'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Description (EN)</h3>
+                      <p className="text-sm">{editingDeal.description}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Description (TR)</h3>
+                      <p className="text-sm">{editingDeal.description_tr || '-'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Original Price</h3>
+                      <p>${editingDeal.originalPrice}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Discounted Price</h3>
+                      <p>${editingDeal.discountedPrice} ({editingDeal.discountPercentage}%)</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Category</h3>
+                      <p>{editingDeal.category}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500">Expires At</h3>
+                      <p>{new Date(editingDeal.expiresAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
+                    <button
+                      onClick={() => { handleRejectDeal(editingDeal.id); setEditingDeal(null); }}
+                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => { handleApproveDeal(editingDeal.id); setEditingDeal(null); }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      Approve
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
-                  No redemptions found for this user.
-                </p>
-              )}
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={() => setViewingRedemptionsForUser(null)}
-                  className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  {t('close')}
-                </button>
-              </div>
+              </Modal>
+            )}
+          </section>
+        )
+      }
+
+      {
+        activeTab === 'subscriptions' && (
+          <>
+            {!isSubscriptionFormVisible && (
+              <button onClick={() => { setEditingPlan(null); setPlanFormData({ tier: '', name: '', name_tr: '', price: 0, price_tr: 0, redemptions_per_period: 0, features: [], features_tr: [], is_active: true }); setIsSubscriptionFormVisible(true); }} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
+                Add Plan
+              </button>
+            )}
+
+            {isSubscriptionFormVisible && (
+              <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
+                <h2 className="text-2xl font-bold mb-4">{editingPlan ? 'Edit Plan' : 'Add Plan'}</h2>
+                <form onSubmit={handlePlanSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-medium mb-1">Tier Key (Unique)</label><input type="text" value={planFormData.tier} onChange={e => setPlanFormData({ ...planFormData, tier: e.target.value })} className="w-full p-2 border rounded" required /></div>
+                    <div><label className="block text-sm font-medium mb-1">Redemptions/Year</label><input type="number" value={planFormData.redemptions_per_period} onChange={e => setPlanFormData({ ...planFormData, redemptions_per_period: parseInt(e.target.value) })} className="w-full p-2 border rounded" required /></div>
+                    <div><label className="block text-sm font-medium mb-1">Name (EN)</label><input type="text" value={planFormData.name} onChange={e => setPlanFormData({ ...planFormData, name: e.target.value })} className="w-full p-2 border rounded" required /></div>
+                    <div><label className="block text-sm font-medium mb-1">Name (TR)</label><input type="text" value={planFormData.name_tr} onChange={e => setPlanFormData({ ...planFormData, name_tr: e.target.value })} className="w-full p-2 border rounded" required /></div>
+                    <div><label className="block text-sm font-medium mb-1">Price (USD)</label><input type="number" step="0.01" value={planFormData.price} onChange={e => setPlanFormData({ ...planFormData, price: parseFloat(e.target.value) })} className="w-full p-2 border rounded" required /></div>
+                    <div><label className="block text-sm font-medium mb-1">Price (TL)</label><input type="number" step="0.01" value={planFormData.price_tr} onChange={e => setPlanFormData({ ...planFormData, price_tr: parseFloat(e.target.value) })} className="w-full p-2 border rounded" required /></div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium mb-1">Features (EN) - JSON Array</label>
+                      <textarea value={JSON.stringify(planFormData.features)} onChange={e => { try { setPlanFormData({ ...planFormData, features: JSON.parse(e.target.value) }); } catch (err) { } }} className="w-full p-2 border rounded h-24" />
+                      <p className="text-xs text-gray-500">Enter as valid JSON array, e.g. ["Feature 1", "Feature 2"]</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium mb-1">Features (TR) - JSON Array</label>
+                      <textarea value={JSON.stringify(planFormData.features_tr)} onChange={e => { try { setPlanFormData({ ...planFormData, features_tr: JSON.parse(e.target.value) }); } catch (err) { } }} className="w-full p-2 border rounded h-24" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-4">
+                    <button type="button" onClick={() => setIsSubscriptionFormVisible(false)} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-brand-primary text-white rounded">Save</button>
+                  </div>
+                </form>
+              </section>
+            )}
+
+            <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 dark:bg-brand-bg">
+                  <tr>
+                    <th className="px-6 py-3">Tier</th>
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Price</th>
+                    <th className="px-6 py-3">Redemptions</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptionPlans.map(plan => (
+                    <tr key={plan.id} className="border-b">
+                      <td className="px-6 py-4">{plan.tier}</td>
+                      <td className="px-6 py-4">{plan.name} / {plan.name_tr}</td>
+                      <td className="px-6 py-4">${plan.price} / ₺{plan.price_tr}</td>
+                      <td className="px-6 py-4">{plan.redemptions_per_period}</td>
+                      <td className="px-6 py-4">{plan.is_active ? 'Active' : 'Inactive'}</td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:underline">Edit</button>
+                        {plan.is_active && <button onClick={() => handleDeletePlanClick(plan.id)} className="text-red-500 hover:underline">Deactivate</button>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </Modal>
-        </>
-      )}
+          </>
+        )
+      }
 
-      {activeTab === 'content' && (
-        <ContentManager />
-      )}
+      {
+        activeTab === 'deals' && (
+          <>
+            {!isDealFormVisible && (
+              <button onClick={() => setIsDealFormVisible(true)} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
+                {t('addDeal')}
+              </button>
+            )}
 
-      {activeTab === 'flight_routes' && (
-        <FlightRouteManager />
-      )}
+            {isDealFormVisible && (
+              <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
+                <h2 className="text-2xl font-bold mb-4">{editingDeal ? t('editDeal') : t('addDeal')}</h2>
+                <form onSubmit={handleDealSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleLabel')}</label><div className="relative"><input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title_tr' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleTrLabel')}</label><div className="relative"><input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionLabel')}</label><div className="relative"><textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description_tr' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionTrLabel')}</label><div className="relative"><textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label>
+                      <ImageUpload
+                        value={dealFormData.imageUrl}
+                        onChange={(base64) => setDealFormData(prev => ({ ...prev, imageUrl: base64 }))}
+                        placeholder={t('imageUrlOptionalHint') || "Upload Deal Image"}
+                      />
+                      {/* Fallback text input for external URLs if needed, or just keep it simple */}
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-500 mb-1">Or enter URL manually:</p>
+                        <input type="text" name="imageUrl" value={dealFormData.imageUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-xs" placeholder="https://..." />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label><select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"><option>Dining</option><option>Wellness</option><option>Travel</option></select></div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                      <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
+                      <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    </div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('vendorLabel')}</label><input type="text" name="vendor" value={dealFormData.vendor} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitLabel')}</label><input type="text" name="usageLimit" value={dealFormData.usageLimit} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitTrLabel')}</label><input type="text" name="usageLimit_tr" value={dealFormData.usageLimit_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityLabel')}</label><input type="text" name="validity" value={dealFormData.validity} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityTrLabel')}</label><input type="text" name="validity_tr" value={dealFormData.validity_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('termsUrlLabel')}</label><input type="text" name="termsUrl" value={dealFormData.termsUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label><input type="text" name="redemptionCode" value={dealFormData.redemptionCode} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('expiresInDaysLabel')}</label><input type="number" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required disabled={neverExpires} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:cursor-not-allowed" /></div>
+                    <div className="flex items-center space-x-2"><input type="checkbox" id="neverExpires" name="neverExpires" checked={neverExpires} onChange={e => setNeverExpires(e.target.checked)} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="neverExpires" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">{t('neverExpires')}</label></div>
+                    <div className="flex items-center space-x-2 pt-5"><input type="checkbox" id="isExternal" name="isExternal" checked={dealFormData.isExternal} onChange={handleDealInputChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="isExternal" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">Is External Deal?</label></div>
 
-      {activeTab === 'payments' && (
-        <PaymentTransactionTable />
-      )}
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="col-span-2 text-sm font-semibold text-gray-700 dark:text-brand-text-light">Location (Optional)</div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Latitude</label>
+                        <input type="number" step="any" name="latitude" value={dealFormData.latitude || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 41.0082" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Longitude</label>
+                        <input type="number" step="any" name="longitude" value={dealFormData.longitude || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 28.9784" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 flex justify-end gap-4 mt-4">
+                    <button type="button" onClick={resetDealForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button>
+                    <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex items-center justify-center disabled:bg-gray-500 w-44" disabled={isSaving}>
+                      {isSaving ? (
+                        <><SpinnerIcon className="w-5 h-5 mr-2" /><span>{isGeneratingImage ? t('generatingImage') : t('saving')}</span></>
+                      ) : (
+                        editingDeal ? t('updateDeal') : t('saveDeal')
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            )}
 
-      {showSuccess && (
-        <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
-          {showSuccess}
-        </div>
-      )}
-    </div>
+            <section>
+              <h2 className="text-2xl font-bold mb-4">{t('allDeals')}</h2>
+              <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
+                    <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg"><tr><th scope="col" className="px-6 py-3">Title</th><th scope="col" className="px-6 py-3">Category</th><th scope="col" className="px-6 py-3">Price</th><th scope="col" className="px-6 py-3">Discount</th><th scope="col" className="px-6 py-3">Tier</th><th scope="col" className="px-6 py-3 text-right">Actions</th></tr></thead>
+                    <tbody>{sortedDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4">{deal.requiredTier}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </>
+        )
+      }
+
+      {
+        activeTab === 'users' && (
+          <>
+            {isUserFormVisible && (
+              <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
+                <h2 className="text-2xl font-bold mb-4">{t('editUser')}</h2>
+                <form onSubmit={handleUserFormSubmit} className="space-y-4 max-w-2xl">
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div><label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label><input type="text" id="name" name="name" value={userFormData.name} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label><input type="email" id="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div><label htmlFor="tier" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('tier')}</label><select id="tier" name="tier" value={userFormData.tier} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
+                    <div><label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile'}</label><input type="tel" id="mobile" name="mobile" value={userFormData.mobile || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div className="md:col-span-2"><label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label><input type="text" id="address" name="address" value={userFormData.address || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                    <div className="md:col-span-2"><label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label><input type="text" id="billingAddress" name="billingAddress" value={userFormData.billingAddress || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold mb-3">{t('addExtraRedemptions')}</h3>
+                    <div className="p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
+                      <p className="text-sm text-gray-600 dark:text-brand-text-muted mb-2">{t('currentBonusRedemptions')}: <span className="font-bold text-lg text-gray-900 dark:text-white">{userFormData.extraRedemptions || 0}</span></p>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={redemptionsToAdd}
+                          onChange={e => setRedemptionsToAdd(Math.max(0, parseInt(e.target.value, 10)))}
+                          placeholder={t('redemptionsToAdd')}
+                          className="flex-grow bg-white dark:bg-brand-surface rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddRedemptions}
+                          disabled={!redemptionsToAdd || redemptionsToAdd <= 0}
+                          className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                          {t('addRedemptions')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold mb-3">Notification Preferences</h3>
+                    <div className="space-y-3 p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="generalNotifications" className="text-sm text-gray-700 dark:text-brand-text-light">General Notifications (Master Switch)</label>
+                        <input
+                          type="checkbox"
+                          id="generalNotifications"
+                          checked={userFormData.notificationPreferences?.generalNotifications ?? true}
+                          onChange={(e) => setUserFormData(prev => ({
+                            ...prev,
+                            notificationPreferences: {
+                              ...prev.notificationPreferences,
+                              generalNotifications: e.target.checked,
+                              newDeals: prev.notificationPreferences?.newDeals ?? true,
+                              expiringDeals: prev.notificationPreferences?.expiringDeals ?? true
+                            }
+                          }))}
+                          className="h-5 w-5 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
+                        <label htmlFor="newDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">New Deals</label>
+                        <input
+                          type="checkbox"
+                          id="newDeals"
+                          checked={userFormData.notificationPreferences?.newDeals ?? true}
+                          disabled={userFormData.notificationPreferences?.generalNotifications === false}
+                          onChange={(e) => setUserFormData(prev => ({
+                            ...prev,
+                            notificationPreferences: {
+                              ...prev.notificationPreferences!,
+                              newDeals: e.target.checked
+                            }
+                          }))}
+                          className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
+                        <label htmlFor="expiringDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">Expiring Deals</label>
+                        <input
+                          type="checkbox"
+                          id="expiringDeals"
+                          checked={userFormData.notificationPreferences?.expiringDeals ?? true}
+                          disabled={userFormData.notificationPreferences?.generalNotifications === false}
+                          onChange={(e) => setUserFormData(prev => ({
+                            ...prev,
+                            notificationPreferences: {
+                              ...prev.notificationPreferences!,
+                              expiringDeals: e.target.checked
+                            }
+                          }))}
+                          className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold mb-3">{t('manageSavedDeals')}</h3>
+                    <div className="space-y-2 mb-4">
+                      {userSavedDeals.length > 0 ? (
+                        userSavedDeals.map(deal => (
+                          <div key={deal.id} className="flex justify-between items-center bg-gray-100 dark:bg-brand-bg p-2 rounded-md">
+                            <p className="text-sm text-gray-800 dark:text-brand-text-light">{language === 'tr' ? deal.title_tr : deal.title}</p>
+                            <button type="button" onClick={() => handleRemoveDealFromUser(deal.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 font-semibold">{t('remove')}</button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-brand-text-muted italic">{t('noSavedDealsForUser')}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                        <option value="">{t('selectDeal')}</option>
+                        {deals.map(deal => (
+                          <option key={deal.id} value={deal.id} disabled={userFormData.savedDeals?.includes(deal.id)}>
+                            {language === 'tr' ? deal.title_tr : deal.title}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" onClick={handleAddDealToUser} disabled={!dealToAdd} className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                        {t('add')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">{t('referralChainLabel')}</h3>
+                      <div className="bg-gray-100 dark:bg-brand-bg p-3 rounded-md text-sm text-gray-800 dark:text-brand-text-light min-h-[40px] flex items-center">
+                        {(userFormData.referralChain?.length ?? 0) > 0 ? (
+                          <span>{userFormData.referralChain?.map(id => userIdToNameMap[id] || 'Unknown').join(' → ')}</span>
+                        ) : (
+                          <p className="italic text-gray-500 dark:text-brand-text-muted">{t('topOfChain')}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">{t('referralNetworkLabel')}</h3>
+                      <div className="bg-gray-100 dark:bg-brand-bg p-3 rounded-md text-sm text-gray-800 dark:text-brand-text-light min-h-[40px]">
+                        {(userFormData.referralNetwork?.length ?? 0) > 0 ? (
+                          <ul className="list-disc list-inside space-y-1">
+                            {userFormData.referralNetwork?.map(id => (
+                              <li key={id}>{userIdToNameMap[id] || 'Unknown User'}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="italic text-gray-500 dark:text-brand-text-muted">{t('noNetwork')}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4 pt-4"><button type="button" onClick={resetUserForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button><button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">{t('updateUser')}</button></div>
+                </form>
+              </section>
+            )}
+
+            <section className="mb-8 bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
+              <h2 className="text-xl font-bold mb-4">Global User Actions</h2>
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-brand-bg rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex-grow">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Master Notification Switch</h3>
+                  <p className="text-sm text-gray-500 dark:text-brand-text-muted">Enable or disable notifications for ALL users. This overrides individual settings.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to ENABLE notifications for ALL users?')) {
+                        updateAllUsersNotificationPreferences({ generalNotifications: true });
+                        setShowSuccess('Notifications enabled for all users');
+                        setTimeout(() => setShowSuccess(''), 3000);
+                      }
+                    }}
+                    className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Enable All
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to DISABLE notifications for ALL users?')) {
+                        updateAllUsersNotificationPreferences({ generalNotifications: false });
+                        setShowSuccess('Notifications disabled for all users');
+                        setTimeout(() => setShowSuccess(''), 3000);
+                      }
+                    }}
+                    className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Disable All
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold mb-4">{t('allUsers')}</h2>
+              <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
+                    <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
+                      <tr>
+                        <th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th>
+                        <th scope="col" className="px-6 py-3">{t('emailLabel')}</th>
+                        <th scope="col" className="px-6 py-3">{t('mobileLabel') || 'Mobile'}</th>
+                        <th scope="col" className="px-6 py-3">{t('tier')}</th>
+                        <th scope="col" className="px-6 py-3">Redemptions Left</th>
+                        <th scope="col" className="px-6 py-3">Renews On</th>
+                        <th scope="col" className="px-6 py-3 text-right">{t('actions')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedUsers.map(user => {
+                        const { remaining, total } = calculateRemainingRedemptions(user);
+                        const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
+
+                        return (
+                          <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
+                              {user.name}{user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
+                            </th>
+                            <td className="px-6 py-4">{user.email}</td>
+                            <td className="px-6 py-4">{user.mobile || '-'}</td>
+                            <td className="px-6 py-4">{user.tier}</td>
+                            <td className="px-6 py-4">
+                              <span className={`font-semibold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                {total === Infinity ? '∞' : `${remaining} / ${total}`}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">{renewalDate}</td>
+                            <td className="px-6 py-4 text-right space-x-2">
+                              <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
+                              <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
+                              <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            {/* User Redemptions Modal */}
+            <Modal
+              isOpen={!!viewingRedemptionsForUser}
+              onClose={() => setViewingRedemptionsForUser(null)}
+              title={`${viewingRedemptionsForUser?.name}'s Redemptions`}
+            >
+              <div className="p-4">
+                {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
+                  <div className="space-y-4">
+                    {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
+                      const deal = deals.find(d => d.id === redemption.dealId);
+                      return (
+                        <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
+                          </p>
+                          <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
+                            <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
+                            {deal && <span>Code: {deal.redemptionCode}</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
+                    No redemptions found for this user.
+                  </p>
+                )}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setViewingRedemptionsForUser(null)}
+                    className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    {t('close')}
+                  </button>
+                </div>
+              </div>
+            </Modal>
+          </>
+        )
+      }
+
+      {
+        activeTab === 'content' && (
+          <ContentManager />
+        )
+      }
+
+      {
+        activeTab === 'flight_routes' && (
+          <FlightRouteManager />
+        )
+      }
+
+      {
+        activeTab === 'payments' && (
+          <PaymentTransactionTable />
+        )
+      }
+
+      {
+        showSuccess && (
+          <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
+            {showSuccess}
+          </div>
+        )
+      }
+    </div >
   );
 };
 
