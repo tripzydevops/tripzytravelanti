@@ -251,6 +251,7 @@ const ProfilePage: React.FC = () => {
           </button>
         </div>
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-brand-text-light">{user.name}</h2>
+        <p className="text-xs text-gray-400 mt-1">Role: {user.role || 'none'}</p>
         {user.tier === SubscriptionTier.PREMIUM && (
           <div className="mt-1 bg-brand-primary/20 text-brand-secondary text-xs font-bold px-3 py-1 rounded-full">
             {t('premiumBadge')}
