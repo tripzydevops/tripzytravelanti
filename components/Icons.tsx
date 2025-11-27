@@ -1,4 +1,12 @@
 import React from 'react';
+import {
+  PencilIcon as LucidePencilIcon,
+  LayoutDashboard as LucideLayoutDashboard
+} from 'lucide-react';
+
+export const LayoutDashboard: React.FC<IconProps> = ({ className }) => (
+  <LucideLayoutDashboard className={className} />
+);
 
 type IconProps = {
   className?: string;

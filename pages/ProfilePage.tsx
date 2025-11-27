@@ -8,7 +8,7 @@ import { SubscriptionTier } from '../types';
 import {
   Globe, ChevronRightIcon, UserIcon, Lock, BellIcon, LocationMarkerIcon,
   FingerPrintIcon, MoonIcon, ShieldCheckIcon, DocumentTextIcon, TrashIcon,
-  QuestionMarkCircleIcon, MailIcon, InformationCircleIcon, PencilIcon
+  QuestionMarkCircleIcon, MailIcon, InformationCircleIcon, PencilIcon, LayoutDashboard
 } from '../components/Icons';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
@@ -251,7 +251,15 @@ const ProfilePage: React.FC = () => {
           </button>
         </div>
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-brand-text-light">{user.name}</h2>
-        <p className="text-xs text-gray-400 mt-1">Role: {user.role || 'none'}</p>
+        {user.role === 'partner' && (
+          <button
+            onClick={() => navigate('/partner')}
+            className="mt-2 bg-purple-600 text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center"
+          >
+            <LayoutDashboard className="w-4 h-4 mr-2" />
+            Partner Portal
+          </button>
+        )}
         {user.tier === SubscriptionTier.PREMIUM && (
           <div className="mt-1 bg-brand-primary/20 text-brand-secondary text-xs font-bold px-3 py-1 rounded-full">
             {t('premiumBadge')}
