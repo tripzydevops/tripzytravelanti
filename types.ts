@@ -38,6 +38,15 @@ export interface User {
   address?: string;
   billingAddress?: string;
   subscriptionStartDate?: string; // For yearly renewal tracking
+  role?: 'user' | 'admin' | 'partner';
+}
+
+export interface PartnerStats {
+  id: string;
+  partnerId: string;
+  totalViews: number;
+  totalRedemptions: number;
+  updatedAt: string;
 }
 
 export interface Deal {

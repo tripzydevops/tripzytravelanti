@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           email: authUser.email,
           tier: SubscriptionTier.FREE,
           avatar_url: authUser.user_metadata.avatar_url,
+          role: 'user',
         });
 
         if (error) {
