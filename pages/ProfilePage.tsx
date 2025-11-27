@@ -75,7 +75,26 @@ const ProfilePage: React.FC = () => {
   const { isLocationEnabled, enableLocation } = useSearch();
   const navigate = useNavigate();
 
-  // ... (keep existing state)
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [mobile, setMobile] = useState(user?.mobile || '');
+  const [address, setAddress] = useState(user?.address || '');
+  const [billingAddress, setBillingAddress] = useState(user?.billingAddress || '');
+  const [isChangePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
+  const [isDeleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
+  const [showSuccess, setShowSuccess] = useState('');
+  const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setMobile(user.mobile || '');
+      setAddress(user.address || '');
+      setBillingAddress(user.billingAddress || '');
+    }
+  }, [user]);
 
   const [settings, setSettings] = useState({
     notifications: user?.notificationPreferences?.generalNotifications ?? true,
