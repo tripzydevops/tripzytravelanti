@@ -180,8 +180,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                                         : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                                                         }`}
                                                 >
-                                                    <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
-                                                        {style.emoji}
+                                                    <div className="w-16 h-16 rounded-xl overflow-hidden group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                                        <img
+                                                            src={style.image}
+                                                            alt={style.label}
+                                                            className="w-full h-full object-cover"
+                                                        />
                                                     </div>
                                                     <div className="text-left">
                                                         <span className="text-lg font-bold text-white block">{style.label}</span>
