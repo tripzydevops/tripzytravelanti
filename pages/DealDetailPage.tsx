@@ -10,6 +10,7 @@ import { SubscriptionTier } from '../types';
 import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon } from '../components/Icons';
 import Modal from '../components/Modal';
 import StarRatingInput from '../components/StarRatingInput';
+import QRCode from 'react-qr-code';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.NONE]: 0,
@@ -432,6 +433,9 @@ const DealDetailPage: React.FC = () => {
           <p className="text-sm text-gray-600 dark:text-brand-text-muted mb-4">{t('showThisCodeAtCheckout')}</p>
           <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 border-2 border-dashed border-brand-primary/30 rounded-xl py-8 px-4 mb-6">
             <p className="text-4xl font-mono font-bold tracking-widest text-gradient mb-2">{deal.redemptionCode}</p>
+            <div className="flex justify-center my-4 p-4 bg-white rounded-xl">
+              <QRCode value={deal.redemptionCode} size={128} />
+            </div>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(deal.redemptionCode);
