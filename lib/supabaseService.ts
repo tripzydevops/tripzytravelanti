@@ -42,6 +42,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         mobile: data.mobile,
         address: data.address,
         billingAddress: data.billing_address,
+        role: data.role,
     };
 }
 
@@ -106,6 +107,7 @@ export async function getAllUsers(): Promise<User[]> {
             redeemedAt: r.redeemed_at
         })) || [],
         mobile: user.mobile,
+        role: user.role,
     }));
 }
 
