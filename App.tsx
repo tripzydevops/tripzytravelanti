@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { SearchProvider } from './contexts/SearchContext';
 import { DealProvider } from './contexts/DealContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { ContentProvider } from './contexts/ContentContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider, useLayout } from './contexts/LayoutContext';
@@ -132,20 +133,22 @@ function App() {
       <LanguageProvider>
         <AuthProvider>
           <DealProvider>
-            <ContentProvider>
-              <ThemeProvider>
-                <LayoutProvider>
-                  <NotificationProvider>
-                    <ToastProvider>
-                      <HashRouter>
-                        <ScrollToTop />
-                        <AppContent />
-                      </HashRouter>
-                    </ToastProvider>
-                  </NotificationProvider>
-                </LayoutProvider>
-              </ThemeProvider>
-            </ContentProvider>
+            <SubscriptionProvider>
+              <ContentProvider>
+                <ThemeProvider>
+                  <LayoutProvider>
+                    <NotificationProvider>
+                      <ToastProvider>
+                        <HashRouter>
+                          <ScrollToTop />
+                          <AppContent />
+                        </HashRouter>
+                      </ToastProvider>
+                    </NotificationProvider>
+                  </LayoutProvider>
+                </ThemeProvider>
+              </ContentProvider>
+            </SubscriptionProvider>
           </DealProvider>
         </AuthProvider>
       </LanguageProvider>

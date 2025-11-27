@@ -1,5 +1,5 @@
 import React from 'react';
-import { SUBSCRIPTION_PLANS } from '../constants';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import SubscriptionCard from '../components/SubscriptionCard';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -12,11 +12,21 @@ const SubscriptionsPage: React.FC = () => {
   const { getContent } = useContent();
   const currentUserTier = user ? user.tier : SubscriptionTier.NONE;
 
+  const { plans, isLoading } = useSubscription();
+
   const headerTitle = getContent('subscriptions', 'header', 'title');
   const headerSubtitle = getContent('subscriptions', 'header', 'subtitle');
 
   const displayTitle = language === 'tr' ? (headerTitle?.content_value_tr || headerTitle?.content_value) : headerTitle?.content_value;
   const displaySubtitle = language === 'tr' ? (headerSubtitle?.content_value_tr || headerSubtitle?.content_value) : headerSubtitle?.content_value;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-12">
@@ -26,7 +36,7 @@ const SubscriptionsPage: React.FC = () => {
           <p className="text-lg text-gray-500 dark:text-brand-text-muted">{displaySubtitle || t('subscriptionsSubtitle')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {SUBSCRIPTION_PLANS.map(plan => (
+          {plans.map(plan => (
             <SubscriptionCard
               key={plan.tier}
               plan={plan}

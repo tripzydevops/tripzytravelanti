@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { SUBSCRIPTION_PLANS } from '../constants';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { SubscriptionTier } from '../types';
 import { CheckCircle, Lock } from '../components/Icons';
 import { createPaymentTransaction, updatePaymentTransactionStatus } from '../lib/paymentService';
@@ -15,8 +15,9 @@ const CheckoutPage: React.FC = () => {
     const { t, language } = useLanguage();
     const { error: showError, success: showSuccess } = useToast();
 
+    const { plans } = useSubscription();
     const tierParam = searchParams.get('tier') as SubscriptionTier;
-    const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.tier === tierParam);
+    const selectedPlan = plans.find(p => p.tier === tierParam);
 
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'iyzico'>('stripe');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -100,7 +101,7 @@ const CheckoutPage: React.FC = () => {
     const currencySymbol = language === 'tr' ? '₺' : '$';
 
     // Calculate prorated amount for upgrades
-    const currentPlan = user ? SUBSCRIPTION_PLANS.find(p => p.tier === user.tier) : null;
+    const currentPlan = user ? plans.find(p => p.tier === user.tier) : null;
     const currentPrice = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
     const isUpgrade = currentPlan && planPrice > currentPrice;
     const priceDifference = isUpgrade ? planPrice - currentPrice : planPrice;

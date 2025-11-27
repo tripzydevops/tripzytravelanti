@@ -13,7 +13,7 @@ import {
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
-import { SUBSCRIPTION_PLANS } from '../constants';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { useSearch } from '../contexts/SearchContext';
 import InvoiceModal from '../components/InvoiceModal';
 import { getUserTransactions } from '../lib/supabaseService';
@@ -76,6 +76,7 @@ const ProfilePage: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { permissionStatus, requestPermission } = useNotifications();
   const { isLocationEnabled, enableLocation } = useSearch();
+  const { plans } = useSubscription();
   const navigate = useNavigate();
 
   const [name, setName] = useState(user?.name || '');
@@ -266,7 +267,7 @@ const ProfilePage: React.FC = () => {
             <p className="text-gray-500 dark:text-brand-text-muted">{t('currentPlanLabel')}</p>
             <p className="text-gray-800 dark:text-brand-text-light font-semibold">
               {(() => {
-                const currentPlan = SUBSCRIPTION_PLANS.find(p => p.tier === user.tier);
+                const currentPlan = plans.find(p => p.tier === user.tier);
                 const planName = currentPlan ? (language === 'tr' ? currentPlan.name_tr : currentPlan.name) : user.tier;
                 const price = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
                 const currency = language === 'tr' ? 'TL' : '$';
