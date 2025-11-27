@@ -535,7 +535,7 @@ const AdminPage: React.FC = () => {
 
           {/* Deal Details Modal */}
           {editingDeal && activeTab === 'pending_approvals' && (
-            <Modal onClose={() => setEditingDeal(null)} title="Deal Details">
+            <Modal isOpen={!!editingDeal} onClose={() => setEditingDeal(null)} title="Deal Details">
               <div className="space-y-4">
                 {editingDeal.imageUrl && (
                   <img src={editingDeal.imageUrl} alt={editingDeal.title} className="w-full h-48 object-cover rounded-lg" />
