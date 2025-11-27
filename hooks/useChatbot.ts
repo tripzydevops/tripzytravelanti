@@ -36,7 +36,11 @@ export const useChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const ai = useMemo(() => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY }), []);
+  const ai = useMemo(() => {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) return null;
+    return new GoogleGenAI({ apiKey });
+  }, []);
 
   const chat = useMemo(() => {
     return ai.chats.create({

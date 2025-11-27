@@ -164,7 +164,9 @@ const AdminPage: React.FC = () => {
   const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
     if (!text.trim()) return '';
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) return '';
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
       const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       return response.text.trim();
@@ -277,7 +279,9 @@ const AdminPage: React.FC = () => {
     if (!finalImageUrl) {
       setIsGeneratingImage(true);
       try {
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) throw new Error("API Key missing");
+        const ai = new GoogleGenAI({ apiKey });
         const prompt = `A vibrant, high-quality promotional image for a travel and lifestyle deal titled: "${dealFormData.title}". Category: ${dealFormData.category}. The image should be appealing for a deals website.`;
         const response = await ai.models.generateImages({ model: 'imagen-4.0-generate-001', prompt, config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '4:3' } });
         if (response.generatedImages?.[0]) {
