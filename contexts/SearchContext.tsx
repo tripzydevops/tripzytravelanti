@@ -15,6 +15,9 @@ interface SearchContextType {
     category?: CategoryFilter;
     rating?: number;
   }) => void;
+  userLocation: { lat: number; lng: number } | null;
+  isLocationEnabled: boolean;
+  enableLocation: () => Promise<void>;
 }
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -23,7 +26,34 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All');
   const [ratingFilter, setRatingFilter] = useState(0);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const navigate = useNavigate();
+
+  const enableLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setIsLocationEnabled(true);
+          resolve();
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsLocationEnabled(false);
+          reject(error);
+        }
+      );
+    });
+  }, []);
 
   const applyFiltersAndNavigate = useCallback((filters: { searchQuery?: string; category?: CategoryFilter; rating?: number; }) => {
     if (filters.searchQuery !== undefined) {
@@ -46,7 +76,10 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setCategoryFilter,
       ratingFilter,
       setRatingFilter,
-      applyFiltersAndNavigate
+      applyFiltersAndNavigate,
+      userLocation,
+      isLocationEnabled,
+      enableLocation
     }}>
       {children}
     </SearchContext.Provider>

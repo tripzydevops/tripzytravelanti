@@ -14,6 +14,7 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import { SUBSCRIPTION_PRICES, TIER_NAMES } from '../lib/constants';
+import { useSearch } from '../contexts/SearchContext';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-6">
@@ -71,42 +72,33 @@ const ProfilePage: React.FC = () => {
   const { t, language, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { permissionStatus, requestPermission } = useNotifications();
+  const { isLocationEnabled, enableLocation } = useSearch();
   const navigate = useNavigate();
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [mobile, setMobile] = useState(user?.mobile || '');
-  const [address, setAddress] = useState(user?.address || '');
-  const [billingAddress, setBillingAddress] = useState(user?.billingAddress || '');
-  const [showSuccess, setShowSuccess] = useState('');
-  const [isChangePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
-  const [isDeleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [copied, setCopied] = useState(false);
+  // ... (keep existing state)
 
   const [settings, setSettings] = useState({
     notifications: user?.notificationPreferences?.generalNotifications ?? true,
-    location: false,
     biometrics: true,
   });
 
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setMobile(user.mobile || '');
-      setAddress(user.address || '');
-      setBillingAddress(user.billingAddress || '');
-      setSettings(prev => ({
-        ...prev,
-        notifications: user.notificationPreferences?.generalNotifications ?? true
-      }));
-    }
-  }, [user]);
+  // ... (keep useEffect)
 
-  const handleToggle = (key: keyof typeof settings) => {
+  const handleToggle = async (key: string) => { // Changed to string to handle 'location' separately
+    if (key === 'location') {
+      if (!isLocationEnabled) {
+        try {
+          await enableLocation();
+        } catch (error) {
+          // Error handled in context
+        }
+      }
+      return;
+    }
+
+    // Handle other settings
     setSettings(prev => {
-      const newValue = !prev[key];
+      const newValue = !prev[key as keyof typeof settings];
       if (key === 'notifications') {
         updateUserNotificationPreferences({ generalNotifications: newValue });
       }
@@ -426,7 +418,7 @@ const ProfilePage: React.FC = () => {
 
       {/* Application Preferences Section */}
       <SettingsSection title={t('appPreferencesSection')}>
-        <SettingsItem icon={<LocationMarkerIcon className="w-6 h-6" />} title={t('locationServices')} subtitle={t('locationServicesSubtitle')} action={<Toggle checked={settings.location} onChange={() => handleToggle('location')} />} />
+        <SettingsItem icon={<LocationMarkerIcon className="w-6 h-6" />} title={t('locationServices')} subtitle={t('locationServicesSubtitle')} action={<Toggle checked={isLocationEnabled} onChange={() => handleToggle('location')} />} />
         <SettingsItem icon={<FingerPrintIcon className="w-6 h-6" />} title={t('biometricAuth')} subtitle={t('biometricAuthSubtitle')} action={<Toggle checked={settings.biometrics} onChange={() => handleToggle('biometrics')} />} />
         <SettingsItem icon={<MoonIcon className="w-6 h-6" />} title={t('darkMode')} action={<Toggle checked={theme === 'dark'} onChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />} />
         <SettingsItem

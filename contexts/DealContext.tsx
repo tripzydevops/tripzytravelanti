@@ -25,7 +25,16 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setLoading(true);
       const fetchedDeals = await getAllDeals();
-      setDeals(fetchedDeals);
+
+      // Mock location data for demo purposes (Random points around Istanbul)
+      // Center: 41.0082, 28.9784
+      const enrichedDeals = fetchedDeals.map(deal => ({
+        ...deal,
+        latitude: 41.0082 + (Math.random() - 0.5) * 0.1, // +/- ~5km
+        longitude: 28.9784 + (Math.random() - 0.5) * 0.1
+      }));
+
+      setDeals(enrichedDeals);
     } catch (error) {
       console.error('Error loading deals:', error);
     } finally {

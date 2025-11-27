@@ -63,6 +63,8 @@ export interface Deal {
   validity_tr: string;
   termsUrl: string;
   redemptionCode: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface SubscriptionPlan {

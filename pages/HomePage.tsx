@@ -6,7 +6,7 @@ import { useContent } from '../contexts/ContentContext';
 import DealCard from '../components/DealCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
-import { Search, CogIcon, ClockIcon, TrashIcon } from '../components/Icons';
+import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import Onboarding from '../components/Onboarding';
 import { getAIRecommendations } from '../lib/recommendationLogic';
@@ -26,6 +26,8 @@ const HomePage: React.FC = () => {
     setCategoryFilter,
     ratingFilter,
     setRatingFilter,
+    userLocation,
+    isLocationEnabled
   } = useSearch();
 
   // ... (keep existing state and effects)
@@ -298,6 +300,43 @@ const HomePage: React.FC = () => {
             ) : (
               <p className="text-brand-text-muted italic">{t('startExploringForRecommendations')}</p>
             )}
+          </section>
+        )}
+
+        {/* Nearby Deals Section */}
+        {isLocationEnabled && userLocation && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-brand-text-light mb-4 flex items-center gap-2">
+              <span className="text-2xl">📍</span> {t('nearbyDeals') || 'Nearby Deals'}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {deals
+                .filter(d => d.latitude && d.longitude)
+                .map(d => {
+                  // Haversine formula
+                  const R = 6371; // Radius of the earth in km
+                  const dLat = (d.latitude! - userLocation.lat) * (Math.PI / 180);
+                  const dLon = (d.longitude! - userLocation.lng) * (Math.PI / 180);
+                  const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(userLocation.lat * (Math.PI / 180)) * Math.cos(d.latitude! * (Math.PI / 180)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                  const distance = R * c; // Distance in km
+                  return { ...d, distance };
+                })
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 3)
+                .map(deal => (
+                  <div key={deal.id} className="relative">
+                    <DealCard deal={deal} />
+                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+                      <LocationMarkerIcon className="w-3 h-3 mr-1" />
+                      {deal.distance.toFixed(1)} km
+                    </div>
+                  </div>
+                ))}
+            </div>
           </section>
         )}
 
