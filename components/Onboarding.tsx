@@ -27,9 +27,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         const images = [
             'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop', // General/Start
             'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', // Nature
-            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop', // Beach
-            'https://images.unsplash.com/photo-1519677100203-a0e668c92439?q=80&w=2072&auto=format&fit=crop', // Mountain
-            'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop', // City
+            '/assets/onboarding/beach.jpg', // Beach
+            '/assets/onboarding/mountain.jpg', // Mountain
+            '/assets/onboarding/city.jpg', // City
+            '/assets/onboarding/adventure.jpg', // Adventure
         ];
         images.forEach(src => {
             const img = new Image();
@@ -38,10 +39,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }, []);
 
     const travelStyles = [
-        { key: 'beach' as const, emoji: '🏖️', label: t('travelStyleBeach') || 'Beach & Relaxation', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop' },
-        { key: 'mountain' as const, emoji: '🏔️', label: t('travelStyleMountain') || 'Mountain & Nature', image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?q=80&w=2072&auto=format&fit=crop' },
-        { key: 'city' as const, emoji: '🏙️', label: t('travelStyleCity') || 'City & Culture', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop' },
-        { key: 'adventure' as const, emoji: '🪂', label: t('travelStyleAdventure') || 'Adventure & Sports', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop' },
+        { key: 'beach' as const, emoji: '🏖️', label: t('travelStyleBeach') || 'Beach & Relaxation', image: '/assets/onboarding/beach.jpg' },
+        { key: 'mountain' as const, emoji: '🏔️', label: t('travelStyleMountain') || 'Mountain & Nature', image: '/assets/onboarding/mountain.jpg' },
+        { key: 'city' as const, emoji: '🏙️', label: t('travelStyleCity') || 'City & Culture', image: '/assets/onboarding/city.jpg' },
+        { key: 'adventure' as const, emoji: '🪂', label: t('travelStyleAdventure') || 'Adventure & Sports', image: '/assets/onboarding/adventure.jpg' },
     ];
 
     const budgetOptions = [
