@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ChevronRightIcon, CheckCircle } from './Icons';
+import { ChevronRightIcon, CheckCircle, SunIcon, MountainIcon, BuildingOfficeIcon, Compass } from './Icons';
 
 interface OnboardingProps {
     onComplete: (preferences: UserPreferences) => void;
@@ -38,10 +38,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }, []);
 
     const travelStyles = [
-        { key: 'beach' as const, emoji: '🏖️', label: t('travelStyleBeach') || 'Beach & Relaxation', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop' },
-        { key: 'mountain' as const, emoji: '⛰️', label: t('travelStyleMountain') || 'Mountain & Nature', image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?q=80&w=2072&auto=format&fit=crop' },
-        { key: 'city' as const, emoji: '🏙️', label: t('travelStyleCity') || 'City & Culture', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop' },
-        { key: 'adventure' as const, emoji: '🎒', label: t('travelStyleAdventure') || 'Adventure & Sports', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop' },
+        { key: 'beach' as const, icon: SunIcon, label: t('travelStyleBeach') || 'Beach & Relaxation', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop' },
+        { key: 'mountain' as const, icon: MountainIcon, label: t('travelStyleMountain') || 'Mountain & Nature', image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?q=80&w=2072&auto=format&fit=crop' },
+        { key: 'city' as const, icon: BuildingOfficeIcon, label: t('travelStyleCity') || 'City & Culture', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop' },
+        { key: 'adventure' as const, icon: Compass, label: t('travelStyleAdventure') || 'Adventure & Sports', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop' },
     ];
 
     const budgetOptions = [
@@ -197,12 +197,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                                     key={style.key}
                                                     onClick={() => setPreferences({ ...preferences, travelStyle: style.key })}
                                                     className={`group relative p-4 rounded-xl border transition-all duration-300 overflow-hidden ${preferences.travelStyle === style.key
-                                                            ? 'border-brand-primary bg-brand-primary/20 shadow-[0_0_20px_rgba(0,169,145,0.3)]'
-                                                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                                                        ? 'border-brand-primary bg-brand-primary/20 shadow-[0_0_20px_rgba(0,169,145,0.3)]'
+                                                        : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                                                         }`}
                                                 >
                                                     <div className="flex flex-col items-center justify-center relative z-10">
-                                                        <span className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{style.emoji}</span>
+                                                        <style.icon className={`w-12 h-12 mb-3 transition-transform duration-300 group-hover:scale-110 ${preferences.travelStyle === style.key ? 'text-brand-primary' : 'text-white'
+                                                            }`} />
                                                         <span className="text-sm font-semibold text-white">{style.label}</span>
                                                     </div>
                                                     {preferences.travelStyle === style.key && (
@@ -230,8 +231,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                                                     key={option.key}
                                                     onClick={() => setPreferences({ ...preferences, budget: option.key })}
                                                     className={`w-full flex items-center p-4 rounded-xl border transition-all duration-300 ${preferences.budget === option.key
-                                                            ? 'border-brand-primary bg-brand-primary/20 shadow-[0_0_20px_rgba(0,169,145,0.3)]'
-                                                            : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
+                                                        ? 'border-brand-primary bg-brand-primary/20 shadow-[0_0_20px_rgba(0,169,145,0.3)]'
+                                                        : 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                                                         }`}
                                                 >
                                                     <span className="text-3xl mr-4">{option.emoji}</span>

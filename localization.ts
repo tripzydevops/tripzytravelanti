@@ -25,6 +25,11 @@ export const translations = {
     back: 'Back',
     getStarted: 'Get Started',
     travelStyleBeach: 'Beach & Relaxation',
+    travelStyleMountain: 'Mountain & Nature',
+    travelStyleCity: 'City & Culture',
+    travelStyleAdventure: 'Adventure & Sports',
+    onboardingQuote: 'Travel is the only thing you buy that makes you richer.',
+    onboardingTravelStyleSubtitle: 'Select your preferred way to travel',
     welcome: 'Welcome',
     searchPlaceholder: 'Search for deals',
     // Home Page
@@ -345,6 +350,11 @@ export const translations = {
     onboardingBenefit3Desc: 'Daha fazla tasarruf için yükseltin.',
     skip: 'Atla',
     travelStyleBeach: 'Plaj & Rahatlama',
+    travelStyleMountain: 'Dağ & Doğa',
+    travelStyleCity: 'Şehir & Kültür',
+    travelStyleAdventure: 'Macera & Spor',
+    onboardingQuote: 'Seyahat, satın alıp da sizi zenginleştiren tek şeydir.',
+    onboardingTravelStyleSubtitle: 'Tercih ettiğiniz seyahat tarzını seçin',
     welcome: 'Hoş geldiniz',
     searchPlaceholder: 'Fırsatları ara',
     // Home Page
