@@ -459,3 +459,138 @@ export async function getUserTransactions(userId: string): Promise<any[]> {
         createdAt: t.created_at
     }));
 }
+
+// =====================================================
+// ANALYTICS OPERATIONS
+// =====================================================
+
+export async function getAnalyticsData() {
+    try {
+        // 1. Fetch Total Users and Growth
+        const { data: users, error: usersError } = await supabase
+            .from('profiles')
+            .select('created_at');
+
+        if (usersError) throw usersError;
+
+        // 2. Fetch Total Revenue and Revenue Over Time
+        const { data: transactions, error: transactionsError } = await supabase
+            .from('payment_transactions')
+            .select('amount, created_at, status')
+            .eq('status', 'succeeded'); // Only count successful transactions
+
+        if (transactionsError) throw transactionsError;
+
+        // 3. Fetch Active Deals and Categories
+        const { data: deals, error: dealsError } = await supabase
+            .from('deals')
+            .select('id, title, category, status, created_at');
+
+        if (dealsError) throw dealsError;
+
+        // 4. Fetch Redemptions and Top Deals
+        const { data: redemptions, error: redemptionsError } = await supabase
+            .from('deal_redemptions')
+            .select('deal_id, redeemed_at');
+
+        if (redemptionsError) throw redemptionsError;
+
+        // --- Aggregation Logic ---
+
+        // Metrics
+        const totalUsers = users.length;
+        const totalRevenue = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const activeDeals = deals.filter(d => d.status === 'approved' || d.status === 'active').length; // Assuming 'approved' or 'active' means active
+        const totalRedemptions = redemptions.length;
+
+        // Charts: Revenue & User Growth (Last 6 Months)
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            months.push(d.toLocaleString('default', { month: 'short' }));
+        }
+
+        const revenueData = months.map(month => {
+            const monthlyTransactions = transactions.filter(t => new Date(t.created_at).toLocaleString('default', { month: 'short' }) === month);
+            return {
+                name: month,
+                revenue: monthlyTransactions.reduce((sum, t) => sum + (t.amount || 0), 0)
+            };
+        });
+
+        const userGrowthData = months.map(month => {
+            // Cumulative users up to this month
+            // This is a bit simplified. Ideally we'd filter by created_at <= end of that month.
+            // Let's do it properly:
+            const currentYear = new Date().getFullYear();
+            // Find the index of the month in the current year context or handle year wrapping?
+            // Simple approach: Filter users created in that month
+            const monthlyUsers = users.filter(u => new Date(u.created_at).toLocaleString('default', { month: 'short' }) === month).length;
+            return {
+                name: month,
+                users: monthlyUsers // This shows new users per month. If we want total users, we need to accumulate.
+            };
+        });
+
+        // Let's make userGrowth cumulative for the chart "User Growth" usually implies total base growth or new users. 
+        // The mock data showed increasing numbers (400 -> 600 -> 800), implying cumulative.
+        let runningTotalUsers = 0;
+        // We need to know users before the 6 month window to start correctly, but for now let's just accumulate within the window or fetch all and filter.
+        // Since we fetched ALL users, we can calculate cumulative correctly.
+
+        const userGrowthCumulative = months.map((month, index) => {
+            const now = new Date();
+            const targetDate = new Date(now.getFullYear(), now.getMonth() - 5 + index + 1, 0); // End of that month
+
+            const count = users.filter(u => new Date(u.created_at) <= targetDate).length;
+            return { name: month, users: count };
+        });
+
+
+        // Charts: Categories
+        const categoryCounts: Record<string, number> = {};
+        deals.forEach(d => {
+            const cat = d.category || 'Other';
+            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+        });
+        const categoryData = Object.entries(categoryCounts).map(([name, value]) => ({ name, value }));
+
+        // Charts: Top Performing Deals
+        const redemptionCounts: Record<string, number> = {};
+        redemptions.forEach(r => {
+            redemptionCounts[r.deal_id] = (redemptionCounts[r.deal_id] || 0) + 1;
+        });
+
+        // Map deal IDs to titles
+        const topDeals = Object.entries(redemptionCounts)
+            .map(([dealId, count]) => {
+                const deal = deals.find(d => d.id === dealId);
+                return {
+                    name: deal ? deal.title : 'Unknown Deal',
+                    redemptions: count
+                };
+            })
+            .sort((a, b) => b.redemptions - a.redemptions)
+            .slice(0, 5);
+
+        return {
+            metrics: {
+                totalUsers,
+                totalRevenue,
+                activeDeals,
+                totalRedemptions
+            },
+            charts: {
+                revenueData,
+                userGrowthData: userGrowthCumulative,
+                categoryData,
+                topDeals
+            }
+        };
+
+    } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        return null;
+    }
+}
