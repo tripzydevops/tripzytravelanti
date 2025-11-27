@@ -151,7 +151,9 @@ export async function getPaymentTransactionsWithUserInfo(
       *,
       profiles:user_id (
         name,
-        email
+        email,
+        address,
+        billing_address
       )
     `)
         .order('created_at', { ascending: false });
@@ -183,6 +185,8 @@ export async function getPaymentTransactionsWithUserInfo(
         ...transaction,
         userName: transaction.profiles?.name || 'Unknown',
         userEmail: transaction.profiles?.email || 'Unknown',
+        userAddress: transaction.profiles?.address || '',
+        userBillingAddress: transaction.profiles?.billing_address || '',
     }));
 
     return { data: transformedData, error };

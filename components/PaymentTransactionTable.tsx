@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getPaymentTransactionsWithUserInfo, PaymentTransactionFilters } from '../lib/paymentService';
 import { PaymentTransaction } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import InvoiceModal from './InvoiceModal';
+import { DocumentTextIcon } from './Icons';
 
 const PaymentTransactionTable: React.FC = () => {
     const { t } = useLanguage();
@@ -9,6 +11,8 @@ const PaymentTransactionTable: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState<PaymentTransactionFilters>({});
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const [isInvoiceModalOpen, setInvoiceModalOpen] = useState(false);
 
     useEffect(() => {
         loadTransactions();
@@ -53,6 +57,11 @@ const PaymentTransactionTable: React.FC = () => {
     const formatCurrency = (amount: number, currency: string) => {
         const symbol = currency === 'TRY' ? '₺' : '$';
         return `${symbol}${amount.toFixed(2)}`;
+    };
+
+    const handleViewInvoice = (transaction: any) => {
+        setSelectedTransaction(transaction);
+        setInvoiceModalOpen(true);
     };
 
     return (
@@ -159,6 +168,9 @@ const PaymentTransactionTable: React.FC = () => {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-brand-text-muted uppercase tracking-wider">
                                         {t('transactionId') || 'Transaction ID'}
                                     </th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-brand-text-muted uppercase tracking-wider">
+                                        {t('actions') || 'Actions'}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -187,6 +199,15 @@ const PaymentTransactionTable: React.FC = () => {
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-brand-text-muted whitespace-nowrap font-mono text-xs">
                                             {transaction.transaction_id || '-'}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
+                                            <button
+                                                onClick={() => handleViewInvoice(transaction)}
+                                                className="text-brand-primary hover:text-brand-primary/80 transition-colors p-1"
+                                                title={t('viewInvoice') || 'View Invoice'}
+                                            >
+                                                <DocumentTextIcon className="w-5 h-5" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -226,6 +247,19 @@ const PaymentTransactionTable: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Invoice Modal */}
+            <InvoiceModal
+                isOpen={isInvoiceModalOpen}
+                onClose={() => setInvoiceModalOpen(false)}
+                transaction={selectedTransaction}
+                user={selectedTransaction ? {
+                    name: selectedTransaction.userName,
+                    email: selectedTransaction.userEmail,
+                    address: selectedTransaction.userAddress,
+                    billingAddress: selectedTransaction.userBillingAddress
+                } : undefined}
+            />
         </div>
     );
 };
