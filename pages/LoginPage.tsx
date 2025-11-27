@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
 import { ChevronLeftIcon } from '../components/Icons';
+import { useToast } from '../contexts/ToastContext';
 
 // --- SVG Icons for Social Login ---
 const AppleIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -26,6 +27,7 @@ const LoginPage: React.FC = () => {
   const { login, signInWithGoogle } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { error: showError, success: showSuccess } = useToast();
   const [showEmailForm, setShowEmailForm] = useState(false);
 
   const handleEmailLoginSubmit = async (e: React.FormEvent) => {
@@ -35,10 +37,13 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(email, password);
+      showSuccess(t('loginSuccess') || 'Successfully logged in!');
       navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      const errorMessage = err.message || 'Failed to login. Please check your credentials.';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -48,9 +53,12 @@ const LoginPage: React.FC = () => {
     try {
       setError('');
       await signInWithGoogle();
+      showSuccess(t('loginSuccess') || 'Successfully logged in with Google!');
     } catch (err: any) {
       console.error('Google login error:', err);
-      setError('Failed to sign in with Google.');
+      const errorMessage = 'Failed to sign in with Google.';
+      setError(errorMessage);
+      showError(errorMessage);
     }
   };
 

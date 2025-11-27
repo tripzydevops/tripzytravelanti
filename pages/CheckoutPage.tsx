@@ -6,12 +6,14 @@ import { SUBSCRIPTION_PLANS } from '../constants';
 import { SubscriptionTier } from '../types';
 import { CheckCircle, Lock } from '../components/Icons';
 import { createPaymentTransaction, updatePaymentTransactionStatus } from '../lib/paymentService';
+import { useToast } from '../contexts/ToastContext';
 
 const CheckoutPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { user, updateTier } = useAuth();
     const { t, language } = useLanguage();
+    const { error: showError, success: showSuccess } = useToast();
 
     const tierParam = searchParams.get('tier') as SubscriptionTier;
     const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.tier === tierParam);
@@ -67,6 +69,8 @@ const CheckoutPage: React.FC = () => {
                 // Update user tier
                 await updateTier(selectedPlan.tier);
 
+                showSuccess(t('paymentSuccess') || 'Payment successful!');
+
                 // Navigate to success page
                 navigate('/payment-success', {
                     state: {
@@ -84,10 +88,10 @@ const CheckoutPage: React.FC = () => {
                 );
                 throw new Error('Payment failed');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Payment failed:', error);
             setIsProcessing(false);
-            // TODO: Show error toast to user
+            showError(error.message || 'Payment failed. Please try again.');
         }
     };
 
