@@ -13,7 +13,11 @@ export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
         return [];
     }
 
-    return data || [];
+    return (data || []).map(plan => ({
+        ...plan,
+        redemptionsPerMonth: plan.redemptions_per_period,
+        billingPeriod: plan.billing_period
+    }));
 };
 
 export const getAllSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
@@ -27,7 +31,11 @@ export const getAllSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => 
         return [];
     }
 
-    return data || [];
+    return (data || []).map(plan => ({
+        ...plan,
+        redemptionsPerMonth: plan.redemptions_per_period,
+        billingPeriod: plan.billing_period
+    }));
 };
 
 export const createSubscriptionPlan = async (plan: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'>) => {
