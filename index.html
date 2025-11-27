@@ -1,49 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tripzy - Discover the World for Less</title>
-    <script>
-      // Set theme before React loads to prevent flash of unstyled content.
-      if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    </script>
-    <script>
-      // Global error handler
-      window.onerror = function(message, source, lineno, colno, error) {
-        var errorDiv = document.createElement('div');
-        errorDiv.style.position = 'fixed';
-        errorDiv.style.top = '0';
-        errorDiv.style.left = '0';
-        errorDiv.style.width = '100%';
-        errorDiv.style.height = '100%';
-        errorDiv.style.backgroundColor = 'rgba(139, 0, 0, 0.9)';
-        errorDiv.style.color = 'white';
-        errorDiv.style.padding = '20px';
-        errorDiv.style.zIndex = '99999';
-        errorDiv.style.overflow = 'auto';
-        errorDiv.style.fontFamily = 'monospace';
-        errorDiv.innerHTML = '<h1>Application Error</h1>' +
-          '<p style="font-size: 1.2em">' + message + '</p>' +
-          '<p>Source: ' + source + ':' + lineno + ':' + colno + '</p>' +
-          '<pre style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">' + (error ? error.stack : 'No stack trace') + '</pre>';
-        document.body.appendChild(errorDiv);
-        console.error('Global Error:', message, error);
-      };
 
-      window.onunhandledrejection = function(event) {
-        window.onerror('Unhandled Promise Rejection: ' + event.reason, '', '', '', event.reason);
-      };
-    </script>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tripzy - Discover the World for Less</title>
+  <script>
+    // Set theme before React loads to prevent flash of unstyled content.
+    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  </script>
   <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
 </html>
