@@ -340,3 +340,34 @@ export async function updatePassword(password: string) {
         throw error;
     }
 }
+
+// =====================================================
+// PAYMENT OPERATIONS
+// =====================================================
+
+export async function getUserTransactions(userId: string): Promise<any[]> {
+    const { data, error } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching user transactions:', error);
+        return [];
+    }
+
+    return data.map(t => ({
+        id: t.id,
+        userId: t.user_id,
+        amount: t.amount,
+        currency: t.currency,
+        status: t.status,
+        paymentMethod: t.payment_method,
+        tier: t.tier,
+        taxId: t.tax_id,
+        transactionId: t.transaction_id,
+        errorMessage: t.error_message,
+        createdAt: t.created_at
+    }));
+}

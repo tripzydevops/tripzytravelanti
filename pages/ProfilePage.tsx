@@ -15,6 +15,9 @@ import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import { SUBSCRIPTION_PRICES, TIER_NAMES } from '../lib/constants';
 import { useSearch } from '../contexts/SearchContext';
+import InvoiceModal from '../components/InvoiceModal';
+import { getUserTransactions } from '../lib/supabaseService';
+import { PaymentTransaction } from '../types';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-6">
@@ -86,6 +89,10 @@ const ProfilePage: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
+  const [isInvoiceModalOpen, setInvoiceModalOpen] = useState(false);
+
   useEffect(() => {
     if (user) {
       setName(user.name || '');
@@ -93,6 +100,9 @@ const ProfilePage: React.FC = () => {
       setMobile(user.mobile || '');
       setAddress(user.address || '');
       setBillingAddress(user.billingAddress || '');
+
+      // Fetch transactions
+      getUserTransactions(user.id).then(setTransactions).catch(console.error);
     }
   }, [user]);
 
@@ -170,6 +180,11 @@ const ProfilePage: React.FC = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleViewInvoice = (transaction: PaymentTransaction) => {
+    setSelectedTransaction(transaction);
+    setInvoiceModalOpen(true);
   };
 
   if (!user) {
@@ -304,6 +319,35 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
         </div>
+      </SettingsSection>
+
+      {/* Billing History Section */}
+      <SettingsSection title={t('billingHistory') || 'Billing History'}>
+        {transactions.length > 0 ? (
+          <div>
+            {transactions.map((transaction, index) => (
+              <SettingsItem
+                key={transaction.id}
+                icon={<DocumentTextIcon className="w-6 h-6" />}
+                title={`${transaction.tier} Membership`}
+                subtitle={`${new Date(transaction.createdAt).toLocaleDateString()} • ${transaction.amount} ${transaction.currency}`}
+                action={
+                  <button
+                    onClick={() => handleViewInvoice(transaction)}
+                    className="text-sm text-brand-primary font-semibold hover:underline"
+                  >
+                    {t('viewInvoice') || 'View Invoice'}
+                  </button>
+                }
+                isLast={index === transactions.length - 1}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 text-center text-gray-500 dark:text-brand-text-muted">
+            {t('noTransactions') || 'No payment history found.'}
+          </div>
+        )}
       </SettingsSection>
 
       {/* Profile Information Section */}
@@ -467,6 +511,12 @@ const ProfilePage: React.FC = () => {
         isOpen={isDeleteAccountModalOpen}
         onClose={() => setDeleteAccountModalOpen(false)}
         onConfirm={handleDeleteAccountConfirm}
+      />
+      <InvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
+        transaction={selectedTransaction}
+        user={user}
       />
     </div>
   );
