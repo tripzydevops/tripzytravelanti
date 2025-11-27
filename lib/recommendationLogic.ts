@@ -1,8 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { User, Deal } from '../types';
 
-// Initialize Gemini
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+// Initialize Gemini lazily inside the function
 
 interface UserAnalysis {
     favoriteCategories: string[];
@@ -130,6 +129,12 @@ export async function getAIRecommendations(
 
     try {
         // 3. Call Gemini
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+            console.warn("Gemini API Key is missing. Skipping AI recommendations.");
+            throw new Error("Missing API Key");
+        }
+        const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash-exp',
             contents: prompt
