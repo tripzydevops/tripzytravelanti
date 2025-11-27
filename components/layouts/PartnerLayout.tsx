@@ -5,7 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { LogOut, LayoutDashboard, QrCode, Settings } from 'lucide-react';
 
 const PartnerLayout: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth();
     const { t } = useLanguage();
     const navigate = useNavigate();
 
@@ -17,6 +17,14 @@ const PartnerLayout: React.FC = () => {
             console.error('Failed to log out', error);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
+            </div>
+        );
+    }
 
     if (!user || user.role !== 'partner') {
         // Redirect non-partners
