@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDeal } from '../../lib/supabaseService';
 import { SubscriptionTier } from '../../types';
 import { ArrowLeft, Save, Upload, Sparkles } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import ImageUpload from '../../components/ImageUpload';
 
 // Helper for debounce
 function useDebounce<T>(value: T, delay: number): T {
@@ -27,6 +29,10 @@ const CreateDealPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isTranslating, setIsTranslating] = useState({ title: false, description: false });
     const [neverExpires, setNeverExpires] = useState(false);
+
+    // Track if user has manually edited the Turkish fields
+    const [isTitleDirty, setIsTitleDirty] = useState(false);
+    const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -66,7 +72,8 @@ const CreateDealPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (debouncedTitle && !formData.title_tr) {
+        // Translate if title exists and user hasn't manually edited the Turkish title
+        if (debouncedTitle && !isTitleDirty) {
             (async () => {
                 setIsTranslating(p => ({ ...p, title: true }));
                 const tr = await translateText(debouncedTitle, 'Turkish');
@@ -74,10 +81,11 @@ const CreateDealPage: React.FC = () => {
                 setIsTranslating(p => ({ ...p, title: false }));
             })();
         }
-    }, [debouncedTitle, translateText]);
+    }, [debouncedTitle, isTitleDirty, translateText]);
 
     useEffect(() => {
-        if (debouncedDescription && !formData.description_tr) {
+        // Translate if description exists and user hasn't manually edited the Turkish description
+        if (debouncedDescription && !isDescriptionDirty) {
             (async () => {
                 setIsTranslating(p => ({ ...p, description: true }));
                 const tr = await translateText(debouncedDescription, 'Turkish');
@@ -85,11 +93,15 @@ const CreateDealPage: React.FC = () => {
                 setIsTranslating(p => ({ ...p, description: false }));
             })();
         }
-    }, [debouncedDescription, translateText]);
+    }, [debouncedDescription, isDescriptionDirty, translateText]);
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
+
+        // Mark Turkish fields as dirty if user manually edits them
+        if (name === 'title_tr') setIsTitleDirty(true);
+        if (name === 'description_tr') setIsDescriptionDirty(true);
 
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
@@ -222,7 +234,6 @@ const CreateDealPage: React.FC = () => {
                             <input
                                 type="text"
                                 name="title_tr"
-                                required
                                 value={formData.title_tr}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -248,7 +259,6 @@ const CreateDealPage: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Turkish)</label>
                         <textarea
                             name="description_tr"
-                            required
                             rows={3}
                             value={formData.description_tr}
                             onChange={handleChange}
@@ -302,21 +312,12 @@ const CreateDealPage: React.FC = () => {
                     {/* Image & Category */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
-                            <div className="flex">
-                                <input
-                                    type="url"
-                                    name="imageUrl"
-                                    required
-                                    value={formData.imageUrl}
-                                    onChange={handleChange}
-                                    className="flex-1 px-4 py-2 rounded-l-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    placeholder="https://..."
-                                />
-                                <button type="button" className="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-l-0 border-gray-300 dark:border-gray-600 rounded-r-lg">
-                                    <Upload className="w-4 h-4" />
-                                </button>
-                            </div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
+                            <ImageUpload
+                                value={formData.imageUrl}
+                                onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+                                bucketName="deals"
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
