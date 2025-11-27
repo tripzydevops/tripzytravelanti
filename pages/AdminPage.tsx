@@ -703,7 +703,7 @@ const AdminPage: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label>
                       <ImageUpload
                         value={dealFormData.imageUrl}
-                        onChange={(base64) => setDealFormData(prev => ({ ...prev, imageUrl: base64 }))}
+                        onChange={(url) => setDealFormData(prev => ({ ...prev, imageUrl: url }))}
                         placeholder={t('imageUrlOptionalHint') || "Upload Deal Image"}
                       />
                       {/* Fallback text input for external URLs if needed, or just keep it simple */}
