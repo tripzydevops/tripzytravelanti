@@ -38,7 +38,16 @@ const PartnerLayout: React.FC = () => {
             }
         }, [user, navigate]);
 
-        return null;
+        return (
+            <div className="p-10 text-white">
+                <h1 className="text-2xl font-bold text-red-500">Debug: Access Denied / Loading Issue</h1>
+                <p>Loading: {loading ? 'true' : 'false'}</p>
+                <p>User: {user ? 'Present' : 'Null'}</p>
+                <p>User ID: {user?.id}</p>
+                <p>User Role: {user?.role}</p>
+                <button onClick={() => navigate('/')} className="mt-4 bg-white text-black px-4 py-2 rounded">Go Home</button>
+            </div>
+        );
     }
 
     return (
