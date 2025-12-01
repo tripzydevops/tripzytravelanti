@@ -283,11 +283,17 @@ export async function getDealsPaginated(
     return { deals, total: count || 0 };
 }
 
-export async function getAllDeals(): Promise<Deal[]> {
-    const { data, error } = await supabase
+export async function getAllDeals(includeExpired: boolean = false): Promise<Deal[]> {
+    let query = supabase
         .from('deals')
         .select('*')
         .order('created_at', { ascending: false });
+
+    if (!includeExpired) {
+        query = query.gt('expires_at', new Date().toISOString());
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching deals:', error);
@@ -312,7 +318,7 @@ export async function getDealById(id: string): Promise<Deal | null> {
     return transformDealFromDB(data);
 }
 
-export async function getDealsForTier(tier: SubscriptionTier): Promise<Deal[]> {
+export async function getDealsForTier(tier: SubscriptionTier, includeExpired: boolean = false): Promise<Deal[]> {
     const tierHierarchy = {
         [SubscriptionTier.NONE]: [],
         [SubscriptionTier.FREE]: ['FREE'],
@@ -323,11 +329,17 @@ export async function getDealsForTier(tier: SubscriptionTier): Promise<Deal[]> {
 
     const allowedTiers = tierHierarchy[tier] || [];
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('deals')
         .select('*')
         .in('required_tier', allowedTiers)
         .order('created_at', { ascending: false });
+
+    if (!includeExpired) {
+        query = query.gt('expires_at', new Date().toISOString());
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching deals for tier:', error);
