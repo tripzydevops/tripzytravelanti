@@ -284,13 +284,23 @@ const DealDetailPage: React.FC = () => {
 
       <main className="animate-fade-in pb-24">
         {/* Hero Image */}
-        <div className="relative h-64 md:h-96 w-full overflow-hidden">
+        {/* Hero Image */}
+        <div className="relative h-64 md:h-96 w-full overflow-hidden bg-gray-900">
+          {/* Blurred Background Layer */}
+          <div
+            className="absolute inset-0 bg-cover bg-center blur-xl opacity-60 scale-110 transition-transform duration-700"
+            style={{ backgroundImage: `url(${getHeroImageUrl(deal.imageUrl)})` }}
+          ></div>
+
+          {/* Main Image */}
           <img
             src={getHeroImageUrl(deal.imageUrl)}
             alt={title}
-            className="w-full h-full object-cover"
+            className="relative w-full h-full object-contain z-10 shadow-2xl"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/20 to-transparent z-20"></div>
         </div>
 
         <div className="container mx-auto px-4 py-6">
