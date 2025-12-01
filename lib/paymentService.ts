@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { PaymentTransaction, SubscriptionTier } from '../types';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export interface CreatePaymentTransactionParams {
     userId: string;
@@ -23,7 +24,7 @@ export interface PaymentTransactionFilters {
  */
 export async function createPaymentTransaction(
     params: CreatePaymentTransactionParams
-): Promise<{ data: PaymentTransaction | null; error: any }> {
+): Promise<{ data: PaymentTransaction | null; error: PostgrestError | null }> {
     const { data, error } = await supabase
         .from('payment_transactions')
         .insert({
@@ -49,8 +50,8 @@ export async function updatePaymentTransactionStatus(
     status: 'success' | 'failed' | 'pending',
     transactionIdFromProvider?: string,
     errorMessage?: string
-): Promise<{ data: PaymentTransaction | null; error: any }> {
-    const updateData: any = {
+): Promise<{ data: PaymentTransaction | null; error: PostgrestError | null }> {
+    const updateData: Record<string, any> = {
         status,
     };
 
@@ -77,7 +78,7 @@ export async function updatePaymentTransactionStatus(
  */
 export async function getPaymentTransactions(
     filters?: PaymentTransactionFilters
-): Promise<{ data: PaymentTransaction[] | null; error: any }> {
+): Promise<{ data: PaymentTransaction[] | null; error: PostgrestError | null }> {
     let query = supabase
         .from('payment_transactions')
         .select('*')
@@ -113,7 +114,7 @@ export async function getPaymentTransactions(
  */
 export async function getPaymentTransactionById(
     transactionId: string
-): Promise<{ data: PaymentTransaction | null; error: any }> {
+): Promise<{ data: PaymentTransaction | null; error: PostgrestError | null }> {
     const { data, error } = await supabase
         .from('payment_transactions')
         .select('*')
@@ -128,7 +129,7 @@ export async function getPaymentTransactionById(
  */
 export async function getUserPaymentHistory(
     userId: string
-): Promise<{ data: PaymentTransaction[] | null; error: any }> {
+): Promise<{ data: PaymentTransaction[] | null; error: PostgrestError | null }> {
     const { data, error } = await supabase
         .from('payment_transactions')
         .select('*')
@@ -144,7 +145,7 @@ export async function getUserPaymentHistory(
  */
 export async function getPaymentTransactionsWithUserInfo(
     filters?: PaymentTransactionFilters
-): Promise<{ data: any[] | null; error: any }> {
+): Promise<{ data: PaymentTransaction[] | null; error: PostgrestError | null }> {
     let query = supabase
         .from('payment_transactions')
         .select(`
@@ -181,13 +182,13 @@ export async function getPaymentTransactionsWithUserInfo(
     const { data, error } = await query;
 
     // Transform the data to flatten user info
-    const transformedData = data?.map((transaction) => ({
+    const transformedData = data?.map((transaction: any) => ({
         ...transaction,
         userName: transaction.profiles?.name || 'Unknown',
         userEmail: transaction.profiles?.email || 'Unknown',
         userAddress: transaction.profiles?.address || '',
         userBillingAddress: transaction.profiles?.billing_address || '',
-    }));
+    })) as PaymentTransaction[];
 
     return { data: transformedData, error };
 }

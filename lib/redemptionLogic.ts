@@ -9,7 +9,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, number> = SUBSCRIPTION_PLANS.
 
 // Ensure NONE tier is handled if not in plans
 if (!(SubscriptionTier.NONE in TIER_LIMITS)) {
-    TIER_LIMITS[SubscriptionTier.NONE] = 0;
+    (TIER_LIMITS as any)[SubscriptionTier.NONE] = 0;
 }
 
 export const calculateRemainingRedemptions = (user: User) => {

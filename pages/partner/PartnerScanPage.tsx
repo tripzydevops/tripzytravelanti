@@ -124,7 +124,7 @@ const PartnerScanPage: React.FC = () => {
                             <div className="mb-8">
                                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center">Scan QR Code</h3>
                                 <div className="bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden h-64 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 relative">
-                                    <QRScanner onScan={handleScan} onError={(err) => console.log(err)} />
+                                    <QRScanner onScan={handleScan} onError={(err) => console.error(err)} />
                                     {/* Overlay text if camera not active */}
                                     <p className="absolute text-gray-400 text-sm pointer-events-none">Camera View</p>
                                 </div>

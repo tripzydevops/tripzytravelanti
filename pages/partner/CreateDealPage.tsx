@@ -20,6 +20,7 @@ const CreateDealPage: React.FC = () => {
         description: '',
         description_tr: '',
         imageUrl: '',
+        companyLogoUrl: '',
         category: 'Food & Dining',
         category_tr: 'Yeme & İçme',
         originalPrice: '',
@@ -104,6 +105,16 @@ const CreateDealPage: React.FC = () => {
             return;
         }
 
+        // Language Validation
+        const hasEnglish = formData.title?.trim() && formData.description?.trim();
+        const hasTurkish = formData.title_tr?.trim() && formData.description_tr?.trim();
+
+        if (!hasEnglish && !hasTurkish) {
+            setError('Please provide a Title and Description in at least one language (English or Turkish).');
+            setLoading(false);
+            return;
+        }
+
         try {
             // Handle Never Expires
             const finalExpiresAt = neverExpires ?
@@ -159,7 +170,6 @@ const CreateDealPage: React.FC = () => {
                             <input
                                 type="text"
                                 name="title"
-                                required
                                 value={formData.title}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -183,7 +193,6 @@ const CreateDealPage: React.FC = () => {
                         </label>
                         <textarea
                             name="description"
-                            required
                             rows={3}
                             value={formData.description}
                             onChange={handleChange}
@@ -251,6 +260,14 @@ const CreateDealPage: React.FC = () => {
                             <ImageUpload
                                 value={formData.imageUrl}
                                 onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+                                bucketName="deals"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Logo (Optional)</label>
+                            <ImageUpload
+                                value={formData.companyLogoUrl}
+                                onChange={(url) => setFormData(prev => ({ ...prev, companyLogoUrl: url }))}
                                 bucketName="deals"
                             />
                         </div>

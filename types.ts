@@ -76,6 +76,7 @@ export interface Deal {
   latitude?: number;
   longitude?: number;
   partnerId?: string;
+  companyLogoUrl?: string;
   status?: 'pending' | 'approved' | 'rejected';
 }
 
