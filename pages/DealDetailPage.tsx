@@ -7,7 +7,7 @@ import { useDeals } from '../contexts/DealContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
-import { SubscriptionTier } from '../types';
+import { SubscriptionTier, Deal } from '../types';
 import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon } from '../components/Icons';
 import Modal from '../components/Modal';
 import StarRatingInput from '../components/StarRatingInput';

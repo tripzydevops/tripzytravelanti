@@ -1,38 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDeal } from '../../lib/supabaseService';
 import { SubscriptionTier } from '../../types';
-import { ArrowLeft, Save, Upload, Sparkles } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { ArrowLeft, Save } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
-
-// Helper for debounce
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-    return debouncedValue;
-}
 
 const CreateDealPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isTranslating, setIsTranslating] = useState({ title: false, description: false });
     const [neverExpires, setNeverExpires] = useState(false);
-
-    // Track if user has manually edited the Turkish fields
-    const [isTitleDirty, setIsTitleDirty] = useState(false);
-    const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -57,53 +37,8 @@ const CreateDealPage: React.FC = () => {
         redemptionCode: '',
     });
 
-    // Translation Logic
-    const debouncedTitle = useDebounce(formData.title, 1000);
-    const debouncedDescription = useDebounce(formData.description, 1000);
-
-    const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
-        if (!text.trim()) return '';
-        try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) return '';
-            const ai = new GoogleGenAI({ apiKey });
-            const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.0-flash-exp', contents: prompt });
-            return response.text().trim();
-        } catch (error) { console.error('Translation failed:', error); return ''; }
-    }, []);
-
-    useEffect(() => {
-        // Translate if title exists and user hasn't manually edited the Turkish title
-        if (debouncedTitle && !isTitleDirty) {
-            (async () => {
-                setIsTranslating(p => ({ ...p, title: true }));
-                const tr = await translateText(debouncedTitle, 'Turkish');
-                if (tr) setFormData(p => ({ ...p, title_tr: tr }));
-                setIsTranslating(p => ({ ...p, title: false }));
-            })();
-        }
-    }, [debouncedTitle, isTitleDirty, translateText]);
-
-    useEffect(() => {
-        // Translate if description exists and user hasn't manually edited the Turkish description
-        if (debouncedDescription && !isDescriptionDirty) {
-            (async () => {
-                setIsTranslating(p => ({ ...p, description: true }));
-                const tr = await translateText(debouncedDescription, 'Turkish');
-                if (tr) setFormData(p => ({ ...p, description_tr: tr }));
-                setIsTranslating(p => ({ ...p, description: false }));
-            })();
-        }
-    }, [debouncedDescription, isDescriptionDirty, translateText]);
-
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
-
-        // Mark Turkish fields as dirty if user manually edits them
-        if (name === 'title_tr') setIsTitleDirty(true);
-        if (name === 'description_tr') setIsDescriptionDirty(true);
 
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
@@ -220,7 +155,6 @@ const CreateDealPage: React.FC = () => {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Title (English)
-                                {isTranslating.title && <span className="ml-2 text-xs text-brand-primary animate-pulse">Translating...</span>}
                             </label>
                             <input
                                 type="text"
@@ -246,7 +180,6 @@ const CreateDealPage: React.FC = () => {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Description (English)
-                            {isTranslating.description && <span className="ml-2 text-xs text-brand-primary animate-pulse">Translating...</span>}
                         </label>
                         <textarea
                             name="description"
