@@ -4,6 +4,7 @@ import { Deal, SubscriptionTier } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Lock, StarIcon, BookmarkIcon } from './Icons';
+import { getThumbnailUrl } from '../lib/imageUtils';
 
 interface DealCardProps {
   deal: Deal;
@@ -101,7 +102,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
       <div className="relative overflow-hidden">
         <img
           className="w-full h-56 object-cover transition-transform duration-500 hover:scale-110"
-          src={deal.imageUrl}
+          src={getThumbnailUrl(deal.imageUrl)}
           alt={title}
         />
         {discount > 0 && !isLocked && (
