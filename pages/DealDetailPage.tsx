@@ -307,8 +307,12 @@ const DealDetailPage: React.FC = () => {
           {/* Brand Logo and Title Section */}
           <div className="flex items-start gap-4 mb-6">
             {/* Brand Logo Circle */}
-            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-lg">
-              <span className="text-2xl font-bold text-white">{deal.vendor.charAt(0)}</span>
+            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-lg overflow-hidden">
+              {deal.companyLogoUrl ? (
+                <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl font-bold text-white">{deal.vendor.charAt(0)}</span>
+              )}
             </div>
 
             {/* Title and Vendor */}

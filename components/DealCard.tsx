@@ -130,7 +130,12 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
       </div>
       <div className="p-5 flex flex-col flex-grow">
         <div className="flex justify-between items-center text-xs text-brand-text-muted mb-2">
-          <span className="font-semibold">{deal.vendor}</span>
+          <div className="flex items-center gap-2">
+            {deal.companyLogoUrl && (
+              <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-6 h-6 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+            )}
+            <span className="font-semibold">{deal.vendor}</span>
+          </div>
           {isLocked && (
             <span
               style={{ backgroundColor: requiredTierColor.bg, color: requiredTierColor.text }}
