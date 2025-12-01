@@ -91,7 +91,8 @@ const AdminPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState('');
 
   // Deals Management
-  const { deals, addDeal, updateDeal, deleteDeal } = useDeals();
+  const { addDeal, updateDeal, deleteDeal } = useDeals();
+  const [adminDeals, setAdminDeals] = useState<Deal[]>([]);
   const [isDealFormVisible, setIsDealFormVisible] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [dealFormData, setDealFormData] = useState<Omit<Deal, 'expiresAt'>>(EMPTY_DEAL);
@@ -118,7 +119,20 @@ const AdminPage: React.FC = () => {
     if (activeTab === 'pending_approvals') {
       loadPendingDeals();
     }
+    if (activeTab === 'deals') {
+      loadAdminDeals();
+    }
   }, [activeTab]);
+
+  const loadAdminDeals = async () => {
+    try {
+      const { getAllDeals } = await import('../lib/supabaseService');
+      const fetchedDeals = await getAllDeals();
+      setAdminDeals(fetchedDeals);
+    } catch (error) {
+      console.error("Failed to load deals for admin:", error);
+    }
+  };
 
   const loadPendingDeals = async () => {
     const deals = await getPendingDeals();
@@ -142,8 +156,8 @@ const AdminPage: React.FC = () => {
 
 
   const sortedDeals = useMemo(() => {
-    return [...deals].sort((a, b) => Number(b.id) - Number(a.id));
-  }, [deals]);
+    return [...adminDeals].sort((a, b) => Number(b.id) - Number(a.id));
+  }, [adminDeals]);
 
   const sortedUsers = useMemo(() => {
     return [...users].sort((a, b) => a.name.localeCompare(b.name));
@@ -264,8 +278,11 @@ const AdminPage: React.FC = () => {
     setIsDealFormVisible(true); window.scrollTo(0, 0);
   };
 
-  const handleDeleteDealClick = (dealId: string) => {
-    if (window.confirm(t('deleteConfirmation'))) deleteDeal(dealId);
+  const handleDeleteDealClick = async (dealId: string) => {
+    if (window.confirm(t('deleteConfirmation'))) {
+      await deleteDeal(dealId);
+      loadAdminDeals();
+    }
   };
 
   const resetDealForm = () => {
@@ -301,10 +318,11 @@ const AdminPage: React.FC = () => {
 
     const dealData = { ...dealFormData, imageUrl: finalImageUrl, expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7), category_tr: dealFormData.category === 'Dining' ? 'Yemek' : dealFormData.category === 'Wellness' ? 'Sağlık' : 'Seyahat' };
     if (editingDeal) {
-      updateDeal(dealData);
+      await updateDeal(dealData);
     } else {
-      addDeal({ ...dealData, id: Date.now().toString() });
+      await addDeal({ ...dealData, id: Date.now().toString() });
     }
+    await loadAdminDeals(); // Refresh admin list
     setIsSaving(false);
     resetDealForm();
   };
@@ -383,9 +401,9 @@ const AdminPage: React.FC = () => {
   const userSavedDeals = useMemo(() => {
     if (!userFormData.savedDeals) return [];
     return userFormData.savedDeals
-      .map(dealId => deals.find(d => d.id === dealId))
+      .map(dealId => adminDeals.find(d => d.id === dealId))
       .filter((d): d is Deal => !!d);
-  }, [userFormData.savedDeals, deals]);
+  }, [userFormData.savedDeals, adminDeals]);
 
   // Subscription Management
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);

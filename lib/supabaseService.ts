@@ -141,6 +141,52 @@ export async function getAllDeals(): Promise<Deal[]> {
     return data.map(transformDealFromDB);
 }
 
+export async function getDealsPaginated(
+    page: number,
+    limit: number,
+    filters?: {
+        category?: string;
+        searchQuery?: string;
+        rating?: number;
+    }
+): Promise<{ deals: Deal[]; total: number }> {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = supabase
+        .from('deals')
+        .select('*', { count: 'exact' });
+
+    // Apply filters
+    if (filters?.category && filters.category !== 'All') {
+        query = query.eq('category', filters.category);
+    }
+
+    if (filters?.rating && filters.rating > 0) {
+        query = query.gte('rating', filters.rating);
+    }
+
+    if (filters?.searchQuery) {
+        const searchTerm = `%${filters.searchQuery}%`;
+        query = query.or(`title.ilike.${searchTerm},title_tr.ilike.${searchTerm},description.ilike.${searchTerm},description_tr.ilike.${searchTerm}`);
+    }
+
+    // Apply pagination and sorting
+    const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    if (error) {
+        console.error('Error fetching paginated deals:', error);
+        return { deals: [], total: 0 };
+    }
+
+    return {
+        deals: data.map(transformDealFromDB),
+        total: count || 0
+    };
+}
+
 export async function getDealById(dealId: string): Promise<Deal | null> {
     const { data, error } = await supabase
         .from('deals')

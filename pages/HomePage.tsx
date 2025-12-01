@@ -6,7 +6,7 @@ import { useContent } from '../contexts/ContentContext';
 import DealCard from '../components/DealCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
-import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon } from '../components/Icons';
+import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import Onboarding from '../components/Onboarding';
 import { getAIRecommendations } from '../lib/recommendationLogic';
@@ -18,7 +18,7 @@ const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { deals } = useDeals();
+  const { deals, loading, loadDealsPaginated, total } = useDeals();
   const { user } = useAuth();
   const {
     searchQuery,
@@ -38,6 +38,11 @@ const HomePage: React.FC = () => {
   const [flightWidgetParams, setFlightWidgetParams] = React.useState<{ origin?: string, destination?: string, departDate?: string }>({});
   const flightWidgetRef = React.useRef<HTMLDivElement>(null);
 
+  // Pagination State
+  const [page, setPage] = React.useState(1);
+  const DEALS_PER_PAGE = 12;
+  const hasMore = deals.length < total;
+
   React.useEffect(() => {
     try {
       const storedSearches = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -48,6 +53,36 @@ const HomePage: React.FC = () => {
       console.error("Failed to parse recent searches from localStorage", error);
     }
   }, []);
+
+  // Fetch deals when filters change
+  React.useEffect(() => {
+    const fetchDeals = async () => {
+      // Reset page to 1 when filters change
+      setPage(1);
+      await loadDealsPaginated(1, DEALS_PER_PAGE, {
+        category: categoryFilter,
+        searchQuery: searchQuery,
+        rating: ratingFilter
+      }, false); // false = reset list
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      fetchDeals();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [categoryFilter, searchQuery, ratingFilter, loadDealsPaginated]);
+
+  const handleLoadMore = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await loadDealsPaginated(nextPage, DEALS_PER_PAGE, {
+      category: categoryFilter,
+      searchQuery: searchQuery,
+      rating: ratingFilter
+    }, true); // true = append
+  };
 
   const saveSearch = (query: string) => {
     const trimmedQuery = query.trim();
@@ -94,20 +129,8 @@ const HomePage: React.FC = () => {
     { value: 3, label: `3+ ★` },
   ];
 
-  const filteredDeals = deals.filter(deal => {
-    const query = searchQuery.toLowerCase().trim();
-    const queryMatch = !query ||
-      deal.title.toLowerCase().includes(query) ||
-      deal.title_tr.toLowerCase().includes(query) ||
-      deal.description.toLowerCase().includes(query) ||
-      deal.description_tr.toLowerCase().includes(query);
-
-    const categoryMatch = categoryFilter === 'All' || deal.category === categoryFilter;
-
-    const ratingMatch = deal.rating >= ratingFilter;
-
-    return queryMatch && categoryMatch && ratingMatch;
-  });
+  // No more client-side filtering
+  const filteredDeals = deals;
 
   const flightRoutes = deals.filter(d => d.category === 'FlightWidget');
 
@@ -431,14 +454,41 @@ const HomePage: React.FC = () => {
                 {displayFeaturedDealsTitle || t('featuredDeals')}
               </h2>
               {filteredDeals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredDeals.map(deal => (
-                    <DealCard key={deal.id} deal={deal} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredDeals.map(deal => (
+                      <DealCard key={deal.id} deal={deal} />
+                    ))}
+                  </div>
+                  {/* Load More Button */}
+                  {hasMore && (
+                    <div className="flex justify-center mt-8">
+                      <button
+                        onClick={handleLoadMore}
+                        disabled={loading}
+                        className="px-8 py-3 bg-brand-surface border border-brand-primary text-brand-primary font-semibold rounded-xl hover:bg-brand-primary hover:text-white transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      >
+                        {loading ? (
+                          <>
+                            <SpinnerIcon className="w-5 h-5 mr-2 animate-spin" />
+                            {t('loading') || 'Loading...'}
+                          </>
+                        ) : (
+                          t('loadMore') || 'Load More'
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-16">
-                  <p className="text-xl text-brand-text-muted">{t('noResults')}</p>
+                  {loading ? (
+                    <div className="flex justify-center">
+                      <SpinnerIcon className="w-8 h-8 text-brand-primary animate-spin" />
+                    </div>
+                  ) : (
+                    <p className="text-xl text-brand-text-muted">{t('noResults')}</p>
+                  )}
                 </div>
               )}
             </>

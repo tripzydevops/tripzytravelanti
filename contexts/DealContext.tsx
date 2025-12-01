@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 
 interface DealContextType {
   deals: Deal[];
+  total: number;
   loading: boolean;
   rateDeal: (dealId: string, rating: number) => Promise<void>;
   getDealById: (dealId: string) => Deal | undefined;
@@ -12,6 +13,7 @@ interface DealContextType {
   updateDeal: (deal: Deal) => Promise<void>;
   deleteDeal: (dealId: string) => Promise<void>;
   refreshDeals: () => Promise<void>;
+  loadDealsPaginated: (page: number, limit: number, filters?: any, append?: boolean) => Promise<void>;
 }
 
 const DealContext = createContext<DealContextType | undefined>(undefined);

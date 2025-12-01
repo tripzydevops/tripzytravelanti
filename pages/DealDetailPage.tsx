@@ -138,7 +138,38 @@ const DealDetailPage: React.FC = () => {
     };
   }, [setChatbotVisible]);
 
-  const deal = useMemo(() => id ? getDealById(id) : undefined, [id, getDealById]);
+  const [fetchedDeal, setFetchedDeal] = useState<Deal | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDeal = async () => {
+      if (!id) return;
+
+      // Try to find in context first
+      const contextDeal = getDealById(id);
+      if (contextDeal) {
+        setFetchedDeal(contextDeal);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch from Supabase if not in context
+      try {
+        setLoading(true);
+        const { getDealById: fetchDeal } = await import('../lib/supabaseService');
+        const deal = await fetchDeal(id);
+        setFetchedDeal(deal);
+      } catch (error) {
+        console.error('Failed to fetch deal:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDeal();
+  }, [id, getDealById]);
+
+  const deal = fetchedDeal;
 
   const shareUrl = useMemo(() => {
     if (!id) return '';
@@ -146,11 +177,28 @@ const DealDetailPage: React.FC = () => {
     return `${window.location.origin}${cleanPathname}#/deals/${id}`;
   }, [id]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-brand-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
+      </div>
+    );
+  }
+
   if (!id || !deal) {
-    useEffect(() => {
-      navigate('/');
-    }, [navigate]);
-    return null;
+    // Redirect to home if deal not found after loading
+    // We can use a timeout or just redirect immediately
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-brand-bg p-4">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{t('dealNotFound') || 'Deal Not Found'}</h2>
+        <button
+          onClick={() => navigate('/')}
+          className="bg-brand-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors"
+        >
+          {t('backToHome') || 'Back to Home'}
+        </button>
+      </div>
+    );
   }
 
   const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
