@@ -11,6 +11,7 @@ import FlightSearchWidget from '../components/FlightSearchWidget';
 import Onboarding from '../components/Onboarding';
 import { getAIRecommendations } from '../lib/recommendationLogic';
 import { Deal } from '../types';
+import { Helmet } from 'react-helmet-async';
 
 const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 
@@ -183,6 +184,10 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
+      <Helmet>
+        <title>{t('heroTitle')} | Tripzy</title>
+        <meta name="description" content={t('heroSubtitle')} />
+      </Helmet>
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
 
       {/* Hero Section */}
