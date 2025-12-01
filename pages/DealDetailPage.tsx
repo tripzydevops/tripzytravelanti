@@ -116,6 +116,8 @@ const DealDetailPage: React.FC = () => {
   const [hasRated, setHasRated] = useState(false);
   const { rateDeal } = useDeals();
 
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
   const handleRedeemConfirm = async (dontShowAgain: boolean) => {
     if (deal) {
       try {
@@ -177,6 +179,19 @@ const DealDetailPage: React.FC = () => {
     return `${window.location.origin}${cleanPathname}#/deals/${id}`;
   }, [id]);
 
+  // Tier Check Effect - Moved up and guarded
+  useEffect(() => {
+    if (!deal) return;
+
+    const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
+    const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
+
+    // Allow access if deal is FREE, even if user is not logged in (tier 0)
+    if (userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
+      navigate('/');
+    }
+  }, [deal, user, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-brand-bg">
@@ -201,15 +216,9 @@ const DealDetailPage: React.FC = () => {
     );
   }
 
+  // Calculate these for rendering, now safe because we passed the early returns
   const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
   const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
-
-  useEffect(() => {
-    // Allow access if deal is FREE, even if user is not logged in (tier 0)
-    if (userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
-      navigate('/');
-    }
-  }, [userTierLevel, requiredTierLevel, navigate, deal.requiredTier]);
 
   if (userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
     return null;
@@ -249,8 +258,6 @@ const DealDetailPage: React.FC = () => {
       setHasRated(true);
     }
   };
-
-  const [showFullDescription, setShowFullDescription] = useState(false);
 
   return (
     <div className="bg-white dark:bg-brand-bg min-h-screen">
