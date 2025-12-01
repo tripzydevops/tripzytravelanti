@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
+import { getHeroImageUrl } from '../lib/imageUtils';
 import { triggerConfetti } from '../utils/confetti';
 import { useDeals } from '../contexts/DealContext';
 import { useLanguage } from '../contexts/LanguageContext';
