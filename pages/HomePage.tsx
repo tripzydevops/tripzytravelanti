@@ -62,7 +62,7 @@ const HomePage: React.FC = () => {
       setPage(1);
       await loadDealsPaginated(1, DEALS_PER_PAGE, {
         category: categoryFilter,
-        searchQuery: searchQuery,
+        search: searchQuery,
         rating: ratingFilter
       }, false); // false = reset list
     };
@@ -80,7 +80,7 @@ const HomePage: React.FC = () => {
     setPage(nextPage);
     await loadDealsPaginated(nextPage, DEALS_PER_PAGE, {
       category: categoryFilter,
-      searchQuery: searchQuery,
+      search: searchQuery,
       rating: ratingFilter
     }, true); // true = append
   };

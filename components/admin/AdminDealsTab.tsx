@@ -88,7 +88,7 @@ const AdminDealsTab: React.FC = () => {
 
     const loadAdminDeals = useCallback(async (page: number) => {
         try {
-            const { deals, total } = await getDealsPaginated(page, ADMIN_DEALS_PER_PAGE);
+            const { deals, total } = await getDealsPaginated(page, ADMIN_DEALS_PER_PAGE, { includeExpired: true });
             setAdminDeals(deals);
             setAdminTotal(total);
             setAdminPage(page);

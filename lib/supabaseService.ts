@@ -242,7 +242,7 @@ export async function deleteSubscriptionPlan(tier: string) {
 export async function getDealsPaginated(
     page: number,
     limit: number,
-    filters?: { category?: string; search?: string; tier?: SubscriptionTier }
+    filters?: { category?: string; search?: string; searchQuery?: string; tier?: SubscriptionTier; includeExpired?: boolean }
 ): Promise<{ deals: Deal[]; total: number }> {
     let query = supabase
         .from('deals')
@@ -252,12 +252,19 @@ export async function getDealsPaginated(
         query = query.eq('category', filters.category);
     }
 
-    if (filters?.search) {
-        query = query.ilike('title', `%${filters.search}%`);
+    // Support both 'search' and 'searchQuery' for compatibility
+    const searchTerm = filters?.search || filters?.searchQuery;
+    if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
     }
 
     if (filters?.tier) {
         // Filter logic for tiers if needed
+    }
+
+    // Filter out expired deals by default unless explicitly requested
+    if (!filters?.includeExpired) {
+        query = query.gt('expires_at', new Date().toISOString());
     }
 
     const from = (page - 1) * limit;
