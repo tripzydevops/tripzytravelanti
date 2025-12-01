@@ -120,18 +120,35 @@ const AdminPage: React.FC = () => {
       loadPendingDeals();
     }
     if (activeTab === 'deals') {
-      loadAdminDeals();
+      loadAdminDeals(1);
     }
   }, [activeTab]);
 
-  const loadAdminDeals = async () => {
+  // Pagination State for Admin Deals
+  const [adminPage, setAdminPage] = useState(1);
+  const [adminTotal, setAdminTotal] = useState(0);
+  const ADMIN_DEALS_PER_PAGE = 20;
+
+  useEffect(() => {
+    if (activeTab === 'deals') {
+      loadAdminDeals(1);
+    }
+  }, [activeTab]);
+
+  const loadAdminDeals = async (page: number) => {
     try {
-      const { getAllDeals } = await import('../lib/supabaseService');
-      const fetchedDeals = await getAllDeals();
-      setAdminDeals(fetchedDeals);
+      const { getDealsPaginated } = await import('../lib/supabaseService');
+      const { deals, total } = await getDealsPaginated(page, ADMIN_DEALS_PER_PAGE);
+      setAdminDeals(deals);
+      setAdminTotal(total);
+      setAdminPage(page);
     } catch (error) {
       console.error("Failed to load deals for admin:", error);
     }
+  };
+
+  const handleAdminPageChange = (newPage: number) => {
+    loadAdminDeals(newPage);
   };
 
   const loadPendingDeals = async () => {
@@ -281,7 +298,7 @@ const AdminPage: React.FC = () => {
   const handleDeleteDealClick = async (dealId: string) => {
     if (window.confirm(t('deleteConfirmation'))) {
       await deleteDeal(dealId);
-      loadAdminDeals();
+      loadAdminDeals(adminPage);
     }
   };
 
@@ -322,7 +339,7 @@ const AdminPage: React.FC = () => {
     } else {
       await addDeal({ ...dealData, id: Date.now().toString() });
     }
-    await loadAdminDeals(); // Refresh admin list
+    await loadAdminDeals(adminPage); // Refresh admin list
     setIsSaving(false);
     resetDealForm();
   };
@@ -541,7 +558,7 @@ const AdminPage: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      pendingDeals.map(deal => (
+                      adminDeals.map(deal => (
                         <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                           <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
                             <div className="flex items-center">
@@ -785,6 +802,28 @@ const AdminPage: React.FC = () => {
                     <tbody>{sortedDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4">{deal.requiredTier}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
                   </table>
                 </div>
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-brand-bg border-t border-gray-200 dark:border-gray-700">
+                  <span className="text-sm text-gray-700 dark:text-brand-text-muted">
+                    Showing {((adminPage - 1) * ADMIN_DEALS_PER_PAGE) + 1} to {Math.min(adminPage * ADMIN_DEALS_PER_PAGE, adminTotal)} of {adminTotal} deals
+                  </span>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => handleAdminPageChange(adminPage - 1)}
+                      disabled={adminPage === 1}
+                      className="px-4 py-2 bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-brand-text-light hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => handleAdminPageChange(adminPage + 1)}
+                      disabled={adminPage * ADMIN_DEALS_PER_PAGE >= adminTotal}
+                      className="px-4 py-2 bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-brand-text-light hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
           </>
@@ -905,7 +944,7 @@ const AdminPage: React.FC = () => {
                     <div className="flex gap-2">
                       <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                         <option value="">{t('selectDeal')}</option>
-                        {deals.map(deal => (
+                        {pendingDeals.map(deal => (
                           <option key={deal.id} value={deal.id} disabled={userFormData.savedDeals?.includes(deal.id)}>
                             {language === 'tr' ? deal.title_tr : deal.title}
                           </option>
@@ -1044,7 +1083,7 @@ const AdminPage: React.FC = () => {
                 {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
                   <div className="space-y-4">
                     {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
-                      const deal = deals.find(d => d.id === redemption.dealId);
+                      const deal = adminDeals.find(d => d.id === redemption.dealId);
                       return (
                         <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                           <p className="font-semibold text-gray-900 dark:text-white">
