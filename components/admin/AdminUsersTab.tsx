@@ -33,6 +33,9 @@ const AdminUsersTab: React.FC = () => {
     const [showSuccess, setShowSuccess] = useState('');
     const [pendingDeals, setPendingDeals] = useState<Deal[]>([]);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [tierFilter, setTierFilter] = useState<SubscriptionTier | 'All'>('All');
+
     useEffect(() => {
         loadPendingDeals();
     }, []);
@@ -43,8 +46,23 @@ const AdminUsersTab: React.FC = () => {
     };
 
     const sortedUsers = useMemo(() => {
-        return [...users].sort((a, b) => a.name.localeCompare(b.name));
-    }, [users]);
+        let filtered = [...users];
+
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(u =>
+                u.name.toLowerCase().includes(query) ||
+                u.email.toLowerCase().includes(query) ||
+                (u.mobile && u.mobile.includes(query))
+            );
+        }
+
+        if (tierFilter !== 'All') {
+            filtered = filtered.filter(u => u.tier === tierFilter);
+        }
+
+        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+    }, [users, searchQuery, tierFilter]);
 
     const userIdToNameMap = useMemo(() =>
         users.reduce((acc, user) => {
@@ -323,6 +341,32 @@ const AdminUsersTab: React.FC = () => {
 
             <section>
                 <h2 className="text-2xl font-bold mb-4">{t('allUsers')}</h2>
+
+                {/* Search and Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-grow">
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, or mobile..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                        />
+                    </div>
+                    <div className="w-full md:w-48">
+                        <select
+                            value={tierFilter}
+                            onChange={(e) => setTierFilter(e.target.value as SubscriptionTier | 'All')}
+                            className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                        >
+                            <option value="All">All Tiers</option>
+                            {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => (
+                                <option key={tier} value={tier}>{tier}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
                 <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">

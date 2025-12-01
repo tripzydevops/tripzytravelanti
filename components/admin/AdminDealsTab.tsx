@@ -86,19 +86,29 @@ const AdminDealsTab: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+
     const loadAdminDeals = useCallback(async (page: number) => {
         try {
-            const { deals, total } = await getDealsPaginated(page, ADMIN_DEALS_PER_PAGE, { includeExpired: true });
+            const { deals, total } = await getDealsPaginated(page, ADMIN_DEALS_PER_PAGE, {
+                includeExpired: true,
+                search: searchQuery,
+                category: categoryFilter
+            });
             setAdminDeals(deals);
             setAdminTotal(total);
             setAdminPage(page);
         } catch (error) {
             console.error("Failed to load deals for admin:", error);
         }
-    }, []);
+    }, [searchQuery, categoryFilter]);
 
     useEffect(() => {
-        loadAdminDeals(1);
+        const timeoutId = setTimeout(() => {
+            loadAdminDeals(1);
+        }, 500); // Debounce
+        return () => clearTimeout(timeoutId);
     }, [loadAdminDeals]);
 
     const handleAdminPageChange = (newPage: number) => {
@@ -357,6 +367,33 @@ const AdminDealsTab: React.FC = () => {
 
             <section>
                 <h2 className="text-2xl font-bold mb-4">{t('allDeals')}</h2>
+
+                {/* Search and Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-grow">
+                        <input
+                            type="text"
+                            placeholder="Search by title..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                        />
+                    </div>
+                    <div className="w-full md:w-48">
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                        >
+                            <option value="All">All Categories</option>
+                            <option value="Dining">Dining</option>
+                            <option value="Wellness">Wellness</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Flights">Flights</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
