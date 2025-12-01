@@ -283,12 +283,13 @@ const DealDetailPage: React.FC = () => {
 
       <main className="animate-fade-in pb-24">
         {/* Hero Image */}
-        <div className="relative h-64 overflow-hidden">
+        <div className="relative h-64 md:h-96 w-full overflow-hidden">
           <img
-            src={deal.imageUrl}
+            src={getHeroImageUrl(deal.imageUrl)}
             alt={title}
             className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
         </div>
 
         <div className="container mx-auto px-4 py-6">

@@ -9,6 +9,7 @@ import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import Onboarding from '../components/Onboarding';
+import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
 import { Deal } from '../types';
 import { Helmet } from 'react-helmet-async';
@@ -429,7 +430,12 @@ const HomePage: React.FC = () => {
                         onClick={() => handleRouteClick(route)}
                         className="group relative h-48 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 text-left w-full"
                       >
-                        <img src={route.imageUrl} alt={route.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <img
+                          src={getThumbnailUrl(route.imageUrl)}
+                          alt={language === 'tr' ? route.title_tr : route.title}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          loading="lazy"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                         <div className="absolute bottom-0 left-0 p-4 w-full">
                           <h4 className="text-white font-bold text-lg mb-1">{route.title}</h4>
