@@ -21,13 +21,15 @@ const DealContext = createContext<DealContextType | undefined>(undefined);
 export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
 
-  // Load deals from Supabase
+  // Load deals from Supabase (Legacy/Initial - can be replaced or kept for non-paginated needs if any)
   const loadDeals = useCallback(async () => {
     try {
       setLoading(true);
       const fetchedDeals = await getAllDeals();
       setDeals(fetchedDeals);
+      setTotal(fetchedDeals.length); // Fallback total
     } catch (error) {
       console.error('Error loading deals:', error);
     } finally {
@@ -35,8 +37,39 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Paginated Load
+  const loadDealsPaginated = useCallback(async (page: number, limit: number, filters?: any, append: boolean = false) => {
+    try {
+      setLoading(true);
+      const { deals: newDeals, total: totalCount } = await import('../lib/supabaseService').then(m => 
+        m.getDealsPaginated(page, limit, filters)
+      );
+
+      setTotal(totalCount);
+
+      if (append) {
+        setDeals(prev => {
+          // Filter out duplicates just in case
+          const existingIds = new Set(prev.map(d => d.id));
+          const uniqueNewDeals = newDeals.filter(d => !existingIds.has(d.id));
+          return [...prev, ...uniqueNewDeals];
+        });
+      } else {
+        setDeals(newDeals);
+      }
+    } catch (error) {
+      console.error('Error loading paginated deals:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Initial load
   useEffect(() => {
+    // We can leave the initial load empty or default to first page
+    // loadDeals(); 
+    // Actually, HomePage triggers loadDealsPaginated on mount/filter change, so we might not need this auto-call if we want to be purely driven by the page.
+    // But to be safe for other pages using useDeals without pagination params:
     loadDeals();
   }, [loadDeals]);
 
@@ -195,6 +228,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <DealContext.Provider
       value={{
         deals,
+        total,
         loading,
         rateDeal,
         getDealById,
@@ -202,6 +236,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateDeal,
         deleteDeal,
         refreshDeals,
+        loadDealsPaginated,
       }}
     >
       {children}
