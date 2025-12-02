@@ -388,15 +388,21 @@ const AdminDealsTab: React.FC = () => {
             }
         }
 
-        const dealData = { ...dealFormData, imageUrl: finalImageUrl, expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7), category_tr: dealFormData.category === 'Dining' ? 'Yemek' : dealFormData.category === 'Wellness' ? 'Sağlık' : 'Seyahat' };
-        if (editingDeal) {
-            await updateDeal(dealData);
-        } else {
-            await addDeal({ ...dealData, id: Date.now().toString() });
+        try {
+            const dealData = { ...dealFormData, imageUrl: finalImageUrl, expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7), category_tr: dealFormData.category === 'Dining' ? 'Yemek' : dealFormData.category === 'Wellness' ? 'Sağlık' : 'Seyahat' };
+            if (editingDeal) {
+                await updateDeal(dealData);
+            } else {
+                await addDeal({ ...dealData, id: Date.now().toString() });
+            }
+            await loadAdminDeals(adminPage);
+            resetDealForm();
+        } catch (error) {
+            console.error('Error saving deal:', error);
+            alert('Failed to save deal. Please try again.');
+        } finally {
+            setIsSaving(false);
         }
-        await loadAdminDeals(adminPage);
-        setIsSaving(false);
-        resetDealForm();
     };
 
 

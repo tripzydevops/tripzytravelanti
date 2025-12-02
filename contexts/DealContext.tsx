@@ -150,6 +150,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           redemption_code: newDeal.redemptionCode,
           latitude: newDeal.latitude,
           longitude: newDeal.longitude,
+          redemption_style: newDeal.redemptionStyle,
         })
         .select()
         .single();
