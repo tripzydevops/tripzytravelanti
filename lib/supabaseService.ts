@@ -275,6 +275,8 @@ export async function getDealsPaginated(
         query = query.gt('expires_at', now);
         // Also filter out future published deals
         query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
+        // Only show approved deals
+        query = query.eq('status', 'approved');
     }
 
     const from = (page - 1) * limit;
@@ -303,6 +305,8 @@ export async function getAllDeals(includeExpired: boolean = false): Promise<Deal
         const now = new Date().toISOString();
         query = query.gt('expires_at', now);
         query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
+        // Only show approved deals
+        query = query.eq('status', 'approved');
     }
 
     const { data, error } = await query;
