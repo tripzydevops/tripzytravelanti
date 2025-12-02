@@ -207,10 +207,10 @@ const ProfilePage: React.FC = () => {
   const handleRedeemReferral = async () => {
     if (!manualReferralCode.trim()) return;
     try {
-      await updateUserDetails({ 
-        name: user?.name || '', 
-        email: user?.email || '', 
-        referredBy: manualReferralCode 
+      await updateUserDetails({
+        name: user?.name || '',
+        email: user?.email || '',
+        referredBy: manualReferralCode
       });
       setShowSuccess(t('profileUpdatedSuccess') || 'Referral code redeemed!');
       setTimeout(() => setShowSuccess(''), 3000);
@@ -350,6 +350,27 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {!user.referredBy && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-brand-text-muted mb-2 text-center">{t('haveReferralCode') || 'Have a referral code? Enter it here:'}</p>
+            <div className="flex gap-2 max-w-md mx-auto">
+              <input
+                type="text"
+                value={manualReferralCode}
+                onChange={(e) => setManualReferralCode(e.target.value)}
+                placeholder="Enter User ID / Code"
+                className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-lg p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+              />
+              <button
+                onClick={handleRedeemReferral}
+                className="bg-brand-secondary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors"
+              >
+                {t('redeem') || 'Redeem'}
+              </button>
+            </div>
+          </div>
+        )}
       </SettingsSection>
 
       {/* Billing History Section */}
