@@ -86,6 +86,7 @@ const AdminUsersTab: React.FC = () => {
             extraRedemptions: user.extraRedemptions || 0,
             address: user.address || '',
             billingAddress: user.billingAddress || '',
+            referredBy: user.referredBy || '',
         });
         setDealToAdd('');
         setRedemptionsToAdd(0);
@@ -324,6 +325,30 @@ const AdminUsersTab: React.FC = () => {
                         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <h3 className="text-lg font-semibold mb-2">{t('referralChainLabel')}</h3>
+                                <div className="mb-2">
+                                    <label htmlFor="referredBy" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Referred By (User ID or Select)</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            id="referredBy"
+                                            name="referredBy"
+                                            value={userFormData.referredBy || ''}
+                                            onChange={handleUserFormChange}
+                                            className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                                            placeholder="Enter User ID"
+                                        />
+                                        <select
+                                            onChange={(e) => setUserFormData(prev => ({ ...prev, referredBy: e.target.value }))}
+                                            value={userFormData.referredBy || ''}
+                                            className="w-1/2 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                                        >
+                                            <option value="">Select User...</option>
+                                            {sortedUsers.filter(u => u.id !== userFormData.id).map(u => (
+                                                <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                                 <div className="bg-gray-100 dark:bg-brand-bg p-3 rounded-md text-sm text-gray-800 dark:text-brand-text-light min-h-[40px] flex items-center">
                                     {(userFormData.referralChain?.length ?? 0) > 0 ? (
                                         <span>{userFormData.referralChain?.map(id => userIdToNameMap[id] || 'Unknown').join(' → ')}</span>

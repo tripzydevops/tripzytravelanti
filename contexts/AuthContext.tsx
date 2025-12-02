@@ -22,7 +22,7 @@ interface AuthContextType {
   users: User[];
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, referredBy?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateTier: (tier: SubscriptionTier) => Promise<void>;
   updateUserDetails: (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string }) => Promise<void>;
@@ -159,7 +159,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user?.isAdmin]);
 
   // Sign up new user
-  const signup = useCallback(async (email: string, password: string, name: string) => {
+  const signup = useCallback(async (email: string, password: string, name: string, referredBy?: string) => {
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -175,6 +175,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           name,
           email,
           tier: SubscriptionTier.FREE,
+          referred_by: referredBy || null,
         });
 
         if (profileError) throw profileError;
@@ -294,6 +295,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         notification_preferences: updatedUser.notificationPreferences,
         mobile: updatedUser.mobile,
         status: updatedUser.status,
+        referred_by: updatedUser.referredBy,
       });
 
       setUsers((currentUsers) =>

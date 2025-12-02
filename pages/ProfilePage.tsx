@@ -217,7 +217,7 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  const referralCode = `TRIPZY-${user.id.substring(0, 6).toUpperCase()}`;
+  const referralCode = `${window.location.origin}/signup?ref=${user.id}`;
 
   const { remaining, total } = calculateRemainingRedemptions(user);
   const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
@@ -322,11 +322,11 @@ const ProfilePage: React.FC = () => {
       <SettingsSection title={t('referFriendTitle')}>
         <div className="p-4 text-center">
           <p className="text-sm text-gray-500 dark:text-brand-text-muted mb-4">{t('referFriendSubtitle')}</p>
-          <div className="flex items-center justify-center bg-gray-100 dark:bg-brand-bg p-3 rounded-lg">
-            <span className="text-lg font-bold text-gray-800 dark:text-brand-text-light tracking-widest mr-4">{referralCode}</span>
+          <div className="flex items-center justify-between bg-gray-100 dark:bg-brand-bg p-3 rounded-lg gap-2">
+            <span className="text-sm font-mono text-gray-800 dark:text-brand-text-light truncate flex-grow">{referralCode}</span>
             <button
               onClick={() => handleCopyCode(referralCode)}
-              className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors w-28"
+              className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex-shrink-0"
             >
               {copied ? t('copied') : t('copyCode')}
             </button>

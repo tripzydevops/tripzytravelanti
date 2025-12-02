@@ -95,6 +95,7 @@ export async function updateUserProfile(
 
         billing_address: string;
         status: 'active' | 'banned' | 'suspended';
+        referred_by: string;
     }>
 ) {
     const { data, error } = await supabase

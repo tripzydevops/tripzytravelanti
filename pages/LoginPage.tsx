@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
@@ -24,7 +24,11 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signInWithGoogle } = useAuth();
+  const [isSignup, setIsSignup] = useState(false);
+  const [name, setName] = useState('');
+  const [searchParams] = useSearchParams();
+  const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
+  const { login, signup, signInWithGoogle } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { error: showError, success: showSuccess } = useToast();
@@ -36,244 +40,294 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      showSuccess(t('loginSuccess') || 'Successfully logged in!');
-      navigate('/');
-    } catch (err: any) {
-      console.error('Login error:', err);
-      const errorMessage = err.message || 'Failed to login. Please check your credentials.';
-      setError(errorMessage);
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        if (isSignup) {
+          await signup(email, password, name, referralCode);
+          showSuccess(t('signupSuccess') || 'Successfully signed up!');
+        } else {
+          await login(email, password);
+          showSuccess(t('loginSuccess') || 'Successfully logged in!');
+        }
+        navigate('/');
+      } catch (err: any) {
+        console.error('Login error:', err);
+        const errorMessage = err.message || 'Failed to login. Please check your credentials.';
+        setError(errorMessage);
+        showError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setError('');
-      await signInWithGoogle();
-      showSuccess(t('loginSuccess') || 'Successfully logged in with Google!');
-    } catch (err: any) {
-      console.error('Google login error:', err);
-      const errorMessage = 'Failed to sign in with Google.';
-      setError(errorMessage);
-      showError(errorMessage);
-    }
-  };
+    const handleGoogleLogin = async () => {
+      try {
+        setError('');
+        await signInWithGoogle();
+        showSuccess(t('loginSuccess') || 'Successfully logged in with Google!');
+      } catch (err: any) {
+        console.error('Google login error:', err);
+        const errorMessage = 'Failed to sign in with Google.';
+        setError(errorMessage);
+        showError(errorMessage);
+      }
+    };
 
-  const handleSocialLogin = () => {
-    // TODO: Implement other social logins
-    setError('This social login method is coming soon!');
-  };
+    const handleSocialLogin = () => {
+      // TODO: Implement other social logins
+      setError('This social login method is coming soon!');
+    };
 
-  const { content, getContent } = useContent();
-  const { language } = useLanguage();
+    const { content, getContent } = useContent();
+    const { language } = useLanguage();
 
-  // Dynamic Content
-  const heroTitle = getContent('login', 'hero', 'title');
-  const heroSubtitle = getContent('login', 'hero', 'subtitle');
-  const heroBadge = getContent('login', 'hero', 'badge');
-  const heroImage = getContent('login', 'hero', 'image_url');
-  const formTitle = getContent('login', 'form', 'title');
-  const formSubtitle = getContent('login', 'form', 'subtitle');
+    // Dynamic Content
+    const heroTitle = getContent('login', 'hero', 'title');
+    const heroSubtitle = getContent('login', 'hero', 'subtitle');
+    const heroBadge = getContent('login', 'hero', 'badge');
+    const heroImage = getContent('login', 'hero', 'image_url');
+    const formTitle = getContent('login', 'form', 'title');
+    const formSubtitle = getContent('login', 'form', 'subtitle');
 
-  const displayHeroTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
-  const displayHeroSubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
-  const displayHeroBadge = language === 'tr' ? (heroBadge?.content_value_tr || heroBadge?.content_value) : heroBadge?.content_value;
-  const displayHeroImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
-  const displayFormTitle = language === 'tr' ? (formTitle?.content_value_tr || formTitle?.content_value) : formTitle?.content_value;
-  const displayFormSubtitle = language === 'tr' ? (formSubtitle?.content_value_tr || formSubtitle?.content_value) : formSubtitle?.content_value;
+    const displayHeroTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
+    const displayHeroSubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
+    const displayHeroBadge = language === 'tr' ? (heroBadge?.content_value_tr || heroBadge?.content_value) : heroBadge?.content_value;
+    const displayHeroImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
+    const displayFormTitle = language === 'tr' ? (formTitle?.content_value_tr || formTitle?.content_value) : formTitle?.content_value;
+    const displayFormSubtitle = language === 'tr' ? (formSubtitle?.content_value_tr || formSubtitle?.content_value) : formSubtitle?.content_value;
 
-  const SocialLoginOptions = () => (
-    <div className="w-full max-w-md space-y-8 animate-fade-in">
-      <div className="text-center">
-        <h1 className="text-4xl font-heading font-bold text-gray-900 dark:text-white tracking-tight">
-          {displayFormTitle || t('letsGetYouStarted')}
-        </h1>
-        <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-          {displayFormSubtitle || t('yourNextAdventure')}
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <button
-          onClick={() => setShowEmailForm(true)}
-          className="w-full flex items-center justify-center gap-x-3 py-4 px-6 rounded-2xl bg-gradient-primary text-white font-bold text-lg shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-        >
-          {t('continueWithEmail')}
-        </button>
-
-        <div className="relative flex py-4 items-center">
-          <div className="flex-grow border-t border-gray-200 dark:border-white/10"></div>
-          <span className="flex-shrink mx-4 text-gray-400 text-sm font-medium tracking-wider">{t('or')}</span>
-          <div className="flex-grow border-t border-gray-200 dark:border-white/10"></div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <button
-            onClick={handleSocialLogin}
-            className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-black text-white font-semibold text-base shadow-md hover:bg-gray-900 hover:scale-[1.02] transition-all duration-300"
-          >
-            <AppleIcon className="h-6 w-6" />
-            {t('signInWithApple')}
-          </button>
-
-          <button
-            onClick={handleSocialLogin}
-            className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-[#1877F2] text-white font-semibold text-base shadow-md hover:bg-[#166fe5] hover:scale-[1.02] transition-all duration-300"
-          >
-            <FacebookIcon className="h-6 w-6" />
-            {t('signInWithFacebook')}
-          </button>
-
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-white text-gray-700 font-semibold text-base border border-gray-200 shadow-sm hover:bg-gray-50 hover:scale-[1.02] transition-all duration-300"
-          >
-            <GoogleIcon className="h-6 w-6" />
-            {t('signInWithGoogle')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const EmailLoginForm = () => (
-    <div className="w-full max-w-md animate-fade-in">
-      <div className="mb-8">
-        <button
-          onClick={() => setShowEmailForm(false)}
-          className="group flex items-center text-gray-500 hover:text-brand-primary transition-colors mb-6"
-        >
-          <div className="p-2 rounded-full bg-gray-100 dark:bg-white/5 group-hover:bg-brand-primary/10 transition-colors mr-2">
-            <ChevronLeftIcon className="w-5 h-5" />
-          </div>
-          <span className="font-medium">{t('back')}</span>
-        </button>
-        <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white">
-          {t('loginTitle')}
-        </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {t('loginSubtitle')}
-        </p>
-      </div>
-
-      <form className="space-y-6" onSubmit={handleEmailLoginSubmit}>
-        {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium flex items-center animate-shake">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-5">
-          <div>
-            <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {t('emailLabel')}
-            </label>
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-              placeholder="name@example.com"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('passwordLabel')}
-              </label>
-              <a href="#" className="text-sm font-medium text-brand-primary hover:text-brand-secondary transition-colors">
-                Forgot password?
-              </a>
-            </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full flex items-center justify-center py-4 px-6 rounded-2xl bg-gradient-primary text-white font-bold text-lg shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300"
-        >
-          {loading ? (
-            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            t('loginButton')
-          )}
-        </button>
-      </form>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen flex bg-white dark:bg-brand-bg">
-      {/* Left Side - Image (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-2/3 relative overflow-hidden bg-gray-900">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-110"
-          style={{
-            backgroundImage: `url("${displayHeroImage}")`,
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-brand-primary/20 mix-blend-overlay" />
-
-        <div className="relative z-10 flex flex-col justify-end p-16 text-white max-w-2xl">
-          <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-medium">
-            <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse" />
-            {displayHeroBadge || t('loginHeroBadge')}
-          </div>
-          <h2 className="text-5xl font-heading font-bold mb-6 leading-tight">
-            {displayHeroTitle || t('loginHeroTitle')}
-          </h2>
-          <p className="text-xl text-white/80 leading-relaxed">
-            {displayHeroSubtitle || t('loginHeroSubtitle')}
+    const SocialLoginOptions = () => (
+      <div className="w-full max-w-md space-y-8 animate-fade-in">
+        <div className="text-center">
+          <h1 className="text-4xl font-heading font-bold text-gray-900 dark:text-white tracking-tight">
+            {displayFormTitle || t('letsGetYouStarted')}
+          </h1>
+          <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
+            {displayFormSubtitle || t('yourNextAdventure')}
           </p>
         </div>
-      </div>
 
-      {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 xl:w-1/3 flex flex-col justify-center items-center p-8 lg:p-12 relative">
-        {/* Mobile Background (visible only on small screens) */}
-        <div className="lg:hidden absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${displayHeroImage}")` }} />
-          <div className="absolute inset-0 bg-white/90 dark:bg-brand-bg/95 backdrop-blur-sm" />
+        <div className="space-y-4">
+          <button
+            onClick={() => setShowEmailForm(true)}
+            className="w-full flex items-center justify-center gap-x-3 py-4 px-6 rounded-2xl bg-gradient-primary text-white font-bold text-lg shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+          >
+            {t('continueWithEmail')}
+          </button>
+
+          <div className="relative flex py-4 items-center">
+            <div className="flex-grow border-t border-gray-200 dark:border-white/10"></div>
+            <span className="flex-shrink mx-4 text-gray-400 text-sm font-medium tracking-wider">{t('or')}</span>
+            <div className="flex-grow border-t border-gray-200 dark:border-white/10"></div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <button
+              onClick={handleSocialLogin}
+              className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-black text-white font-semibold text-base shadow-md hover:bg-gray-900 hover:scale-[1.02] transition-all duration-300"
+            >
+              <AppleIcon className="h-6 w-6" />
+              {t('signInWithApple')}
+            </button>
+
+            <button
+              onClick={handleSocialLogin}
+              className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-[#1877F2] text-white font-semibold text-base shadow-md hover:bg-[#166fe5] hover:scale-[1.02] transition-all duration-300"
+            >
+              <FacebookIcon className="h-6 w-6" />
+              {t('signInWithFacebook')}
+            </button>
+
+            <button
+              onClick={handleGoogleLogin}
+              className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-white text-gray-700 font-semibold text-base border border-gray-200 shadow-sm hover:bg-gray-50 hover:scale-[1.02] transition-all duration-300"
+            >
+              <GoogleIcon className="h-6 w-6" />
+              {t('signInWithGoogle')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+    const EmailLoginForm = () => (
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="mb-8">
+          <button
+            onClick={() => setShowEmailForm(false)}
+            className="group flex items-center text-gray-500 hover:text-brand-primary transition-colors mb-6"
+          >
+            <div className="p-2 rounded-full bg-gray-100 dark:bg-white/5 group-hover:bg-brand-primary/10 transition-colors mr-2">
+              <ChevronLeftIcon className="w-5 h-5" />
+            </div>
+            <span className="font-medium">{t('back')}</span>
+          </button>
+          <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white">
+            {isSignup ? (t('createAccount') || 'Create Account') : t('loginTitle')}
+          </h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            {isSignup ? (t('signupSubtitle') || 'Join us today!') : t('loginSubtitle')}
+          </p>
         </div>
 
-        <div className="relative z-10 w-full max-w-md">
-          {showEmailForm ? <EmailLoginForm /> : <SocialLoginOptions />}
+        <form className="space-y-6" onSubmit={handleEmailLoginSubmit}>
+          {error && (
+            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium flex items-center animate-shake">
+              <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error}
+            </div>
+          )}
 
-          <div className="mt-8 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('termsAgreement')}{' '}
-              <a className="font-semibold text-brand-primary hover:text-brand-secondary hover:underline transition-colors" href="#">{t('termsOfService')}</a> {t('and')}{' '}
-              <a className="font-semibold text-brand-primary hover:text-brand-secondary hover:underline transition-colors" href="#">{t('privacyPolicy')}</a>.
+          <div className="space-y-5">
+            {isSignup && (
+              <>
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    {t('fullNameLabel')}
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Referral Code (Optional)
+                  </label>
+                  <input
+                    id="referralCode"
+                    name="referralCode"
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
+                    placeholder="Referral Code"
+                  />
+                </div>
+              </>
+            )}
+            <div>
+              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                {t('emailLabel')}
+              </label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
+                placeholder="name@example.com"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t('passwordLabel')}
+                </label>
+                <a href="#" className="text-sm font-medium text-brand-primary hover:text-brand-secondary transition-colors">
+                  Forgot password?
+                </a>
+              </div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center py-4 px-6 rounded-2xl bg-gradient-primary text-white font-bold text-lg shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300"
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+            ): (
+              isSignup? (t('signupButton') || 'Sign Up') : t('loginButton')
+          )}
+          </button>
+
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => setIsSignup(!isSignup)}
+              className="text-sm text-brand-primary hover:text-brand-secondary font-medium"
+            >
+              {isSignup ? (t('alreadyHaveAccount') || 'Already have an account? Login') : (t('dontHaveAccount') || "Don't have an account? Sign Up")}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+
+    return (
+      <div className="min-h-screen flex bg-white dark:bg-brand-bg">
+        {/* Left Side - Image (Desktop Only) */}
+        <div className="hidden lg:flex lg:w-1/2 xl:w-2/3 relative overflow-hidden bg-gray-900">
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-110"
+            style={{
+              backgroundImage: `url("${displayHeroImage}")`,
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-brand-primary/20 mix-blend-overlay" />
+
+          <div className="relative z-10 flex flex-col justify-end p-16 text-white max-w-2xl">
+            <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-medium">
+              <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse" />
+              {displayHeroBadge || t('loginHeroBadge')}
+            </div>
+            <h2 className="text-5xl font-heading font-bold mb-6 leading-tight">
+              {displayHeroTitle || t('loginHeroTitle')}
+            </h2>
+            <p className="text-xl text-white/80 leading-relaxed">
+              {displayHeroSubtitle || t('loginHeroSubtitle')}
             </p>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
 
-export default LoginPage;
+        {/* Right Side - Form */}
+        <div className="w-full lg:w-1/2 xl:w-1/3 flex flex-col justify-center items-center p-8 lg:p-12 relative">
+          {/* Mobile Background (visible only on small screens) */}
+          <div className="lg:hidden absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${displayHeroImage}")` }} />
+            <div className="absolute inset-0 bg-white/90 dark:bg-brand-bg/95 backdrop-blur-sm" />
+          </div>
+
+          <div className="relative z-10 w-full max-w-md">
+            {showEmailForm ? <EmailLoginForm /> : <SocialLoginOptions />}
+
+            <div className="mt-8 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('termsAgreement')}{' '}
+                <a className="font-semibold text-brand-primary hover:text-brand-secondary hover:underline transition-colors" href="#">{t('termsOfService')}</a> {t('and')}{' '}
+                <a className="font-semibold text-brand-primary hover:text-brand-secondary hover:underline transition-colors" href="#">{t('privacyPolicy')}</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  export default LoginPage;
