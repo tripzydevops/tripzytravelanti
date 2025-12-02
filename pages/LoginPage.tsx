@@ -40,7 +40,6 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      try {
         if (isSignup) {
           await signup(email, password, name, referralCode);
           showSuccess(t('signupSuccess') || 'Successfully signed up!');
@@ -261,7 +260,7 @@ const LoginPage: React.FC = () => {
             {loading ? (
               <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-            ): (
+
               isSignup? (t('signupButton') || 'Sign Up') : t('loginButton')
           )}
           </button>
