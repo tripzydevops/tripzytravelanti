@@ -123,6 +123,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Add new deal (admin only)
   const addDeal = useCallback(async (newDeal: Deal) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase
         .from('deals')
         .insert({
@@ -151,6 +153,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           latitude: newDeal.latitude,
           longitude: newDeal.longitude,
           redemption_style: newDeal.redemptionStyle,
+          partner_id: user?.id,
+          status: newDeal.status || 'pending',
         })
         .select()
         .single();
