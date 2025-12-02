@@ -19,22 +19,45 @@ import Chatbot from './components/Chatbot';
 import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy load pages
-const HomePage = React.lazy(() => import('./pages/HomePage'));
-const FlightsPage = React.lazy(() => import('./pages/FlightsPage'));
-const SubscriptionsPage = React.lazy(() => import('./pages/SubscriptionsPage'));
-const LoginPage = React.lazy(() => import('./pages/LoginPage'));
-const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
-const TravelPage = React.lazy(() => import('./pages/TravelPage'));
-const TripPlannerPage = React.lazy(() => import('./pages/TripPlannerPage'));
-const DealDetailPage = React.lazy(() => import('./pages/DealDetailPage'));
-const AdminPage = React.lazy(() => import('./pages/AdminPage'));
-const PartnerDashboard = React.lazy(() => import('./pages/partner/PartnerDashboard'));
-const PartnerScanPage = React.lazy(() => import('./pages/partner/PartnerScanPage'));
-const CreateDealPage = React.lazy(() => import('./pages/partner/CreateDealPage'));
-const MyDealsPage = React.lazy(() => import('./pages/MyDealsPage'));
-const CheckoutPage = React.lazy(() => import('./pages/CheckoutPage'));
-const PaymentSuccessPage = React.lazy(() => import('./pages/PaymentSuccessPage'));
+// Helper to retry lazy imports and reload on chunk error
+const lazyLoadRetry = (importFn: () => Promise<any>) => {
+  return React.lazy(async () => {
+    try {
+      return await importFn();
+    } catch (error: any) {
+      // Check if it's a chunk load error
+      if (error.message?.includes('Failed to fetch dynamically imported module') ||
+        error.message?.includes('Importing a module script failed')) {
+        // Only reload once to avoid infinite loops
+        const storageKey = `retry-lazy-${window.location.pathname}`;
+        if (!sessionStorage.getItem(storageKey)) {
+          sessionStorage.setItem(storageKey, 'true');
+          window.location.reload();
+          // Return a never-resolving promise to wait for reload
+          return new Promise(() => { });
+        }
+      }
+      throw error;
+    }
+  });
+};
+
+// Lazy load pages with retry
+const HomePage = lazyLoadRetry(() => import('./pages/HomePage'));
+const FlightsPage = lazyLoadRetry(() => import('./pages/FlightsPage'));
+const SubscriptionsPage = lazyLoadRetry(() => import('./pages/SubscriptionsPage'));
+const LoginPage = lazyLoadRetry(() => import('./pages/LoginPage'));
+const ProfilePage = lazyLoadRetry(() => import('./pages/ProfilePage'));
+const TravelPage = lazyLoadRetry(() => import('./pages/TravelPage'));
+const TripPlannerPage = lazyLoadRetry(() => import('./pages/TripPlannerPage'));
+const DealDetailPage = lazyLoadRetry(() => import('./pages/DealDetailPage'));
+const AdminPage = lazyLoadRetry(() => import('./pages/AdminPage'));
+const PartnerDashboard = lazyLoadRetry(() => import('./pages/partner/PartnerDashboard'));
+const PartnerScanPage = lazyLoadRetry(() => import('./pages/partner/PartnerScanPage'));
+const CreateDealPage = lazyLoadRetry(() => import('./pages/partner/CreateDealPage'));
+const MyDealsPage = lazyLoadRetry(() => import('./pages/MyDealsPage'));
+const CheckoutPage = lazyLoadRetry(() => import('./pages/CheckoutPage'));
+const PaymentSuccessPage = lazyLoadRetry(() => import('./pages/PaymentSuccessPage'));
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
