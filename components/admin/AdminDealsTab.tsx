@@ -384,22 +384,7 @@ const AdminDealsTab: React.FC = () => {
         resetDealForm();
     };
 
-    const sortedDeals = useMemo(() => {
-        let filtered = [...adminDeals];
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(d => d.title.toLowerCase().includes(query));
-        }
-        if (categoryFilter !== 'All') {
-            filtered = filtered.filter(d => d.category === categoryFilter);
-        }
-        return filtered;
-    }, [adminDeals, searchQuery, categoryFilter]);
 
-    const handleAdminPageChange = (newPage: number) => {
-        setAdminPage(newPage);
-        loadAdminDeals(newPage);
-    };
 
     return (
         <>
