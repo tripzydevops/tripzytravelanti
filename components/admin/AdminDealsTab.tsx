@@ -33,7 +33,8 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     validity_tr: '',
     termsUrl: '',
     redemptionCode: '',
-    publishAt: undefined
+    publishAt: undefined,
+    redemptionStyle: []
 };
 
 const getExpiryDate = (days: number): string => {

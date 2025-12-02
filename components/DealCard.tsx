@@ -144,6 +144,12 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
               {deal.requiredTier}
             </span>
           )}
+          {deal.redemptionStyle && deal.redemptionStyle.length > 0 && (
+            <div className="flex gap-1 ml-2">
+              {deal.redemptionStyle.includes('online') && <span title="Online">🌐</span>}
+              {deal.redemptionStyle.includes('in_store') && <span title="In-Store">🏪</span>}
+            </div>
+          )}
         </div>
         <h3 className="text-lg font-heading font-bold text-brand-text-light mb-2">{title}</h3>
         <p className="text-brand-text-muted text-sm mb-4 flex-grow line-clamp-2">{description}</p>
