@@ -195,6 +195,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           latitude: updatedDeal.latitude,
           longitude: updatedDeal.longitude,
           status: updatedDeal.status,
+          redemption_style: updatedDeal.redemptionStyle,
         })
         .eq('id', updatedDeal.id);
 

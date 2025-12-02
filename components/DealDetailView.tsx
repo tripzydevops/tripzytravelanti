@@ -338,6 +338,20 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Sticky Use Coupon Button Footer */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-brand-bg border-t border-gray-200 dark:border-white/10 p-4 z-10">
+                {deal.redemptionStyle && deal.redemptionStyle.length > 0 && (
+                    <div className="flex justify-center gap-3 mb-2">
+                        {deal.redemptionStyle.includes('online') && (
+                            <span className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                🌐 Redeem Online
+                            </span>
+                        )}
+                        {deal.redemptionStyle.includes('in_store') && (
+                            <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
+                                🏪 Redeem In-Store
+                            </span>
+                        )}
+                    </div>
+                )}
                 <button
                     onClick={() => {
                         if (isPreview) {

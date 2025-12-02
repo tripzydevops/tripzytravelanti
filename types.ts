@@ -80,6 +80,7 @@ export interface Deal {
   companyLogoUrl?: string;
   status?: 'pending' | 'approved' | 'rejected';
   publishAt?: string;
+  redemptionStyle?: ('online' | 'in_store')[];
 }
 
 export interface SubscriptionPlan {

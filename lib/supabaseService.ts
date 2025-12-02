@@ -31,6 +31,7 @@ interface DBDeal {
     company_logo_url?: string;
     status?: 'pending' | 'approved' | 'rejected';
     publish_at?: string;
+    redemption_style?: ('online' | 'in_store')[];
 }
 
 // =====================================================
@@ -397,6 +398,7 @@ function transformDealFromDB(dbDeal: DBDeal): Deal {
         companyLogoUrl: dbDeal.company_logo_url,
         status: dbDeal.status,
         publishAt: dbDeal.publish_at,
+        redemptionStyle: dbDeal.redemption_style,
     };
 }
 
@@ -427,7 +429,8 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         status: deal.status || 'pending',
         rating: 0,
         rating_count: 0,
-        publish_at: deal.publishAt
+        publish_at: deal.publishAt,
+        redemption_style: deal.redemptionStyle
     };
 
     const { data, error } = await supabase

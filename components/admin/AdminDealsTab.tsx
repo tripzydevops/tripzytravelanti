@@ -90,7 +90,9 @@ const AdminDealsTab: React.FC = () => {
     const [previewDeal, setPreviewDeal] = useState<Deal | null>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
+
     const [categoryFilter, setCategoryFilter] = useState('All');
+    const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
 
     const loadAdminDeals = useCallback(async (page: number) => {
         try {
@@ -113,6 +115,18 @@ const AdminDealsTab: React.FC = () => {
         }, 500); // Debounce
         return () => clearTimeout(timeoutId);
     }, [loadAdminDeals]);
+
+    const filteredDeals = useMemo(() => {
+        const now = new Date();
+        return adminDeals.filter(deal => {
+            const expiryDate = new Date(deal.expiresAt);
+            if (activeTab === 'active') {
+                return expiryDate >= now;
+            } else {
+                return expiryDate < now;
+            }
+        });
+    }, [adminDeals, activeTab]);
 
     const handleAdminPageChange = (newPage: number) => {
         loadAdminDeals(newPage);
@@ -455,6 +469,41 @@ const AdminDealsTab: React.FC = () => {
                             <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('termsUrlLabel')}</label><input type="text" name="termsUrl" value={dealFormData.termsUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                             <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label><input type="text" name="redemptionCode" value={dealFormData.redemptionCode} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                             <div>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Redemption Style</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={dealFormData.redemptionStyle?.includes('online') || false}
+                                            onChange={(e) => {
+                                                const current = dealFormData.redemptionStyle || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, 'online']
+                                                    : current.filter(s => s !== 'online');
+                                                setDealFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] }));
+                                            }}
+                                            className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                                        />
+                                        <span className="text-sm text-gray-700 dark:text-brand-text-light">Online</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={dealFormData.redemptionStyle?.includes('in_store') || false}
+                                            onChange={(e) => {
+                                                const current = dealFormData.redemptionStyle || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, 'in_store']
+                                                    : current.filter(s => s !== 'in_store');
+                                                setDealFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] }));
+                                            }}
+                                            className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                                        />
+                                        <span className="text-sm text-gray-700 dark:text-brand-text-light">In Store</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Publish Date (Optional)</label>
                                 <input
                                     type="datetime-local"
@@ -516,6 +565,22 @@ const AdminDealsTab: React.FC = () => {
             <section>
                 <h2 className="text-2xl font-bold mb-4">{t('allDeals')}</h2>
 
+                {/* Tabs */}
+                <div className="flex space-x-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                    <button
+                        className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'active' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                        onClick={() => setActiveTab('active')}
+                    >
+                        Active Deals
+                    </button>
+                    <button
+                        className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'expired' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                        onClick={() => setActiveTab('expired')}
+                    >
+                        Expired Deals
+                    </button>
+                </div>
+
                 {/* Search and Filters */}
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     <div className="flex-grow">
@@ -546,7 +611,7 @@ const AdminDealsTab: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
                             <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg"><tr><th scope="col" className="px-6 py-3">Title</th><th scope="col" className="px-6 py-3">Category</th><th scope="col" className="px-6 py-3">Price</th><th scope="col" className="px-6 py-3">Discount</th><th scope="col" className="px-6 py-3">Status</th><th scope="col" className="px-6 py-3">Expires</th><th scope="col" className="px-6 py-3 text-right">Actions</th></tr></thead>
-                            <tbody>{sortedDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${deal.status === 'approved' ? 'bg-green-100 text-green-800' : deal.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>{deal.status || 'pending'}</span></td><td className="px-6 py-4 text-xs">{new Date(deal.expiresAt).toLocaleDateString()}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => updateDeal({ ...deal, status: deal.status === 'approved' ? 'pending' : 'approved' }).then(() => loadAdminDeals(adminPage))} className={`font-medium hover:underline ${deal.status === 'approved' ? 'text-yellow-600' : 'text-green-600'}`}>{deal.status === 'approved' ? 'Suspend' : 'Approve'}</button><button onClick={() => handleCloneDealClick(deal)} className="font-medium text-blue-600 hover:underline">Clone</button><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
+                            <tbody>{filteredDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${deal.status === 'approved' ? 'bg-green-100 text-green-800' : deal.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>{deal.status || 'pending'}</span></td><td className="px-6 py-4 text-xs">{new Date(deal.expiresAt).toLocaleDateString()}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => updateDeal({ ...deal, status: deal.status === 'approved' ? 'pending' : 'approved' }).then(() => loadAdminDeals(adminPage))} className={`font-medium hover:underline ${deal.status === 'approved' ? 'text-yellow-600' : 'text-green-600'}`}>{deal.status === 'approved' ? 'Suspend' : 'Approve'}</button><button onClick={() => handleCloneDealClick(deal)} className="font-medium text-blue-600 hover:underline">Clone</button><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
                         </table>
                     </div>
                     {/* Pagination Controls */}
