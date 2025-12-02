@@ -41,7 +41,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loadDealsPaginated = useCallback(async (page: number, limit: number, filters?: any, append: boolean = false) => {
     try {
       setLoading(true);
-      const { deals: newDeals, total: totalCount } = await import('../lib/supabaseService').then(m => 
+      const { deals: newDeals, total: totalCount } = await import('../lib/supabaseService').then(m =>
         m.getDealsPaginated(page, limit, filters)
       );
 
@@ -194,6 +194,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           redemption_code: updatedDeal.redemptionCode,
           latitude: updatedDeal.latitude,
           longitude: updatedDeal.longitude,
+          status: updatedDeal.status,
         })
         .eq('id', updatedDeal.id);
 
