@@ -9,10 +9,11 @@ import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminPendingApprovalsTab from '../components/admin/AdminPendingApprovalsTab';
 import AdminContentTab from '../components/admin/AdminContentTab';
 import AdminFlightRoutesTab from '../components/admin/AdminFlightRoutesTab';
+import { AdminAnnouncementsTab } from '../components/admin/AdminAnnouncementsTab';
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'analytics'>('analytics');
+  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'analytics' | 'announcements'>('analytics');
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -57,6 +58,9 @@ const AdminPage: React.FC = () => {
             <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingCount}</span>
           )}
         </button>
+        <button onClick={() => setActiveTab('announcements')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'announcements' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
+          Announcements
+        </button>
       </div>
 
       {activeTab === 'analytics' && <AnalyticsDashboard />}
@@ -67,6 +71,7 @@ const AdminPage: React.FC = () => {
       {activeTab === 'flight_routes' && <AdminFlightRoutesTab />}
       {activeTab === 'payments' && <PaymentTransactionTable />}
       {activeTab === 'pending_approvals' && <AdminPendingApprovalsTab />}
+      {activeTab === 'announcements' && <AdminAnnouncementsTab />}
     </div>
   );
 };

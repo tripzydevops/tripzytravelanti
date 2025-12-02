@@ -121,3 +121,24 @@ export interface PaymentTransaction {
   userName?: string;
   userEmail?: string;
 }
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  isActive: boolean;
+  createdAt: string;
+  endAt?: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  isRead: boolean;
+  createdAt: string;
+  link?: string;
+}

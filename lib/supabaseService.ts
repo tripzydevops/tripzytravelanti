@@ -829,3 +829,94 @@ export async function getAnalyticsData() {
         return null;
     }
 }
+
+// =====================================================
+// COMMUNICATIONS (Announcements & Notifications)
+// =====================================================
+
+export async function getActiveAnnouncements() {
+    const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching announcements:', error);
+        return [];
+    }
+
+    return data.map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        message: a.message,
+        type: a.type,
+        isActive: a.is_active,
+        createdAt: a.created_at,
+        endAt: a.end_at
+    }));
+}
+
+export async function createAnnouncement(announcement: { title: string; message: string; type: string; endAt?: string }) {
+    const { data, error } = await supabase
+        .from('announcements')
+        .insert([{
+            title: announcement.title,
+            message: announcement.message,
+            type: announcement.type,
+            end_at: announcement.endAt
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function getUserNotifications(userId: string) {
+    const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+    if (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+    }
+
+    return data.map((n: any) => ({
+        id: n.id,
+        userId: n.user_id,
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        isRead: n.is_read,
+        createdAt: n.created_at,
+        link: n.link
+    }));
+}
+
+export async function markNotificationAsRead(notificationId: string) {
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
+
+    if (error) console.error('Error marking notification read:', error);
+}
+
+export async function createNotification(notification: { userId: string; title: string; message: string; type: string; link?: string }) {
+    const { error } = await supabase
+        .from('notifications')
+        .insert([{
+            user_id: notification.userId,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            link: notification.link
+        }]);
+
+    if (error) throw error;
+}
