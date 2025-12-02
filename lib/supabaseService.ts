@@ -30,6 +30,7 @@ interface DBDeal {
     partner_id?: string;
     company_logo_url?: string;
     status?: 'pending' | 'approved' | 'rejected';
+    publish_at?: string;
 }
 
 // =====================================================
@@ -73,7 +74,9 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         mobile: data.mobile,
         address: data.address,
         billingAddress: data.billing_address,
+
         role: data.role,
+        status: data.status,
     };
 }
 
@@ -88,7 +91,9 @@ export async function updateUserProfile(
         notification_preferences: UserNotificationPreferences;
         mobile: string;
         address: string;
+
         billing_address: string;
+        status: 'active' | 'banned' | 'suspended';
     }>
 ) {
     const { data, error } = await supabase
@@ -140,7 +145,9 @@ export async function getAllUsers(): Promise<User[]> {
         mobile: user.mobile,
         address: user.address,
         billingAddress: user.billing_address,
+
         role: user.role,
+        status: user.status,
     }));
 }
 
@@ -264,7 +271,10 @@ export async function getDealsPaginated(
 
     // Filter out expired deals by default unless explicitly requested
     if (!filters?.includeExpired) {
-        query = query.gt('expires_at', new Date().toISOString());
+        const now = new Date().toISOString();
+        query = query.gt('expires_at', now);
+        // Also filter out future published deals
+        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
     }
 
     const from = (page - 1) * limit;
@@ -290,7 +300,9 @@ export async function getAllDeals(includeExpired: boolean = false): Promise<Deal
         .order('created_at', { ascending: false });
 
     if (!includeExpired) {
-        query = query.gt('expires_at', new Date().toISOString());
+        const now = new Date().toISOString();
+        query = query.gt('expires_at', now);
+        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
     }
 
     const { data, error } = await query;
@@ -336,7 +348,9 @@ export async function getDealsForTier(tier: SubscriptionTier, includeExpired: bo
         .order('created_at', { ascending: false });
 
     if (!includeExpired) {
-        query = query.gt('expires_at', new Date().toISOString());
+        const now = new Date().toISOString();
+        query = query.gt('expires_at', now);
+        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
     }
 
     const { data, error } = await query;
@@ -378,6 +392,7 @@ function transformDealFromDB(dbDeal: DBDeal): Deal {
         partnerId: dbDeal.partner_id,
         companyLogoUrl: dbDeal.company_logo_url,
         status: dbDeal.status,
+        publishAt: dbDeal.publish_at,
     };
 }
 
@@ -407,7 +422,8 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         company_logo_url: deal.companyLogoUrl,
         status: deal.status || 'pending',
         rating: 0,
-        rating_count: 0
+        rating_count: 0,
+        publish_at: deal.publishAt
     };
 
     const { data, error } = await supabase

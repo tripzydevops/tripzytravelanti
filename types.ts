@@ -39,6 +39,7 @@ export interface User {
   billingAddress?: string;
   subscriptionStartDate?: string; // For yearly renewal tracking
   role?: 'user' | 'admin' | 'partner';
+  status?: 'active' | 'banned' | 'suspended';
 }
 
 export interface PartnerStats {
@@ -78,6 +79,7 @@ export interface Deal {
   partnerId?: string;
   companyLogoUrl?: string;
   status?: 'pending' | 'approved' | 'rejected';
+  publishAt?: string;
 }
 
 export interface SubscriptionPlan {

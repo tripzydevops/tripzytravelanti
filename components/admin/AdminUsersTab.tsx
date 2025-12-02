@@ -2,10 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useDeals } from '../../contexts/DealContext';
-import { User, SubscriptionTier, Deal } from '../../types';
+import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -17,6 +17,7 @@ const EMPTY_USER: User = {
     referralChain: [],
     referralNetwork: [],
     extraRedemptions: 0,
+    status: 'active',
 };
 
 const AdminUsersTab: React.FC = () => {
@@ -30,6 +31,9 @@ const AdminUsersTab: React.FC = () => {
     const [dealToAdd, setDealToAdd] = useState<string>('');
     const [redemptionsToAdd, setRedemptionsToAdd] = useState(0);
     const [viewingRedemptionsForUser, setViewingRedemptionsForUser] = useState<User | null>(null);
+    const [viewingPaymentsForUser, setViewingPaymentsForUser] = useState<User | null>(null);
+    const [userPayments, setUserPayments] = useState<PaymentTransaction[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
     const [showSuccess, setShowSuccess] = useState('');
     const [pendingDeals, setPendingDeals] = useState<Deal[]>([]);
 
@@ -137,6 +141,52 @@ const AdminUsersTab: React.FC = () => {
             setTimeout(() => setShowSuccess(''), 2000);
             setRedemptionsToAdd(0);
         }
+    };
+
+    const handleViewPaymentsClick = async (user: User) => {
+        setViewingPaymentsForUser(user);
+        const transactions = await getUserTransactions(user.id);
+        setUserPayments(transactions);
+    };
+
+    const handleSelectUser = (userId: string) => {
+        const newSelected = new Set(selectedUsers);
+        if (newSelected.has(userId)) {
+            newSelected.delete(userId);
+        } else {
+            newSelected.add(userId);
+        }
+        setSelectedUsers(newSelected);
+    };
+
+    const handleSelectAllUsers = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedUsers(new Set(sortedUsers.map(u => u.id)));
+        } else {
+            setSelectedUsers(new Set());
+        }
+    };
+
+    const handleBulkAction = async (action: 'ban' | 'activate' | 'email') => {
+        if (selectedUsers.size === 0) return;
+        if (!window.confirm(`Are you sure you want to ${action} ${selectedUsers.size} users?`)) return;
+
+        if (action === 'email') {
+            const emails = users.filter(u => selectedUsers.has(u.id)).map(u => u.email).join(',');
+            window.location.href = `mailto:?bcc=${emails}`;
+            return;
+        }
+
+        const status = action === 'ban' ? 'banned' : 'active';
+        for (const userId of selectedUsers) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                await updateUser({ ...user, status });
+            }
+        }
+        setShowSuccess(`Users ${action === 'ban' ? 'banned' : 'activated'} successfully`);
+        setTimeout(() => setShowSuccess(''), 3000);
+        setSelectedUsers(new Set());
     };
 
     const userSavedDeals = useMemo(() => {
@@ -367,11 +417,26 @@ const AdminUsersTab: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Bulk Actions Toolbar */}
+                {selectedUsers.size > 0 && (
+                    <div className="bg-brand-primary/10 p-4 rounded-lg mb-4 flex items-center justify-between">
+                        <span className="font-semibold text-brand-primary">{selectedUsers.size} users selected</span>
+                        <div className="flex gap-2">
+                            <button onClick={() => handleBulkAction('email')} className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Email</button>
+                            <button onClick={() => handleBulkAction('activate')} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Activate</button>
+                            <button onClick={() => handleBulkAction('ban')} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Ban</button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
                             <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                                 <tr>
+                                    <th scope="col" className="px-6 py-3">
+                                        <input type="checkbox" onChange={handleSelectAllUsers} checked={selectedUsers.size === sortedUsers.length && sortedUsers.length > 0} className="rounded text-brand-primary focus:ring-brand-primary" />
+                                    </th>
                                     <th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th>
                                     <th scope="col" className="px-6 py-3">{t('emailLabel')}</th>
                                     <th scope="col" className="px-6 py-3">{t('mobileLabel') || 'Mobile'}</th>
@@ -387,9 +452,14 @@ const AdminUsersTab: React.FC = () => {
                                     const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
 
                                     return (
-                                        <tr key={user.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <tr key={user.id} className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${user.status === 'banned' ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
+                                            <td className="px-6 py-4">
+                                                <input type="checkbox" checked={selectedUsers.has(user.id)} onChange={() => handleSelectUser(user.id)} className="rounded text-brand-primary focus:ring-brand-primary" />
+                                            </td>
                                             <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
-                                                {user.name}{user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
+                                                {user.name}
+                                                {user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
+                                                {user.status === 'banned' && <span className="ml-2 text-xs bg-red-500 text-white font-bold px-2 py-0.5 rounded-full">Banned</span>}
                                             </th>
                                             <td className="px-6 py-4">{user.email}</td>
                                             <td className="px-6 py-4">{user.mobile || '-'}</td>
@@ -401,6 +471,7 @@ const AdminUsersTab: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4">{renewalDate}</td>
                                             <td className="px-6 py-4 text-right space-x-2">
+                                                <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
                                                 <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
                                                 <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
                                                 <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
@@ -450,6 +521,37 @@ const AdminUsersTab: React.FC = () => {
                         >
                             {t('close')}
                         </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* User Payments Modal */}
+            <Modal
+                isOpen={!!viewingPaymentsForUser}
+                onClose={() => setViewingPaymentsForUser(null)}
+                title={`${viewingPaymentsForUser?.name}'s Payment History`}
+            >
+                <div className="p-4">
+                    {userPayments.length > 0 ? (
+                        <div className="space-y-4">
+                            {userPayments.map(payment => (
+                                <div key={payment.id} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-semibold text-gray-900 dark:text-white">{payment.amount} {payment.currency}</span>
+                                        <span className={`text-xs px-2 py-1 rounded-full ${payment.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{payment.status}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
+                                        <span>Date: {new Date(payment.createdAt).toLocaleDateString()}</span>
+                                        <span>Method: {payment.paymentMethod}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">No payments found for this user.</p>
+                    )}
+                    <div className="mt-6 flex justify-end">
+                        <button onClick={() => setViewingPaymentsForUser(null)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">{t('close')}</button>
                     </div>
                 </div>
             </Modal>

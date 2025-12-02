@@ -37,6 +37,50 @@ const AnalyticsDashboard: React.FC = () => {
         fetchData();
     }, []);
 
+    const handleRefresh = async () => {
+        setLoading(true);
+        const analyticsData = await getAnalyticsData();
+        setData(analyticsData);
+        setLoading(false);
+    };
+
+    const exportToCSV = () => {
+        if (!data) return;
+
+        const { metrics, charts } = data;
+        let csvContent = "data:text/csv;charset=utf-8,";
+
+        // Metrics
+        csvContent += "Metrics\n";
+        csvContent += `Total Users,${metrics.totalUsers}\n`;
+        csvContent += `Total Revenue,${metrics.totalRevenue}\n`;
+        csvContent += `Active Deals,${metrics.activeDeals}\n`;
+        csvContent += `Total Redemptions,${metrics.totalRedemptions}\n\n`;
+
+        // Revenue Data
+        csvContent += "Revenue Data\n";
+        csvContent += "Month,Revenue\n";
+        charts.revenueData.forEach((row: any) => {
+            csvContent += `${row.name},${row.revenue}\n`;
+        });
+        csvContent += "\n";
+
+        // User Growth
+        csvContent += "User Growth\n";
+        csvContent += "Month,Users\n";
+        charts.userGrowthData.forEach((row: any) => {
+            csvContent += `${row.name},${row.users}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "analytics_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -57,6 +101,18 @@ const AnalyticsDashboard: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Overview</h2>
+                <div className="flex gap-2">
+                    <button onClick={handleRefresh} className="bg-white dark:bg-brand-surface border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm">
+                        <SpinnerIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+                    </button>
+                    <button onClick={exportToCSV} className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm">
+                        <TrendingUpIcon className="w-4 h-4" /> Export CSV
+                    </button>
+                </div>
+            </div>
+
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard

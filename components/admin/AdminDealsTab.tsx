@@ -3,9 +3,12 @@ import { GoogleGenAI } from "@google/genai";
 import { useDeals } from '../../contexts/DealContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Deal, SubscriptionTier } from '../../types';
-import { SpinnerIcon } from '../Icons';
+
+import { SpinnerIcon, EyeIcon } from '../Icons';
 import ImageUpload from '../ImageUpload';
-import { getDealsPaginated } from '../../lib/supabaseService';
+import { getDealsPaginated, createDeal } from '../../lib/supabaseService';
+import DealDetailView from '../DealDetailView';
+import Modal from '../Modal';
 
 const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     id: '',
@@ -18,6 +21,7 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     category_tr: 'Yemek',
     originalPrice: 0,
     discountedPrice: 0,
+    discountPercentage: 0,
     requiredTier: SubscriptionTier.FREE,
     isExternal: false,
     vendor: '',
@@ -27,12 +31,9 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     usageLimit_tr: '',
     validity: '',
     validity_tr: '',
-    termsUrl: '#',
+    termsUrl: '',
     redemptionCode: '',
-    discountPercentage: undefined,
-    latitude: undefined,
-    longitude: undefined,
-    companyLogoUrl: '',
+    publishAt: undefined
 };
 
 const getExpiryDate = (days: number): string => {
@@ -85,6 +86,8 @@ const AdminDealsTab: React.FC = () => {
     const [lastEditedField, setLastEditedField] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewDeal, setPreviewDeal] = useState<Deal | null>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
@@ -229,6 +232,105 @@ const AdminDealsTab: React.FC = () => {
         }
     };
 
+    const handleCloneDealClick = (deal: Deal) => {
+        const clonedDeal = { ...deal };
+        setDealFormData({
+            ...clonedDeal,
+            title: `${clonedDeal.title} (Copy)`,
+            title_tr: `${clonedDeal.title_tr} (Kopya)`,
+            redemptionCode: `${clonedDeal.redemptionCode}-COPY`
+        });
+        setEditingDeal(null); // Treat as new deal
+
+        // Reset expiry to default 30 days for clones, unless it was 'never expires'
+        if (isFarFuture(deal.expiresAt)) {
+            setNeverExpires(true);
+            setExpiresInDays(7);
+        } else {
+            setNeverExpires(false);
+            setExpiresInDays(30);
+        }
+
+        setIsDealFormVisible(true);
+        window.scrollTo(0, 0);
+    };
+
+    const handlePreviewClick = () => {
+        // Create a temporary deal object from form data for preview
+        const tempDeal: Deal = {
+            ...dealFormData,
+            id: 'preview',
+            expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7),
+            category_tr: dealFormData.category === 'Dining' ? 'Yemek' : dealFormData.category === 'Wellness' ? 'Sağlık' : 'Seyahat'
+        };
+        setPreviewDeal(tempDeal);
+        setIsPreviewOpen(true);
+    };
+
+    const handleImportDeals = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const text = event.target?.result as string;
+            const lines = text.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+
+            let successCount = 0;
+            let errorCount = 0;
+            setIsSaving(true);
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const values = lines[i].split(',').map(v => v.trim());
+                const dealData: any = {};
+
+                headers.forEach((header, index) => {
+                    dealData[header] = values[index];
+                });
+
+                try {
+                    const newDeal: Omit<Deal, 'id'> = {
+                        title: dealData.title || 'Untitled',
+                        title_tr: dealData.title_tr || dealData.title || 'Untitled',
+                        description: dealData.description || '',
+                        description_tr: dealData.description_tr || dealData.description || '',
+                        imageUrl: dealData.imageUrl || '',
+                        category: dealData.category || 'Dining',
+                        category_tr: dealData.category_tr || 'Yemek',
+                        originalPrice: parseFloat(dealData.originalPrice) || 0,
+                        discountedPrice: parseFloat(dealData.discountedPrice) || 0,
+                        requiredTier: (dealData.requiredTier as SubscriptionTier) || SubscriptionTier.FREE,
+                        isExternal: dealData.isExternal === 'true',
+                        vendor: dealData.vendor || '',
+                        expiresAt: getExpiryDate(30),
+                        rating: 0,
+                        ratingCount: 0,
+                        usageLimit: dealData.usageLimit || 'Unlimited',
+                        usageLimit_tr: dealData.usageLimit_tr || 'Sınırsız',
+                        validity: dealData.validity || 'Valid until expiration',
+                        validity_tr: dealData.validity_tr || 'Son kullanma tarihine kadar geçerli',
+                        termsUrl: dealData.termsUrl || '',
+                        redemptionCode: dealData.redemptionCode || 'CODE',
+                        status: 'pending',
+                    };
+
+                    await createDeal(newDeal);
+                    successCount++;
+                } catch (error) {
+                    console.error('Error importing deal:', error);
+                    errorCount++;
+                }
+            }
+
+            setIsSaving(false);
+            alert(`Import complete. Success: ${successCount}, Failed: ${errorCount}`);
+            loadAdminDeals(1);
+        };
+        reader.readAsText(file);
+    };
+
     const resetDealForm = () => {
         setEditingDeal(null); setDealFormData(EMPTY_DEAL); setExpiresInDays(''); setNeverExpires(false); setIsDealFormVisible(false); setLastEditedField(null);
     };
@@ -282,12 +384,44 @@ const AdminDealsTab: React.FC = () => {
         resetDealForm();
     };
 
+    const sortedDeals = useMemo(() => {
+        let filtered = [...adminDeals];
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(d => d.title.toLowerCase().includes(query));
+        }
+        if (categoryFilter !== 'All') {
+            filtered = filtered.filter(d => d.category === categoryFilter);
+        }
+        return filtered;
+    }, [adminDeals, searchQuery, categoryFilter]);
+
+    const handleAdminPageChange = (newPage: number) => {
+        setAdminPage(newPage);
+        loadAdminDeals(newPage);
+    };
+
     return (
         <>
             {!isDealFormVisible && (
-                <button onClick={() => setIsDealFormVisible(true)} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
-                    {t('addDeal')}
-                </button>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">{t('manageDeals')}</h2>
+                    <div className="flex gap-2">
+                        <label className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors cursor-pointer flex items-center">
+                            Import CSV
+                            <input type="file" accept=".csv" onChange={handleImportDeals} className="hidden" />
+                        </label>
+                        <button onClick={() => {
+                            setEditingDeal(null);
+                            setDealFormData(EMPTY_DEAL);
+                            setExpiresInDays('');
+                            setNeverExpires(false);
+                            setIsDealFormVisible(true);
+                        }} className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
+                            {t('addDeal')}
+                        </button>
+                    </div>
+                </div>
             )}
 
             {isDealFormVisible && (
@@ -335,6 +469,24 @@ const AdminDealsTab: React.FC = () => {
                             <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityTrLabel')}</label><input type="text" name="validity_tr" value={dealFormData.validity_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                             <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('termsUrlLabel')}</label><input type="text" name="termsUrl" value={dealFormData.termsUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                             <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label><input type="text" name="redemptionCode" value={dealFormData.redemptionCode} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Publish Date (Optional)</label>
+                                <input
+                                    type="datetime-local"
+                                    name="publishAt"
+                                    value={dealFormData.publishAt ? new Date(new Date(dealFormData.publishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => {
+                                        if (!e.target.value) {
+                                            setDealFormData(prev => ({ ...prev, publishAt: undefined }));
+                                            return;
+                                        }
+                                        const date = new Date(e.target.value);
+                                        setDealFormData(prev => ({ ...prev, publishAt: date.toISOString() }));
+                                    }}
+                                    className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                                />
+                                <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">Leave empty to publish immediately.</p>
+                            </div>
                             <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('expiresInDaysLabel')}</label><input type="number" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required disabled={neverExpires} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:cursor-not-allowed" /></div>
                             <div className="flex items-center space-x-2"><input type="checkbox" id="neverExpires" name="neverExpires" checked={neverExpires} onChange={e => setNeverExpires(e.target.checked)} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="neverExpires" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">{t('neverExpires')}</label></div>
                             <div className="flex items-center space-x-2 pt-5"><input type="checkbox" id="isExternal" name="isExternal" checked={dealFormData.isExternal} onChange={handleDealInputChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="isExternal" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">Is External Deal?</label></div>
@@ -352,6 +504,10 @@ const AdminDealsTab: React.FC = () => {
                             </div>
                         </div>
                         <div className="md:col-span-2 flex justify-end gap-4 mt-4">
+                            <button type="button" onClick={handlePreviewClick} className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
+                                <EyeIcon className="w-5 h-5 mr-2" />
+                                {t('preview') || 'Preview'}
+                            </button>
                             <button type="button" onClick={resetDealForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button>
                             <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex items-center justify-center disabled:bg-gray-500 w-44" disabled={isSaving}>
                                 {isSaving ? (
@@ -364,6 +520,13 @@ const AdminDealsTab: React.FC = () => {
                     </form>
                 </section>
             )}
+
+            {/* Preview Modal */}
+            <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} title="Deal Preview" maxWidth="max-w-4xl">
+                <div className="max-h-[80vh] overflow-y-auto">
+                    {previewDeal && <DealDetailView deal={previewDeal} isPreview={true} />}
+                </div>
+            </Modal>
 
             <section>
                 <h2 className="text-2xl font-bold mb-4">{t('allDeals')}</h2>
@@ -398,7 +561,7 @@ const AdminDealsTab: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
                             <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg"><tr><th scope="col" className="px-6 py-3">Title</th><th scope="col" className="px-6 py-3">Category</th><th scope="col" className="px-6 py-3">Price</th><th scope="col" className="px-6 py-3">Discount</th><th scope="col" className="px-6 py-3">Tier</th><th scope="col" className="px-6 py-3 text-right">Actions</th></tr></thead>
-                            <tbody>{sortedDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4">{deal.requiredTier}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
+                            <tbody>{sortedDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4">{deal.requiredTier}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => handleCloneDealClick(deal)} className="font-medium text-green-600 hover:underline">Clone</button><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
                         </table>
                     </div>
                     {/* Pagination Controls */}

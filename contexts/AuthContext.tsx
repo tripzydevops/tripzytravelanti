@@ -293,6 +293,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         extra_redemptions: updatedUser.extraRedemptions,
         notification_preferences: updatedUser.notificationPreferences,
         mobile: updatedUser.mobile,
+        status: updatedUser.status,
       });
 
       setUsers((currentUsers) =>
