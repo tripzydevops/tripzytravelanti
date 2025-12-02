@@ -447,6 +447,49 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
     return transformDealFromDB(data);
 }
 
+export async function updateDeal(dealId: string, updates: Partial<Deal>) {
+    // Convert app format to DB format
+    const dbUpdates: any = {};
+    if (updates.title) dbUpdates.title = updates.title;
+    if (updates.title_tr) dbUpdates.title_tr = updates.title_tr;
+    if (updates.description) dbUpdates.description = updates.description;
+    if (updates.description_tr) dbUpdates.description_tr = updates.description_tr;
+    if (updates.imageUrl) dbUpdates.image_url = updates.imageUrl;
+    if (updates.category) dbUpdates.category = updates.category;
+    if (updates.category_tr) dbUpdates.category_tr = updates.category_tr;
+    if (updates.originalPrice !== undefined) dbUpdates.original_price = updates.originalPrice;
+    if (updates.discountedPrice !== undefined) dbUpdates.discounted_price = updates.discountedPrice;
+    if (updates.discountPercentage !== undefined) dbUpdates.discount_percentage = updates.discountPercentage;
+    if (updates.requiredTier) dbUpdates.required_tier = updates.requiredTier;
+    if (updates.isExternal !== undefined) dbUpdates.is_external = updates.isExternal;
+    if (updates.vendor) dbUpdates.vendor = updates.vendor;
+    if (updates.expiresAt) dbUpdates.expires_at = updates.expiresAt;
+    if (updates.usageLimit) dbUpdates.usage_limit = updates.usageLimit;
+    if (updates.usageLimit_tr) dbUpdates.usage_limit_tr = updates.usageLimit_tr;
+    if (updates.validity) dbUpdates.validity = updates.validity;
+    if (updates.validity_tr) dbUpdates.validity_tr = updates.validity_tr;
+    if (updates.termsUrl) dbUpdates.terms_url = updates.termsUrl;
+    if (updates.redemptionCode) dbUpdates.redemption_code = updates.redemptionCode;
+    if (updates.companyLogoUrl) dbUpdates.company_logo_url = updates.companyLogoUrl;
+    if (updates.status) dbUpdates.status = updates.status;
+    if (updates.publishAt) dbUpdates.publish_at = updates.publishAt;
+    if (updates.redemptionStyle) dbUpdates.redemption_style = updates.redemptionStyle;
+
+    const { data, error } = await supabase
+        .from('deals')
+        .update(dbUpdates)
+        .eq('id', dealId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating deal:', error);
+        throw error;
+    }
+
+    return transformDealFromDB(data);
+}
+
 export async function getDealsByPartner(partnerId: string): Promise<Deal[]> {
     const { data, error } = await supabase
         .from('deals')

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { createDeal } from '../../lib/supabaseService';
+import { createDeal, getDealById, updateDeal } from '../../lib/supabaseService';
 import { SubscriptionTier } from '../../types';
 import { ArrowLeft, Save } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
@@ -10,6 +10,9 @@ import ImageUpload from '../../components/ImageUpload';
 const CreateDealPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const isEditing = !!id;
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [neverExpires, setNeverExpires] = useState(false);
@@ -36,7 +39,59 @@ const CreateDealPage: React.FC = () => {
         validity_tr: 'Her gün geçerli',
         termsUrl: '',
         redemptionCode: '',
+        redemptionStyle: [] as ('online' | 'in_store')[],
     });
+
+    useEffect(() => {
+        const fetchDeal = async () => {
+            if (id) {
+                try {
+                    setLoading(true);
+                    const deal = await getDealById(id);
+                    if (deal) {
+                        setFormData({
+                            title: deal.title,
+                            title_tr: deal.title_tr,
+                            description: deal.description,
+                            description_tr: deal.description_tr,
+                            imageUrl: deal.imageUrl,
+                            companyLogoUrl: deal.companyLogoUrl || '',
+                            category: deal.category,
+                            category_tr: deal.category_tr,
+                            originalPrice: deal.originalPrice.toString(),
+                            discountedPrice: deal.discountedPrice.toString(),
+                            discountPercentage: deal.discountPercentage?.toString() || '',
+                            requiredTier: deal.requiredTier,
+                            isExternal: deal.isExternal,
+                            vendor: deal.vendor,
+                            expiresAt: deal.expiresAt ? new Date(deal.expiresAt).toISOString().split('T')[0] : '',
+                            usageLimit: deal.usageLimit,
+                            usageLimit_tr: deal.usageLimit_tr,
+                            validity: deal.validity,
+                            validity_tr: deal.validity_tr,
+                            termsUrl: deal.termsUrl,
+                            redemptionCode: deal.redemptionCode,
+                            redemptionStyle: deal.redemptionStyle || [],
+                        });
+
+                        // Check if expires far in the future (approx 100 years)
+                        const expiryDate = new Date(deal.expiresAt);
+                        const now = new Date();
+                        if (expiryDate.getFullYear() > now.getFullYear() + 50) {
+                            setNeverExpires(true);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error fetching deal:', err);
+                    setError('Failed to load deal details.');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchDeal();
+    }, [id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -121,21 +176,28 @@ const CreateDealPage: React.FC = () => {
                 new Date(new Date().setFullYear(new Date().getFullYear() + 100)).toISOString() :
                 formData.expiresAt;
 
-            await createDeal({
+            const dealData = {
                 ...formData,
                 originalPrice: hasPrice ? original : 0,
                 discountedPrice: hasPrice ? discounted : 0,
                 discountPercentage: percentage || 0,
                 partnerId: user.id,
-                status: 'pending',
+                status: 'pending' as const, // Reset to pending on edit? Usually yes for approval.
                 expiresAt: finalExpiresAt,
                 rating: 0,
                 ratingCount: 0
-            });
+            };
+
+            if (isEditing && id) {
+                await updateDeal(id, dealData);
+            } else {
+                await createDeal(dealData);
+            }
+
             navigate('/partner/dashboard');
         } catch (err) {
-            console.error('Error creating deal:', err);
-            setError('Failed to create deal. Please try again.');
+            console.error('Error saving deal:', err);
+            setError('Failed to save deal. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -152,7 +214,9 @@ const CreateDealPage: React.FC = () => {
             </button>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create New Deal</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                    {isEditing ? 'Edit Deal' : 'Create New Deal'}
+                </h1>
 
                 {error && (
                     <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
@@ -344,6 +408,42 @@ const CreateDealPage: React.FC = () => {
                         </div>
                     </div>
 
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Redemption Style</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.redemptionStyle?.includes('online') || false}
+                                    onChange={(e) => {
+                                        const current = formData.redemptionStyle || [];
+                                        const updated = e.target.checked
+                                            ? [...current, 'online']
+                                            : current.filter(s => s !== 'online');
+                                        setFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] }));
+                                    }}
+                                    className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">Online</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.redemptionStyle?.includes('in_store') || false}
+                                    onChange={(e) => {
+                                        const current = formData.redemptionStyle || [];
+                                        const updated = e.target.checked
+                                            ? [...current, 'in_store']
+                                            : current.filter(s => s !== 'in_store');
+                                        setFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] }));
+                                    }}
+                                    className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">In Store</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end pt-6">
                         <button
                             type="submit"
@@ -351,7 +451,7 @@ const CreateDealPage: React.FC = () => {
                             className="bg-brand-primary text-white px-6 py-2 rounded-lg font-semibold hover:bg-brand-primary/90 transition-colors flex items-center disabled:opacity-50"
                         >
                             <Save className="w-4 h-4 mr-2" />
-                            {loading ? 'Creating...' : 'Submit for Approval'}
+                            {loading ? 'Saving...' : (isEditing ? 'Update Deal' : 'Submit for Approval')}
                         </button>
                     </div>
                 </form>

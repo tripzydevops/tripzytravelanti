@@ -162,7 +162,7 @@ const PartnerDashboard: React.FC = () => {
                                             -
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button className="text-brand-primary hover:text-brand-secondary">Edit</button>
+                                            <Link to={`/partner/edit-deal/${deal.id}`} className="text-brand-primary hover:text-brand-secondary">Edit</Link>
                                         </td>
                                     </tr>
                                 ))

@@ -139,6 +139,7 @@ function AnimatedRoutes() {
             <Route index element={<Navigate to="/partner/dashboard" replace />} />
             <Route path="dashboard" element={<PartnerDashboard />} />
             <Route path="create-deal" element={<CreateDealPage />} />
+            <Route path="edit-deal/:id" element={<CreateDealPage />} />
             <Route path="scan" element={<PartnerScanPage />} />
           </Route>
         </Routes>
