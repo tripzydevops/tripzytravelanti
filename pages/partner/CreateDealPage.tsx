@@ -182,7 +182,7 @@ const CreateDealPage: React.FC = () => {
                 discountedPrice: hasPrice ? discounted : 0,
                 discountPercentage: percentage || 0,
                 partnerId: user.id,
-                status: 'pending' as const, // Reset to pending on edit? Usually yes for approval.
+                status: (user.isAdmin ? 'approved' : (isEditing ? formData.status : 'pending')) as 'pending' | 'approved' | 'rejected',
                 expiresAt: finalExpiresAt,
                 rating: 0,
                 ratingCount: 0
@@ -197,7 +197,8 @@ const CreateDealPage: React.FC = () => {
             navigate('/partner/dashboard');
         } catch (err) {
             console.error('Error saving deal:', err);
-            setError('Failed to save deal. Please try again.');
+            console.log('Form Data being sent:', dealData); // Debug log
+            setError('Failed to save deal. Please try again. Check console for details.');
         } finally {
             setLoading(false);
         }
