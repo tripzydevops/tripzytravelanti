@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS partner_stats (
 -- Enable RLS on partner_stats
 ALTER TABLE partner_stats ENABLE ROW LEVEL SECURITY;
 -- Policy: Partners can view their own stats
+DROP POLICY IF EXISTS "Partners can view own stats" ON partner_stats;
 CREATE POLICY "Partners can view own stats" ON partner_stats FOR
 SELECT USING (auth.uid() = partner_id);
 -- Policy: System can update stats (for now, allow all authenticated to update if logic is in app, ideally restricted to service role)
