@@ -4,7 +4,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { Link } from 'react-router-dom';
 
 export const NotificationBell: React.FC = () => {
-    const { notifications, announcements, unreadCount, markAsRead } = useNotifications();
+    const { notifications, announcements, unreadCount, markAsRead, readAnnouncementIds } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +37,7 @@ export const NotificationBell: React.FC = () => {
     };
 
     const allItems = [
-        ...announcements.map(a => ({ ...a, isAnnouncement: true, isRead: false })), // Announcements are always "unread" or highlighted
+        ...announcements.map(a => ({ ...a, isAnnouncement: true, isRead: readAnnouncementIds.includes(a.id) })),
         ...notifications
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -77,8 +77,8 @@ export const NotificationBell: React.FC = () => {
                                 {allItems.map((item: any) => (
                                     <div
                                         key={item.id}
-                                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!item.isRead && !item.isAnnouncement ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
-                                        onClick={() => !item.isAnnouncement && handleNotificationClick(item.id)}
+                                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!item.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+                                        onClick={() => handleNotificationClick(item.id)}
                                     >
                                         <div className="flex gap-3">
                                             <div className="mt-1 flex-shrink-0">
@@ -106,7 +106,7 @@ export const NotificationBell: React.FC = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            {!item.isRead && !item.isAnnouncement && (
+                                            {!item.isRead && (
                                                 <div className="mt-2 flex-shrink-0">
                                                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                                 </div>

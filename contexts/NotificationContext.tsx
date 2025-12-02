@@ -13,6 +13,7 @@ interface NotificationContextType {
   announcements: Announcement[];
   notifications: AppNotification[];
   unreadCount: number;
+  readAnnouncementIds: string[];
   markAsRead: (id: string) => Promise<void>;
   refreshNotifications: () => Promise<void>;
 }
@@ -25,14 +26,27 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const { user } = useAuth();
 
+  const [readAnnouncementIds, setReadAnnouncementIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('readAnnouncementIds');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const isSubscribed = permissionStatus === 'granted';
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Calculate unread count: unread notifications + unread announcements
+  const unreadCount = notifications.filter(n => !n.isRead).length +
+    announcements.filter(a => !readAnnouncementIds.includes(a.id)).length;
 
   useEffect(() => {
     if ('Notification' in window) {
       setPermissionStatus(Notification.permission as PermissionStatus);
     }
   }, []);
+
+  // Persist read announcements
+  useEffect(() => {
+    localStorage.setItem('readAnnouncementIds', JSON.stringify(readAnnouncementIds));
+  }, [readAnnouncementIds]);
 
   // Fetch data on load and when user changes
   const fetchData = useCallback(async () => {
@@ -53,8 +67,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     fetchData();
 
     // Real-time subscription for notifications
+    let notificationSubscription: any;
     if (user) {
-      const subscription = supabase
+      notificationSubscription = supabase
         .channel('public:notifications')
         .on('postgres_changes', {
           event: 'INSERT',
@@ -84,11 +99,43 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           }
         })
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(subscription);
-      };
     }
+
+    // Real-time subscription for announcements (Public)
+    const announcementSubscription = supabase
+      .channel('public:announcements')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'announcements',
+        filter: 'is_active=eq.true'
+      }, (payload) => {
+        const newAnnouncement = payload.new as any;
+
+        // Map to Announcement type
+        const mappedAnnouncement: Announcement = {
+          id: newAnnouncement.id,
+          title: newAnnouncement.title,
+          message: newAnnouncement.message,
+          type: newAnnouncement.type,
+          isActive: newAnnouncement.is_active,
+          createdAt: newAnnouncement.created_at,
+          endAt: newAnnouncement.expires_at
+        };
+
+        setAnnouncements(prev => [mappedAnnouncement, ...prev]);
+
+        // Show desktop notification if subscribed
+        if (isSubscribed) {
+          new Notification(`New Announcement: ${mappedAnnouncement.title}`, { body: mappedAnnouncement.message });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      if (notificationSubscription) supabase.removeChannel(notificationSubscription);
+      supabase.removeChannel(announcementSubscription);
+    };
   }, [user, fetchData, isSubscribed]);
 
   const requestPermission = useCallback(async () => {
@@ -102,10 +149,19 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   const markAsRead = useCallback(async (id: string) => {
-    // Optimistic update
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-    await markNotificationAsRead(id);
-  }, []);
+    // Check if it's an announcement (by checking if it exists in announcements array)
+    const isAnnouncement = announcements.some(a => a.id === id);
+
+    if (isAnnouncement) {
+      if (!readAnnouncementIds.includes(id)) {
+        setReadAnnouncementIds(prev => [...prev, id]);
+      }
+    } else {
+      // Optimistic update for notifications
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      await markNotificationAsRead(id);
+    }
+  }, [announcements, readAnnouncementIds]);
 
   return (
     <NotificationContext.Provider value={{
@@ -115,6 +171,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       announcements,
       notifications,
       unreadCount,
+      readAnnouncementIds,
       markAsRead,
       refreshNotifications: fetchData
     }}>
