@@ -25,7 +25,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string, referredBy?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateTier: (tier: SubscriptionTier) => Promise<void>;
-  updateUserDetails: (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string }) => Promise<void>;
+  updateUserDetails: (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string; referredBy?: string }) => Promise<void>;
   updateUserAvatar: (avatarUrl: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   updateUser: (user: User) => Promise<void>;
@@ -239,7 +239,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   // Update user details
-  const updateUserDetails = useCallback(async (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string }) => {
+  const updateUserDetails = useCallback(async (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string; referredBy?: string }) => {
     if (!user) return;
     try {
       await updateUserProfile(user.id, {
@@ -248,6 +248,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         mobile: details.mobile,
         address: details.address,
         billing_address: details.billingAddress,
+        referred_by: details.referredBy,
       });
       setUser((currentUser) => (currentUser ? { ...currentUser, ...details } : null));
     } catch (error) {

@@ -88,6 +88,7 @@ const ProfilePage: React.FC = () => {
   const [isDeleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
   const [copied, setCopied] = useState(false);
+  const [manualReferralCode, setManualReferralCode] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
