@@ -204,6 +204,23 @@ const ProfilePage: React.FC = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const handleRedeemReferral = async () => {
+    if (!manualReferralCode.trim()) return;
+    try {
+      await updateUserDetails({ 
+        name: user?.name || '', 
+        email: user?.email || '', 
+        referredBy: manualReferralCode 
+      });
+      setShowSuccess(t('profileUpdatedSuccess') || 'Referral code redeemed!');
+      setTimeout(() => setShowSuccess(''), 3000);
+      setManualReferralCode('');
+    } catch (error) {
+      console.error('Error redeeming code:', error);
+      alert('Invalid referral code or error redeeming.');
+    }
+  };
+
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
