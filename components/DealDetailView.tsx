@@ -105,7 +105,7 @@ interface DealDetailViewProps {
 
 const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false, onRate, onRedeem }) => {
     const { t, language } = useLanguage();
-    const { user } = useAuth();
+    const { user, saveDealForUser, unsaveDealForUser } = useAuth();
     const navigate = useNavigate();
 
     const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
@@ -218,12 +218,27 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         <ShareIcon className="h-5 w-5" />
                     </button>
                     <button
-                        onClick={() => {
-                            // Toggle favorite logic here if needed
+                        onClick={async () => {
+                            if (!user) {
+                                navigate('/login');
+                                return;
+                            }
+                            if (deal && user) {
+                                const isSaved = user.savedDeals?.includes(deal.id);
+                                if (isSaved) {
+                                    await unsaveDealForUser(deal.id);
+                                } else {
+                                    await saveDealForUser(deal.id);
+                                    triggerConfetti('simple');
+                                }
+                            }
                         }}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 text-white"
+                        className={`w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-md border shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 ${user?.savedDeals?.includes(deal.id)
+                            ? 'bg-red-500 border-red-500 text-white'
+                            : 'bg-white/20 border-white/30 text-white'
+                            }`}
                     >
-                        <HeartIcon className="h-6 w-6" />
+                        <HeartIcon className={`h-6 w-6 ${user?.savedDeals?.includes(deal.id) ? 'fill-current' : ''}`} />
                     </button>
                 </div>
             </div>
