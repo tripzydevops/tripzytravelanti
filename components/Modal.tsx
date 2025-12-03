@@ -11,24 +11,35 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center" 
-      aria-modal="true" 
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+      aria-modal="true"
       role="dialog"
-      onClick={onClose}
     >
-      <div 
-        className="bg-white dark:bg-brand-surface rounded-lg shadow-xl w-full max-w-md m-4"
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      ></div>
+
+      {/* Modal Content */}
+      <div
+        className="relative bg-white dark:bg-brand-surface w-full md:w-auto md:max-w-md md:rounded-3xl rounded-t-3xl shadow-2xl transform transition-transform duration-300 animate-slide-up md:animate-fade-in m-0 md:m-4 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-brand-text-light">{title}</h3>
-          <button 
+        {/* Handle bar for mobile */}
+        <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+        </div>
+
+        <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-white/5">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
+          <button
             onClick={onClose}
-            className="text-gray-400 dark:text-brand-text-muted hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
             aria-label="Close modal"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
         <div className="p-6">

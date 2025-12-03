@@ -115,6 +115,8 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [hasRated, setHasRated] = useState(false);
     const [showFullDescription, setShowFullDescription] = useState(false);
 
+    const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
+
     const handleRedeemConfirm = async (dontShowAgain: boolean) => {
         if (deal && onRedeem) {
             try {
@@ -185,173 +187,186 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
         }
     };
 
+    // Calculate days left
+    const daysLeft = useMemo(() => {
+        if (!deal.expiresAt) return null;
+        const now = new Date();
+        const expiry = new Date(deal.expiresAt);
+        const diffTime = Math.abs(expiry.getTime() - now.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }, [deal.expiresAt]);
+
     return (
-        <div className="bg-white dark:bg-brand-bg min-h-screen relative">
-            {/* Header */}
-            <header className="sticky top-0 z-20 bg-white/80 dark:bg-brand-bg/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
-                <div className="mx-auto px-4 h-14 flex items-center justify-between">
-                    <button
-                        onClick={() => isPreview ? null : navigate(-1)}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300 text-gray-700 dark:text-brand-text-light"
-                        aria-label="Go back"
-                        disabled={isPreview}
-                    >
-                        <ChevronLeftIcon className="h-5 w-5" />
-                    </button>
+        <div className="bg-gray-50 dark:bg-brand-bg min-h-screen relative pb-24">
+            {/* Header Actions (Absolute) */}
+            <div className="absolute top-0 left-0 right-0 z-30 p-4 flex justify-between items-center">
+                <button
+                    onClick={() => isPreview ? null : navigate(-1)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 text-white"
+                    aria-label="Go back"
+                    disabled={isPreview}
+                >
+                    <ChevronLeftIcon className="h-6 w-6" />
+                </button>
+                <div className="flex gap-3">
                     <button
                         onClick={handleShare}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-300"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 text-white"
                         aria-label={t('shareDeal')}
                     >
-                        <PremiumShareIcon className="h-5 w-5" />
+                        <ShareIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                        onClick={() => {
+                            // Toggle favorite logic here if needed
+                        }}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 text-white"
+                    >
+                        <HeartIcon className="h-6 w-6" />
                     </button>
                 </div>
-            </header>
+            </div>
 
-            <main className="animate-fade-in pb-24">
-                {/* Hero Image */}
-                <div className="relative h-64 md:h-96 w-full overflow-hidden bg-gray-900">
-                    <div
-                        className="absolute inset-0 bg-cover bg-center blur-xl opacity-60 scale-110 transition-transform duration-700"
-                        style={{ backgroundImage: `url(${getHeroImageUrl(deal.imageUrl)})` }}
-                    ></div>
-                    <img
-                        src={getHeroImageUrl(deal.imageUrl)}
-                        alt={title}
-                        className="relative w-full h-full object-contain z-10 shadow-2xl"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/20 to-transparent z-20"></div>
-                </div>
+            {/* Hero Image */}
+            <div className="relative h-80 w-full overflow-hidden bg-gray-900">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 z-10"></div>
+                <img
+                    src={getHeroImageUrl(deal.imageUrl)}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                />
+            </div>
 
-                <div className="container mx-auto px-4 py-6">
-                    {/* Brand Logo and Title Section */}
+            {/* Floating Content Card */}
+            <div className="relative z-20 -mt-10 px-4">
+                <div className="bg-white dark:bg-brand-surface rounded-3xl shadow-xl p-6 min-h-[500px]">
+
+                    {/* Brand & Title Header */}
                     <div className="flex items-start gap-4 mb-6">
-                        <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-lg overflow-hidden">
+                        <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-white shadow-md p-1 border border-gray-100 overflow-hidden">
                             {deal.companyLogoUrl ? (
-                                <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover" />
+                                <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-contain" />
                             ) : (
-                                <span className="text-2xl font-bold text-white">{deal.vendor.charAt(0)}</span>
-                            )}
-                        </div>
-                        <div className="flex-1">
-                            <h2 className="text-2xl font-heading font-bold text-gray-900 dark:text-brand-text-light mb-1">{title}</h2>
-                            <p className="text-sm text-gray-600 dark:text-brand-text-muted">{deal.vendor}</p>
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="mb-6">
-                        <p className={`text-gray-700 dark:text-brand-text-muted leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
-                            {description}
-                        </p>
-                        {description.length > 150 && (
-                            <button
-                                onClick={() => setShowFullDescription(!showFullDescription)}
-                                className="text-brand-primary hover:text-brand-secondary font-medium text-sm mt-2"
-                            >
-                                {showFullDescription ? t('readLess') : t('readMore')}
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Offer Details */}
-                    <div className="bg-gray-50 dark:bg-brand-surface rounded-xl p-4 mb-6">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-brand-text-light mb-3">{t('offerDetails')}</h3>
-                        <div className="space-y-3">
-                            {(deal.discountPercentage || deal.originalPrice > 0) && (
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('discount')}</span>
-                                    <span className="text-lg font-bold text-brand-primary">
-                                        {deal.discountPercentage
-                                            ? (language === 'tr' ? `%${deal.discountPercentage}` : `${deal.discountPercentage}%`)
-                                            : `$${deal.originalPrice - deal.discountedPrice}`}
-                                    </span>
-                                </div>
-                            )}
-                            {(deal.usageLimit || deal.usageLimit_tr) && (
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('usageLimit')}</span>
-                                    <span className="text-sm font-medium text-gray-900 dark:text-brand-text-light">
-                                        {language === 'tr' ? deal.usageLimit_tr : deal.usageLimit}
-                                    </span>
-                                </div>
-                            )}
-                            {(deal.validity || deal.validity_tr) && (
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600 dark:text-brand-text-muted">{t('validity')}</span>
-                                    <span className="text-sm font-medium text-gray-900 dark:text-brand-text-light">
-                                        {language === 'tr' ? deal.validity_tr : deal.validity}
-                                    </span>
+                                <div className="w-full h-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold text-xl">
+                                    {deal.vendor.charAt(0)}
                                 </div>
                             )}
                         </div>
+                        <div className="flex-1 pt-1">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-tight mb-1">{title}</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{deal.vendor}</p>
+                        </div>
                     </div>
 
-                    {/* Rating Section */}
-                    <div className="bg-white dark:bg-brand-surface border border-gray-100 dark:border-white/5 rounded-xl p-6 mb-6 shadow-sm text-center">
-                        {hasRated ? (
-                            <div className="animate-fade-in">
-                                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                                <p className="text-brand-text-light font-medium">{t('ratingSubmittedSuccess')}</p>
-                            </div>
-                        ) : (
-                            <>
-                                <h3 className="text-sm font-semibold text-gray-900 dark:text-brand-text-light mb-4">{t('rateThisDeal')}</h3>
-                                <StarRatingInput
-                                    onRate={handleRate}
-                                    disabled={isPreview || !user || (user && !user.redemptions?.some(r => r.dealId === deal.id))}
-                                />
-                                {isPreview ? (
-                                    <p className="text-xs text-brand-text-muted mt-2">Preview Mode: Rating disabled</p>
-                                ) : !user ? (
-                                    <p className="text-xs text-brand-text-muted mt-2">{t('loginToUnlock')}</p>
-                                ) : user && !user.redemptions?.some(r => r.dealId === deal.id) ? (
-                                    <p className="text-xs text-brand-text-muted mt-2">{t('redeemToRate')}</p>
-                                ) : null}
-                            </>
-                        )}
-                    </div>
+                    {/* Days Left Badge */}
+                    {daysLeft !== null && (
+                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-6">
+                            <ClockIcon className="w-4 h-4" />
+                            <span>{daysLeft} {t('daysLeft') || 'days left'}</span>
+                        </div>
+                    )}
 
-                    {/* Share Button */}
-                    <div className="flex justify-center mb-6">
+                    {/* Tabs */}
+                    <div className="flex border-b border-gray-100 dark:border-white/10 mb-6">
                         <button
-                            onClick={handleShare}
-                            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2"
+                            onClick={() => setActiveTab('conditions')}
+                            className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'conditions'
+                                    ? 'text-brand-primary'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                }`}
                         >
-                            <ShareIcon className="w-5 h-5" />
-                            {t('shareDeal')}
+                            {t('campaignConditions') || 'Campaign Conditions'}
+                            {activeTab === 'conditions' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary rounded-t-full"></div>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('locations')}
+                            className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'locations'
+                                    ? 'text-brand-primary'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                }`}
+                        >
+                            {t('validLocations') || 'Valid Locations'}
+                            {activeTab === 'locations' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary rounded-t-full"></div>
+                            )}
                         </button>
                     </div>
 
-                    {/* Terms Link */}
-                    <div className="mb-6">
-                        <a
-                            href={deal.termsUrl || '#'}
-                            onClick={handleTermsClick}
-                            className="text-brand-primary hover:text-brand-secondary text-sm font-medium underline cursor-pointer"
-                        >
-                            {t('viewTermsAndConditions')}
-                        </a>
+                    {/* Tab Content */}
+                    <div className="animate-fade-in">
+                        {activeTab === 'conditions' ? (
+                            <div className="space-y-4">
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
+                                    <p className="leading-relaxed">{description}</p>
+                                </div>
+
+                                {/* Terms Link */}
+                                {deal.termsUrl && (
+                                    <div className="pt-4 border-t border-gray-100 dark:border-white/5">
+                                        <a
+                                            href={deal.termsUrl || '#'}
+                                            onClick={handleTermsClick}
+                                            className="flex items-center gap-2 text-brand-primary hover:text-brand-secondary font-medium text-sm"
+                                        >
+                                            <LinkIcon className="w-4 h-4" />
+                                            {t('viewTermsAndConditions')}
+                                        </a>
+                                    </div>
+                                )}
+
+                                {/* Rating (Moved inside conditions for now) */}
+                                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t('rateThisDeal')}</h3>
+                                    <div className="flex justify-center">
+                                        <StarRatingInput
+                                            onRate={handleRate}
+                                            disabled={isPreview || !user || (user && !user.redemptions?.some(r => r.dealId === deal.id))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {/* Map Placeholder or List */}
+                                <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 flex flex-col items-center justify-center text-center h-48">
+                                    <LocationMarkerIcon className="w-8 h-8 text-gray-400 mb-2" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        {deal.latitude && deal.longitude
+                                            ? "View location on map"
+                                            : (t('validAtAllLocations') || "Valid at all branch locations.")}
+                                    </p>
+                                    {deal.latitude && deal.longitude && (
+                                        <button
+                                            onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
+                                            className="mt-3 text-brand-primary text-sm font-semibold hover:underline"
+                                        >
+                                            Open in Maps
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3 mt-4">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {t('contactInfo') || 'Contact Information'}
+                                    </h4>
+                                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
+                                            <Globe className="w-4 h-4" />
+                                        </div>
+                                        <a href="#" className="hover:text-brand-primary transition-colors">Visit Website</a>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </main>
+            </div>
 
-            {/* Sticky Use Coupon Button Footer */}
-            <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-brand-bg border-t border-gray-200 dark:border-white/10 p-4 z-10">
-                {deal.redemptionStyle && deal.redemptionStyle.length > 0 && (
-                    <div className="flex justify-center gap-3 mb-2">
-                        {deal.redemptionStyle.includes('online') && (
-                            <span className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                                🌐 Redeem Online
-                            </span>
-                        )}
-                        {deal.redemptionStyle.includes('in_store') && (
-                            <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
-                                🏪 Redeem In-Store
-                            </span>
-                        )}
-                    </div>
-                )}
+            {/* Sticky Footer */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-brand-bg border-t border-gray-100 dark:border-white/10 p-4 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
                 <button
                     onClick={() => {
                         if (isPreview) {
@@ -367,13 +382,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             }
                         }
                     }}
-                    className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                    className="w-full bg-brand-primary text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-secondary transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2"
                 >
-                    {t('useCoupon')}
+                    <span>{t('useCoupon') || 'Get Code'}</span>
                 </button>
-            </footer>
+            </div>
 
-            {/* Warning Modal */}
+            {/* Modals (Keep existing modals) */}
             <Modal
                 isOpen={isWarningModalOpen}
                 onClose={() => setIsWarningModalOpen(false)}
@@ -419,7 +434,6 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 </div>
             </Modal>
 
-            {/* Redeem Modal (Coupon Code) */}
             <Modal
                 isOpen={isRedeemModalOpen}
                 onClose={() => setIsRedeemModalOpen(false)}
@@ -457,7 +471,6 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 dealTitle={title}
             />
 
-            {/* Terms and Conditions Modal */}
             <Modal
                 isOpen={isTermsModalOpen}
                 onClose={() => setIsTermsModalOpen(false)}
