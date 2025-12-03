@@ -434,7 +434,6 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         status: deal.status || 'pending',
         rating: 0,
         rating_count: 0,
-        rating_count: 0,
         publish_at: deal.publishAt,
         redemption_style: deal.redemptionStyle,
         is_flash_deal: deal.is_flash_deal,
@@ -536,6 +535,24 @@ export async function getPendingDeals(): Promise<Deal[]> {
 
     if (error) {
         console.error('Error fetching pending deals:', error);
+        return [];
+    }
+
+    return data.map(transformDealFromDB);
+}
+
+export async function getFlashDeals(): Promise<Deal[]> {
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+        .from('deals')
+        .select('*')
+        .eq('is_flash_deal', true)
+        .gt('flash_end_time', now)
+        .eq('status', 'approved')
+        .order('flash_end_time', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching flash deals:', error);
         return [];
     }
 

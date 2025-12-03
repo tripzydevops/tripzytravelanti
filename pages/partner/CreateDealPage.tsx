@@ -197,7 +197,7 @@ const CreateDealPage: React.FC = () => {
             navigate('/partner/dashboard');
         } catch (err) {
             console.error('Error saving deal:', err);
-            console.log('Form Data being sent:', dealData); // Debug log
+            console.log('Form Data being sent:', formData); // Debug log
             setError('Failed to save deal. Please try again. Check console for details.');
         } finally {
             setLoading(false);
