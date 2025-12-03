@@ -5,7 +5,7 @@ import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SubscriptionTier, Deal } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon } from './Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, Globe } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import QRCode from 'react-qr-code';
