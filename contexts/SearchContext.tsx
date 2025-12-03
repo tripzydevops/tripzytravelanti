@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export type CategoryFilter = 'All' | 'Dining' | 'Wellness' | 'Travel' | 'Flights';
+export type CategoryFilter = 'All' | 'Dining' | 'Food & Dining' | 'Wellness' | 'Services' | 'Travel' | 'Flights' | 'Entertainment' | 'Shopping';
 
 interface SearchContextType {
   searchQuery: string;
