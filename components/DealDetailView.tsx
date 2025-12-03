@@ -5,7 +5,7 @@ import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SubscriptionTier, Deal } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon } from './Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import QRCode from 'react-qr-code';
@@ -272,8 +272,8 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         <button
                             onClick={() => setActiveTab('conditions')}
                             className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'conditions'
-                                    ? 'text-brand-primary'
-                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                ? 'text-brand-primary'
+                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                                 }`}
                         >
                             {t('campaignConditions') || 'Campaign Conditions'}
@@ -284,8 +284,8 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         <button
                             onClick={() => setActiveTab('locations')}
                             className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'locations'
-                                    ? 'text-brand-primary'
-                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                ? 'text-brand-primary'
+                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                                 }`}
                         >
                             {t('validLocations') || 'Valid Locations'}
