@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { Deal } from '../types';
-import { getAllDeals, getDealById as getSupabaseDealById } from '../lib/supabaseService';
+import { getAllDeals, getDealById as getSupabaseDealById, getDealsPaginated } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 
 interface DealContextType {
@@ -41,9 +41,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loadDealsPaginated = useCallback(async (page: number, limit: number, filters?: any, append: boolean = false) => {
     try {
       setLoading(true);
-      const { deals: newDeals, total: totalCount } = await import('../lib/supabaseService').then(m =>
-        m.getDealsPaginated(page, limit, filters)
-      );
+      const { deals: newDeals, total: totalCount } = await getDealsPaginated(page, limit, filters);
 
       setTotal(totalCount);
 
