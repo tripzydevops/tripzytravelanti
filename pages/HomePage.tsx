@@ -70,7 +70,6 @@ const HomePage: React.FC = () => {
   // Fetch deals when filters change
   React.useEffect(() => {
     const fetchDeals = async () => {
-      console.log('Fetching deals with filter:', categoryFilter); // Debug log
       // Reset page to 1 when filters change
       setPage(1);
       await loadDealsPaginated(1, DEALS_PER_PAGE, {
@@ -404,10 +403,7 @@ const HomePage: React.FC = () => {
             {categories.map(cat => (
               <button
                 key={cat.key}
-                onClick={() => {
-                  console.log('Category clicked:', cat.key);
-                  setCategoryFilter(cat.key as any);
-                }}
+                onClick={() => setCategoryFilter(cat.key as any)}
                 className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-lg hover:scale-105 ${categoryFilter === cat.key
                   ? 'bg-gradient-primary text-white shadow-brand-primary/50'
                   : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
