@@ -246,8 +246,8 @@ const CreateDealPage: React.FC = () => {
                             type="button"
                             onClick={() => setFormTab(tab)}
                             className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${formTab === tab
-                                    ? 'border-brand-primary text-brand-primary'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                ? 'border-brand-primary text-brand-primary'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 }`}
                         >
                             {tab}
@@ -273,6 +273,10 @@ const CreateDealPage: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name (Vendor)</label>
                                 <input type="text" name="vendor" required value={formData.vendor} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Website (Optional)</label>
+                                <input type="url" name="companyWebsiteUrl" value={formData.companyWebsiteUrl || ''} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="https://example.com" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (English)</label>
@@ -301,12 +305,14 @@ const CreateDealPage: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                                 <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                    <option value="Dining">Dining</option>
-                                    <option value="Wellness">Wellness</option>
-                                    <option value="Travel">Travel</option>
-                                    <option value="Flights">Flights</option>
+                                    <option>Dining</option>
+                                    <option>Wellness</option>
+                                    <option>Travel</option>
+                                    <option>Flights</option>
+                                    <option>Shopping</option>
                                 </select>
                             </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Original Price</label><input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discounted Price</label><input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>

@@ -367,12 +367,14 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                                         {t('contactInfo') || 'Contact Information'}
                                     </h4>
-                                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                                            <Globe className="w-4 h-4" />
+                                    {deal.companyWebsiteUrl && (
+                                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
+                                                <Globe className="w-4 h-4" />
+                                            </div>
+                                            <a href={deal.companyWebsiteUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">Visit Website</a>
                                         </div>
-                                        <a href="#" className="hover:text-brand-primary transition-colors">Visit Website</a>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         )}

@@ -83,6 +83,7 @@ export interface Deal {
   redemptionStyle?: ('online' | 'in_store')[];
   is_flash_deal?: boolean;
   flash_end_time?: string;
+  companyWebsiteUrl?: string;
 }
 
 export interface SubscriptionPlan {
