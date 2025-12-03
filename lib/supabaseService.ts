@@ -32,6 +32,8 @@ interface DBDeal {
     status?: 'pending' | 'approved' | 'rejected';
     publish_at?: string;
     redemption_style?: ('online' | 'in_store')[];
+    is_flash_deal?: boolean;
+    flash_end_time?: string;
 }
 
 // =====================================================
@@ -400,6 +402,8 @@ function transformDealFromDB(dbDeal: DBDeal): Deal {
         status: dbDeal.status,
         publishAt: dbDeal.publish_at,
         redemptionStyle: dbDeal.redemption_style,
+        is_flash_deal: dbDeal.is_flash_deal,
+        flash_end_time: dbDeal.flash_end_time,
     };
 }
 
@@ -430,8 +434,11 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         status: deal.status || 'pending',
         rating: 0,
         rating_count: 0,
+        rating_count: 0,
         publish_at: deal.publishAt,
-        redemption_style: deal.redemptionStyle
+        redemption_style: deal.redemptionStyle,
+        is_flash_deal: deal.is_flash_deal,
+        flash_end_time: deal.flash_end_time
     };
 
     const { data, error } = await supabase
@@ -475,6 +482,8 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
     if (updates.status) dbUpdates.status = updates.status;
     if (updates.publishAt) dbUpdates.publish_at = updates.publishAt;
     if (updates.redemptionStyle) dbUpdates.redemption_style = updates.redemptionStyle;
+    if (updates.is_flash_deal !== undefined) dbUpdates.is_flash_deal = updates.is_flash_deal;
+    if (updates.flash_end_time) dbUpdates.flash_end_time = updates.flash_end_time;
 
     const { data, error } = await supabase
         .from('deals')

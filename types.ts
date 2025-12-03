@@ -81,6 +81,8 @@ export interface Deal {
   status?: 'pending' | 'approved' | 'rejected';
   publishAt?: string;
   redemptionStyle?: ('online' | 'in_store')[];
+  is_flash_deal?: boolean;
+  flash_end_time?: string;
 }
 
 export interface SubscriptionPlan {

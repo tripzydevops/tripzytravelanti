@@ -155,6 +155,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           redemption_style: newDeal.redemptionStyle,
           partner_id: user?.id,
           status: newDeal.status || 'pending',
+          is_flash_deal: newDeal.is_flash_deal,
+          flash_end_time: newDeal.flash_end_time,
         })
         .select()
         .single();
@@ -201,6 +203,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           longitude: updatedDeal.longitude,
           status: updatedDeal.status,
           redemption_style: updatedDeal.redemptionStyle,
+          is_flash_deal: updatedDeal.is_flash_deal,
+          flash_end_time: updatedDeal.flash_end_time,
         })
         .eq('id', updatedDeal.id);
 

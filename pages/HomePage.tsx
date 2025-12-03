@@ -12,8 +12,10 @@ import Onboarding from '../components/Onboarding';
 import { AdBanner } from '../components/AdBanner';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
+import { getFlashDeals } from '../lib/supabaseService';
 import { Deal } from '../types';
 import { Helmet } from 'react-helmet-async';
+import FlashDealCard from '../components/FlashDealCard';
 
 const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
 
@@ -39,6 +41,15 @@ const HomePage: React.FC = () => {
   const [recentSearches, setRecentSearches] = React.useState<string[]>([]);
   const [flightWidgetParams, setFlightWidgetParams] = React.useState<{ origin?: string, destination?: string, departDate?: string }>({});
   const flightWidgetRef = React.useRef<HTMLDivElement>(null);
+  const [flashDeals, setFlashDeals] = React.useState<Deal[]>([]);
+
+  React.useEffect(() => {
+    const fetchFlashDeals = async () => {
+      const deals = await getFlashDeals();
+      setFlashDeals(deals);
+    };
+    fetchFlashDeals();
+  }, []);
 
   // Pagination State
   const [page, setPage] = React.useState(1);
@@ -308,6 +319,15 @@ const HomePage: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+
+        {/* Flash Deals Section */}
+        {flashDeals.length > 0 && (
+          <div className="mb-12">
+            {flashDeals.map(deal => (
+              <FlashDealCard key={deal.id} deal={deal} />
+            ))}
+          </div>
+        )}
 
         {/* Recommendations Section */}
         {user && (
