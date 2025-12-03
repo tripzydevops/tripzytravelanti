@@ -131,8 +131,8 @@ const HomePage: React.FC = () => {
   const categories = [
     { key: 'All', name: t('categoryAll') },
     { key: 'Flights', name: t('categoryFlights') || 'Flights' },
-    { key: 'Dining', name: t('categoryDining') },
-    { key: 'Wellness', name: t('categoryWellness') },
+    { key: 'Food & Dining', name: t('categoryDining') },
+    { key: 'Services', name: t('categoryWellness') },
     { key: 'Travel', name: t('categoryTravel') },
   ];
 
