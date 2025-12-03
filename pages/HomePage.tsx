@@ -9,6 +9,7 @@ import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import Onboarding from '../components/Onboarding';
+import { AdBanner } from '../components/AdBanner';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
 import { Deal } from '../types';
@@ -500,8 +501,14 @@ const HomePage: React.FC = () => {
             </>
           )}
         </section>
+      </section>
+
+      {/* Ad Banner Test */}
+      <div className="mt-12">
+        <AdBanner position="BOTTOM" />
       </div>
     </div>
+    </div >
   );
 };
 
