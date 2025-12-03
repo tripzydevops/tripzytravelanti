@@ -501,13 +501,11 @@ const HomePage: React.FC = () => {
             </>
           )}
         </section>
-      </section>
-
-      {/* Ad Banner Test */}
-      <div className="mt-12">
-        <AdBanner position="BOTTOM" />
+        {/* Ad Banner Test */}
+        <div className="mt-12">
+          <AdBanner position="BOTTOM" />
+        </div>
       </div>
-    </div>
     </div >
   );
 };
