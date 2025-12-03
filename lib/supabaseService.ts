@@ -259,7 +259,10 @@ export async function getDealsPaginated(
         .from('deals')
         .select('*', { count: 'exact' });
 
+    console.log('getDealsPaginated called with filters:', filters); // Debug log
+
     if (filters?.category && filters.category !== 'All') {
+        console.log('Applying category filter:', filters.category); // Debug log
         query = query.eq('category', filters.category);
     }
 
