@@ -1,35 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 
-.btn-secondary {
-  @apply bg-brand-secondary hover:bg-brand-secondary/90 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Card styles */
-.card {
-  @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-300 hover:shadow-2xl hover:border-white/10;
-}
+@layer components {
+  .btn-secondary {
+    @apply bg-brand-secondary hover:bg-brand-secondary/90 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105;
+  }
 
-/* Input styles */
-.input {
-  @apply bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-text-light placeholder:text-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all;
-}
-}
+  /* Card styles */
+  .card {
+    @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-300 hover:shadow-2xl hover:border-white/10;
+  }
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
-
-.btn-secondary {
-  @apply bg-brand-secondary hover:bg-brand-secondary/90 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105;
-}
-
-/* Card styles */
-.card {
-  @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-300 hover:shadow-2xl hover:border-white/10;
-}
-
-/* Input styles */
-.input {
-  @apply bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-text-light placeholder:text-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all;
-}
+  /* Input styles */
+  .input {
+    @apply bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-text-light placeholder:text-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all;
+  }
 }
 
 @layer utilities {
@@ -39,6 +27,10 @@
 
   .bg-gradient-primary {
     @apply bg-gradient-to-br from-brand-primary to-brand-secondary;
+  }
+
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
   }
 
   .icon-glow {
