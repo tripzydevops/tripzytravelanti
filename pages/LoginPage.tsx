@@ -78,11 +78,11 @@ const LoginPage: React.FC = () => {
           filter: 'blur(4px)'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/80 to-blue-900/40 z-0 mix-blend-multiply" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#001F3F]/90 to-[#0074D9]/60 z-0 mix-blend-multiply" />
 
       {/* Main Login Container */}
       <div className="relative z-10 w-full max-w-md p-8 mx-4">
-        <div className="backdrop-blur-md bg-white/10 rounded-3xl border border-gold-500/30 shadow-2xl overflow-hidden p-8 animate-fade-in">
+        <div className="backdrop-blur-md bg-black/20 rounded-3xl border border-gold-500/30 shadow-2xl overflow-hidden p-8 animate-fade-in">
 
           {/* Logo & Header */}
           <div className="text-center mb-8">

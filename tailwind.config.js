@@ -13,16 +13,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        'brand-bg': '#0F172A',
-        'brand-surface': '#1E293B',
-        'brand-primary': '#6366F1',
-        'brand-secondary': '#F472B6',
-        'brand-text-light': '#F8FAFC',
-        'brand-text-muted': '#94A3B8',
+        'brand-bg': '#001F3F', // Deep Ocean Blue (Top)
+        'brand-surface': '#003366', // Slightly lighter for cards/surfaces
+        'brand-primary': '#D4AF37', // Soft Gold
+        'brand-secondary': '#0074D9', // Azure Blue (Bottom)
+        'brand-text-light': '#FFFFFF',
+        'brand-text-muted': 'rgba(255, 255, 255, 0.7)',
         'gold': {
-          400: '#FACC15', // Adjust as needed for "soft gold"
-          500: '#EAB308',
-          600: '#CA8A04',
+          400: '#FACC15',
+          500: '#D4AF37', // Updated to match spec
+          600: '#B8860B',
         },
       },
       fontFamily: {

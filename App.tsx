@@ -162,7 +162,7 @@ function AppContent() {
 
   return (
     <SearchProvider>
-      <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
+      <div className="flex flex-col min-h-screen text-brand-text-light">
         <main className={`flex-grow ${user ? 'pb-24' : ''}`}>
           <AnimatedRoutes />
         </main>
