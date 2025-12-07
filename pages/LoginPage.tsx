@@ -74,10 +74,10 @@ const LoginPage: React.FC = () => {
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
         style={{
-          backgroundImage: `url("https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop")`, // Night ocean/travel vibe
+          backgroundImage: `url("https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c78?q=80&w=2070&auto=format&fit=crop")`, // Maldives bungalow sunset
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#001F3F] via-[#001F3F]/80 to-[#0074D9]/70 z-0 mix-blend-multiply" />
+      <div className="absolute inset-0 bg-black/20 z-0" />
 
       {/* Main Login Container */}
       <div className="relative z-10 w-full max-w-md p-8 mx-4">
