@@ -74,15 +74,15 @@ const LoginPage: React.FC = () => {
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
         style={{
-          backgroundImage: `url("${displayHeroImage}")`,
-          filter: 'blur(4px)'
+          backgroundImage: `url("https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop")`, // Night ocean/travel vibe
+          filter: 'blur(2px)'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#001F3F]/90 to-[#0074D9]/60 z-0 mix-blend-multiply" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#001F3F] via-[#001F3F]/90 to-[#0074D9]/80 z-0 mix-blend-multiply" />
 
       {/* Main Login Container */}
       <div className="relative z-10 w-full max-w-md p-8 mx-4">
-        <div className="backdrop-blur-md bg-black/20 rounded-3xl border border-gold-500/30 shadow-2xl overflow-hidden p-8 animate-fade-in">
+        <div className="backdrop-blur-xl bg-black/40 rounded-3xl border border-gold-500/30 shadow-2xl overflow-hidden p-8 animate-fade-in">
 
           {/* Logo & Header */}
           <div className="text-center mb-8">

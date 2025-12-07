@@ -60,6 +60,7 @@ export const translations = {
     unlimitedDealRedemptions: 'Unlimited deal redemptions',
     // Login Page
     loginTitle: 'Login to Your Account',
+    welcomeBack: 'Welcome Back',
     loginSubtitle: 'Access your deals and manage your subscription.',
     emailLabel: 'Email Address',
     passwordLabel: 'Password',
@@ -409,6 +410,7 @@ export const translations = {
     unlimitedDealRedemptions: 'Sınırsız fırsat kullanımı',
     // Login Page
     loginTitle: 'Hesabınıza Giriş Yapın',
+    welcomeBack: 'Tekrar Hoşgeldiniz',
     loginSubtitle: 'Fırsatlarınıza erişin ve aboneliğinizi yönetin.',
     emailLabel: 'E-posta Adresi',
     passwordLabel: 'Şifre',
