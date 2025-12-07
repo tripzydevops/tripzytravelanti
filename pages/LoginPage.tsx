@@ -3,21 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
-import { ChevronLeftIcon } from '../components/Icons';
+import { MailIcon, Lock, AppleLogo, FacebookLogo, GoogleLogo } from '../components/Icons';
 import { useToast } from '../contexts/ToastContext';
-
-// --- SVG Icons for Social Login ---
-const AppleIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12c0 6.627 5.373 12 12 12 6.627 0 12-5.373 12-12C24 5.373 18.627 0 12 0zm-1.073 18.78c-1.344.494-2.813.494-4.22.186a9.923 9.923 0 0 1-1.63-.715c-.29-.186-.522-.43-.725-.684-.233-.29-.436-.59-.62-1.047a4.935 4.935 0 0 1-.29-2.325c.125-1.56.814-2.93 1.942-3.873.97-1.018 2.23-1.66 3.712-1.748 1.452-.093 2.87.279 4.062.962.29.186.521.43.725.684.093.093.218.156.343.186.344.093.687-.093.875-.372s.187-.625.093-.875c-.093-.25-.25-.494-.406-.715a6.89 6.89 0 0 0-2.872-2.108 8.16 8.16 0 0 0-4.62-1.108c-3.122 0-5.84 2.29-6.932 5.278-.625 1.748-.469 3.653.406 5.152.937 1.498 2.5 2.53 4.31 2.748.812.093 1.624.031 2.404-.156.281-.062.531-.218.687-.468.219-.344.156-.78-.125-1.062-.281-.25-.656-.344-.999-.281zM18.8 6.09c.813-.962 1.313-2.264 1.344-3.622C19.49 1.41 18.6 1.028 17.65 1.09c-1.468.093-2.81 1-3.622 2.138-.72.993-1.28 2.295-1.248 3.621.656.962 1.78 1.592 2.998 1.592.344 0 .687-.062 1.03-.186z"></path></svg>
-);
-
-const FacebookIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"></path></svg>
-);
-
-const GoogleIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#fbc02d"></path><path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" fill="#e53935"></path><path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" fill="#4caf50"></path><path d="M43.611 20.083H42V20H24v8h11.303c-.792 2.447-2.756 4.517-5.17 5.594l6.19 5.238C42.025 35.636 44 30.138 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#1565c0"></path></svg>
-);
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -32,7 +19,6 @@ const LoginPage: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { error: showError, success: showSuccess } = useToast();
-  const [showEmailForm, setShowEmailForm] = useState(false);
 
   const handleEmailLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,255 +58,174 @@ const LoginPage: React.FC = () => {
   };
 
   const handleSocialLogin = () => {
-    // TODO: Implement other social logins
     setError('This social login method is coming soon!');
   };
 
-  const { content, getContent } = useContent();
+  const { getContent } = useContent();
   const { language } = useLanguage();
 
   // Dynamic Content
-  const heroTitle = getContent('login', 'hero', 'title');
-  const heroSubtitle = getContent('login', 'hero', 'subtitle');
-  const heroBadge = getContent('login', 'hero', 'badge');
   const heroImage = getContent('login', 'hero', 'image_url');
-  const formTitle = getContent('login', 'form', 'title');
-  const formSubtitle = getContent('login', 'form', 'subtitle');
-
-  const displayHeroTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
-  const displayHeroSubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
-  const displayHeroBadge = language === 'tr' ? (heroBadge?.content_value_tr || heroBadge?.content_value) : heroBadge?.content_value;
   const displayHeroImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
-  const displayFormTitle = language === 'tr' ? (formTitle?.content_value_tr || formTitle?.content_value) : formTitle?.content_value;
-  const displayFormSubtitle = language === 'tr' ? (formSubtitle?.content_value_tr || formSubtitle?.content_value) : formSubtitle?.content_value;
-
-  const SocialLoginOptions = () => (
-    <div className="w-full max-w-md space-y-8 animate-fade-in">
-      <div className="text-center">
-        <h1 className="text-4xl font-heading font-bold text-gray-900 dark:text-white tracking-tight">
-          {displayFormTitle || t('letsGetYouStarted')}
-        </h1>
-        <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-          {displayFormSubtitle || t('yourNextAdventure')}
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <button
-          onClick={() => setShowEmailForm(true)}
-          className="w-full flex items-center justify-center gap-x-3 py-4 px-6 rounded-2xl bg-gradient-primary text-white font-bold text-lg shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-        >
-          {t('continueWithEmail')}
-        </button>
-
-        <div className="relative flex py-4 items-center">
-          <div className="flex-grow border-t border-gray-200 dark:border-white/10"></div>
-          <span className="flex-shrink mx-4 text-gray-400 text-sm font-medium tracking-wider">{t('or')}</span>
-          <div className="flex-grow border-t border-gray-200 dark:border-white/10"></div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <button
-            onClick={handleSocialLogin}
-            className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-black text-white font-semibold text-base shadow-md hover:bg-gray-900 hover:scale-[1.02] transition-all duration-300"
-          >
-            <AppleIcon className="h-6 w-6" />
-            {t('signInWithApple')}
-          </button>
-
-          <button
-            onClick={handleSocialLogin}
-            className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-[#1877F2] text-white font-semibold text-base shadow-md hover:bg-[#166fe5] hover:scale-[1.02] transition-all duration-300"
-          >
-            <FacebookIcon className="h-6 w-6" />
-            {t('signInWithFacebook')}
-          </button>
-
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-x-3 py-3.5 px-6 rounded-2xl bg-white text-gray-700 font-semibold text-base border border-gray-200 shadow-sm hover:bg-gray-50 hover:scale-[1.02] transition-all duration-300"
-          >
-            <GoogleIcon className="h-6 w-6" />
-            {t('signInWithGoogle')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const EmailLoginForm = () => (
-    <div className="w-full max-w-md animate-fade-in">
-      <div className="mb-8">
-        <button
-          onClick={() => setShowEmailForm(false)}
-          className="group flex items-center text-gray-500 hover:text-brand-primary transition-colors mb-6"
-        >
-          <div className="p-2 rounded-full bg-gray-100 dark:bg-white/5 group-hover:bg-brand-primary/10 transition-colors mr-2">
-            <ChevronLeftIcon className="w-5 h-5" />
-          </div>
-          <span className="font-medium">{t('back')}</span>
-        </button>
-        <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white">
-          {isSignup ? t('createAccount') : t('loginTitle')}
-        </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {isSignup ? t('signupSubtitle') : t('loginSubtitle')}
-        </p>
-      </div>
-
-      <form className="space-y-6" onSubmit={handleEmailLoginSubmit}>
-        {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium flex items-center animate-shake">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-5">
-          {isSignup && (
-            <>
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  {t('fullNameLabel')}
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  {t('referralCodeOptional')}
-                </label>
-                <input
-                  id="referralCode"
-                  name="referralCode"
-                  type="text"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value)}
-                  className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-                  placeholder="Referral Code"
-                />
-              </div>
-            </>
-          )}
-          <div>
-            <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {t('emailLabel')}
-            </label>
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-              placeholder="name@example.com"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('passwordLabel')}
-              </label>
-              <a href="#" className="text-sm font-medium text-brand-primary hover:text-brand-secondary transition-colors">
-                {t('forgotPassword')}
-              </a>
-            </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full px-4 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full flex items-center justify-center py-4 px-6 rounded-2xl bg-gradient-primary text-white font-bold text-lg shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none transition-all duration-300"
-        >
-          {loading ? (
-            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-
-            isSignup ? t('signupButton') : t('loginButton')
-          )}
-        </button>
-
-        <div className="text-center mt-4">
-          <button
-            type="button"
-            onClick={() => setIsSignup(!isSignup)}
-            className="text-sm text-brand-primary hover:text-brand-secondary font-medium"
-          >
-            {isSignup ? t('alreadyHaveAccount') : t('dontHaveAccount')}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-brand-bg">
-      {/* Left Side - Image (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-2/3 relative overflow-hidden bg-gray-900">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-110"
-          style={{
-            backgroundImage: `url("${displayHeroImage}")`,
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-brand-primary/20 mix-blend-overlay" />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center z-0"
+        style={{
+          backgroundImage: `url("${displayHeroImage}")`,
+          filter: 'blur(4px)'
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/80 to-blue-900/40 z-0 mix-blend-multiply" />
 
-        <div className="relative z-10 flex flex-col justify-end p-16 text-white max-w-2xl">
-          <div className="mb-6 inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-medium">
-            <span className="w-2 h-2 rounded-full bg-green-400 mr-2 animate-pulse" />
-            {displayHeroBadge || t('loginHeroBadge')}
+      {/* Main Login Container */}
+      <div className="relative z-10 w-full max-w-md p-8 mx-4">
+        <div className="backdrop-blur-md bg-white/10 rounded-3xl border border-gold-500/30 shadow-2xl overflow-hidden p-8 animate-fade-in">
+
+          {/* Logo & Header */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="text-4xl font-heading font-bold text-gold-400">T</span>
+              <span className="text-2xl font-heading font-medium text-white tracking-wide">Tripzy</span>
+            </div>
+            <h1 className="text-3xl font-serif text-gold-400 mb-2">
+              {isSignup ? (t('createAccount') || 'Create Account') : (t('welcomeBack') || 'Welcome Back')}
+            </h1>
           </div>
-          <h2 className="text-5xl font-heading font-bold mb-6 leading-tight">
-            {displayHeroTitle || t('loginHeroTitle')}
-          </h2>
-          <p className="text-xl text-white/80 leading-relaxed">
-            {displayHeroSubtitle || t('loginHeroSubtitle')}
-          </p>
-        </div>
-      </div>
 
-      {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 xl:w-1/3 flex flex-col justify-center items-center p-8 lg:p-12 relative">
-        {/* Mobile Background (visible only on small screens) */}
-        <div className="lg:hidden absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${displayHeroImage}")` }} />
-          <div className="absolute inset-0 bg-white/90 dark:bg-brand-bg/95 backdrop-blur-sm" />
-        </div>
+          {/* Form */}
+          <form onSubmit={handleEmailLoginSubmit} className="space-y-5">
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-sm text-center">
+                {error}
+              </div>
+            )}
 
-        <div className="relative z-10 w-full max-w-md">
-          {showEmailForm ? <EmailLoginForm /> : <SocialLoginOptions />}
+            {isSignup && (
+              <>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-gold-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                      </svg>
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t('fullNameLabel') || "Full Name"}
+                    className="block w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-gold-400/50 focus:ring-1 focus:ring-gold-400/50 transition-all duration-300"
+                    required
+                  />
+                </div>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-gold-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.593l6.002-2.002a2.051 2.051 0 00.593-2.607l-9.581-9.581a2.25 2.25 0 00-1.591-.659z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                      </svg>
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    placeholder={t('referralCodeOptional') || "Referral Code (Optional)"}
+                    className="block w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-gold-400/50 focus:ring-1 focus:ring-gold-400/50 transition-all duration-300"
+                  />
+                </div>
+              </>
+            )}
 
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <MailIcon className="h-5 w-5 text-gold-400" />
+              </div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('emailLabel') || "Email Address"}
+                className="block w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-gold-400/50 focus:ring-1 focus:ring-gold-400/50 transition-all duration-300"
+                required
+              />
+            </div>
+
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-gold-400" />
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t('passwordLabel') || "Password"}
+                className="block w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none focus:border-gold-400/50 focus:ring-1 focus:ring-gold-400/50 transition-all duration-300"
+                required
+              />
+            </div>
+
+            {!isSignup && (
+              <div className="flex justify-end">
+                <button type="button" className="text-sm text-white/80 hover:text-gold-400 transition-colors">
+                  {t('forgotPassword') || "Forgot Password?"}
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-400 to-gold-600 text-white font-bold text-lg shadow-lg shadow-gold-500/20 hover:shadow-gold-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
+              ) : (
+                isSignup ? (t('signupButton') || 'Sign Up') : (t('loginButton') || 'Log In')
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative flex py-6 items-center">
+            <div className="flex-grow border-t border-white/10"></div>
+            <span className="flex-shrink mx-4 text-white/40 text-sm font-medium tracking-wider">
+              {t('orContinueWith') || 'Or continue with'}
+            </span>
+            <div className="flex-grow border-t border-white/10"></div>
+          </div>
+
+          {/* Social Login */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all duration-300 group"
+            >
+              <GoogleLogo className="h-6 w-6 group-hover:scale-110 transition-transform" />
+            </button>
+            <button
+              onClick={handleSocialLogin}
+              className="flex items-center justify-center py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all duration-300 group"
+            >
+              <AppleLogo className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+
+          {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('termsAgreement')}{' '}
-              <a className="font-semibold text-brand-primary hover:text-brand-secondary hover:underline transition-colors" href="#">{t('termsOfService')}</a> {t('and')}{' '}
-              <a className="font-semibold text-brand-primary hover:text-brand-secondary hover:underline transition-colors" href="#">{t('privacyPolicy')}</a>{t('termsAgreementEnd')}
+            <p className="text-white/60">
+              {isSignup ? (t('alreadyHaveAccount') || "Already have an account?") : (t('dontHaveAccount') || "Don't have an account?")}{' '}
+              <button
+                onClick={() => setIsSignup(!isSignup)}
+                className="text-gold-400 font-semibold hover:text-gold-300 transition-colors"
+              >
+                {isSignup ? (t('loginButton') || 'Log In') : (t('signupButton') || 'Sign Up')}
+              </button>
             </p>
           </div>
         </div>

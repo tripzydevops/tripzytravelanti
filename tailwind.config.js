@@ -19,10 +19,16 @@ export default {
         'brand-secondary': '#F472B6',
         'brand-text-light': '#F8FAFC',
         'brand-text-muted': '#94A3B8',
+        'gold': {
+          400: '#FACC15', // Adjust as needed for "soft gold"
+          500: '#EAB308',
+          600: '#CA8A04',
+        },
       },
       fontFamily: {
         'heading': ['Outfit', 'sans-serif'],
         'body': ['Inter', 'sans-serif'],
+        'serif': ['Playfair Display', 'serif'], // Or another premium serif
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
