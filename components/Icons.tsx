@@ -33,7 +33,8 @@ import {
   Eye,
   ArrowRight,
   CheckCircle2,
-  Lock as LucideLock
+  Lock as LucideLock,
+  Globe
 } from 'lucide-react';
 
 type IconProps = {
@@ -80,6 +81,7 @@ export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => <ArrowRigh
 export const CheckCircle: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />;
 export const Lock: React.FC<IconProps> = ({ className }) => <LucideLock className={className} />;
 export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />; // Mapping to CheckCircle2 or ShieldCheck if available
+export const Globe: React.FC<IconProps> = ({ className }) => <Globe className={className} />;
 
 // --- Custom / Complex Icons ---
 
