@@ -44,11 +44,11 @@ type IconProps = {
 
 // --- Lucide Icon Wrappers ---
 
-export const HomeIcon: React.FC<IconProps> = ({ className }) => <Home className={className} />;
-export const Search: React.FC<IconProps> = ({ className }) => <LucideSearch className={className} />;
-export const BriefcaseIcon: React.FC<IconProps> = ({ className }) => <Briefcase className={className} />; // Renamed to avoid conflict if any, but kept consistent with export
+export const HomeIcon: React.FC<IconProps> = ({ className }) => <Home className={className} strokeWidth={1.5} />;
+export const Search: React.FC<IconProps> = ({ className }) => <LucideSearch className={className} strokeWidth={1.5} />;
+export const BriefcaseIcon: React.FC<IconProps> = ({ className }) => <Briefcase className={className} strokeWidth={1.5} />; // Renamed to avoid conflict if any, but kept consistent with export
 export { Briefcase }; // Export direct component too if needed
-export const UserIcon: React.FC<IconProps> = ({ className }) => <User className={className} />;
+export const UserIcon: React.FC<IconProps> = ({ className }) => <User className={className} strokeWidth={1.5} />;
 export const CogIcon: React.FC<IconProps> = ({ className }) => <Settings className={className} />;
 export const ChevronLeftIcon: React.FC<IconProps> = ({ className }) => <ChevronLeft className={className} />;
 export const ChevronRightIcon: React.FC<IconProps> = ({ className }) => <ChevronRight className={className} />;
@@ -80,8 +80,8 @@ export const EyeIcon: React.FC<IconProps> = ({ className }) => <Eye className={c
 export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => <ArrowRight className={className} />;
 export const CheckCircle: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />;
 export const Lock: React.FC<IconProps> = ({ className }) => <LucideLock className={className} />;
-export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />; // Mapping to CheckCircle2 or ShieldCheck if available
-export const Globe: React.FC<IconProps> = ({ className }) => <Globe className={className} />;
+export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} strokeWidth={1.5} />; // Mapping to CheckCircle2 or ShieldCheck if available
+export const Globe: React.FC<IconProps> = ({ className }) => <Globe className={className} strokeWidth={1.5} />;
 
 // --- Custom / Complex Icons ---
 

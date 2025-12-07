@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { HomeIcon, Search, UserIcon, ShieldCheckIcon, Briefcase } from './Icons';
+import { HomeIcon, Search, UserIcon, ShieldCheckIcon, BriefcaseIcon } from './Icons';
 
 const BottomNav: React.FC = () => {
   const { t } = useLanguage();
@@ -11,7 +11,7 @@ const BottomNav: React.FC = () => {
   const navItems = [
     { path: '/', label: t('bottomNavHome') || 'Home', icon: HomeIcon, admin: false },
     { path: '/travel', label: t('bottomNavSearch') || 'Search', icon: Search, admin: false },
-    { path: '/my-deals', label: t('bottomNavTrips') || 'Trips', icon: Briefcase, admin: false },
+    { path: '/my-deals', label: t('bottomNavTrips') || 'Trips', icon: BriefcaseIcon, admin: false },
     { path: '/profile', label: t('bottomNavProfile') || 'Profile', icon: UserIcon, admin: false },
     { path: '/admin', label: t('bottomNavAdmin') || 'Admin', icon: ShieldCheckIcon, admin: true },
   ];
