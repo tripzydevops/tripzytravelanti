@@ -20,8 +20,11 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
 
     public componentDidMount() {
-        // Clear the reload flag on successful mount (meaning the app loaded fine)
-        sessionStorage.removeItem('chunk_reload_attempt');
+        // Only clear the flag after a delay. If the app crashes immediately after reload,
+        // the flag will still be there, preventing an infinite loop.
+        setTimeout(() => {
+            sessionStorage.removeItem('chunk_reload_attempt');
+        }, 5000);
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -33,9 +36,16 @@ class ErrorBoundary extends React.Component<Props, State> {
             const hasReloaded = sessionStorage.getItem('chunk_reload_attempt');
             if (!hasReloaded) {
                 sessionStorage.setItem('chunk_reload_attempt', 'true');
-                window.location.reload();
+                this.handleReload();
             }
         }
+    }
+
+    private handleReload = () => {
+        // Force a cache-busting reload by appending a timestamp
+        const url = new URL(window.location.href);
+        url.searchParams.set('t', Date.now().toString());
+        window.location.href = url.toString();
     }
 
     public render() {
@@ -54,7 +64,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                         </p>
                         <div className="space-y-3">
                             <button
-                                onClick={() => window.location.reload()}
+                                onClick={this.handleReload}
                                 className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                             >
                                 Refresh Page
