@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAdmin } from '../../contexts/AdminContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
@@ -22,7 +23,8 @@ const EMPTY_USER: User = {
 
 const AdminUsersTab: React.FC = () => {
     const { t, language } = useLanguage();
-    const { user: loggedInUser, users, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAuth();
+    const { user: loggedInUser } = useAuth();
+    const { users, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAdmin();
     const { deals } = useDeals(); // Use deals from context for lookups
 
     const [isUserFormVisible, setIsUserFormVisible] = useState(false);

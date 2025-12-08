@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useUserActivity } from '../contexts/UserActivityContext';
 import { useDeals } from '../contexts/DealContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import DealCard from '../components/DealCard';
@@ -7,11 +7,10 @@ import { BookmarkIcon } from '../components/Icons';
 
 const MyDealsPage: React.FC = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { savedDeals: savedDealIds } = useUserActivity();
   const { deals } = useDeals();
 
-  const savedDealIds = new Set(user?.savedDeals || []);
-  const savedDeals = deals.filter(deal => savedDealIds.has(deal.id));
+  const savedDeals = deals.filter(deal => savedDealIds.includes(deal.id));
 
   return (
     <div className="container mx-auto px-4 pt-6 pb-24">

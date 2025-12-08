@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { UserActivityProvider } from './contexts/UserActivityContext';
+import { AdminProvider } from './contexts/AdminContext';
 import { SearchProvider } from './contexts/SearchContext';
 import { DealProvider } from './contexts/DealContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
@@ -178,24 +180,28 @@ function App() {
     <ErrorBoundary>
       <LanguageProvider>
         <AuthProvider>
-          <DealProvider>
-            <SubscriptionProvider>
-              <ContentProvider>
-                <ThemeProvider>
-                  <LayoutProvider>
-                    <NotificationProvider>
-                      <ToastProvider>
-                        <BrowserRouter>
-                          <ScrollToTop />
-                          <AppContent />
-                        </BrowserRouter>
-                      </ToastProvider>
-                    </NotificationProvider>
-                  </LayoutProvider>
-                </ThemeProvider>
-              </ContentProvider>
-            </SubscriptionProvider>
-          </DealProvider>
+          <UserActivityProvider>
+            <AdminProvider>
+              <DealProvider>
+                <SubscriptionProvider>
+                  <ContentProvider>
+                    <ThemeProvider>
+                      <LayoutProvider>
+                        <NotificationProvider>
+                          <ToastProvider>
+                            <BrowserRouter>
+                              <ScrollToTop />
+                              <AppContent />
+                            </BrowserRouter>
+                          </ToastProvider>
+                        </NotificationProvider>
+                      </LayoutProvider>
+                    </ThemeProvider>
+                  </ContentProvider>
+                </SubscriptionProvider>
+              </DealProvider>
+            </AdminProvider>
+          </UserActivityProvider>
         </AuthProvider>
       </LanguageProvider>
     </ErrorBoundary>

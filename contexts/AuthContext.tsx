@@ -6,21 +6,15 @@ import { supabase } from '../lib/supabaseClient';
 import {
   getUserProfile,
   updateUserProfile,
-  getAllUsers,
-  deleteUserProfile,
-  saveDeal,
-  unsaveDeal,
   getDirectReferrals,
   getReferralChain,
   getReferralNetwork,
-  redeemDeal,
   updatePassword,
-  updateAllUsersNotificationPreferences as updateAllUsersNotificationPreferencesService,
+  deleteUserProfile,
 } from '../lib/supabaseService';
 
 interface AuthContextType {
   user: User | null;
-  users: User[];
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, referredBy?: string) => Promise<void>;
@@ -29,22 +23,15 @@ interface AuthContextType {
   updateUserDetails: (details: { name: string; email: string; mobile?: string; address?: string; billingAddress?: string; referredBy?: string }) => Promise<void>;
   updateUserAvatar: (avatarUrl: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
-  updateUser: (user: User) => Promise<void>;
-  deleteUser: (userId: string) => Promise<void>;
-  saveDealForUser: (dealId: string) => Promise<void>;
-  unsaveDealForUser: (dealId: string) => Promise<void>;
-  redeemDeal: (dealId: string) => Promise<void>;
-  addExtraRedemptions: (userId: string, amount: number) => Promise<void>;
   updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
-  updateAllUsersNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Load user profile from Supabase
@@ -64,8 +51,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (!profile) {
           console.error('Profile not found after retries. Trigger may have failed.');
-          // Optionally we could show a UI error here, but for now we just log it.
-          // The user will see a "profile incomplete" state potentially.
         }
       }
 
@@ -143,12 +128,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, [loadUserProfile]);
 
-  // Load all users if admin
-  useEffect(() => {
-    if (user?.isAdmin) {
-      getAllUsers().then(setUsers).catch(console.error);
-    }
-  }, [user?.isAdmin]);
 
   // Sign up new user
   const signup = useCallback(async (email: string, password: string, name: string, referredBy?: string) => {
@@ -167,7 +146,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (authError) throw authError;
 
       if (authData.user) {
-        // Load the new profile (Trigger should have created it, or loadUserProfile will handle fallback)
         await loadUserProfile(authData.user);
       }
     } catch (error) {
@@ -207,6 +185,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Delete account (self)
+  const deleteAccount = useCallback(async () => {
+    if (!user) return;
+    try {
+      await deleteUserProfile(user.id);
+      await logout();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      throw error;
+    }
+  }, [user, logout]);
+
   // Update subscription tier
   const updateTier = useCallback(async (tier: SubscriptionTier) => {
     if (!user) return;
@@ -214,11 +204,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await updateUserProfile(user.id, { tier });
       setUser((currentUser) => (currentUser ? { ...currentUser, tier } : null));
-
-      // Update in users list if admin
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => (u.id === user.id ? { ...u, tier } : u))
-      );
     } catch (error) {
       console.error('Error updating tier:', error);
       throw error;
@@ -260,157 +245,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await updateUserProfile(user.id, { avatar_url: avatarUrl });
       setUser((currentUser) => (currentUser ? { ...currentUser, avatarUrl } : null));
-
-      // Update in users list if admin
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => (u.id === user.id ? { ...u, avatarUrl } : u))
-      );
     } catch (error) {
       console.error('Error updating avatar:', error);
       throw error;
     }
   }, [user]);
-
-  // Update user (for admin)
-  const updateUser = useCallback(async (updatedUser: User) => {
-    try {
-      await updateUserProfile(updatedUser.id, {
-        name: updatedUser.name,
-        email: updatedUser.email,
-        tier: updatedUser.tier,
-        avatar_url: updatedUser.avatarUrl,
-        extra_redemptions: updatedUser.extraRedemptions,
-        notification_preferences: updatedUser.notificationPreferences,
-        mobile: updatedUser.mobile,
-        status: updatedUser.status,
-        referred_by: updatedUser.referredBy,
-      });
-
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-      );
-
-      if (user && user.id === updatedUser.id) {
-        setUser(updatedUser);
-      }
-    } catch (error) {
-      console.error('Error updating user:', error);
-      throw error;
-    }
-  }, [user]);
-
-  // Delete user (for admin)
-  const deleteUser = useCallback(async (userId: string) => {
-    try {
-      await deleteUserProfile(userId);
-      setUsers((currentUsers) => currentUsers.filter((u) => u.id !== userId));
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      throw error;
-    }
-  }, []);
-
-  // Save deal for user
-  const saveDealForUser = useCallback(async (dealId: string) => {
-    if (!user) return;
-
-    try {
-      await saveDeal(user.id, dealId);
-      setUser((currentUser) => {
-        if (!currentUser) return null;
-        const newSavedDeals = [...new Set([...(currentUser.savedDeals || []), dealId])];
-        const updatedUser = { ...currentUser, savedDeals: newSavedDeals };
-        setUsers((currentUsers) =>
-          currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-        );
-        return updatedUser;
-      });
-    } catch (error) {
-      console.error('Error saving deal:', error);
-      throw error;
-    }
-  }, [user]);
-
-  // Unsave deal for user
-  const unsaveDealForUser = useCallback(async (dealId: string) => {
-    if (!user) return;
-
-    try {
-      await unsaveDeal(user.id, dealId);
-      setUser((currentUser) => {
-        if (!currentUser) return null;
-        const newSavedDeals = (currentUser.savedDeals || []).filter((id) => id !== dealId);
-        const updatedUser = { ...currentUser, savedDeals: newSavedDeals };
-        setUsers((currentUsers) =>
-          currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-        );
-        return updatedUser;
-      });
-    } catch (error) {
-      console.error('Error unsaving deal:', error);
-      throw error;
-    }
-  }, [user]);
-
-  // Redeem deal
-  const handleRedeemDeal = useCallback(async (dealId: string) => {
-    if (!user) return;
-
-    try {
-      await redeemDeal(user.id, dealId);
-
-      // Update local state
-      const newRedemption = {
-        id: crypto.randomUUID(), // Temporary ID until refresh
-        dealId,
-        userId: user.id,
-        redeemedAt: new Date().toISOString()
-      };
-
-      setUser((currentUser) => {
-        if (!currentUser) return null;
-        const updatedRedemptions = [...(currentUser.redemptions || []), newRedemption];
-        const updatedUser = { ...currentUser, redemptions: updatedRedemptions };
-
-        // Update in users list if admin
-        setUsers((currentUsers) =>
-          currentUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-        );
-
-        return updatedUser;
-      });
-
-    } catch (error) {
-      console.error('Error redeeming deal:', error);
-      throw error;
-    }
-  }, [user]);
-
-  // Add extra redemptions
-  const addExtraRedemptions = useCallback(async (userId: string, amount: number) => {
-    try {
-      const targetUser = users.find((u) => u.id === userId);
-      if (!targetUser) return;
-
-      const newRedemptions = (targetUser.extraRedemptions || 0) + amount;
-      await updateUserProfile(userId, { extra_redemptions: newRedemptions });
-
-      setUsers((currentUsers) =>
-        currentUsers.map((u) =>
-          u.id === userId ? { ...u, extraRedemptions: newRedemptions } : u
-        )
-      );
-
-      if (user && user.id === userId) {
-        setUser((currentUser) =>
-          currentUser ? { ...currentUser, extraRedemptions: newRedemptions } : null
-        );
-      }
-    } catch (error) {
-      console.error('Error adding extra redemptions:', error);
-      throw error;
-    }
-  }, [users, user]);
 
   // Update notification preferences
   const updateUserNotificationPreferences = useCallback(async (prefs: Partial<UserNotificationPreferences>) => {
@@ -430,48 +269,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser((currentUser) =>
         currentUser ? { ...currentUser, notificationPreferences: updatedPrefs } : null
       );
-
-      setUsers((currentUsers) =>
-        currentUsers.map((u) =>
-          u.id === user.id ? { ...u, notificationPreferences: updatedPrefs } : u
-        )
-      );
     } catch (error) {
       console.error('Error updating notification preferences:', error);
-      throw error;
-    }
-  }, [user]);
-
-  // Update notification preferences for all users (admin only)
-  const updateAllUsersNotificationPreferences = useCallback(async (prefs: Partial<UserNotificationPreferences>) => {
-    if (!user?.isAdmin) return;
-
-    try {
-      // Use the server-side RPC for scalable updates
-      await updateAllUsersNotificationPreferencesService(prefs);
-
-      // Optimistically update local users state
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => ({
-          ...u,
-          notificationPreferences: {
-            ...u.notificationPreferences,
-            ...prefs
-          }
-        }))
-      );
-
-      // Also update current user if they are in the list
-      setUser(prev => prev ? {
-        ...prev,
-        notificationPreferences: {
-          ...prev.notificationPreferences,
-          ...prefs
-        }
-      } : null);
-
-    } catch (error) {
-      console.error('Error updating all users notification preferences:', error);
       throw error;
     }
   }, [user]);
@@ -480,8 +279,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signInWithGoogle = useCallback(async () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -499,7 +296,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         user,
-        users,
         loading,
         login,
         signup,
@@ -507,16 +303,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateTier,
         updateUserDetails,
         updateUserAvatar,
-        updateUser,
-        deleteUser,
-        saveDealForUser,
-        unsaveDealForUser,
-        redeemDeal: handleRedeemDeal,
-        addExtraRedemptions,
-        updateUserNotificationPreferences,
-        updateAllUsersNotificationPreferences,
         signInWithGoogle,
         updatePassword: handleUpdatePassword,
+        updateUserNotificationPreferences,
       }}
     >
       {children}

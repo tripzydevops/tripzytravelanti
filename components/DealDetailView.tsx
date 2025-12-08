@@ -4,6 +4,7 @@ import { getHeroImageUrl } from '../lib/imageUtils';
 import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActivity } from '../contexts/UserActivityContext';
 import { SubscriptionTier, Deal } from '../types';
 import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon } from './Icons';
 import Modal from './Modal';
@@ -105,7 +106,8 @@ interface DealDetailViewProps {
 
 const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false, onRate, onRedeem }) => {
     const { t, language } = useLanguage();
-    const { user, saveDealForUser, unsaveDealForUser } = useAuth();
+    const { user } = useAuth();
+    const { saveDeal, unsaveDeal, isDealSaved } = useUserActivity();
     const navigate = useNavigate();
 
     const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
@@ -224,21 +226,21 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 return;
                             }
                             if (deal && user) {
-                                const isSaved = user.savedDeals?.includes(deal.id);
+                                const isSaved = isDealSaved(deal.id);
                                 if (isSaved) {
-                                    await unsaveDealForUser(deal.id);
+                                    await unsaveDeal(deal.id);
                                 } else {
-                                    await saveDealForUser(deal.id);
+                                    await saveDeal(deal.id);
                                     triggerConfetti('simple');
                                 }
                             }
                         }}
-                        className={`w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-md border shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 ${user?.savedDeals?.includes(deal.id)
+                        className={`w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-md border shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 ${isDealSaved(deal.id)
                             ? 'bg-red-500 border-red-500 text-white'
                             : 'bg-white/20 border-white/30 text-white'
                             }`}
                     >
-                        <HeartIcon className={`h-6 w-6 ${user?.savedDeals?.includes(deal.id) ? 'fill-current' : ''}`} />
+                        <HeartIcon className={`h-6 w-6 ${isDealSaved(deal.id) ? 'fill-current' : ''}`} />
                     </button>
                 </div>
             </div>

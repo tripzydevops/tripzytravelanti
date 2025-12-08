@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Deal, SubscriptionTier } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActivity } from '../contexts/UserActivityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Lock, StarIcon, BookmarkIcon } from './Icons';
 import { getThumbnailUrl } from '../lib/imageUtils';
@@ -39,7 +40,8 @@ const StarRating: React.FC<{ rating: number; ratingCount: number; t: (key: strin
 };
 
 const DealCard: React.FC<DealCardProps> = ({ deal }) => {
-  const { user, saveDealForUser, unsaveDealForUser } = useAuth();
+  const { user } = useAuth();
+  const { saveDeal, unsaveDeal, isDealSaved } = useUserActivity();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
 
@@ -52,7 +54,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     isLocked = false;
   }
 
-  const isSaved = user?.savedDeals?.includes(deal.id) ?? false;
+  const isSaved = isDealSaved(deal.id);
 
   const title = language === 'tr' ? deal.title_tr : deal.title;
   const description = language === 'tr' ? deal.description_tr : deal.description;
@@ -82,9 +84,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     e.stopPropagation();
     if (!user) return;
     if (isSaved) {
-      unsaveDealForUser(deal.id);
+      unsaveDeal(deal.id);
     } else {
-      saveDealForUser(deal.id);
+      saveDeal(deal.id);
     }
   };
 

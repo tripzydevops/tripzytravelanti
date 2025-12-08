@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActivity } from '../contexts/UserActivityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -71,7 +72,8 @@ const SettingsItem: React.FC<{ icon: React.ReactNode; title: string; subtitle?: 
 };
 
 const ProfilePage: React.FC = () => {
-  const { user, logout, updateUserDetails, updateUserAvatar, deleteUser, updateUserNotificationPreferences } = useAuth();
+  const { user, logout, updateUserDetails, updateUserAvatar, deleteAccount, updateUserNotificationPreferences } = useAuth();
+  const { redemptions } = useUserActivity();
   const { t, language, toggleLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { permissionStatus, requestPermission } = useNotifications();
@@ -152,8 +154,8 @@ const ProfilePage: React.FC = () => {
 
   const handleDeleteAccountConfirm = () => {
     if (user) {
-      deleteUser(user.id); // This will only remove from local state
-      logout(); // This clears the current user session
+      deleteAccount(); // This will only remove from local state
+      // logout(); // Handled in deleteAccount
       navigate('/');
     }
   };
@@ -234,7 +236,9 @@ const ProfilePage: React.FC = () => {
 
   const referralCode = `${window.location.origin}/signup?ref=${user.id}`;
 
-  const { remaining, total } = calculateRemainingRedemptions(user);
+  // Merge user with fresh redemptions from context
+  const userWithFreshRedemptions = { ...user, redemptions: redemptions || user.redemptions };
+  const { remaining, total } = calculateRemainingRedemptions(userWithFreshRedemptions);
   const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
 
   return (
