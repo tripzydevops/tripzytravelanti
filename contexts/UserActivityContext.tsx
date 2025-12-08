@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { saveDeal, unsaveDeal, redeemDeal } from '../lib/supabaseService';
 import { User } from '../types';
@@ -78,16 +78,18 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         return redemptions.some(r => r.dealId === dealId);
     }, [redemptions]);
 
+    const contextValue = useMemo(() => ({
+        savedDeals,
+        redemptions,
+        saveDeal: handleSaveDeal,
+        unsaveDeal: handleUnsaveDeal,
+        redeemDeal: handleRedeemDeal,
+        isDealSaved,
+        hasRedeemed
+    }), [savedDeals, redemptions, handleSaveDeal, handleUnsaveDeal, handleRedeemDeal, isDealSaved, hasRedeemed]);
+
     return (
-        <UserActivityContext.Provider value={{
-            savedDeals,
-            redemptions,
-            saveDeal: handleSaveDeal,
-            unsaveDeal: handleUnsaveDeal,
-            redeemDeal: handleRedeemDeal,
-            isDealSaved,
-            hasRedeemed
-        }}>
+        <UserActivityContext.Provider value={contextValue}>
             {children}
         </UserActivityContext.Provider>
     );

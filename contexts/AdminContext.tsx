@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { User, UserNotificationPreferences } from '../types';
 import {
@@ -38,14 +38,9 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }, [user?.isAdmin]);
 
-    // Load all users if admin
-    useEffect(() => {
-        if (user?.isAdmin) {
-            fetchUsers();
-        } else {
-            setUsers([]);
-        }
-    }, [user?.isAdmin, fetchUsers]);
+    // Don't auto-fetch users on mount - only fetch when explicitly needed
+    // This prevents slow initial page loads for all users
+    // Admin components will call refreshUsers() when they mount
 
     const updateUser = useCallback(async (updatedUser: User) => {
         try {
@@ -120,16 +115,18 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }, [user]);
 
+    const contextValue = useMemo(() => ({
+        users,
+        loadingUsers,
+        refreshUsers: fetchUsers,
+        updateUser,
+        deleteUser,
+        addExtraRedemptions,
+        updateAllUsersNotificationPreferences
+    }), [users, loadingUsers, fetchUsers, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences]);
+
     return (
-        <AdminContext.Provider value={{
-            users,
-            loadingUsers,
-            refreshUsers: fetchUsers,
-            updateUser,
-            deleteUser,
-            addExtraRedemptions,
-            updateAllUsersNotificationPreferences
-        }}>
+        <AdminContext.Provider value={contextValue}>
             {children}
         </AdminContext.Provider>
     );

@@ -64,12 +64,10 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initial load
   useEffect(() => {
-    // We can leave the initial load empty or default to first page
-    // loadDeals(); 
-    // Actually, HomePage triggers loadDealsPaginated on mount/filter change, so we might not need this auto-call if we want to be purely driven by the page.
-    // But to be safe for other pages using useDeals without pagination params:
-    loadDeals();
-  }, [loadDeals]);
+    // Optimization: Do not automatically load all deals on mount.
+    // Pages (HomePage, AdminPage) should trigger their own data fetching
+    // using loadDealsPaginated or refreshDeals as needed.
+  }, []);
 
   // Refresh deals manually
   const refreshDeals = useCallback(async () => {

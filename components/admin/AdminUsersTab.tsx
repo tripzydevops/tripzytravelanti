@@ -24,7 +24,7 @@ const EMPTY_USER: User = {
 const AdminUsersTab: React.FC = () => {
     const { t, language } = useLanguage();
     const { user: loggedInUser } = useAuth();
-    const { users, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAdmin();
+    const { users, refreshUsers, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAdmin();
     const { deals } = useDeals(); // Use deals from context for lookups
 
     const [isUserFormVisible, setIsUserFormVisible] = useState(false);
@@ -42,7 +42,9 @@ const AdminUsersTab: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<SubscriptionTier | 'All'>('All');
 
+    // Fetch users when admin tab mounts
     useEffect(() => {
+        refreshUsers();
         loadPendingDeals();
     }, []);
 
