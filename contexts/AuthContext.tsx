@@ -164,21 +164,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+            referred_by: referredBy || null,
+          }
+        }
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create profile
+        // Create profile - Handle duplicate key error if trigger already created it
         const { error: profileError } = await supabase.from('profiles').insert({
           id: authData.user.id,
           name,
           email,
           tier: SubscriptionTier.FREE,
           referred_by: referredBy || null,
+          // If using trigger, role might default to 'user', which is fine.
         });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          // Ignore unique constraint violation (code 23505) as it means profile was created by trigger
+          if (profileError.code !== '23505') {
+            throw profileError;
+          }
+        }
 
         // Load the new profile
         await loadUserProfile(authData.user);
