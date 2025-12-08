@@ -48,15 +48,20 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 1600,
+      minify: 'esbuild', // Faster than terser
       rollupOptions: {
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-ui': ['framer-motion', 'lucide-react'],
             'vendor-supabase': ['@supabase/supabase-js'],
+            'vendor-charts': ['recharts'],
           }
         }
-      }
+      },
+      // Improve build performance
+      sourcemap: false, // Disable sourcemaps for faster builds
+      reportCompressedSize: false, // Skip gzip size reporting
     }
   };
 });

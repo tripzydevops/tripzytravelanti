@@ -17,9 +17,11 @@ import BottomNav from './components/BottomNav';
 import PartnerLayout from './components/layouts/PartnerLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
-import Chatbot from './components/Chatbot';
 import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load heavy components
+const Chatbot = React.lazy(() => import('./components/Chatbot'));
 
 // Helper to retry lazy imports and reload on chunk error
 const lazyLoadRetry = (importFn: () => Promise<any>) => {
@@ -168,7 +170,11 @@ function AppContent() {
         <main className={`flex-grow ${user ? 'pb-24' : ''}`}>
           <AnimatedRoutes />
         </main>
-        {isChatbotVisible && user && <Chatbot />}
+        {isChatbotVisible && user && (
+          <Suspense fallback={<div />}>
+            <Chatbot />
+          </Suspense>
+        )}
         {user && <BottomNav />}
       </div>
     </SearchProvider>
