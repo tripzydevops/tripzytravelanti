@@ -34,7 +34,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Lock as LucideLock,
-  Globe
+  Globe as LucideGlobe
 } from 'lucide-react';
 
 type IconProps = {
@@ -81,7 +81,7 @@ export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => <ArrowRigh
 export const CheckCircle: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />;
 export const Lock: React.FC<IconProps> = ({ className }) => <LucideLock className={className} />;
 export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} strokeWidth={1.5} />;
-export const Globe: React.FC<IconProps> = ({ className }) => <Globe className={className} strokeWidth={1.5} />;
+export const GlobeIcon: React.FC<IconProps> = ({ className }) => <LucideGlobe className={className} strokeWidth={1.5} />;
 
 // --- Custom Branded Icons (Lucide with Premium Gold Glow Styling) ---
 
@@ -143,6 +143,14 @@ export const CustomBellIcon: React.FC<IconProps> = ({ className }) => (
 
 export const CustomHeartIcon: React.FC<IconProps> = ({ className }) => (
   <Heart className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomMailIcon: React.FC<IconProps> = ({ className }) => (
+  <Mail className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomLockIcon: React.FC<IconProps> = ({ className }) => (
+  <LucideLock className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
 );
 
 // --- Custom / Complex Icons ---

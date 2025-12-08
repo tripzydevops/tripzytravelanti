@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
-import { MailIcon, Lock, AppleLogo, FacebookLogo, GoogleLogo } from '../components/Icons';
+import { CustomMailIcon, CustomLockIcon, CustomUserIcon, CustomTicketIcon, AppleLogo, FacebookLogo, GoogleLogo } from '../components/Icons';
 import { useToast } from '../contexts/ToastContext';
 
 const LoginPage: React.FC = () => {
@@ -74,7 +74,7 @@ const LoginPage: React.FC = () => {
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
         style={{
-          backgroundImage: `url("https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c78?q=80&w=2070&auto=format&fit=crop")`, // Maldives bungalow sunset
+          backgroundImage: `url("${displayHeroImage}")`,
         }}
       />
       <div className="absolute inset-0 bg-black/20 z-0" />
@@ -106,11 +106,7 @@ const LoginPage: React.FC = () => {
               <>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gold-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                      </svg>
-                    </span>
+                    <CustomUserIcon className="w-5 h-5" />
                   </div>
                   <input
                     type="text"
@@ -123,12 +119,7 @@ const LoginPage: React.FC = () => {
                 </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gold-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.593l6.002-2.002a2.051 2.051 0 00.593-2.607l-9.581-9.581a2.25 2.25 0 00-1.591-.659z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
-                      </svg>
-                    </span>
+                    <CustomTicketIcon className="w-5 h-5" />
                   </div>
                   <input
                     type="text"
@@ -143,7 +134,7 @@ const LoginPage: React.FC = () => {
 
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <MailIcon className="h-5 w-5 text-gold-400" />
+                <CustomMailIcon className="h-5 w-5" />
               </div>
               <input
                 type="email"
@@ -157,7 +148,7 @@ const LoginPage: React.FC = () => {
 
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gold-400" />
+                <CustomLockIcon className="h-5 w-5" />
               </div>
               <input
                 type="password"
