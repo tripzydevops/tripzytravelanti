@@ -156,6 +156,10 @@ export const CustomLockIcon: React.FC<IconProps> = ({ className }) => (
   <LucideLock className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
 );
 
+export const CustomShieldCheckIcon: React.FC<IconProps> = ({ className }) => (
+  <CheckCircle2 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
 // --- Custom / Complex Icons ---
 
 export const LayoutDashboard: React.FC<IconProps> = ({ className }) => (
