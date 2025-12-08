@@ -9,10 +9,11 @@ interface FlightSearchWidgetProps {
 }
 
 const FlightSearchWidget: React.FC<FlightSearchWidgetProps> = memo(({ origin, destination, departDate }) => {
-    const containerRef = useRef<HTMLDivElement>(null);
+    const scriptContainerRef = useRef<HTMLDivElement>(null);
     const { language } = useLanguage();
     const [isVisible, setIsVisible] = useState(false);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Lazy load: Only start loading when widget is close to viewport
     useEffect(() => {
@@ -23,21 +24,23 @@ const FlightSearchWidget: React.FC<FlightSearchWidgetProps> = memo(({ origin, de
                     observer.disconnect();
                 }
             },
-            { rootMargin: '200px' } // Start loading 200px before it comes into view
+            { rootMargin: '200px' }
         );
 
-        if (containerRef.current) {
-            observer.observe(containerRef.current);
+        if (wrapperRef.current) {
+            observer.observe(wrapperRef.current);
         }
 
         return () => observer.disconnect();
     }, []);
 
     useEffect(() => {
-        if (!isVisible || !containerRef.current) return;
+        if (!isVisible || !scriptContainerRef.current) return;
 
-        // Clear previous content
-        containerRef.current.innerHTML = '';
+        const container = scriptContainerRef.current;
+
+        // Clear previous content purely within the script container
+        container.innerHTML = '';
         setIsScriptLoaded(false);
 
         const script = document.createElement('script');
@@ -58,22 +61,26 @@ const FlightSearchWidget: React.FC<FlightSearchWidgetProps> = memo(({ origin, de
             setIsScriptLoaded(true);
         };
 
-        containerRef.current.appendChild(script);
+        container.appendChild(script);
 
         return () => {
-            if (containerRef.current) {
-                containerRef.current.innerHTML = '';
+            if (container) {
+                container.innerHTML = '';
             }
         };
     }, [isVisible, language, origin, destination, departDate]);
 
     return (
         <div
-            ref={containerRef}
+            ref={wrapperRef}
             className="w-full min-h-[500px] bg-white dark:bg-brand-surface rounded-xl shadow-lg overflow-hidden relative"
         >
+            {/* Dedicated container for the script - React never touches its children */}
+            <div ref={scriptContainerRef} className="w-full h-full" />
+
+            {/* Loading Overlay - React fully manages this */}
             {(!isVisible || !isScriptLoaded) && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0f172a]/80 backdrop-blur-sm animate-pulse">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0f172a]/80 backdrop-blur-sm animate-pulse pointer-events-none">
                     <div className="w-16 h-16 mb-4 text-gold-500">
                         <SpinnerIcon className="w-full h-full animate-spin" />
                     </div>
