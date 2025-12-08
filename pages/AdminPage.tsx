@@ -32,7 +32,7 @@ const AdminPage: React.FC = () => {
 
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
         <button onClick={() => setActiveTab('analytics')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'analytics' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          Analytics
+          {t('adminAnalytics')}
         </button>
         <button onClick={() => setActiveTab('deals')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'deals' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           {t('manageDeals')}
@@ -41,25 +41,25 @@ const AdminPage: React.FC = () => {
           {t('manageUsers')}
         </button>
         <button onClick={() => setActiveTab('subscriptions')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'subscriptions' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          Subscriptions
+          {t('adminSubscriptions')}
         </button>
         <button onClick={() => setActiveTab('content')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'content' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          Manage Content
+          {t('adminContent')}
         </button>
         <button onClick={() => setActiveTab('flight_routes')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'flight_routes' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          Flight Routes
+          {t('adminFlightRoutes')}
         </button>
         <button onClick={() => setActiveTab('payments')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'payments' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          {t('paymentTransactions') || 'Payment Transactions'}
+          {t('adminPaymentTransactions')}
         </button>
         <button onClick={() => setActiveTab('pending_approvals')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'pending_approvals' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          Pending Approvals
+          {t('adminPendingApprovals')}
           {pendingCount > 0 && (
             <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{pendingCount}</span>
           )}
         </button>
         <button onClick={() => setActiveTab('announcements')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'announcements' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          Announcements
+          {t('adminAnnouncements')}
         </button>
       </div>
 

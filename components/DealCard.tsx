@@ -108,7 +108,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         />
         {discount > 0 && !isLocked && (
           <div className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-20 border border-white/10 backdrop-blur-sm">
-            {language === 'tr' ? `%${discount} ${t('off') || 'İNDİRİM'}` : `${discount}% OFF`}
+            {language === 'tr' ? `%${discount} ${t('off')}` : `${discount}% ${t('off')}`}
           </div>
         )}
         {user && !isLocked && (
