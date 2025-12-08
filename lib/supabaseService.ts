@@ -170,18 +170,14 @@ export async function deleteUserProfile(userId: string) {
 export async function updateAllUsersNotificationPreferences(
     preferences: Record<string, boolean>
 ) {
-    // This is a bit tricky as we need to update a JSONB column for all users
-    // Supabase doesn't support updating all rows with a JSON merge easily without a function
-    // For now, we'll fetch all users and update them one by one (inefficient but works for small scale)
-    // OR better: create a Postgres function.
-    // Let's assume we just want to set a default for everyone.
+    const { error } = await supabase.rpc('update_all_notification_preferences', {
+        new_prefs: preferences
+    });
 
-    // Ideally:
-    // UPDATE profiles SET notification_preferences = notification_preferences || '{"newKey": true}'::jsonb;
-
-    // Since we don't have a specific function, we'll skip this implementation detail for now
-    // or implement it if requested.
-    console.warn('updateAllUsersNotificationPreferences not fully implemented');
+    if (error) {
+        console.error('Error updating all users notification preferences:', error);
+        throw error;
+    }
 }
 
 

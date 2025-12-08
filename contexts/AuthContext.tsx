@@ -15,6 +15,7 @@ import {
   getReferralNetwork,
   redeemDeal,
   updatePassword,
+  updateAllUsersNotificationPreferences as updateAllUsersNotificationPreferencesService,
 } from '../lib/supabaseService';
 
 interface AuthContextType {
@@ -446,40 +447,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user?.isAdmin) return;
 
     try {
-      // In a real app, this should be a backend function or edge function to avoid N requests
-      // For now, we'll iterate through all users
-      const updates = users.map(async (u) => {
-        const updatedPrefs = {
-          ...u.notificationPreferences,
-          newDeals: u.notificationPreferences?.newDeals ?? true,
-          expiringDeals: u.notificationPreferences?.expiringDeals ?? true,
-          generalNotifications: u.notificationPreferences?.generalNotifications ?? true,
-          ...prefs,
-        };
+      // Use the server-side RPC for scalable updates
+      await updateAllUsersNotificationPreferencesService(prefs);
 
-        await updateUserProfile(u.id, { notification_preferences: updatedPrefs });
-        return { id: u.id, prefs: updatedPrefs };
-      });
-
-      const results = await Promise.all(updates);
-
+      // Optimistically update local users state
       setUsers((currentUsers) =>
-        currentUsers.map((u) => {
-          const update = results.find(r => r.id === u.id);
-          return update ? { ...u, notificationPreferences: update.prefs } : u;
-        })
+        currentUsers.map((u) => ({
+          ...u,
+          notificationPreferences: {
+            ...u.notificationPreferences,
+            ...prefs
+          }
+        }))
       );
 
       // Also update current user if they are in the list
-      if (results.find(r => r.id === user.id)) {
-        setUser(prev => prev ? { ...prev, notificationPreferences: results.find(r => r.id === user.id)!.prefs } : null);
-      }
+      setUser(prev => prev ? {
+        ...prev,
+        notificationPreferences: {
+          ...prev.notificationPreferences,
+          ...prefs
+        }
+      } : null);
 
     } catch (error) {
       console.error('Error updating all users notification preferences:', error);
       throw error;
     }
-  }, [user, users]);
+  }, [user]);
 
   // Sign in with Google
   const signInWithGoogle = useCallback(async () => {
