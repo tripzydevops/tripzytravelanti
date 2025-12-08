@@ -19,8 +19,23 @@ class ErrorBoundary extends React.Component<Props, State> {
         return { hasError: true, error };
     }
 
+    public componentDidMount() {
+        // Clear the reload flag on successful mount (meaning the app loaded fine)
+        sessionStorage.removeItem('chunk_reload_attempt');
+    }
+
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('Uncaught error:', error, errorInfo);
+
+        // Auto-reload for chunk loading errors
+        if (error.message.includes('Failed to fetch dynamically imported module') ||
+            error.message.includes('Importing a module script failed')) {
+            const hasReloaded = sessionStorage.getItem('chunk_reload_attempt');
+            if (!hasReloaded) {
+                sessionStorage.setItem('chunk_reload_attempt', 'true');
+                window.location.reload();
+            }
+        }
     }
 
     public render() {
