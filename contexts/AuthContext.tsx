@@ -52,30 +52,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       let profile = await getUserProfile(authUser.id);
 
       if (!profile) {
-
-        // Create profile if it doesn't exist (e.g. first time OAuth login)
-        const { error } = await supabase.from('profiles').insert({
-          id: authUser.id,
-          name: authUser.user_metadata.full_name || authUser.email?.split('@')[0] || 'User',
-          email: authUser.email,
-          tier: SubscriptionTier.FREE,
-          avatar_url: authUser.user_metadata.avatar_url,
-          role: 'user',
-          referred_by: authUser.user_metadata.referred_by || null,
-        });
-
-        if (error) {
-          // If error is duplicate key (23505), it means profile already exists, so we can proceed.
-          // Otherwise, report the error.
-          if (error.code !== '23505') {
-            console.error('Error creating profile:', error);
-            // Don't block execution with alert
-            return;
-          }
+        // Trigger might be slow, so we retry fetching a few times
+        // We do NOT insert from client-side anymore to avoid RLS/Permission issues.
+        let retries = 3;
+        while (!profile && retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+          profile = await getUserProfile(authUser.id);
+          retries--;
         }
 
-        // Fetch the newly created profile
-        profile = await getUserProfile(authUser.id);
+        if (!profile) {
+          console.error('Profile not found after retries. Trigger may have failed.');
+          // Optionally we could show a UI error here, but for now we just log it.
+          // The user will see a "profile incomplete" state potentially.
+        }
       }
 
       if (profile) {
