@@ -44,58 +44,58 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
 
     return (
         <div className="w-full max-w-4xl mx-auto mb-12 transform hover:scale-[1.01] transition-all duration-300">
-            <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-brand-surface shadow-2xl border border-brand-primary/20">
-                {/* Animated Gradient Border Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-primary via-purple-500 to-brand-secondary opacity-10 animate-pulse"></div>
+            <div className="relative overflow-hidden rounded-3xl bg-[#0f172a]/80 backdrop-blur-md shadow-2xl border border-gold-500/30 group">
+                {/* Animated Gold Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-gold-500/10 via-purple-500/10 to-gold-500/10 animate-pulse pointer-events-none"></div>
 
                 <div className="relative flex flex-col md:flex-row">
                     {/* Image Section */}
-                    <div className="md:w-1/2 relative h-64 md:h-auto overflow-hidden">
-                        <div className="absolute top-4 left-4 z-10 bg-red-600 text-white px-4 py-1 rounded-full font-bold text-sm animate-bounce shadow-lg">
+                    <div className="md:w-1/2 relative h-64 md:h-auto overflow-hidden group">
+                        <div className="absolute top-4 left-4 z-10 bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-1.5 rounded-full font-bold text-sm animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.5)] border border-white/20 backdrop-blur-md">
                             FLASH DEAL ⚡
                         </div>
                         <img
                             src={deal.imageUrl}
                             alt={title}
-                            className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700"
+                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:bg-gradient-to-r"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[#0f172a]/90"></div>
                     </div>
 
                     {/* Content Section */}
-                    <div className="md:w-1/2 p-8 flex flex-col justify-between relative">
+                    <div className="md:w-1/2 p-8 flex flex-col justify-between relative bg-[#0f172a]/40">
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <span className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                <span className="bg-gold-500/10 border border-gold-500/20 text-gold-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
                                     {language === 'tr' ? deal.category_tr : deal.category}
                                 </span>
-                                <div className="flex items-center text-red-500 font-bold bg-red-50 px-3 py-1 rounded-lg border border-red-100">
-                                    <ClockIcon className="w-5 h-5 mr-2 animate-pulse" />
-                                    <span className="tabular-nums text-lg">
+                                <div className="flex items-center text-gold-500 font-bold bg-[#0f172a]/60 px-3 py-1.5 rounded-xl border border-gold-500/30 shadow-[0_0_10px_rgba(212,175,55,0.2)]">
+                                    <ClockIcon className="w-5 h-5 mr-2 animate-pulse text-gold-400" />
+                                    <span className="tabular-nums text-lg font-mono tracking-widest text-gold-300">
                                         {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
                                     </span>
                                 </div>
                             </div>
 
-                            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">
+                            <h3 className="text-3xl font-heading font-bold text-white mb-3 leading-tight drop-shadow-md">
                                 {title}
                             </h3>
-                            <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-2 text-lg">
+                            <p className="text-white/70 mb-6 line-clamp-2 text-lg font-light">
                                 {description}
                             </p>
                         </div>
 
                         <div className="flex items-end justify-between mt-auto">
                             <div className="flex flex-col">
-                                <span className="text-gray-400 text-sm line-through font-medium">
+                                <span className="text-white/40 text-sm line-through font-medium mb-1">
                                     ${deal.originalPrice}
                                 </span>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-extrabold text-brand-primary">
+                                <div className="flex items-baseline gap-3">
+                                    <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 shadow-sm">
                                         ${deal.discountedPrice}
                                     </span>
                                     {deal.discountPercentage && (
-                                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-bold">
+                                        <span className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-400 px-2 py-1 rounded-lg text-sm font-bold backdrop-blur-sm">
                                             -{deal.discountPercentage}%
                                         </span>
                                     )}
@@ -104,7 +104,7 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
 
                             <Link
                                 to={`/deal/${deal.id}`}
-                                className="group flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-brand-primary hover:text-white dark:hover:bg-brand-primary dark:hover:text-white transition-all duration-300 shadow-lg hover:shadow-brand-primary/30"
+                                className="group flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-white px-8 py-3 rounded-2xl font-bold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 transform hover:scale-105 active:scale-95"
                             >
                                 {t('viewDeal') || 'View Deal'}
                                 <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

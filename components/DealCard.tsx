@@ -99,75 +99,85 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const CardContent = () => (
     <>
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-60 z-10"></div>
         <img
-          className="w-full h-56 object-cover transition-transform duration-500 hover:scale-110"
+          className="w-full h-56 object-cover transition-transform duration-700 group-hover:scale-110"
           src={getThumbnailUrl(deal.imageUrl)}
           alt={title}
         />
         {discount > 0 && !isLocked && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-brand-secondary to-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-10 animate-zoom">
-            {language === 'tr' ? `%${discount}` : `${discount}%`}
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-20 border border-white/10 backdrop-blur-sm">
+            {language === 'tr' ? `%${discount} ${t('off') || 'İNDİRİM'}` : `${discount}% OFF`}
           </div>
         )}
         {user && !isLocked && (
           <button
             onClick={handleSaveToggle}
-            className="absolute top-3 right-3 glass p-2 rounded-full text-white hover:scale-110 transition-transform z-10"
+            className="absolute top-3 right-3 bg-white/10 hover:bg-gold-500/20 backdrop-blur-md p-2 rounded-full text-white hover:text-gold-400 border border-white/20 transition-all z-20 group/btn"
             aria-label={isSaved ? t('unsaveDealAction') : t('saveDealAction')}
           >
-            <BookmarkIcon className="w-5 h-5" fill={isSaved ? 'currentColor' : 'none'} />
+            <BookmarkIcon className={`w-5 h-5 transition-colors ${isSaved ? 'text-gold-500 fill-current' : 'text-white group-hover/btn:text-gold-400'}`} />
           </button>
         )}
         {isLocked && (
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4 text-center z-10">
-            <Lock className="w-10 h-10 mb-3 text-brand-secondary" />
-            <span className="font-semibold text-sm">
+          <div className="absolute inset-0 bg-[#0f172a]/90 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-4 text-center z-20 border-b border-white/10">
+            <div className="p-4 rounded-full bg-white/5 border border-white/10 mb-3 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+              <Lock className="w-8 h-8 text-gold-500" />
+            </div>
+            <span className="font-bold text-sm tracking-wide text-gold-200">
               {!user ? t('loginToUnlock') : `${t('lockedDeal')} ${deal.requiredTier} ${t('toUnlock')}`}
             </span>
           </div>
         )}
       </div>
-      <div className="p-5 flex flex-col flex-grow">
-        <div className="flex justify-between items-center text-xs text-brand-text-muted mb-2">
-          <div className="flex items-center gap-2">
-            {deal.companyLogoUrl && (
-              <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-6 h-6 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
-            )}
-            <span className="font-semibold">{deal.vendor}</span>
-          </div>
-          {isLocked && (
-            <span
-              style={{ backgroundColor: requiredTierColor.bg, color: requiredTierColor.text }}
-              className="font-bold py-1 px-2.5 rounded-full"
-            >
-              {deal.requiredTier}
-            </span>
-          )}
-          {deal.redemptionStyle && deal.redemptionStyle.length > 0 && (
-            <div className="flex gap-1 ml-2">
-              {deal.redemptionStyle.includes('online') && <span title="Online">🌐</span>}
-              {deal.redemptionStyle.includes('in_store') && <span title="In-Store">🏪</span>}
-            </div>
-          )}
-        </div>
-        <h3 className="text-lg font-heading font-bold text-brand-text-light mb-2">{title}</h3>
-        <p className="text-brand-text-muted text-sm mb-4 flex-grow line-clamp-2">{description}</p>
 
-        <div className="mt-auto pt-4 border-t border-white/5">
-          <StarRating rating={deal.rating} ratingCount={deal.ratingCount} t={t} />
-          <div className="flex justify-between items-baseline mt-3">
-            <div className="flex items-baseline space-x-2">
-              {deal.originalPrice > 0 ? (
-                <>
-                  <p className="text-2xl font-bold text-gradient">${deal.discountedPrice}</p>
-                  <p className="text-sm font-medium text-brand-text-muted line-through">${deal.originalPrice}</p>
-                </>
-              ) : (
-                <p className="text-2xl font-bold text-gradient">{language === 'tr' ? `%${discount}` : `${discount}%`}</p>
-              )}
+      <div className="p-5 flex flex-col flex-grow relative bg-gradient-to-b from-white/5 to-transparent">
+        <div className="flex justify-between items-center text-xs mb-3">
+          <div className="flex items-center gap-2">
+            {deal.companyLogoUrl ? (
+              <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-6 h-6 rounded-full object-cover border border-white/20" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white border border-white/20">
+                {deal.vendor.substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            <span className="font-semibold text-white/90 tracking-wide">{deal.vendor}</span>
+          </div>
+          <div className="flex gap-2">
+            {isLocked && (
+              <span
+                className="font-bold py-0.5 px-2 rounded-md text-[10px] uppercase tracking-wider border border-white/10 shadow-sm"
+                style={{ backgroundColor: requiredTierColor.bg, color: requiredTierColor.text }}
+              >
+                {deal.requiredTier}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <h3 className="text-lg font-heading font-bold text-white mb-2 leading-tight group-hover:text-gold-400 transition-colors">{title}</h3>
+        <p className="text-white/60 text-sm mb-4 flex-grow line-clamp-2">{description}</p>
+
+        <div className="mt-auto pt-4 border-t border-white/10">
+          <div className="flex justify-between items-center mb-2">
+            <StarRating rating={deal.rating} ratingCount={deal.ratingCount} t={t} />
+            {deal.redemptionStyle && deal.redemptionStyle.length > 0 && (
+              <div className="flex gap-2 text-white/50 text-xs">
+                {deal.redemptionStyle.includes('online') && <span title="Online">🌐</span>}
+                {deal.redemptionStyle.includes('in_store') && <span title="In-Store">🏪</span>}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between items-end">
+            <div className="flex flex-col">
+              {deal.originalPrice > 0 && <span className="text-xs text-white/40 line-through mb-0.5">${deal.originalPrice}</span>}
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 shadow-sm">
+                {deal.originalPrice > 0 ? `$${deal.discountedPrice}` : (language === 'tr' ? `%${discount}` : `${discount}%`)}
+              </div>
             </div>
-            <p className={`text-xs font-semibold ${daysLeftText === t('expired') ? 'text-red-500' : 'text-brand-text-muted'} whitespace-nowrap`}>
+            <p className={`text-xs font-semibold ${daysLeftText === t('expired') ? 'text-red-400' : 'text-emerald-400'} bg-white/5 px-2 py-1 rounded-md border border-white/5`}>
               {daysLeftText}
             </p>
           </div>
@@ -177,13 +187,16 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div className="card overflow-hidden flex flex-col hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 cursor-pointer">
+    <div className="relative flex flex-col rounded-2xl overflow-hidden bg-[#0f172a]/60 backdrop-blur-md border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:border-gold-500/30 group">
+      {/* Glow Effect on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
+
       {isLocked ? (
-        <div className="flex flex-col flex-grow" onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}>
+        <div className="flex flex-col flex-grow cursor-pointer" onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}>
           <CardContent />
         </div>
       ) : (
-        <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow">
+        <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow cursor-pointer">
           <CardContent />
         </Link>
       )}

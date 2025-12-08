@@ -6,7 +6,7 @@ import { useContent } from '../contexts/ContentContext';
 import DealCard from '../components/DealCard';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
-import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon } from '../components/Icons';
+import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon, StarIcon, SparklesIcon, FireIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 
 import { AdBanner } from '../components/AdBanner';
@@ -216,23 +216,24 @@ const HomePage: React.FC = () => {
 
 
       {/* Hero Section */}
-      <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center transform scale-105"
           style={{
             backgroundImage: `url('${displayImage}')`,
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-brand-bg"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/40 via-[#0f172a]/20 to-[#0f172a]"></div>
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
         </div>
 
         {/* Login Button for Unauthenticated Users */}
         {!user && (
-          <div className="absolute top-4 right-4 z-20">
+          <div className="absolute top-6 right-6 z-20">
             <Link
               to="/login"
-              className="px-6 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-semibold hover:bg-white/20 transition-all shadow-lg"
+              className="px-8 py-2.5 bg-white/10 hover:bg-gold-500 hover:text-white backdrop-blur-md border border-white/20 rounded-full text-white font-semibold transition-all shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]"
             >
               {t('login') || 'Login'}
             </Link>
@@ -241,119 +242,159 @@ const HomePage: React.FC = () => {
 
         {/* Hero Content */}
         <div className="relative z-10 container mx-auto px-4 text-center animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-heading font-bold text-white mb-4 drop-shadow-lg">
+          <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white mb-6 drop-shadow-2xl tracking-tight">
             {displayTitle || t('heroTitle') || 'Discover the World for Less'}
           </h1>
-          <p className="text-lg md:text-xl text-white/90 mb-8 drop-shadow-md">
+          <p className="text-xl md:text-2xl text-white/90 mb-10 drop-shadow-lg font-light max-w-3xl mx-auto leading-relaxed">
             {displaySubtitle || t('heroSubtitle') || 'Exclusive travel deals and discounts at your fingertips'}
           </p>
 
-          {/* Glassmorphism Search Bar */}
-          <div className="max-w-2xl mx-auto relative">
-            <div className="glass rounded-2xl p-2 shadow-2xl">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                  onKeyDown={handleSearchKeyDown}
-                  className="w-full py-4 pl-12 pr-4 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-transparent transition-all"
-                  aria-label={t('searchPlaceholder')}
-                />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                  <Search className="h-6 w-6 text-white/70" />
-                </div>
+          {/* Premium Glass Search Bar */}
+          <div className="max-w-3xl mx-auto relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-gold-500/20 to-purple-500/20 rounded-full blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+            <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-2 shadow-2xl flex items-center transition-all duration-300 focus-within:bg-white/15 focus-within:border-gold-500/50">
+              <div className="pl-4 pr-2">
+                <Search className="h-6 w-6 text-gold-400" />
               </div>
+              <input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                onKeyDown={handleSearchKeyDown}
+                className="w-full bg-transparent border-none text-white text-lg placeholder-white/60 focus:ring-0 px-2 py-3"
+                aria-label={t('searchPlaceholder')}
+              />
+              {/* Search Button (Optional visual cue) */}
+              <button className="hidden md:block px-6 py-2 bg-gold-500 hover:bg-gold-600 text-white font-bold rounded-full transition-colors shadow-lg">
+                Search
+              </button>
             </div>
 
             {/* Recent Searches Dropdown */}
-            {isSearchFocused && (
-              <div className="absolute top-full mt-2 w-full glass rounded-xl shadow-2xl z-20 overflow-hidden border border-white/20 animate-slide-up">
-                {recentSearches.length > 0 ? (
-                  <>
-                    <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
-                      <h4 className="text-sm font-semibold text-white/80">{t('recentSearches')}</h4>
-                      <button onClick={clearRecentSearches} className="flex items-center text-xs text-brand-secondary hover:text-brand-secondary/80 transition-colors">
-                        <TrashIcon className="w-4 h-4 mr-1" />
-                        {t('clear')}
+            {isSearchFocused && recentSearches.length > 0 && (
+              <div className="absolute top-full mt-4 w-full bg-[#0f172a]/90 backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-20 overflow-hidden border border-white/10 animate-slide-up">
+                <div className="flex justify-between items-center px-6 py-4 border-b border-white/10">
+                  <h4 className="text-xs font-bold text-gold-500 uppercase tracking-widest">{t('recentSearches')}</h4>
+                  <button onClick={clearRecentSearches} className="flex items-center text-xs text-white/50 hover:text-white transition-colors">
+                    <TrashIcon className="w-3 h-3 mr-1" />
+                    {t('clear')}
+                  </button>
+                </div>
+                <ul>
+                  {recentSearches.map((term, index) => (
+                    <li key={index}>
+                      <button
+                        onClick={() => handleRecentSearchClick(term)}
+                        className="w-full text-left px-6 py-3 flex items-center text-white/90 hover:bg-white/5 hover:text-gold-400 transition-colors duration-150 border-b border-white/5 last:border-0"
+                      >
+                        <ClockIcon className="w-4 h-4 mr-3 text-white/40" />
+                        {term}
                       </button>
-                    </div>
-                    <ul>
-                      {recentSearches.map((term, index) => (
-                        <li key={index}>
-                          <button
-                            onClick={() => handleRecentSearchClick(term)}
-                            className="w-full text-left px-4 py-3 flex items-center text-white hover:bg-white/10 transition-colors duration-150"
-                          >
-                            <ClockIcon className="w-4 h-4 mr-3 text-white/60" />
-                            {term}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <div className="p-4 text-center text-sm text-white/60">
-                    {t('noRecentSearches')}
-                  </div>
-                )}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
+
+            {/* Empty State Dropdown for Search suggestions if needed, currently omitted for cleanliness */}
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-12 relative z-10">
 
-        {/* Flash Deals Section */}
+        {/* Flash Deals Section - Moved up for priority */}
         {flashDeals.length > 0 && (
-          <div className="mb-12">
+          <div className="mb-16 animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 backdrop-blur-md">
+                <FireIcon className="w-6 h-6 text-red-500 animate-pulse" />
+              </div>
+              <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
+                {t('flashDeals') || 'Flash Deals'}
+              </h2>
+            </div>
             {flashDeals.map(deal => (
               <FlashDealCard key={deal.id} deal={deal} />
             ))}
           </div>
         )}
 
+        {/* Category Filters - Horizontal Scroll */}
+        <div className="mb-12 sticky top-[70px] z-30 py-4 -mx-4 px-4 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5 transition-all duration-300">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-gold-500 uppercase tracking-widest px-1">{displayCategoriesTitle || t('categories') || 'Categories'}</h3>
+            </div>
+            <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide mask-gradient-right">
+              {categories.map(cat => (
+                <button
+                  key={cat.key}
+                  onClick={() => setCategoryFilter(cat.key as any)}
+                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap border flex items-center gap-2 ${categoryFilter === cat.key
+                    ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white border-gold-400 shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105'
+                    : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    }`}
+                >
+                  {/* Optional icons for categories could go here */}
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Recommendations Section */}
         {user && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold text-brand-text-light mb-4 flex items-center gap-2">
-              <span className="text-2xl">✨</span> {t('recommendedForYou') || 'Recommended for You'}
-            </h2>
+          <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20 backdrop-blur-md">
+                <SparklesIcon className="w-6 h-6 text-gold-400" />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-heading font-bold text-white tracking-tight">
+                {t('recommendedForYou') || 'Recommended for You'}
+              </h2>
+            </div>
+
             {loadingRecommendations ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
+                  <div key={i} className="h-[400px] bg-white/5 rounded-2xl animate-pulse border border-white/5"></div>
                 ))}
               </div>
             ) : recommendations.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-1000">
                 {recommendations.map(deal => (
                   <DealCard key={deal.id} deal={deal} />
                 ))}
               </div>
             ) : (
-              <p className="text-brand-text-muted italic">{t('startExploringForRecommendations')}</p>
+              <p className="text-white/50 italic bg-white/5 p-6 rounded-xl border border-white/5">{t('startExploringForRecommendations')}</p>
             )}
           </section>
         )}
 
         {/* Nearby Deals Section */}
         {isLocationEnabled && userLocation && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold text-brand-text-light mb-4 flex items-center gap-2">
-              <span className="text-2xl">📍</span> {t('nearbyDeals') || 'Nearby Deals'}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <section className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 backdrop-blur-md">
+                <LocationMarkerIcon className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-heading font-bold text-white tracking-tight">
+                {t('nearbyDeals') || 'Nearby Deals'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {deals
                 .filter(d => d.latitude && d.longitude)
                 .map(d => {
-                  // Haversine formula
-                  const R = 6371; // Radius of the earth in km
+                  const R = 6371;
                   const dLat = (d.latitude! - userLocation.lat) * (Math.PI / 180);
                   const dLon = (d.longitude! - userLocation.lng) * (Math.PI / 180);
                   const a =
@@ -361,15 +402,15 @@ const HomePage: React.FC = () => {
                     Math.cos(userLocation.lat * (Math.PI / 180)) * Math.cos(d.latitude! * (Math.PI / 180)) *
                     Math.sin(dLon / 2) * Math.sin(dLon / 2);
                   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                  const distance = R * c; // Distance in km
+                  const distance = R * c;
                   return { ...d, distance };
                 })
                 .sort((a, b) => a.distance - b.distance)
                 .slice(0, 3)
                 .map(deal => (
-                  <div key={deal.id} className="relative">
+                  <div key={deal.id} className="relative group/nearby">
                     <DealCard deal={deal} />
-                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+                    <div className="absolute top-4 right-4 bg-[#0f172a]/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1.5 rounded-full flex items-center shadow-lg z-20 group-hover/nearby:bg-emerald-500 group-hover/nearby:text-white transition-all">
                       <LocationMarkerIcon className="w-3 h-3 mr-1" />
                       {deal.distance.toFixed(1)} km
                     </div>
@@ -379,37 +420,22 @@ const HomePage: React.FC = () => {
           </section>
         )}
 
-        {/* Category Filters - Horizontal Scroll */}
-        <div className="mb-8">
-          <h3 className="text-sm font-semibold text-brand-text-muted mb-3">{displayCategoriesTitle || t('categories') || 'Categories'}</h3>
-          <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map(cat => (
-              <button
-                key={cat.key}
-                onClick={() => setCategoryFilter(cat.key as any)}
-                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-lg hover:scale-105 ${categoryFilter === cat.key
-                  ? 'bg-gradient-primary text-white shadow-brand-primary/50'
-                  : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
-                  }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Rating Filters */}
         {categoryFilter !== 'Flights' && (
-          <div className="flex items-center space-x-4 mb-8">
-            <h3 className="text-sm font-semibold text-brand-text-muted whitespace-nowrap">{t('filterByRating')}:</h3>
-            <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center space-x-4 mb-10 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 shrink-0">
+              <StarIcon className="w-4 h-4 text-gold-500" />
+              <h3 className="text-sm font-bold text-white/80 whitespace-nowrap">{t('filterByRating')}:</h3>
+            </div>
+
+            <div className="flex bg-white/5 rounded-full p-1 border border-white/10">
               {ratingFilters.map(filter => (
                 <button
                   key={filter.value}
                   onClick={() => setRatingFilter(filter.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
-                    ? 'bg-brand-primary text-white shadow-lg'
-                    : 'bg-brand-surface text-brand-text-muted hover:bg-brand-surface/80'
+                  className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
+                    ? 'bg-white/20 text-white shadow-inner'
+                    : 'text-white/50 hover:text-white hover:bg-white/10'
                     }`}
                 >
                   {filter.label}
@@ -423,39 +449,50 @@ const HomePage: React.FC = () => {
         <section>
           {categoryFilter === 'Flights' ? (
             <div className="animate-fade-in">
-              <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
-                {displayFlightsTitle || t('findFlightsTitle') || 'Find the Best Flight Deals'}
-              </h2>
-              <div ref={flightWidgetRef}>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20 backdrop-blur-md">
+                  <span className="text-blue-400 text-2xl">✈️</span>
+                </div>
+                <h2 className="text-3xl font-heading font-bold text-white tracking-tight">
+                  {displayFlightsTitle || t('findFlightsTitle') || 'Find the Best Flight Deals'}
+                </h2>
+              </div>
+
+              <div ref={flightWidgetRef} className="bg-[#0f172a]/60 backdrop-blur-xl rounded-3xl border border-white/10 p-1 shadow-2xl">
                 <FlightSearchWidget {...flightWidgetParams} />
               </div>
 
               {flightRoutes.length > 0 && (
-                <div className="mt-12">
-                  <h3 className="text-2xl font-bold text-brand-text-light mb-6">{t('popularRoutes')}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="mt-16">
+                  <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+                    <span className="text-gold-500">★</span> {t('popularRoutes')}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {flightRoutes.map(route => (
                       <button
                         key={route.id}
                         onClick={() => handleRouteClick(route)}
-                        className="group relative h-48 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 text-left w-full"
+                        className="group relative h-64 rounded-2xl overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] transition-all duration-500 text-left w-full border border-white/10"
                       >
                         <img
                           src={getThumbnailUrl(route.imageUrl)}
                           alt={language === 'tr' ? route.title_tr : route.title}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 p-4 w-full">
-                          <h4 className="text-white font-bold text-lg mb-1">{route.title}</h4>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/40 to-transparent opacity-90"></div>
+                        <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                          <h4 className="text-white font-bold text-2xl mb-1 drop-shadow-md">{route.title}</h4>
                           <div className="flex justify-between items-end">
-                            <span className="text-white/80 text-sm">
+                            <span className="text-white/70 text-sm font-medium bg-white/10 px-2 py-1 rounded-md backdrop-blur-md">
                               {new Date(route.expiresAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </span>
-                            <span className="text-brand-secondary font-bold text-xl">
-                              {t('fromPrice').replace('{{price}}', route.discountedPrice.toString())}
-                            </span>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xs text-white/50 uppercase tracking-widest mb-1">From</span>
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-500 font-extrabold text-2xl drop-shadow-sm">
+                                {t('fromPrice').replace('{{price}}', route.discountedPrice.toString())}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </button>
@@ -466,44 +503,64 @@ const HomePage: React.FC = () => {
             </div>
           ) : (
             <>
-              <h2 className="text-3xl font-heading font-bold text-brand-text-light mb-6">
-                {displayFeaturedDealsTitle || t('featuredDeals')}
-              </h2>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20 backdrop-blur-md">
+                    <StarIcon className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight">
+                    {displayFeaturedDealsTitle || t('featuredDeals')}
+                  </h2>
+                </div>
+              </div>
+
               {filteredDeals.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-1000">
                     {filteredDeals.map(deal => (
                       <DealCard key={deal.id} deal={deal} />
                     ))}
                   </div>
                   {/* Load More Button */}
                   {hasMore && (
-                    <div className="flex justify-center mt-8">
+                    <div className="flex justify-center mt-12 mb-8">
                       <button
                         onClick={handleLoadMore}
                         disabled={loading}
-                        className="px-8 py-3 bg-brand-surface border border-brand-primary text-brand-primary font-semibold rounded-xl hover:bg-brand-primary hover:text-white transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        className="relative group px-10 py-3.5 rounded-full overflow-hidden shadow-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                       >
-                        {loading ? (
-                          <>
-                            <SpinnerIcon className="w-5 h-5 mr-2 animate-spin" />
-                            {t('loading') || 'Loading...'}
-                          </>
-                        ) : (
-                          t('loadMore') || 'Load More'
-                        )}
+                        <div className="absolute inset-0 bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 group-hover:via-gold-400 group-hover:to-gold-300 transition-all duration-500"></div>
+                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="relative flex items-center gap-2 text-white font-bold tracking-wide">
+                          {loading ? (
+                            <>
+                              <SpinnerIcon className="w-5 h-5 animate-spin" />
+                              {t('loading') || 'Loading...'}
+                            </>
+                          ) : (
+                            t('loadMore') || 'Load More'
+                          )}
+                        </div>
                       </button>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="text-center py-16">
+                <div className="text-center py-24 bg-white/5 rounded-3xl border border-white/5 mx-auto max-w-2xl">
                   {loading ? (
                     <div className="flex justify-center">
-                      <SpinnerIcon className="w-8 h-8 text-brand-primary animate-spin" />
+                      <SpinnerIcon className="w-10 h-10 text-gold-500 animate-spin" />
                     </div>
                   ) : (
-                    <p className="text-xl text-brand-text-muted">{t('noResults')}</p>
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+                        <Search className="w-8 h-8 text-white/30" />
+                      </div>
+                      <p className="text-xl text-white/60 font-medium">{t('noResults')}</p>
+                      <button onClick={() => { setCategoryFilter('All'); setSearchQuery(''); }} className="mt-4 text-gold-500 hover:text-gold-400 underline">
+                        Reset Filters
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -511,7 +568,7 @@ const HomePage: React.FC = () => {
           )}
         </section>
         {/* Ad Banner Test */}
-        <div className="mt-12">
+        <div className="mt-20 opacity-50 hover:opacity-100 transition-opacity">
           <AdBanner position="BOTTOM" />
         </div>
       </div>
