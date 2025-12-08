@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
 
       {/* Main Login Container - Frosted Glass Card */}
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-8 md:p-10 animate-fade-in relative overflow-hidden">
+        <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-8 md:p-10 relative overflow-hidden transform-gpu">
 
           {/* Subtle gold glow at top */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gold-400/50 blur-lg rounded-full"></div>
