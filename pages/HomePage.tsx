@@ -325,7 +325,7 @@ const HomePage: React.FC = () => {
         )}
 
         {/* Category Filters - Horizontal Scroll */}
-        <div className="mb-12 sticky top-[70px] z-30 py-4 -mx-4 px-4 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5 transition-all duration-300">
+        <div className="mb-12 py-4 -mx-4 px-4 transition-all duration-300">
           <div className="container mx-auto">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-bold text-gold-500 uppercase tracking-widest px-1">{displayCategoriesTitle || t('categories') || 'Categories'}</h3>
