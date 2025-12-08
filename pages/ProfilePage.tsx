@@ -21,50 +21,50 @@ import { PaymentTransaction } from '../types';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-6">
-    <h2 className="text-sm font-semibold text-gray-500 dark:text-brand-text-muted uppercase tracking-wider px-4 mb-2">{title}</h2>
-    <div className="bg-white dark:bg-brand-surface rounded-lg shadow-sm">
+    <h2 className="text-xs font-bold text-gold-500/80 uppercase tracking-widest px-4 mb-3">{title}</h2>
+    <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-lg">
       {children}
     </div>
   </section>
 );
 
 const Toggle: React.FC<{ checked: boolean; onChange: () => void, disabled?: boolean }> = ({ checked, onChange, disabled }) => (
-  <button onClick={onChange} disabled={disabled} className={`relative w-12 h-6 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${checked ? 'bg-brand-primary' : 'bg-gray-300 dark:bg-gray-600'} ${disabled ? 'cursor-not-allowed' : ''}`} aria-checked={checked} role="switch">
-    <span className={`block w-5 h-5 bg-white rounded-full transform transition-transform duration-300 ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+  <button onClick={onChange} disabled={disabled} className={`relative w-12 h-6 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${checked ? 'bg-gold-500' : 'bg-white/20'} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`} aria-checked={checked} role="switch">
+    <span className={`block w-5 h-5 bg-white rounded-full transform transition-transform duration-300 shadow-md ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
   </button>
 );
 
 const LanguageSelector: React.FC<{ lang: string; onToggle: () => void }> = ({ lang, onToggle }) => (
-  <div className="flex items-center bg-gray-100 dark:bg-brand-bg p-1 rounded-md">
-    <button onClick={lang === 'tr' ? onToggle : undefined} className={`px-3 py-1 text-sm font-semibold rounded ${lang === 'en' ? 'bg-white dark:bg-brand-surface text-gray-800 dark:text-brand-text-light' : 'text-gray-500 dark:text-brand-text-muted'}`}>EN</button>
-    <button onClick={lang === 'en' ? onToggle : undefined} className={`px-3 py-1 text-sm font-semibold rounded ${lang === 'tr' ? 'bg-white dark:bg-brand-surface text-gray-800 dark:text-brand-text-light' : 'text-gray-500 dark:text-brand-text-muted'}`}>TR</button>
+  <div className="flex items-center bg-white/10 p-1 rounded-lg">
+    <button onClick={lang === 'tr' ? onToggle : undefined} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${lang === 'en' ? 'bg-gold-500 text-white shadow-md' : 'text-white/50 hover:text-white'}`}>EN</button>
+    <button onClick={lang === 'en' ? onToggle : undefined} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${lang === 'tr' ? 'bg-gold-500 text-white shadow-md' : 'text-white/50 hover:text-white'}`}>TR</button>
   </div>
 );
 
 const SettingsItem: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string; action?: React.ReactNode; isLast?: boolean, danger?: boolean, onClick?: () => void }> = ({ icon, title, subtitle, action, isLast, danger, onClick }) => {
-  const commonClasses = `w-full flex items-center p-4 text-left ${!isLast ? 'border-b border-gray-200 dark:border-gray-700' : ''} first:rounded-t-lg last:rounded-b-lg group`;
+  const commonClasses = `w-full flex items-center p-4 text-left ${!isLast ? 'border-b border-white/5' : ''} group transition-colors duration-200`;
 
   const content = (
     <>
-      <div className="mr-4 text-gray-500 dark:text-brand-text-muted">{icon}</div>
+      <div className="mr-4 text-gold-500 drop-shadow-[0_0_2px_rgba(212,175,55,0.3)]">{icon}</div>
       <div className="flex-grow">
-        <p className={danger ? "text-red-500 dark:text-red-400" : "text-gray-800 dark:text-brand-text-light"}>{title}</p>
-        {subtitle && <p className="text-xs text-gray-500 dark:text-brand-text-muted">{subtitle}</p>}
+        <p className={danger ? "text-red-400 font-medium" : "text-white/90 font-medium"}>{title}</p>
+        {subtitle && <p className="text-xs text-white/50">{subtitle}</p>}
       </div>
-      <div className="ml-4">{action}</div>
+      <div className="ml-4 flex items-center">{action}</div>
     </>
   );
 
   if (onClick) {
     return (
-      <button onClick={onClick} className={`${commonClasses} hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
+      <button onClick={onClick} className={`${commonClasses} hover:bg-white/5 px-4`}>
         {content}
       </button>
     );
   }
 
   return (
-    <div className={commonClasses}>
+    <div className={`${commonClasses} px-4`}>
       {content}
     </div>
   );
@@ -241,110 +241,144 @@ const ProfilePage: React.FC = () => {
   const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
 
   return (
-    <div className="container mx-auto px-4 pt-6 pb-24">
-      <header className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-brand-text-light">{t('profileSettingsTitle')}</h1>
-      </header>
+    <div className="container mx-auto px-4 pt-6 pb-24 text-brand-text-light">
+      <header className="relative mb-8 text-center">
+        <h1 className="text-3xl font-bold font-heading text-white drop-shadow-md mb-6">{t('profileSettingsTitle')}</h1>
 
-      {/* Profile Avatar & Name */}
-      <section className="flex flex-col items-center mb-8">
-        <div className="relative mb-3">
-          <button onClick={handleAvatarClick} className="w-24 h-24 rounded-full bg-brand-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              getInitials(user.name)
-            )}
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            className="hidden"
-            aria-label={t('uploadAPhoto')}
-          />
-          <button onClick={handleAvatarClick} className="absolute -bottom-1 -right-1 bg-white dark:bg-brand-surface border-2 border-gray-50 dark:border-brand-bg rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label={t('uploadAPhoto')}>
-            <PencilIcon className="w-4 h-4 text-gray-800 dark:text-brand-text-light" />
-          </button>
-        </div>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-brand-text-light">{user.name}</h2>
-        {user.role === 'partner' && (
-          <button
-            onClick={() => navigate('/partner')}
-            className="mt-2 bg-purple-600 text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-purple-700 transition-colors flex items-center"
-          >
-            <LayoutDashboard className="w-4 h-4 mr-2" />
-            Partner Portal
-          </button>
-        )}
-        {user.tier === SubscriptionTier.PREMIUM && (
-          <div className="mt-1 bg-brand-primary/20 text-brand-secondary text-xs font-bold px-3 py-1 rounded-full">
-            {t('premiumBadge')}
+        {/* Premium Avatar Section */}
+        <div className="flex flex-col items-center">
+          <div className="relative mb-4 group">
+            <div className="absolute inset-0 bg-gold-500 rounded-full blur-md opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+            <button
+              onClick={handleAvatarClick}
+              className="relative w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-gold-400 to-gold-600 shadow-xl overflow-hidden"
+            >
+              <div className="w-full h-full rounded-full bg-brand-surface border-4 border-brand-bg overflow-hidden flex items-center justify-center">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl font-bold text-gold-500">{getInitials(user.name)}</span>
+                )}
+              </div>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+            <button onClick={handleAvatarClick} className="absolute bottom-1 right-1 bg-brand-surface border border-gold-500/50 rounded-full p-2 hover:bg-gold-500 hover:text-white transition-colors text-gold-500 shadow-lg">
+              <PencilIcon className="w-4 h-4" />
+            </button>
           </div>
-        )}
-      </section>
+
+          <h2 className="text-3xl font-bold font-heading text-transparent bg-clip-text bg-gradient-to-r from-white via-gold-200 to-white">{user.name}</h2>
+          <p className="text-brand-text-muted text-sm mt-1">{user.email}</p>
+
+          {user.role === 'partner' && (
+            <button
+              onClick={() => navigate('/partner')}
+              className="mt-4 bg-purple-600/20 border border-purple-500/50 text-purple-300 text-sm font-bold px-6 py-2 rounded-full hover:bg-purple-600/40 transition-all flex items-center backdrop-blur-sm"
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Partner Mobile Portal
+            </button>
+          )}
+        </div>
+      </header>
 
 
 
       {/* Subscription Info Card */}
       <SettingsSection title={t('subscriptionInfo')}>
-        <div className="p-4 space-y-3">
-          <div className="flex justify-between items-center text-sm">
-            <p className="text-gray-500 dark:text-brand-text-muted">{t('currentPlanLabel')}</p>
-            <p className="text-gray-800 dark:text-brand-text-light font-semibold">
-              {(() => {
-                const currentPlan = plans.find(p => p.tier === user.tier);
-                const planName = currentPlan ? (language === 'tr' ? currentPlan.name_tr : currentPlan.name) : user.tier;
-                const price = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
-                const currency = language === 'tr' ? 'TL' : '$';
-                return t('planWithPrice', { plan: planName, price: `${currency}${price}/year` });
-              })()}
-            </p>
-          </div>
+        <div className="p-1">
+          {/* Glass Credit Card */}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 shadow-2xl group">
+            {/* Decorative Gold Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none"></div>
 
-          {/* Redemption Info */}
-          <div className="flex justify-between items-center text-sm">
-            <p className="text-gray-500 dark:text-brand-text-muted">{t('redemptionsLeft') || 'Redemptions Left'}</p>
-            <p className={`font-bold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
-              {total === Infinity ? '∞' : `${remaining} / ${total}`}
-            </p>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <p className="text-gray-500 dark:text-brand-text-muted">{t('renewsOn') || 'Renews On'}</p>
-            <p className="text-gray-800 dark:text-brand-text-light font-semibold">{renewalDate}</p>
-          </div>
+            <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
+              {/* Header: Plan & Price */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-gold-500 font-semibold tracking-wider uppercase mb-1">{t('currentPlanLabel')}</p>
+                  <h3 className="text-2xl font-bold text-white tracking-tight">
+                    {(() => {
+                      const currentPlan = plans.find(p => p.tier === user.tier);
+                      return currentPlan ? (language === 'tr' ? currentPlan.name_tr : currentPlan.name) : user.tier;
+                    })()}
+                  </h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-brand-text-muted mb-1">{t('priceLabel') || 'Price'}</p>
+                  <p className="text-xl font-bold text-white">
+                    {(() => {
+                      const currentPlan = plans.find(p => p.tier === user.tier);
+                      const price = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
+                      const currency = language === 'tr' ? 'TL' : '$';
+                      return `${currency}${price}`;
+                    })()}
+                    <span className="text-xs font-normal text-white/50">/year</span>
+                  </p>
+                </div>
+              </div>
 
-          {(user.extraRedemptions ?? 0) > 0 && (
-            <div className="flex justify-between items-center text-sm">
-              <p className="text-gray-500 dark:text-brand-text-muted">{t('bonusRedemptionsAvailable')}</p>
-              <p className="text-brand-primary font-bold">{user.extraRedemptions}</p>
+              {/* Progress Bar: Redemptions */}
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm text-brand-text-muted">{t('redemptionsLeft') || 'Redemptions Left'}</span>
+                  <span className="text-sm font-bold text-gold-500">
+                    {total === Infinity ? '∞' : `${remaining} / ${total}`}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-gold-400 to-gold-600 rounded-full shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-all duration-500"
+                    style={{ width: total === Infinity ? '100%' : `${(remaining / total) * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-white/40 mt-1 text-right">{t('resetsOn') || 'Resets on'} {renewalDate}</p>
+              </div>
+
+              {/* Footer: Date & Card */}
+              <div className="flex justify-between items-end pt-2 border-t border-white/10">
+                <div>
+                  <p className="text-[10px] text-brand-text-muted uppercase tracking-widest mb-1">{t('renewsOn') || 'RENEWAL DATE'}</p>
+                  <p className="text-sm font-medium text-white">{renewalDate}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-brand-text-muted uppercase tracking-widest mb-1">{t('paymentMethodLabel') || 'PAYMENT'}</p>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <p className="text-sm font-medium text-white">**** 1234</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-          <div className="flex justify-between items-center text-sm">
-            <p className="text-gray-500 dark:text-brand-text-muted">{t('nextBillLabel')}</p>
-            <p className="text-gray-800 dark:text-brand-text-light font-semibold">{renewalDate}</p>
           </div>
-          <div className="flex justify-between items-center text-sm">
-            <p className="text-gray-500 dark:text-brand-text-muted">{t('paymentMethodLabel')}</p>
-            <p className="text-gray-800 dark:text-brand-text-light font-semibold">**** 1234 Visa</p>
-          </div>
-          <div className="pt-2 flex gap-4">
-            <button onClick={() => navigate('/subscriptions')} className="flex-1 bg-gray-100 dark:bg-brand-bg text-gray-800 dark:text-brand-text-light font-semibold py-2 px-4 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors">{t('managePlan')}</button>
-            <button onClick={() => navigate('/subscriptions')} className="flex-1 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">{t('upgradePlan')}</button>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 mt-4 px-2 pb-2">
+            <button onClick={() => navigate('/subscriptions')} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-sm transition-all hover:scale-[1.02] active:scale-95">
+              {t('managePlan')}
+            </button>
+            <button onClick={() => navigate('/subscriptions')} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold text-sm shadow-lg hover:shadow-gold-500/20 transition-all hover:scale-[1.02] active:scale-95">
+              {t('upgradePlan')}
+            </button>
           </div>
         </div>
       </SettingsSection>
 
       {/* Refer a Friend Section */}
       <SettingsSection title={t('referFriendTitle')}>
-        <div className="p-4 text-center">
-          <p className="text-sm text-gray-500 dark:text-brand-text-muted mb-4">{t('referFriendSubtitle')}</p>
-          <div className="flex items-center justify-between bg-gray-100 dark:bg-brand-bg p-3 rounded-lg gap-2">
-            <span className="text-sm font-mono text-gray-800 dark:text-brand-text-light truncate flex-grow">{referralCode}</span>
+        <div className="p-6 text-center">
+          <p className="text-sm text-white/70 mb-4">{t('referFriendSubtitle')}</p>
+          <div className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-xl gap-2 mb-4">
+            <span className="text-sm font-mono text-gold-400 truncate flex-grow pl-2">{referralCode}</span>
             <button
               onClick={() => handleCopyCode(referralCode)}
-              className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex-shrink-0"
+              className="bg-brand-surface border border-gold-500/50 text-gold-500 hover:text-white hover:bg-gold-500 font-semibold py-2 px-4 rounded-lg transition-all flex-shrink-0"
             >
               {copied ? t('copied') : t('copyCode')}
             </button>
@@ -352,19 +386,19 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {!user.referredBy && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-brand-text-muted mb-2 text-center">{t('haveReferralCode') || 'Have a referral code? Enter it here:'}</p>
+          <div className="pt-4 border-t border-white/10">
+            <p className="text-xs text-white/50 mb-3 text-center uppercase tracking-wider">{t('haveReferralCode') || 'Have a referral code?'}</p>
             <div className="flex gap-2 max-w-md mx-auto">
               <input
                 type="text"
                 value={manualReferralCode}
                 onChange={(e) => setManualReferralCode(e.target.value)}
                 placeholder="Enter User ID / Code"
-                className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-lg p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                className="flex-grow bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50"
               />
               <button
                 onClick={handleRedeemReferral}
-                className="bg-brand-secondary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors"
+                className="bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-6 rounded-xl transition-colors border border-white/10"
               >
                 {t('redeem') || 'Redeem'}
               </button>
@@ -403,73 +437,73 @@ const ProfilePage: React.FC = () => {
       </SettingsSection>
 
       {/* Profile Information Section */}
-      <section className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-brand-text-muted uppercase tracking-wider px-4 mb-2">{t('profileInfo')}</h2>
-        <div className="bg-white dark:bg-brand-surface rounded-lg shadow-sm">
-          <form onSubmit={handleSaveChanges} className="p-4 space-y-4">
+      <SettingsSection title={t('profileInfo')}>
+        <form onSubmit={handleSaveChanges} className="p-6 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label>
+              <label htmlFor="fullName" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('fullNameLabel')}</label>
               <input
                 type="text"
                 id="fullName"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 required
-                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label>
+              <label htmlFor="email" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('emailLabel')}</label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
               />
             </div>
             <div>
-              <label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
+              <label htmlFor="mobile" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('mobileLabel') || 'Mobile Number'}</label>
               <input
                 type="tel"
                 id="mobile"
                 value={mobile}
                 onChange={e => setMobile(e.target.value)}
-                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
                 placeholder="+90 555 123 45 67"
               />
             </div>
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label>
+              <label htmlFor="address" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('addressLabel')}</label>
               <input
                 type="text"
                 id="address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
                 placeholder={t('addressPlaceholder')}
               />
             </div>
-            <div>
-              <label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label>
-              <input
-                type="text"
-                id="billingAddress"
-                value={billingAddress}
-                onChange={(e) => setBillingAddress(e.target.value)}
-                className="w-full py-2 px-3 bg-gray-100 dark:bg-brand-bg border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-brand-text-light placeholder-gray-400 dark:placeholder-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                placeholder={t('billingAddressPlaceholder')}
-              />
-            </div>
-            <div className="flex justify-end">
-              <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
-                {t('saveChanges')}
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
+          </div>
+
+          <div>
+            <label htmlFor="billingAddress" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('billingAddressLabel')}</label>
+            <input
+              type="text"
+              id="billingAddress"
+              value={billingAddress}
+              onChange={(e) => setBillingAddress(e.target.value)}
+              className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
+              placeholder={t('billingAddressPlaceholder')}
+            />
+          </div>
+          <div className="flex justify-end pt-2">
+            <button type="submit" className="bg-brand-secondary hover:bg-brand-secondary/80 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95">
+              {t('saveChanges')}
+            </button>
+          </div>
+        </form>
+      </SettingsSection>
 
       {/* Account Section */}
       <SettingsSection title={t('accountSection')}>
@@ -539,10 +573,10 @@ const ProfilePage: React.FC = () => {
       </SettingsSection>
 
       {/* Logout Button */}
-      <div className="mt-8">
+      <div className="mt-8 mb-8">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center py-3 px-4 border border-red-500/30 dark:border-red-500/50 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors font-semibold"
+          className="w-full flex items-center justify-center py-4 px-6 bg-gradient-to-r from-gold-500 to-gold-600 text-white rounded-2xl shadow-lg hover:shadow-gold-500/20 transform transition-all hover:scale-[1.02] active:scale-95 font-bold tracking-wide"
         >
           {t('signOut')}
         </button>
