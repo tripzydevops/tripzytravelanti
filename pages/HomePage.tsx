@@ -8,7 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
-import Onboarding from '../components/Onboarding';
+
 import { AdBanner } from '../components/AdBanner';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
@@ -174,24 +174,7 @@ const HomePage: React.FC = () => {
   const displayFeaturedDealsTitle = language === 'tr' ? (featuredDealsTitle?.content_value_tr || featuredDealsTitle?.content_value) : featuredDealsTitle?.content_value;
   const displayFlightsTitle = language === 'tr' ? (flightsTitle?.content_value_tr || flightsTitle?.content_value) : flightsTitle?.content_value;
 
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
 
-  React.useEffect(() => {
-    const onboardingCompleted = localStorage.getItem('tripzy_onboarding_completed');
-    if (!onboardingCompleted) {
-      // Small delay to ensure smooth entrance
-      const timer = setTimeout(() => setShowOnboarding(true), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  const handleOnboardingComplete = (preferences: any) => {
-    localStorage.setItem('tripzy_onboarding_completed', 'true');
-    localStorage.setItem('tripzy_user_preferences', JSON.stringify(preferences));
-    setShowOnboarding(false);
-    // Trigger re-fetch of recommendations with new preferences
-    window.location.reload();
-  };
 
   const [recommendations, setRecommendations] = React.useState<Deal[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(false);
@@ -230,7 +213,7 @@ const HomePage: React.FC = () => {
         <title>{t('heroTitle')} | Tripzy</title>
         <meta name="description" content={t('heroSubtitle')} />
       </Helmet>
-      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+
 
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">

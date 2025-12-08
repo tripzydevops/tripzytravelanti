@@ -119,7 +119,7 @@ const LoginPage: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t('fullNameLabel') || "Full Name"}
-                    className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-all duration-300 backdrop-blur-md"
+                    className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-colors duration-200"
                     required
                   />
                 </div>
@@ -132,7 +132,7 @@ const LoginPage: React.FC = () => {
                     value={referralCode}
                     onChange={(e) => setReferralCode(e.target.value)}
                     placeholder={t('referralCodeOptional') || "Referral Code (Optional)"}
-                    className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-all duration-300 backdrop-blur-md"
+                    className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-colors duration-200"
                   />
                 </div>
               </>
@@ -147,7 +147,7 @@ const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('emailLabel') || "Email Address"}
-                className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-all duration-300 backdrop-blur-md"
+                className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-colors duration-200"
                 required
               />
             </div>
@@ -161,7 +161,7 @@ const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('passwordLabel') || "Password"}
-                className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-all duration-300 backdrop-blur-md"
+                className="block w-full pl-11 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-gold-500/70 focus:bg-white/10 focus:ring-1 focus:ring-gold-500/50 transition-colors duration-200"
                 required
               />
             </div>
