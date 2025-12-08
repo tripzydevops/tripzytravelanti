@@ -159,7 +159,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         <h3 className="text-lg font-heading font-bold text-white mb-2 leading-tight group-hover:text-gold-400 transition-colors">{title}</h3>
         <p className="text-white/60 text-sm mb-4 flex-grow line-clamp-2">{description}</p>
 
-        <div className="mt-auto pt-4 border-t border-white/10">
+        <div className="mt-auto pt-4 border-t border-white/20">
           <div className="flex justify-between items-center mb-2">
             <StarRating rating={deal.rating} ratingCount={deal.ratingCount} t={t} />
             {deal.redemptionStyle && deal.redemptionStyle.length > 0 && (
@@ -187,7 +187,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div className="relative flex flex-col rounded-2xl overflow-hidden bg-[#0f172a]/60 backdrop-blur-md border border-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] hover:border-gold-500/30 group">
+    <div className="relative flex flex-col rounded-2xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:border-gold-500/50 group">
       {/* Glow Effect on Hover */}
       <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
 

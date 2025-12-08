@@ -215,8 +215,15 @@ const HomePage: React.FC = () => {
       </Helmet>
 
 
+      {/* Ambient Background Glows */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-gold-900/10 rounded-full blur-[120px] animate-pulse-slow delay-1000"></div>
+        <div className="absolute top-[40%] left-[50%] transform -translate-x-1/2 w-[30%] h-[30%] bg-blue-900/20 rounded-full blur-[100px] animate-pulse-slow delay-2000"></div>
+      </div>
+
       {/* Hero Section */}
-      <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center overflow-hidden z-10">
         {/* Background Image with Overlay */}
         <div
           className="absolute inset-0 bg-cover bg-center transform scale-105"
