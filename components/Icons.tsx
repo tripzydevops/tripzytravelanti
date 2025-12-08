@@ -80,8 +80,70 @@ export const EyeIcon: React.FC<IconProps> = ({ className }) => <Eye className={c
 export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => <ArrowRight className={className} />;
 export const CheckCircle: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />;
 export const Lock: React.FC<IconProps> = ({ className }) => <LucideLock className={className} />;
-export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} strokeWidth={1.5} />; // Mapping to CheckCircle2 or ShieldCheck if available
+export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} strokeWidth={1.5} />;
 export const Globe: React.FC<IconProps> = ({ className }) => <Globe className={className} strokeWidth={1.5} />;
+
+// --- Custom Branded Icons (Lucide with Premium Gold Glow Styling) ---
+
+export const CustomHomeIcon: React.FC<IconProps> = ({ className }) => (
+  <Home className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomSearchIcon: React.FC<IconProps> = ({ className }) => (
+  <LucideSearch className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomTicketIcon: React.FC<IconProps> = ({ className }) => (
+  <Ticket className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomBriefcaseIcon: React.FC<IconProps> = ({ className }) => (
+  <Briefcase className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomUserIcon: React.FC<IconProps> = ({ className }) => (
+  <User className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomSettingsIcon: React.FC<IconProps> = ({ className }) => (
+  <Settings className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomChevronLeftIcon: React.FC<IconProps> = ({ className }) => (
+  <ChevronLeft className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomXIcon: React.FC<IconProps> = ({ className }) => (
+  <X className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomShareIcon: React.FC<IconProps> = ({ className }) => (
+  <Share2 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomPencilIcon: React.FC<IconProps> = ({ className }) => (
+  <Pencil className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomLogoutIcon: React.FC<IconProps> = ({ className }) => (
+  <LogOut className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomChatIcon: React.FC<IconProps> = ({ className }) => (
+  <MessageCircle className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomCreditCardIcon: React.FC<IconProps> = ({ className }) => (
+  <CreditCard className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomBellIcon: React.FC<IconProps> = ({ className }) => (
+  <Bell className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomHeartIcon: React.FC<IconProps> = ({ className }) => (
+  <Heart className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
 
 // --- Custom / Complex Icons ---
 
