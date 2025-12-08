@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
-import { Globe, Compass, Search } from './Icons';
+import { GlobeIcon, Compass, Search } from './Icons';
 import { NotificationBell } from './NotificationBell';
 
 const Header: React.FC = () => {
@@ -58,7 +58,7 @@ const Header: React.FC = () => {
 
         <div className="flex items-center space-x-4 flex-shrink-0">
           <button onClick={toggleLanguage} className="flex items-center text-gray-600 hover:text-brand-primary transition-colors duration-300" aria-label="Toggle language">
-            <Globe className="h-6 w-6 mr-1" />
+            <GlobeIcon className="h-6 w-6 mr-1" />
             {language === 'en' ? 'TR' : 'EN'}
           </button>
           <NotificationBell />

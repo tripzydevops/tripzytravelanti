@@ -34,7 +34,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Lock as LucideLock,
-  Globe as LucideGlobe
+  Globe as LucideGlobe,
+  Compass
 } from 'lucide-react';
 
 type IconProps = {
@@ -82,6 +83,8 @@ export const CheckCircle: React.FC<IconProps> = ({ className }) => <CheckCircle2
 export const Lock: React.FC<IconProps> = ({ className }) => <LucideLock className={className} />;
 export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} strokeWidth={1.5} />;
 export const GlobeIcon: React.FC<IconProps> = ({ className }) => <LucideGlobe className={className} strokeWidth={1.5} />;
+export const CompassIcon: React.FC<IconProps> = ({ className }) => <Compass className={className} strokeWidth={1.5} />;
+export { Compass };
 
 // --- Custom Branded Icons (Lucide with Premium Gold Glow Styling) ---
 

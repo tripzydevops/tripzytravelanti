@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { SubscriptionTier } from '../types';
 import {
-  Globe, ChevronRightIcon, UserIcon, Lock, BellIcon, LocationMarkerIcon,
+  GlobeIcon, ChevronRightIcon, UserIcon, Lock, BellIcon, LocationMarkerIcon,
   FingerPrintIcon, MoonIcon, ShieldCheckIcon, DocumentTextIcon, TrashIcon,
   QuestionMarkCircleIcon, MailIcon, InformationCircleIcon, PencilIcon, LayoutDashboard
 } from '../components/Icons';
@@ -475,7 +475,7 @@ const ProfilePage: React.FC = () => {
       <SettingsSection title={t('accountSection')}>
         <SettingsItem onClick={() => setChangePasswordModalOpen(true)} icon={<Lock className="w-6 h-6" />} title={t('changePassword')} subtitle={t('changePasswordSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
         <SettingsItem icon={<BellIcon className="w-6 h-6" />} title={t('notificationSettings')} subtitle={t('notificationSettingsSubtitle')} action={<Toggle checked={settings.notifications} onChange={() => handleToggle('notifications')} />} />
-        <SettingsItem icon={<Globe className="w-6 h-6" />} title={t('languageSelection')} action={<LanguageSelector lang={language} onToggle={toggleLanguage} />} isLast={true} />
+        <SettingsItem icon={<GlobeIcon className="w-6 h-6" />} title={t('languageSelection')} action={<LanguageSelector lang={language} onToggle={toggleLanguage} />} isLast={true} />
       </SettingsSection>
 
       {/* Application Preferences Section */}

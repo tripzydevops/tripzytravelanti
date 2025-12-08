@@ -5,7 +5,7 @@ import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SubscriptionTier, Deal } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, Globe } from './Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import QRCode from 'react-qr-code';
@@ -370,7 +370,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                     {deal.companyWebsiteUrl && (
                                         <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
                                             <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                                                <Globe className="w-4 h-4" />
+                                                <GlobeIcon className="w-4 h-4" />
                                             </div>
                                             <a href={deal.companyWebsiteUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">Visit Website</a>
                                         </div>
