@@ -94,6 +94,7 @@ const ProfilePage: React.FC = () => {
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
   const [isInvoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [isBillingExpanded, setBillingExpanded] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -112,8 +113,6 @@ const ProfilePage: React.FC = () => {
     notifications: user?.notificationPreferences?.generalNotifications ?? true,
     biometrics: true,
   });
-
-  // ... (keep useEffect)
 
   const handleToggle = async (key: string) => { // Changed to string to handle 'location' separately
     if (key === 'location') {
@@ -192,8 +191,6 @@ const ProfilePage: React.FC = () => {
   if (!user) {
     return null;
   }
-
-
 
   const getInitials = (name: string) => {
     if (!name) return '';
@@ -288,298 +285,233 @@ const ProfilePage: React.FC = () => {
         </div>
       </header>
 
-
-
       {/* Subscription Info Card */}
-      <SettingsSection title={t('subscriptionInfo')}>
-        <div className="p-1">
-          {/* Glass Credit Card */}
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 shadow-2xl group">
-            {/* Decorative Gold Glow */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+      <div className="mb-6">
+        <SettingsSection title={t('subscriptionInfo')}>
+          <div className="p-1">
+            {/* Glass Credit Card */}
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 shadow-2xl group">
+              {/* Decorative Gold Glow */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none"></div>
 
-            <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
-              {/* Header: Plan & Price */}
-              <div className="flex justify-between items-start">
+              <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
+                {/* Header: Plan & Price */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-gold-500 font-semibold tracking-wider uppercase mb-1">{t('currentPlanLabel')}</p>
+                    <h3 className="text-2xl font-bold text-white tracking-tight">
+                      {(() => {
+                        const currentPlan = plans.find(p => p.tier === user.tier);
+                        return currentPlan ? (language === 'tr' ? currentPlan.name_tr : currentPlan.name) : user.tier;
+                      })()}
+                    </h3>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-brand-text-muted mb-1">{t('priceLabel') || 'Price'}</p>
+                    <p className="text-xl font-bold text-white">
+                      {(() => {
+                        const currentPlan = plans.find(p => p.tier === user.tier);
+                        const price = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
+                        const currency = language === 'tr' ? 'TL' : '$';
+                        return `${currency}${price}`;
+                      })()}
+                      <span className="text-xs font-normal text-white/50">/year</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar: Redemptions */}
                 <div>
-                  <p className="text-sm text-gold-500 font-semibold tracking-wider uppercase mb-1">{t('currentPlanLabel')}</p>
-                  <h3 className="text-2xl font-bold text-white tracking-tight">
-                    {(() => {
-                      const currentPlan = plans.find(p => p.tier === user.tier);
-                      return currentPlan ? (language === 'tr' ? currentPlan.name_tr : currentPlan.name) : user.tier;
-                    })()}
-                  </h3>
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-sm text-brand-text-muted">{t('redemptionsLeft') || 'Redemptions Left'}</span>
+                    <span className="text-sm font-bold text-gold-500">
+                      {total === Infinity ? '∞' : `${remaining} / ${total}`}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-gold-400 to-gold-600 rounded-full shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-all duration-500"
+                      style={{ width: total === Infinity ? '100%' : `${(remaining / total) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-1 text-right">{t('resetsOn') || 'Resets on'} {renewalDate}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-brand-text-muted mb-1">{t('priceLabel') || 'Price'}</p>
-                  <p className="text-xl font-bold text-white">
-                    {(() => {
-                      const currentPlan = plans.find(p => p.tier === user.tier);
-                      const price = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
-                      const currency = language === 'tr' ? 'TL' : '$';
-                      return `${currency}${price}`;
-                    })()}
-                    <span className="text-xs font-normal text-white/50">/year</span>
-                  </p>
-                </div>
-              </div>
 
-              {/* Progress Bar: Redemptions */}
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm text-brand-text-muted">{t('redemptionsLeft') || 'Redemptions Left'}</span>
-                  <span className="text-sm font-bold text-gold-500">
-                    {total === Infinity ? '∞' : `${remaining} / ${total}`}
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-gold-400 to-gold-600 rounded-full shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-all duration-500"
-                    style={{ width: total === Infinity ? '100%' : `${(remaining / total) * 100}%` }}
-                  ></div>
-                </div>
-                <p className="text-[10px] text-white/40 mt-1 text-right">{t('resetsOn') || 'Resets on'} {renewalDate}</p>
-              </div>
-
-              {/* Footer: Date & Card */}
-              <div className="flex justify-between items-end pt-2 border-t border-white/10">
-                <div>
-                  <p className="text-[10px] text-brand-text-muted uppercase tracking-widest mb-1">{t('renewsOn') || 'RENEWAL DATE'}</p>
-                  <p className="text-sm font-medium text-white">{renewalDate}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-brand-text-muted uppercase tracking-widest mb-1">{t('paymentMethodLabel') || 'PAYMENT'}</p>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <p className="text-sm font-medium text-white">**** 1234</p>
+                {/* Footer: Date & Card */}
+                <div className="flex justify-between items-end pt-2 border-t border-white/10">
+                  <div>
+                    <p className="text-[10px] text-brand-text-muted uppercase tracking-widest mb-1">{t('renewsOn') || 'RENEWAL DATE'}</p>
+                    <p className="text-sm font-medium text-white">{renewalDate}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-brand-text-muted uppercase tracking-widest mb-1">{t('paymentMethodLabel') || 'PAYMENT'}</p>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <p className="text-sm font-medium text-white">**** 1234</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 mt-4 px-2 pb-2">
-            <button onClick={() => navigate('/subscriptions')} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-sm transition-all hover:scale-[1.02] active:scale-95">
-              {t('managePlan')}
-            </button>
-            <button onClick={() => navigate('/subscriptions')} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold text-sm shadow-lg hover:shadow-gold-500/20 transition-all hover:scale-[1.02] active:scale-95">
-              {t('upgradePlan')}
-            </button>
-          </div>
-        </div>
-      </SettingsSection>
-
-      {/* Refer a Friend Section */}
-      <SettingsSection title={t('referFriendTitle')}>
-        <div className="p-6 text-center">
-          <p className="text-sm text-white/70 mb-4">{t('referFriendSubtitle')}</p>
-          <div className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-xl gap-2 mb-4">
-            <span className="text-sm font-mono text-gold-400 truncate flex-grow pl-2">{referralCode}</span>
-            <button
-              onClick={() => handleCopyCode(referralCode)}
-              className="bg-brand-surface border border-gold-500/50 text-gold-500 hover:text-white hover:bg-gold-500 font-semibold py-2 px-4 rounded-lg transition-all flex-shrink-0"
-            >
-              {copied ? t('copied') : t('copyCode')}
-            </button>
-          </div>
-        </div>
-
-        {!user.referredBy && (
-          <div className="pt-4 border-t border-white/10">
-            <p className="text-xs text-white/50 mb-3 text-center uppercase tracking-wider">{t('haveReferralCode') || 'Have a referral code?'}</p>
-            <div className="flex gap-2 max-w-md mx-auto">
-              <input
-                type="text"
-                value={manualReferralCode}
-                onChange={(e) => setManualReferralCode(e.target.value)}
-                placeholder="Enter User ID / Code"
-                className="flex-grow bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50"
-              />
-              <button
-                onClick={handleRedeemReferral}
-                className="bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-6 rounded-xl transition-colors border border-white/10"
-              >
-                {t('redeem') || 'Redeem'}
+            {/* Action Buttons */}
+            <div className="flex gap-4 mt-4 px-2 pb-2">
+              <button onClick={() => navigate('/subscriptions')} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-sm transition-all hover:scale-[1.02] active:scale-95">
+                {t('managePlan')}
+              </button>
+              <button onClick={() => navigate('/subscriptions')} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold text-sm shadow-lg hover:shadow-gold-500/20 transition-all hover:scale-[1.02] active:scale-95">
+                {t('upgradePlan')}
               </button>
             </div>
           </div>
-        )}
-      </SettingsSection>
+        </SettingsSection>
+      </div>
 
-      {/* Billing History Section */}
-      <SettingsSection title={t('billingHistory') || 'Billing History'}>
-        {transactions.length > 0 ? (
-          <div>
-            {transactions.map((transaction, index) => (
-              <SettingsItem
-                key={transaction.id}
-                icon={<DocumentTextIcon className="w-6 h-6" />}
-                title={`${transaction.tier} Membership`}
-                subtitle={`${new Date(transaction.createdAt).toLocaleDateString()} • ${transaction.amount} ${transaction.currency}`}
-                action={
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Refer a Friend Section */}
+          <SettingsSection title={t('referFriendTitle')}>
+            <div className="p-6 text-center">
+              <p className="text-sm text-white/70 mb-4">{t('referFriendSubtitle')}</p>
+              <div className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-xl gap-2 mb-4">
+                <span className="text-sm font-mono text-gold-400 truncate flex-grow pl-2">{referralCode}</span>
+                <button
+                  onClick={() => handleCopyCode(referralCode)}
+                  className="bg-brand-surface border border-gold-500/50 text-gold-500 hover:text-white hover:bg-gold-500 font-semibold py-2 px-4 rounded-lg transition-all flex-shrink-0"
+                >
+                  {copied ? t('copied') : t('copyCode')}
+                </button>
+              </div>
+
+              {!user.referredBy && (
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-xs text-white/50 mb-3 text-center uppercase tracking-wider">{t('haveReferralCode') || 'Have a referral code?'}</p>
+                  <div className="flex gap-2 max-w-md mx-auto">
+                    <input
+                      type="text"
+                      value={manualReferralCode}
+                      onChange={(e) => setManualReferralCode(e.target.value)}
+                      placeholder="Enter User ID / Code"
+                      className="flex-grow bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50"
+                    />
+                    <button
+                      onClick={handleRedeemReferral}
+                      className="bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-6 rounded-xl transition-colors border border-white/10"
+                    >
+                      {t('redeem') || 'Redeem'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </SettingsSection>
+
+          {/* Application Preferences Section */}
+          <SettingsSection title={t('appPreferencesSection')}>
+            <SettingsItem icon={<LocationMarkerIcon className="w-6 h-6" />} title={t('locationServices')} subtitle={t('locationServicesSubtitle')} action={<Toggle checked={isLocationEnabled} onChange={() => handleToggle('location')} />} />
+            <SettingsItem icon={<FingerPrintIcon className="w-6 h-6" />} title={t('biometricAuth')} subtitle={t('biometricAuthSubtitle')} action={<Toggle checked={settings.biometrics} onChange={() => handleToggle('biometrics')} />} />
+            <SettingsItem icon={<MoonIcon className="w-6 h-6" />} title={t('darkMode')} action={<Toggle checked={theme === 'dark'} onChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />} />
+            <SettingsItem
+              icon={<BellIcon className="w-6 h-6" />}
+              title={t('pushNotifications')}
+              subtitle={permissionStatus === 'denied' ? t('notificationsDenied') : t('pushNotificationsSubtitle')}
+              action={
+                permissionStatus !== 'granted' ? (
                   <button
-                    onClick={() => handleViewInvoice(transaction)}
-                    className="text-sm text-brand-primary font-semibold hover:underline"
+                    onClick={requestPermission}
+                    disabled={permissionStatus === 'denied'}
+                    className="bg-brand-primary text-white font-semibold py-1 px-3 rounded-lg text-sm disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
                   >
-                    {t('viewInvoice') || 'View Invoice'}
+                    {permissionStatus === 'denied' ? 'Denied' : 'Enable'}
                   </button>
-                }
-                isLast={index === transactions.length - 1}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="p-4 text-center text-gray-500 dark:text-brand-text-muted">
-            {t('noTransactions') || 'No payment history found.'}
-          </div>
-        )}
-      </SettingsSection>
-
-      {/* Profile Information Section */}
-      <SettingsSection title={t('profileInfo')}>
-        <form onSubmit={handleSaveChanges} className="p-6 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="fullName" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('fullNameLabel')}</label>
-              <input
-                type="text"
-                id="fullName"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                required
-                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('emailLabel')}</label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="mobile" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('mobileLabel') || 'Mobile Number'}</label>
-              <input
-                type="tel"
-                id="mobile"
-                value={mobile}
-                onChange={e => setMobile(e.target.value)}
-                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
-                placeholder="+90 555 123 45 67"
-              />
-            </div>
-            <div>
-              <label htmlFor="address" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('addressLabel')}</label>
-              <input
-                type="text"
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
-                placeholder={t('addressPlaceholder')}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="billingAddress" className="block text-xs font-medium text-brand-text-muted mb-2 uppercase tracking-wide">{t('billingAddressLabel')}</label>
-            <input
-              type="text"
-              id="billingAddress"
-              value={billingAddress}
-              onChange={(e) => setBillingAddress(e.target.value)}
-              className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-colors"
-              placeholder={t('billingAddressPlaceholder')}
+                ) : (
+                  <span className="text-sm font-semibold text-green-500">Enabled</span>
+                )
+              }
+              isLast={permissionStatus !== 'granted'}
             />
-          </div>
-          <div className="flex justify-end pt-2">
-            <button type="submit" className="bg-brand-secondary hover:bg-brand-secondary/80 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95">
-              {t('saveChanges')}
+            {permissionStatus === 'granted' && (
+              <>
+                <div className="pl-10 border-b border-gray-200 dark:border-gray-700">
+                  <SettingsItem
+                    icon={<div className="w-6 h-6" />}
+                    title={t('newDealNotifications')}
+                    action={<Toggle checked={user.notificationPreferences?.newDeals ?? false} onChange={() => handleSubToggle('newDeals')} />}
+                  />
+                </div>
+                <div className="pl-10">
+                  <SettingsItem
+                    icon={<div className="w-6 h-6" />}
+                    title={t('expiringDealNotifications')}
+                    action={<Toggle checked={user.notificationPreferences?.expiringDeals ?? false} onChange={() => handleSubToggle('expiringDeals')} />}
+                    isLast={true}
+                  />
+                </div>
+              </>
+            )}
+          </SettingsSection>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Account Section */}
+          <SettingsSection title={t('accountSection')}>
+            <SettingsItem onClick={() => setChangePasswordModalOpen(true)} icon={<Lock className="w-6 h-6" />} title={t('changePassword')} subtitle={t('changePasswordSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
+            <SettingsItem icon={<BellIcon className="w-6 h-6" />} title={t('notificationSettings')} subtitle={t('notificationSettingsSubtitle')} action={<Toggle checked={settings.notifications} onChange={() => handleToggle('notifications')} />} />
+            <SettingsItem icon={<GlobeIcon className="w-6 h-6" />} title={t('languageSelection')} action={<LanguageSelector lang={language} onToggle={toggleLanguage} />} />
+
+            {/* Billing History Expandable */}
+            <SettingsItem
+              onClick={() => setBillingExpanded(!isBillingExpanded)}
+              icon={<DocumentTextIcon className="w-6 h-6" />}
+              title={t('billingHistory') || 'Billing History'}
+              action={<ChevronRightIcon className={`w-5 h-5 text-gray-400 transform transition-transform ${isBillingExpanded ? 'rotate-90' : ''}`} />}
+            />
+            {isBillingExpanded && (
+              <div className="pl-4 pr-4 pb-2 bg-white/5 border-t border-white/5">
+                {transactions.length > 0 ? (
+                  transactions.map((transaction) => (
+                    <div key={transaction.id} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 text-sm">
+                      <div>
+                        <p className="text-white font-medium">{transaction.tier}</p>
+                        <p className="text-white/50 text-xs">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <button onClick={() => handleViewInvoice(transaction)} className="text-gold-500 hover:text-white transition-colors text-xs font-bold border border-gold-500/50 rounded px-2 py-1">
+                        VIEW
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-3 text-center text-white/50 text-sm">No history</div>
+                )}
+              </div>
+            )}
+          </SettingsSection>
+
+          {/* Support Section */}
+          <SettingsSection title={t('supportSection')}>
+            <SettingsItem onClick={handleNotImplemented} icon={<QuestionMarkCircleIcon className="w-6 h-6" />} title={t('helpCenter')} subtitle={t('helpCenterSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
+            <SettingsItem onClick={handleNotImplemented} icon={<MailIcon className="w-6 h-6" />} title={t('contact')} subtitle={t('contactSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
+            <SettingsItem icon={<InformationCircleIcon className="w-6 h-6" />} title={t('aboutApp')} subtitle={t('appVersion')} />
+            {/* Merged Privacy Links */}
+            <SettingsItem onClick={handleNotImplemented} icon={<ShieldCheckIcon className="w-6 h-6" />} title={t('privacyPolicyLink')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
+            <SettingsItem onClick={() => setDeleteAccountModalOpen(true)} icon={<TrashIcon className="w-6 h-6" />} title={t('deleteAccount')} subtitle={t('deleteAccountSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-red-500 dark:text-red-400" />} isLast={true} danger={true} />
+          </SettingsSection>
+
+          {/* Logout Button (At bottom of Right Column) */}
+          <div className="">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center py-4 px-6 bg-gradient-to-r from-gold-500 to-gold-600 text-white rounded-2xl shadow-lg hover:shadow-gold-500/20 transform transition-all hover:scale-[1.02] active:scale-95 font-bold tracking-wide"
+            >
+              {t('signOut')}
             </button>
           </div>
-        </form>
-      </SettingsSection>
+        </div>
 
-      {/* Account Section */}
-      <SettingsSection title={t('accountSection')}>
-        <SettingsItem onClick={() => setChangePasswordModalOpen(true)} icon={<Lock className="w-6 h-6" />} title={t('changePassword')} subtitle={t('changePasswordSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
-        <SettingsItem icon={<BellIcon className="w-6 h-6" />} title={t('notificationSettings')} subtitle={t('notificationSettingsSubtitle')} action={<Toggle checked={settings.notifications} onChange={() => handleToggle('notifications')} />} />
-        <SettingsItem icon={<GlobeIcon className="w-6 h-6" />} title={t('languageSelection')} action={<LanguageSelector lang={language} onToggle={toggleLanguage} />} isLast={true} />
-      </SettingsSection>
-
-      {/* Application Preferences Section */}
-      <SettingsSection title={t('appPreferencesSection')}>
-        <SettingsItem icon={<LocationMarkerIcon className="w-6 h-6" />} title={t('locationServices')} subtitle={t('locationServicesSubtitle')} action={<Toggle checked={isLocationEnabled} onChange={() => handleToggle('location')} />} />
-        <SettingsItem icon={<FingerPrintIcon className="w-6 h-6" />} title={t('biometricAuth')} subtitle={t('biometricAuthSubtitle')} action={<Toggle checked={settings.biometrics} onChange={() => handleToggle('biometrics')} />} />
-        <SettingsItem icon={<MoonIcon className="w-6 h-6" />} title={t('darkMode')} action={<Toggle checked={theme === 'dark'} onChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />} />
-        <SettingsItem
-          icon={<BellIcon className="w-6 h-6" />}
-          title={t('pushNotifications')}
-          subtitle={permissionStatus === 'denied' ? t('notificationsDenied') : t('pushNotificationsSubtitle')}
-          action={
-            permissionStatus !== 'granted' ? (
-              <button
-                onClick={requestPermission}
-                disabled={permissionStatus === 'denied'}
-                className="bg-brand-primary text-white font-semibold py-1 px-3 rounded-lg text-sm disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
-              >
-                {permissionStatus === 'denied' ? 'Denied' : 'Enable'}
-              </button>
-            ) : (
-              <span className="text-sm font-semibold text-green-500">Enabled</span>
-            )
-          }
-          isLast={permissionStatus !== 'granted'}
-        />
-        {permissionStatus === 'granted' && (
-          <>
-            <div className="pl-10 border-b border-gray-200 dark:border-gray-700">
-              <SettingsItem
-                icon={<div className="w-6 h-6" />}
-                title={t('newDealNotifications')}
-                action={<Toggle checked={user.notificationPreferences?.newDeals ?? false} onChange={() => handleSubToggle('newDeals')} />}
-              />
-            </div>
-            <div className="pl-10">
-              <SettingsItem
-                icon={<div className="w-6 h-6" />}
-                title={t('expiringDealNotifications')}
-                action={<Toggle checked={user.notificationPreferences?.expiringDeals ?? false} onChange={() => handleSubToggle('expiringDeals')} />}
-                isLast={true}
-              />
-            </div>
-          </>
-        )}
-      </SettingsSection>
-
-      {/* Privacy Section */}
-      <SettingsSection title={t('privacySection')}>
-        {/* FIX: Updated translation key from 'privacyPolicy' to 'privacyPolicyLink' to match change in localization.ts */}
-        <SettingsItem onClick={handleNotImplemented} icon={<ShieldCheckIcon className="w-6 h-6" />} title={t('privacyPolicyLink')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
-        <SettingsItem onClick={handleNotImplemented} icon={<DocumentTextIcon className="w-6 h-6" />} title={t('termsOfUse')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
-        <SettingsItem onClick={() => setDeleteAccountModalOpen(true)} icon={<TrashIcon className="w-6 h-6" />} title={t('deleteAccount')} subtitle={t('deleteAccountSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-red-500 dark:text-red-400" />} isLast={true} danger={true} />
-      </SettingsSection>
-
-      {/* Support Section */}
-      <SettingsSection title={t('supportSection')}>
-        <SettingsItem onClick={handleNotImplemented} icon={<QuestionMarkCircleIcon className="w-6 h-6" />} title={t('helpCenter')} subtitle={t('helpCenterSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
-        <SettingsItem onClick={handleNotImplemented} icon={<MailIcon className="w-6 h-6" />} title={t('contact')} subtitle={t('contactSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
-        <SettingsItem icon={<InformationCircleIcon className="w-6 h-6" />} title={t('aboutApp')} subtitle={t('appVersion')} isLast={true} />
-      </SettingsSection>
-
-      {/* Logout Button */}
-      <div className="mt-8 mb-8">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center py-4 px-6 bg-gradient-to-r from-gold-500 to-gold-600 text-white rounded-2xl shadow-lg hover:shadow-gold-500/20 transform transition-all hover:scale-[1.02] active:scale-95 font-bold tracking-wide"
-        >
-          {t('signOut')}
-        </button>
       </div>
 
       {showSuccess && (
