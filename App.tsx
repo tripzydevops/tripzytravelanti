@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -185,10 +185,10 @@ function App() {
                   <LayoutProvider>
                     <NotificationProvider>
                       <ToastProvider>
-                        <HashRouter>
+                        <BrowserRouter>
                           <ScrollToTop />
                           <AppContent />
-                        </HashRouter>
+                        </BrowserRouter>
                       </ToastProvider>
                     </NotificationProvider>
                   </LayoutProvider>
