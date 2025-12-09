@@ -342,7 +342,7 @@ const HomePage: React.FC = () => {
                 <button
                   key={cat.key}
                   onClick={() => setCategoryFilter(cat.key as any)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap border flex items-center gap-2 ${categoryFilter === cat.key
+                  className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 whitespace-nowrap border flex items-center gap-2 ${categoryFilter === cat.key
                     ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white border-gold-400 shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105'
                     : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
                     }`}
@@ -430,17 +430,17 @@ const HomePage: React.FC = () => {
         {/* Rating Filters */}
         {categoryFilter !== 'Flights' && (
           <div className="flex items-center space-x-4 mb-10 overflow-x-auto pb-2 scrollbar-hide">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 shrink-0">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 shrink-0">
               <StarIcon className="w-4 h-4 text-gold-500" />
               <h3 className="text-sm font-bold text-white/80 whitespace-nowrap">{t('filterByRating')}:</h3>
             </div>
 
-            <div className="flex bg-white/5 rounded-full p-1 border border-white/10">
+            <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10">
               {ratingFilters.map(filter => (
                 <button
                   key={filter.value}
                   onClick={() => setRatingFilter(filter.value)}
-                  className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
+                  className={`px-5 py-1.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
                     ? 'bg-white/20 text-white shadow-inner'
                     : 'text-white/50 hover:text-white hover:bg-white/10'
                     }`}
