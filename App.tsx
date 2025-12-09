@@ -60,6 +60,8 @@ const PartnerDashboard = lazyLoadRetry(() => import('./pages/partner/PartnerDash
 const PartnerScanPage = lazyLoadRetry(() => import('./pages/partner/PartnerScanPage'));
 const CreateDealPage = lazyLoadRetry(() => import('./pages/partner/CreateDealPage'));
 const MyDealsPage = lazyLoadRetry(() => import('./pages/MyDealsPage'));
+const SavedDealsPage = lazyLoadRetry(() => import('./pages/SavedDealsPage'));
+const WalletPage = lazyLoadRetry(() => import('./pages/WalletPage'));
 const CheckoutPage = lazyLoadRetry(() => import('./pages/CheckoutPage'));
 const PaymentSuccessPage = lazyLoadRetry(() => import('./pages/PaymentSuccessPage'));
 
@@ -118,6 +120,22 @@ function AnimatedRoutes() {
             }
           />
           <Route path="/deals/:id" element={<PageTransition><DealDetailPage /></PageTransition>} />
+          <Route
+            path="/saved"
+            element={
+              <AuthenticatedRoute>
+                <PageTransition><SavedDealsPage /></PageTransition>
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/wallet"
+            element={
+              <AuthenticatedRoute>
+                <PageTransition><WalletPage /></PageTransition>
+              </AuthenticatedRoute>
+            }
+          />
           <Route path="/flights" element={<PageTransition><FlightsPage /></PageTransition>} />
           <Route path="/travel" element={<PageTransition><TravelPage /></PageTransition>} />
           <Route path="/plan" element={<PageTransition><TripPlannerPage /></PageTransition>} />

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { CustomHomeIcon, CustomSearchIcon, CustomUserIcon, CustomShieldCheckIcon, CustomBriefcaseIcon } from './Icons';
+import { CustomHomeIcon, CustomSearchIcon, CustomUserIcon, CustomShieldCheckIcon, CustomBriefcaseIcon, CustomHeartIcon, CustomCreditCardIcon } from './Icons';
 
 const BottomNav: React.FC = () => {
   const { t } = useLanguage();
@@ -10,8 +10,8 @@ const BottomNav: React.FC = () => {
 
   const navItems = [
     { path: '/', label: t('bottomNavHome') || 'Home', icon: CustomHomeIcon, admin: false },
-    { path: '/travel', label: t('bottomNavSearch') || 'Search', icon: CustomSearchIcon, admin: false },
-    { path: '/my-deals', label: t('bottomNavTrips') || 'Trips', icon: CustomBriefcaseIcon, admin: false },
+    { path: '/saved', label: t('bottomNavFavorites') || 'Favorilerim', icon: CustomHeartIcon, admin: false },
+    { path: '/wallet', label: t('bottomNavWallet') || 'Cüzdanım', icon: CustomCreditCardIcon, admin: false },
     { path: '/profile', label: t('bottomNavProfile') || 'Profile', icon: CustomUserIcon, admin: false },
     { path: '/admin', label: t('bottomNavAdmin') || 'Admin', icon: CustomShieldCheckIcon, admin: true },
   ];
