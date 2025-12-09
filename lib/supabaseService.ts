@@ -603,7 +603,7 @@ export async function getSavedDeals(userId: string): Promise<string[]> {
 export const redeemDeal = async (userId: string, dealId: string) => {
     try {
         const { data, error } = await supabase
-            .from('redemptions')
+            .from('deal_redemptions')
             .insert({
                 user_id: userId,
                 deal_id: dealId,
