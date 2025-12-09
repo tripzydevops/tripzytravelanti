@@ -964,3 +964,34 @@ export async function createNotification(notification: { userId: string; title: 
 
     if (error) throw error;
 }
+// =====================================================
+// BACKGROUND IMAGE OPERATIONS
+// =====================================================
+
+export interface BackgroundImage {
+    id: string;
+    url: string;
+    time_of_day: 'morning' | 'afternoon' | 'evening' | 'night';
+    is_active: boolean;
+}
+
+export async function getBackgroundImages(timeOfDay?: string): Promise<BackgroundImage[]> {
+    let query = supabase
+        .from('background_images')
+        .select('*')
+        .eq('is_active', true);
+
+    if (timeOfDay) {
+        query = query.eq('time_of_day', timeOfDay);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        // Fallback or silent error if table doesn't exist yet
+        console.warn('Error fetching background images (table may not exist yet):', error);
+        return [];
+    }
+
+    return data as BackgroundImage[];
+}

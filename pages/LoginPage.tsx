@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
 import { CustomMailIcon, CustomLockIcon, CustomUserIcon, CustomTicketIcon, AppleLogo, FacebookLogo, GoogleLogo } from '../components/Icons';
 import { useToast } from '../contexts/ToastContext';
+import { getBackgroundImages } from '../lib/supabaseService';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -64,19 +65,56 @@ const LoginPage: React.FC = () => {
   const { getContent } = useContent();
   const { language } = useLanguage();
 
-  // Dynamic Content (Optional override if needed, but we hardcoded a nice one for the "Premium" look)
-  // We use a specific Maldives/Overwater Bungalow image to match the reference.
-  const displayHeroImage = 'https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=2000&auto=format&fit=crop';
+  // ==========================================
+  // Dynamic Background Logic
+  // ==========================================
+  const [backgroundImages, setBackgroundImages] = useState<string[]>([
+    'https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=2000&auto=format&fit=crop' // Fallback
+  ]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      // Determine Time of Day
+      const hour = new Date().getHours();
+      let timeOfDay = 'afternoon';
+      if (hour >= 6 && hour < 12) timeOfDay = 'morning';
+      else if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
+      else if (hour >= 18 && hour < 24) timeOfDay = 'evening';
+      else timeOfDay = 'night';
+
+      const images = await getBackgroundImages(timeOfDay);
+      if (images && images.length > 0) {
+        setBackgroundImages(images.map(img => img.url));
+      }
+    };
+    fetchBackgrounds();
+  }, []);
+
+  // Rotate images
+  useEffect(() => {
+    if (backgroundImages.length <= 1) return;
+
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
+    }, 5000); // Change every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, [backgroundImages]);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-body">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center z-0"
-        style={{
-          backgroundImage: `url("${displayHeroImage}")`,
-        }}
-      />
+      {/* Background Image Carousel */}
+      {backgroundImages.map((img, index) => (
+        <div
+          key={img}
+          className={`absolute inset-0 bg-cover bg-center z-0 transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+          style={{
+            backgroundImage: `url("${img}")`,
+          }}
+        />
+      ))}
 
       {/* Deep Ocean Blue Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-brand-bg/40 via-brand-bg/20 to-brand-bg/60 z-0" />

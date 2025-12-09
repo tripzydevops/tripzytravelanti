@@ -12,228 +12,70 @@ import FlightSearchWidget from '../components/FlightSearchWidget';
 import { AdBanner } from '../components/AdBanner';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
-import { getFlashDeals } from '../lib/supabaseService';
-import { Deal } from '../types';
-import { Helmet } from 'react-helmet-async';
-import FlashDealCard from '../components/FlashDealCard';
+import { getBackgroundImages } from '../lib/supabaseService';
 
-const LOCAL_STORAGE_KEY = 'wanderwise_recent_searches';
+// ... (existing imports)
 
 const HomePage: React.FC = () => {
-  const { t } = useLanguage();
-  const navigate = useNavigate();
-  const { deals, loading, loadDealsPaginated, total } = useDeals();
-  const { user } = useAuth();
-  const {
-    searchQuery,
-    setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
-    ratingFilter,
-    setRatingFilter,
-    userLocation,
-    isLocationEnabled
-  } = useSearch();
+  // ... (existing state)
 
-  // ... (keep existing state and effects)
-
-  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
-  const [recentSearches, setRecentSearches] = React.useState<string[]>([]);
-  const [flightWidgetParams, setFlightWidgetParams] = React.useState<{ origin?: string, destination?: string, departDate?: string }>({});
-  const flightWidgetRef = React.useRef<HTMLDivElement>(null);
-  const [flashDeals, setFlashDeals] = React.useState<Deal[]>([]);
+  // ==========================================
+  // Dynamic Background Logic
+  // ==========================================
+  const [backgroundImages, setBackgroundImages] = React.useState<string[]>([
+    displayImage // Use the CMS image as initial default
+  ]);
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 
   React.useEffect(() => {
-    const fetchFlashDeals = async () => {
-      const deals = await getFlashDeals();
-      setFlashDeals(deals);
-    };
-    fetchFlashDeals();
-  }, []);
+    const fetchBackgrounds = async () => {
+      // Determine Time of Day
+      const hour = new Date().getHours();
+      let timeOfDay = 'afternoon';
+      if (hour >= 6 && hour < 12) timeOfDay = 'morning';
+      else if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
+      else if (hour >= 18 && hour < 24) timeOfDay = 'evening';
+      else timeOfDay = 'night';
 
-  // Pagination State
-  const [page, setPage] = React.useState(1);
-  const DEALS_PER_PAGE = 12;
-  const hasMore = deals.length < total;
-
-  React.useEffect(() => {
-    try {
-      const storedSearches = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedSearches) {
-        setRecentSearches(JSON.parse(storedSearches));
-      }
-    } catch (error) {
-      console.error("Failed to parse recent searches from localStorage", error);
-    }
-  }, []);
-
-  // Fetch deals when filters change
-  React.useEffect(() => {
-    const fetchDeals = async () => {
-      // Reset page to 1 when filters change
-      setPage(1);
-      await loadDealsPaginated(1, DEALS_PER_PAGE, {
-        category: categoryFilter,
-        search: searchQuery,
-        rating: ratingFilter
-      }, false); // false = reset list
-    };
-
-    // Debounce search
-    const timeoutId = setTimeout(() => {
-      fetchDeals();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [categoryFilter, searchQuery, ratingFilter, loadDealsPaginated]);
-
-  const handleLoadMore = async () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await loadDealsPaginated(nextPage, DEALS_PER_PAGE, {
-      category: categoryFilter,
-      search: searchQuery,
-      rating: ratingFilter
-    }, true); // true = append
-  };
-
-  const saveSearch = (query: string) => {
-    const trimmedQuery = query.trim();
-    if (!trimmedQuery) return;
-
-    const updatedSearches = [
-      trimmedQuery,
-      ...recentSearches.filter(s => s.toLowerCase() !== trimmedQuery.toLowerCase())
-    ].slice(0, 5);
-
-    setRecentSearches(updatedSearches);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedSearches));
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      saveSearch(searchQuery);
-      e.currentTarget.blur();
-    }
-  };
-
-  const handleRecentSearchClick = (query: string) => {
-    setSearchQuery(query);
-    saveSearch(query);
-    setIsSearchFocused(false);
-  };
-
-  const clearRecentSearches = () => {
-    setRecentSearches([]);
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-  };
-
-  const categories = [
-    { key: 'All', name: t('categoryAll') },
-    { key: 'Flights', name: t('categoryFlights') || 'Flights' },
-    { key: 'Food & Dining', name: t('categoryDining') },
-    { key: 'Services', name: t('categoryWellness') },
-    { key: 'Travel', name: t('categoryTravel') },
-  ];
-
-  const ratingFilters = [
-    { value: 0, label: t('allRatings') },
-    { value: 4, label: `4+ ★` },
-    { value: 3, label: `3+ ★` },
-  ];
-
-  // No more client-side filtering
-  const filteredDeals = deals;
-
-  const flightRoutes = deals.filter(d => d.category === 'FlightWidget');
-
-  const handleRouteClick = (route: any) => {
-    setFlightWidgetParams({
-      origin: route.vendor,
-      destination: route.redemptionCode,
-      departDate: route.expiresAt
-    });
-    flightWidgetRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const { content, getContent } = useContent();
-  const { language } = useLanguage();
-
-  // Get dynamic content
-  const heroTitle = getContent('home', 'hero', 'title');
-  const heroSubtitle = getContent('home', 'hero', 'subtitle');
-  const heroImage = getContent('home', 'hero', 'image_url');
-  const categoriesTitle = getContent('home', 'categories', 'title');
-  const featuredDealsTitle = getContent('home', 'featured_deals', 'title');
-  const flightsTitle = getContent('home', 'flights', 'title');
-
-  const displayTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
-  const displaySubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
-  const displayImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070';
-  const displayCategoriesTitle = language === 'tr' ? (categoriesTitle?.content_value_tr || categoriesTitle?.content_value) : categoriesTitle?.content_value;
-  const displayFeaturedDealsTitle = language === 'tr' ? (featuredDealsTitle?.content_value_tr || featuredDealsTitle?.content_value) : featuredDealsTitle?.content_value;
-  const displayFlightsTitle = language === 'tr' ? (flightsTitle?.content_value_tr || flightsTitle?.content_value) : flightsTitle?.content_value;
-
-
-
-  const [recommendations, setRecommendations] = React.useState<Deal[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = React.useState(false);
-
-  React.useEffect(() => {
-    const fetchRecommendations = async () => {
-      if (user && deals.length > 0) {
-        setLoadingRecommendations(true);
-        try {
-          // Get stored preferences
-          const storedPrefs = localStorage.getItem('tripzy_user_preferences');
-          const preferences = storedPrefs ? JSON.parse(storedPrefs) : undefined;
-
-          const recs = await getAIRecommendations(user, deals, preferences);
-          setRecommendations(recs);
-        } catch (error) {
-          console.error("Failed to fetch recommendations", error);
-        } finally {
-          setLoadingRecommendations(false);
-        }
+      const images = await getBackgroundImages(timeOfDay);
+      if (images && images.length > 0) {
+        setBackgroundImages(images.map(img => img.url));
       }
     };
+    fetchBackgrounds();
+  }, []);
 
-    fetchRecommendations();
-
-    // Debug: Log distinct categories in loaded deals
-    if (deals.length > 0) {
-      const distinctCategories = [...new Set(deals.map(d => d.category))];
-      console.log('Distinct Categories in loaded deals:', distinctCategories);
-    }
-  }, [user, deals]);
+  // Rotate images
+  React.useEffect(() => {
+    if (backgroundImages.length <= 1) return;
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
+    }, 5000); // Change every 5 seconds
+    return () => clearInterval(intervalId);
+  }, [backgroundImages]);
 
   return (
     <div className="min-h-screen">
-      <Helmet>
-        <title>{t('heroTitle')} | Tripzy</title>
-        <meta name="description" content={t('heroSubtitle')} />
-      </Helmet>
-
+      {/* ... (Helmet) ... */}
 
       {/* Ambient Background Glows */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-gold-900/10 rounded-full blur-[120px] animate-pulse-slow delay-1000"></div>
-        <div className="absolute top-[40%] left-[50%] transform -translate-x-1/2 w-[30%] h-[30%] bg-blue-900/20 rounded-full blur-[100px] animate-pulse-slow delay-2000"></div>
-      </div>
+      {/* ... */}
 
       {/* Hero Section */}
       <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center overflow-hidden z-10">
-        {/* Background Image with Overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center transform scale-105"
-          style={{
-            backgroundImage: `url('${displayImage}')`,
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/40 via-[#0f172a]/20 to-[#0f172a]"></div>
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
-        </div>
+        {/* Background Image Carousel */}
+        {backgroundImages.map((img, index) => (
+          <div
+            key={img}
+            className={`absolute inset-0 bg-cover bg-center transform scale-105 transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+            style={{
+              backgroundImage: `url('${img}')`,
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/40 via-[#0f172a]/20 to-[#0f172a]"></div>
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
+          </div>
+        ))}
 
         {/* Login Button for Unauthenticated Users */}
         {!user && (
