@@ -36,7 +36,9 @@ import {
   Lock as LucideLock,
   Globe as LucideGlobe,
   Compass,
-  Flame
+  Flame,
+  Upload,
+  Plus
 } from 'lucide-react';
 
 type IconProps = {
@@ -86,6 +88,8 @@ export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCir
 export const GlobeIcon: React.FC<IconProps> = ({ className }) => <LucideGlobe className={className} strokeWidth={1.5} />;
 export const CompassIcon: React.FC<IconProps> = ({ className }) => <Compass className={className} strokeWidth={1.5} />;
 export const FireIcon: React.FC<IconProps> = ({ className }) => <Flame className={className} strokeWidth={1.5} />;
+export const UploadIcon: React.FC<IconProps> = ({ className }) => <Upload className={className} strokeWidth={1.5} />;
+export const PlusIcon: React.FC<IconProps> = ({ className }) => <Plus className={className} strokeWidth={1.5} />;
 export { Compass };
 
 // --- Custom Branded Icons (Lucide with Premium Gold Glow Styling) ---
