@@ -38,7 +38,13 @@ import {
   Compass,
   Flame,
   Upload,
-  Plus
+  Plus,
+  BarChart3,
+  QrCode,
+  ArrowLeft,
+  Save,
+  Megaphone,
+  AlertCircle
 } from 'lucide-react';
 
 type IconProps = {
@@ -90,6 +96,13 @@ export const CompassIcon: React.FC<IconProps> = ({ className }) => <Compass clas
 export const FireIcon: React.FC<IconProps> = ({ className }) => <Flame className={className} strokeWidth={1.5} />;
 export const UploadIcon: React.FC<IconProps> = ({ className }) => <Upload className={className} strokeWidth={1.5} />;
 export const PlusIcon: React.FC<IconProps> = ({ className }) => <Plus className={className} strokeWidth={1.5} />;
+export const BarChartIcon: React.FC<IconProps> = ({ className }) => <BarChart3 className={className} strokeWidth={1.5} />;
+export const QrCodeIcon: React.FC<IconProps> = ({ className }) => <QrCode className={className} strokeWidth={1.5} />;
+export const ArrowLeftIcon: React.FC<IconProps> = ({ className }) => <ArrowLeft className={className} strokeWidth={1.5} />;
+export const SaveIcon: React.FC<IconProps> = ({ className }) => <Save className={className} strokeWidth={1.5} />;
+export const MegaphoneIcon: React.FC<IconProps> = ({ className }) => <Megaphone className={className} strokeWidth={1.5} />;
+export const AlertCircleIcon: React.FC<IconProps> = ({ className }) => <AlertCircle className={className} strokeWidth={1.5} />;
+
 export { Compass };
 
 // --- Custom Branded Icons (Lucide with Premium Gold Glow Styling) ---
@@ -164,6 +177,30 @@ export const CustomLockIcon: React.FC<IconProps> = ({ className }) => (
 
 export const CustomShieldCheckIcon: React.FC<IconProps> = ({ className }) => (
   <CheckCircle2 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomBarChartIcon: React.FC<IconProps> = ({ className }) => (
+  <BarChart3 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomQrCodeIcon: React.FC<IconProps> = ({ className }) => (
+  <QrCode className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomArrowLeftIcon: React.FC<IconProps> = ({ className }) => (
+  <ArrowLeft className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomSaveIcon: React.FC<IconProps> = ({ className }) => (
+  <Save className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomMegaphoneIcon: React.FC<IconProps> = ({ className }) => (
+  <Megaphone className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomAlertCircleIcon: React.FC<IconProps> = ({ className }) => (
+  <AlertCircle className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
 );
 
 // --- Custom / Complex Icons ---
