@@ -412,7 +412,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Sticky Footer Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-white/10 p-4 z-40 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-area-pb">
+            <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-white/10 p-4 z-[60] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-area-pb">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
                     <div className="hidden md:flex flex-col">
                         <span className="text-white/40 text-xs line-through">{originalPriceFormatted}</span>
