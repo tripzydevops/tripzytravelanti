@@ -81,4 +81,3 @@ const AdminPage: React.FC = () => {
 };
 
 export default AdminPage;
-export default AdminPage;
