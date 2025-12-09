@@ -238,6 +238,9 @@ export const translations = {
     interestNightlife: "Nightlife & Entertainment",
     interestShopping: "Shopping",
     // Deal Detail Page
+    campaignConditions: 'Campaign Conditions',
+    validLocations: 'Valid Locations',
+    daysLeft: 'days left',
     rateThisDeal: 'Rate this deal',
     submitRating: 'Submit Rating',
     ratingSubmittedSuccess: 'Thank you for your rating!',
@@ -602,6 +605,9 @@ export const translations = {
     interestNightlife: "Gece Hayatı ve Eğlence",
     interestShopping: "Alışveriş",
     // Deal Detail Page
+    campaignConditions: 'Kampanya Koşulları',
+    validLocations: 'Geçerli Lokasyonlar',
+    daysLeft: 'Gün Kaldı',
     rateThisDeal: 'Bu fırsatı değerlendir',
     submitRating: 'Değerlendirmeyi Gönder',
     ratingSubmittedSuccess: 'Değerlendirmeniz için teşekkür ederiz!',

@@ -6,7 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActivity } from '../contexts/UserActivityContext';
 import { SubscriptionTier, Deal } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon } from './Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon, StarIcon } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import QRCode from 'react-qr-code';
@@ -115,8 +115,6 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
     const [hasRated, setHasRated] = useState(false);
-    const [showFullDescription, setShowFullDescription] = useState(false);
-
     const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
 
     const handleRedeemConfirm = async (dontShowAgain: boolean) => {
@@ -147,17 +145,19 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
     if (!isPreview && userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-brand-bg p-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{t('upgradeToAccess') || 'Upgrade to Access'}</h2>
-                <p className="text-gray-600 dark:text-brand-text-muted mb-6 text-center">
-                    This deal requires {deal.requiredTier} membership.
-                </p>
-                <button
-                    onClick={() => navigate('/profile')}
-                    className="bg-brand-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors"
-                >
-                    {t('upgradeMembership') || 'Upgrade Membership'}
-                </button>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] p-4 text-center">
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 max-w-md w-full backdrop-blur-md shadow-2xl">
+                    <h2 className="text-2xl font-serif text-gold-400 mb-4">{t('upgradeToAccess') || 'Upgrade to Access'}</h2>
+                    <p className="text-white/60 mb-6">
+                        This deal requires <span className="text-gold-300 font-bold">{deal.requiredTier}</span> membership.
+                    </p>
+                    <button
+                        onClick={() => navigate('/profile')}
+                        className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-6 py-3 rounded-xl font-bold hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all"
+                    >
+                        {t('upgradeMembership') || 'Upgrade Membership'}
+                    </button>
+                </div>
             </div>
         );
     }
@@ -199,22 +199,32 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
         return diffDays;
     }, [deal.expiresAt]);
 
+    const originalPriceFormatted = deal.originalPrice > 0 ? `₺${deal.originalPrice}` : '';
+    const discountedPriceFormatted = deal.originalPrice > 0 ? `₺${deal.discountedPrice}` : (language === 'tr' ? `%${deal.discountPercentage}` : `${deal.discountPercentage}%`);
+
     return (
-        <div className="bg-gray-50 dark:bg-brand-bg min-h-screen relative pb-24">
+        <div className="bg-[#0f172a] min-h-screen relative pb-32 font-body text-white selection:bg-gold-500/30">
+            {/* Background Gradients */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-brand-bg/80 to-brand-bg z-0"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] opacity-30"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-gold-500/10 rounded-full blur-[100px] opacity-20"></div>
+            </div>
+
             {/* Header Actions (Absolute) */}
-            <div className="absolute top-0 left-0 right-0 z-30 p-4 flex justify-between items-center">
+            <div className="absolute top-0 left-0 right-0 z-30 p-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
                 <button
                     onClick={() => isPreview ? null : navigate(-1)}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 text-white"
+                    className="w-12 h-12 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 group"
                     aria-label="Go back"
                     disabled={isPreview}
                 >
-                    <ChevronLeftIcon className="h-6 w-6" />
+                    <ChevronLeftIcon className="h-6 w-6 text-white group-hover:-translate-x-1 transition-transform" />
                 </button>
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                     <button
                         onClick={handleShare}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 text-white"
+                        className="w-12 h-12 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 text-white"
                         aria-label={t('shareDeal')}
                     >
                         <ShareIcon className="h-5 w-5" />
@@ -231,13 +241,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                     await unsaveDeal(deal.id);
                                 } else {
                                     await saveDeal(deal.id);
-                                    triggerConfetti('simple');
+                                    triggerConfetti('default');
                                 }
                             }
                         }}
-                        className={`w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-md border shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 ${isDealSaved(deal.id)
-                            ? 'bg-red-500 border-red-500 text-white'
-                            : 'bg-white/20 border-white/30 text-white'
+                        className={`w-12 h-12 flex items-center justify-center rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-all duration-300 ${isDealSaved(deal.id)
+                            ? 'bg-gradient-to-br from-red-600 to-red-500 border-red-400 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
+                            : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                             }`}
                     >
                         <HeartIcon className={`h-6 w-6 ${isDealSaved(deal.id) ? 'fill-current' : ''}`} />
@@ -246,98 +256,114 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Hero Image */}
-            <div className="relative h-80 w-full overflow-hidden bg-gray-900">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 z-10"></div>
+            <div className="relative h-[45vh] w-full overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/20 to-transparent z-10"></div>
                 <img
                     src={getHeroImageUrl(deal.imageUrl)}
                     alt={title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transform scale-105"
                 />
             </div>
 
             {/* Floating Content Card */}
-            <div className="relative z-20 -mt-10 px-4">
-                <div className="bg-white dark:bg-brand-surface rounded-3xl shadow-xl p-6 min-h-[500px]">
+            <div className="relative z-20 -mt-16 px-4 max-w-4xl mx-auto">
+                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.4)] p-8 relative overflow-hidden">
+                    {/* Top Glow */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-gold-500/50 blur-lg rounded-full"></div>
 
                     {/* Brand & Title Header */}
-                    <div className="flex items-start gap-4 mb-6">
-                        <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-white shadow-md p-1 border border-gray-100 overflow-hidden">
+                    <div className="flex items-start gap-5 mb-8">
+                        <div className="flex-shrink-0 w-20 h-20 rounded-2xl bg-[#0f172a] shadow-lg p-1 border border-gold-500/30 overflow-hidden relative group">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             {deal.companyLogoUrl ? (
-                                <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-contain" />
+                                <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover rounded-xl" />
                             ) : (
-                                <div className="w-full h-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold text-xl">
+                                <div className="w-full h-full flex items-center justify-center text-gold-400 font-bold text-3xl font-heading">
                                     {deal.vendor.charAt(0)}
                                 </div>
                             )}
                         </div>
                         <div className="flex-1 pt-1">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-tight mb-1">{title}</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{deal.vendor}</p>
+                            <h2 className="text-3xl font-heading font-bold text-white leading-tight mb-2 drop-shadow-lg">{title}</h2>
+                            <p className="text-lg text-gold-200/80 font-medium tracking-wide">{deal.vendor}</p>
+
+                            {/* Rating */}
+                            <div className="flex items-center mt-2 gap-2">
+                                <div className="flex">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <StarIcon key={star} className={`w-4 h-4 ${star <= deal.rating ? 'text-gold-400 fill-current' : 'text-gray-600'}`} />
+                                    ))}
+                                </div>
+                                <span className="text-white/40 text-sm">({deal.ratingCount} {t('ratings')})</span>
+                            </div>
                         </div>
                     </div>
 
                     {/* Days Left Badge */}
                     {daysLeft !== null && (
-                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-6">
-                            <ClockIcon className="w-4 h-4" />
-                            <span>{daysLeft} {t('daysLeft') || 'days left'}</span>
+                        <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full mb-8 shadow-inner">
+                            <ClockIcon className="w-4 h-4 text-gold-400 animate-pulse" />
+                            <span className="text-gold-100 font-medium text-sm tracking-wide">
+                                {daysLeft} {t('daysLeft')}
+                            </span>
                         </div>
                     )}
 
                     {/* Tabs */}
-                    <div className="flex border-b border-gray-100 dark:border-white/10 mb-6">
+                    <div className="flex border-b border-white/10 mb-8 relative">
+                        {/* Active Tab Indicator Background (Optional Animation could be added here) */}
                         <button
                             onClick={() => setActiveTab('conditions')}
-                            className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'conditions'
-                                ? 'text-brand-primary'
-                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                            className={`flex-1 pb-4 text-sm font-bold tracking-wider uppercase transition-all relative ${activeTab === 'conditions'
+                                ? 'text-gold-400'
+                                : 'text-white/40 hover:text-white/70'
                                 }`}
                         >
-                            {t('campaignConditions') || 'Campaign Conditions'}
+                            {t('campaignConditions')}
                             {activeTab === 'conditions' && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary rounded-t-full"></div>
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent shadow-[0_0_10px_rgba(212,175,55,0.7)]"></div>
                             )}
                         </button>
                         <button
                             onClick={() => setActiveTab('locations')}
-                            className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${activeTab === 'locations'
-                                ? 'text-brand-primary'
-                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                            className={`flex-1 pb-4 text-sm font-bold tracking-wider uppercase transition-all relative ${activeTab === 'locations'
+                                ? 'text-gold-400'
+                                : 'text-white/40 hover:text-white/70'
                                 }`}
                         >
-                            {t('validLocations') || 'Valid Locations'}
+                            {t('validLocations')}
                             {activeTab === 'locations' && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary rounded-t-full"></div>
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent shadow-[0_0_10px_rgba(212,175,55,0.7)]"></div>
                             )}
                         </button>
                     </div>
 
                     {/* Tab Content */}
-                    <div className="animate-fade-in">
+                    <div className="animate-fade-in min-h-[200px]">
                         {activeTab === 'conditions' ? (
-                            <div className="space-y-4">
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
-                                    <p className="leading-relaxed">{description}</p>
+                            <div className="space-y-6">
+                                <div className="prose prose-invert max-w-none text-white/80 leading-relaxed font-light text-lg">
+                                    <p>{description}</p>
                                 </div>
 
                                 {/* Terms Link */}
                                 {deal.termsUrl && (
-                                    <div className="pt-4 border-t border-gray-100 dark:border-white/5">
+                                    <div className="pt-6 border-t border-white/10">
                                         <a
                                             href={deal.termsUrl || '#'}
                                             onClick={handleTermsClick}
-                                            className="flex items-center gap-2 text-brand-primary hover:text-brand-secondary font-medium text-sm"
+                                            className="inline-flex items-center gap-2 text-gold-400 hover:text-gold-300 font-semibold text-sm transition-colors group"
                                         >
-                                            <LinkIcon className="w-4 h-4" />
+                                            <LinkIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                                             {t('viewTermsAndConditions')}
                                         </a>
                                     </div>
                                 )}
 
-                                {/* Rating (Moved inside conditions for now) */}
-                                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5">
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t('rateThisDeal')}</h3>
-                                    <div className="flex justify-center">
+                                {/* Rating Section */}
+                                <div className="mt-8 pt-6 border-t border-white/10">
+                                    <h3 className="text-sm font-semibold text-white/90 mb-4 uppercase tracking-wider">{t('rateThisDeal')}</h3>
+                                    <div className="flex justify-center bg-white/5 rounded-2xl p-4 border border-white/5">
                                         <StarRatingInput
                                             onRate={handleRate}
                                             disabled={isPreview || !user || (user && !user.redemptions?.some(r => r.dealId === deal.id))}
@@ -346,11 +372,12 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {/* Map Placeholder or List */}
-                                <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 flex flex-col items-center justify-center text-center h-48">
-                                    <LocationMarkerIcon className="w-8 h-8 text-gray-400 mb-2" />
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="space-y-6">
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                                        <LocationMarkerIcon className="w-8 h-8 text-gold-400" />
+                                    </div>
+                                    <p className="text-white/70 font-light text-lg">
                                         {deal.latitude && deal.longitude
                                             ? "View location on map"
                                             : (t('validAtAllLocations') || "Valid at all branch locations.")}
@@ -358,23 +385,23 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                     {deal.latitude && deal.longitude && (
                                         <button
                                             onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
-                                            className="mt-3 text-brand-primary text-sm font-semibold hover:underline"
+                                            className="mt-6 px-6 py-2 rounded-full border border-gold-500/30 text-gold-400 text-sm font-bold hover:bg-gold-500/10 transition-colors"
                                         >
                                             Open in Maps
                                         </button>
                                     )}
                                 </div>
 
-                                <div className="space-y-3 mt-4">
-                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <div className="space-y-4 pt-4 border-t border-white/10">
+                                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">
                                         {t('contactInfo') || 'Contact Information'}
                                     </h4>
                                     {deal.companyWebsiteUrl && (
-                                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                                                <GlobeIcon className="w-4 h-4" />
+                                        <div className="flex items-center gap-4 text-white/70 hover:text-white transition-colors group cursor-pointer">
+                                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-gold-500/30 transition-colors">
+                                                <GlobeIcon className="w-5 h-5 text-white/50 group-hover:text-gold-400 transition-colors" />
                                             </div>
-                                            <a href={deal.companyWebsiteUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">Visit Website</a>
+                                            <a href={deal.companyWebsiteUrl} target="_blank" rel="noopener noreferrer" className="font-medium">Visit Website</a>
                                         </div>
                                     )}
                                 </div>
@@ -384,40 +411,49 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 </div>
             </div>
 
-            {/* Sticky Footer */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-brand-bg border-t border-gray-100 dark:border-white/10 p-4 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-                <button
-                    onClick={() => {
-                        if (isPreview) {
-                            handleRedeemConfirm(false);
-                        } else if (!user) {
-                            navigate('/login');
-                        } else {
-                            const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
-                            if (dontShowAgain) {
+            {/* Sticky Footer Bar */}
+            <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-white/10 p-4 z-40 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-area-pb">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
+                    <div className="hidden md:flex flex-col">
+                        <span className="text-white/40 text-xs line-through">{originalPriceFormatted}</span>
+                        <div className="text-2xl font-bold bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 bg-clip-text text-transparent">
+                            {discountedPriceFormatted}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            if (isPreview) {
                                 handleRedeemConfirm(false);
+                            } else if (!user) {
+                                navigate('/login');
                             } else {
-                                setIsWarningModalOpen(true);
+                                const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
+                                if (dontShowAgain) {
+                                    handleRedeemConfirm(false);
+                                } else {
+                                    setIsWarningModalOpen(true);
+                                }
                             }
-                        }
-                    }}
-                    className="w-full bg-brand-primary text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:bg-brand-secondary transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                    <span>{t('useCoupon') || 'Get Code'}</span>
-                </button>
+                        }}
+                        className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg"
+                    >
+                        <span>{t('useCoupon') || 'Get Code'}</span>
+                    </button>
+                </div>
             </div>
 
-            {/* Modals (Keep existing modals) */}
+            {/* Modals */}
             <Modal
                 isOpen={isWarningModalOpen}
                 onClose={() => setIsWarningModalOpen(false)}
                 title={t('redemptionWarningTitle')}
             >
+                {/* Existing Modal Content - You might want to style this too if your Modal component isn't globally styled */}
                 <div className="p-4">
                     <p className="text-gray-600 dark:text-brand-text-muted mb-6">
                         {t('redemptionWarningBody')}
                     </p>
-
                     <div className="flex items-center mb-6">
                         <input
                             type="checkbox"
@@ -435,7 +471,6 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             {t('dontShowAgain')}
                         </label>
                     </div>
-
                     <div className="flex gap-4">
                         <button
                             onClick={() => setIsWarningModalOpen(false)}
@@ -506,7 +541,6 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     </div>
                     <div>
                         <h4 className="font-semibold text-gray-900 dark:text-brand-text-light mb-2">{t('generalTerms')}</h4>
-
                         {deal.termsUrl && !isTermsUrl(deal.termsUrl) && deal.termsUrl !== '#' ? (
                             <p className="whitespace-pre-wrap">{deal.termsUrl}</p>
                         ) : (
