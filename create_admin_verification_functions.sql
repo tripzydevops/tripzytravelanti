@@ -1,5 +1,6 @@
 -- Function to get all users mixed with their profile data and auth verification status
-create or replace function get_users_with_status() returns table (
+-- Renamed to get_admin_users_list to avoid caching issues
+create or replace function get_admin_users_list() returns table (
         id uuid,
         email text,
         email_confirmed_at timestamptz,
@@ -24,9 +25,9 @@ set search_path = public,
     auth language plpgsql as $$ begin -- Check if the requesting user is an admin
     if not exists (
         select 1
-        from public.profiles
-        where id = auth.uid()
-            and is_admin = true
+        from public.profiles p_admin
+        where p_admin.id = auth.uid()
+            and p_admin.is_admin = true
     ) then return;
 -- Return empty if not admin
 end if;
@@ -36,12 +37,12 @@ select au.id,
     au.email_confirmed_at,
     au.last_sign_in_at,
     au.created_at,
-    p.name,
-    p.tier,
+    p.name::text,
+    p.tier::text,
     p.is_admin,
-    p.avatar_url,
-    p.mobile,
-    p.status,
+    p.avatar_url::text,
+    p.mobile::text,
+    p.status::text,
     p.extra_redemptions,
     p.referred_by,
     p.notification_preferences,
@@ -49,9 +50,9 @@ select au.id,
         (
             select jsonb_agg(item)
             from (
-                    select deal_id
-                    from public.saved_deals
-                    where user_id = au.id
+                    select sd.deal_id
+                    from public.saved_deals sd
+                    where sd.user_id = au.id
                 ) item
         ),
         '[]'::jsonb
@@ -60,19 +61,19 @@ select au.id,
         (
             select jsonb_agg(item)
             from (
-                    select id,
-                        deal_id,
-                        user_id,
-                        redeemed_at
-                    from public.deal_redemptions
-                    where user_id = au.id
+                    select dr.id,
+                        dr.deal_id,
+                        dr.user_id,
+                        dr.redeemed_at
+                    from public.deal_redemptions dr
+                    where dr.user_id = au.id
                 ) item
         ),
         '[]'::jsonb
     ) as deal_redemptions,
-    p.address,
-    p.billing_address,
-    p.role
+    p.address::text,
+    p.billing_address::text,
+    p.role::text
 from auth.users au
     left join public.profiles p on p.id = au.id
 order by au.created_at desc;

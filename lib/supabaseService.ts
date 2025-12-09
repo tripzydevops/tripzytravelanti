@@ -117,7 +117,7 @@ export async function updateUserProfile(
 
 export async function getAllUsers(): Promise<User[]> {
     const { data, error } = await supabase
-        .rpc('get_users_with_status');
+        .rpc('get_admin_users_list', {});
 
     if (error) {
         console.error('Error fetching users:', error);
