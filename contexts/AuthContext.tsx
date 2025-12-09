@@ -50,7 +50,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (!profile) {
-          console.error('Profile not found after retries. Trigger may have failed.');
+          console.warn('Profile not found after retries. Attempting client-side creation...');
+          try {
+            // Fallback: Create profile client-side if trigger failed
+            const { error: insertError } = await supabase.from('profiles').insert({
+              id: authUser.id,
+              email: authUser.email,
+              name: authUser.user_metadata?.full_name || authUser.email,
+              avatar_url: authUser.user_metadata?.avatar_url,
+              tier: 'FREE',
+              referred_by: authUser.user_metadata?.referred_by
+            });
+
+            if (!insertError) {
+              profile = await getUserProfile(authUser.id);
+            } else {
+              console.error('Failed to create profile client-side:', insertError);
+            }
+          } catch (e) {
+            console.error('Error in client-side profile creation:', e);
+          }
         }
       }
 
