@@ -203,7 +203,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const discountedPriceFormatted = deal.originalPrice > 0 ? `₺${deal.discountedPrice}` : (language === 'tr' ? `%${deal.discountPercentage}` : `${deal.discountPercentage}%`);
 
     return (
-        <div className="bg-[#0f172a] min-h-screen relative pb-32 font-body text-white selection:bg-gold-500/30">
+        <div className="bg-[#0f172a] min-h-screen relative pb-40 font-body text-white selection:bg-gold-500/30">
             {/* Background Gradients */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-brand-bg/80 to-brand-bg z-0"></div>
@@ -411,35 +411,42 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 </div>
             </div>
 
-            {/* Sticky Footer Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-white/10 p-4 z-[60] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] safe-area-pb">
-                <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
-                    <div className="hidden md:flex flex-col">
-                        <span className="text-white/40 text-xs line-through">{originalPriceFormatted}</span>
-                        <div className="text-2xl font-bold bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 bg-clip-text text-transparent">
-                            {discountedPriceFormatted}
+            {/* Action Bar - Static (In Flow) */}
+            <div className="relative z-30 mt-8 px-4 max-w-4xl mx-auto mb-8">
+                <div className="bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="hidden md:flex flex-col">
+                            <span className="text-white/40 text-xs line-through">{originalPriceFormatted}</span>
+                            <div className="text-2xl font-bold bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 bg-clip-text text-transparent">
+                                {discountedPriceFormatted}
+                            </div>
                         </div>
-                    </div>
 
-                    <button
-                        onClick={() => {
-                            if (isPreview) {
-                                handleRedeemConfirm(false);
-                            } else if (!user) {
-                                navigate('/login');
-                            } else {
-                                const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
-                                if (dontShowAgain) {
+                        <button
+                            onClick={() => {
+                                console.log('Redeem button clicked');
+                                if (isPreview) {
+                                    console.log('Is preview, confirming');
                                     handleRedeemConfirm(false);
+                                } else if (!user) {
+                                    console.log('No user, redirecting to login');
+                                    navigate('/login');
                                 } else {
-                                    setIsWarningModalOpen(true);
+                                    const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
+                                    console.log('User logged in. DontShowAgain:', dontShowAgain);
+                                    if (dontShowAgain) {
+                                        handleRedeemConfirm(false);
+                                    } else {
+                                        console.log('Opening warning modal');
+                                        setIsWarningModalOpen(true);
+                                    }
                                 }
-                            }
-                        }}
-                        className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg"
-                    >
-                        <span>{t('useCoupon') || 'Get Code'}</span>
-                    </button>
+                            }}
+                            className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer"
+                        >
+                            <span>{t('useCoupon') || 'Get Code'}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
