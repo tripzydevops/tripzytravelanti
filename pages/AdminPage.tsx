@@ -10,6 +10,7 @@ import AdminPendingApprovalsTab from '../components/admin/AdminPendingApprovalsT
 import AdminContentTab from '../components/admin/AdminContentTab';
 import AdminFlightRoutesTab from '../components/admin/AdminFlightRoutesTab';
 import AdminBackgroundsTab from '../components/admin/AdminBackgroundsTab';
+import { AdminAnnouncementsTab } from '../components/admin/AdminAnnouncementsTab';
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
