@@ -12,12 +12,71 @@ import FlightSearchWidget from '../components/FlightSearchWidget';
 import { AdBanner } from '../components/AdBanner';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
-import { getBackgroundImages } from '../lib/supabaseService';
+import { getBackgroundImages, getFlashDeals } from '../lib/supabaseService';
+import { Deal } from '../types';
+import { Helmet } from 'react-helmet-async';
+import FlashDealCard from '../components/FlashDealCard';
 
 // ... (existing imports)
 
 const HomePage: React.FC = () => {
-  // ... (existing state)
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { deals, loading, loadDealsPaginated, total } = useDeals();
+  const { user } = useAuth();
+  const {
+    searchQuery,
+    setSearchQuery,
+    categoryFilter,
+    setCategoryFilter,
+    ratingFilter,
+    setRatingFilter,
+    userLocation,
+    isLocationEnabled
+  } = useSearch();
+
+  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+  const [recentSearches, setRecentSearches] = React.useState<string[]>([]);
+  const [flightWidgetParams, setFlightWidgetParams] = React.useState<{ origin?: string, destination?: string, departDate?: string }>({});
+  const flightWidgetRef = React.useRef<HTMLDivElement>(null);
+  const [flashDeals, setFlashDeals] = React.useState<Deal[]>([]);
+
+  // Local Storage for Recent Searches
+  React.useEffect(() => {
+    try {
+      const storedSearches = localStorage.getItem('wanderwise_recent_searches');
+      if (storedSearches) {
+        setRecentSearches(JSON.parse(storedSearches));
+      }
+    } catch (error) {
+      console.error("Failed to parse recent searches from localStorage", error);
+    }
+  }, []);
+  React.useEffect(() => {
+    const fetchFlashDeals = async () => {
+      const deals = await getFlashDeals();
+      setFlashDeals(deals);
+    };
+    fetchFlashDeals();
+  }, []);
+
+  const { content, getContent } = useContent();
+  const { language } = useLanguage();
+
+  // Get dynamic content
+  const heroTitle = getContent('home', 'hero', 'title');
+  const heroSubtitle = getContent('home', 'hero', 'subtitle');
+  const heroImage = getContent('home', 'hero', 'image_url');
+  const categoriesTitle = getContent('home', 'categories', 'title');
+  const featuredDealsTitle = getContent('home', 'featured_deals', 'title');
+  const flightsTitle = getContent('home', 'flights', 'title');
+
+  const displayTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
+  const displaySubtitle = language === 'tr' ? (heroSubtitle?.content_value_tr || heroSubtitle?.content_value) : heroSubtitle?.content_value;
+  const displayImage = heroImage?.content_value || 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2070';
+  const displayCategoriesTitle = language === 'tr' ? (categoriesTitle?.content_value_tr || categoriesTitle?.content_value) : categoriesTitle?.content_value;
+  const displayFeaturedDealsTitle = language === 'tr' ? (featuredDealsTitle?.content_value_tr || featuredDealsTitle?.content_value) : featuredDealsTitle?.content_value;
+  const displayFlightsTitle = language === 'tr' ? (flightsTitle?.content_value_tr || flightsTitle?.content_value) : flightsTitle?.content_value;
 
   // ==========================================
   // Dynamic Background Logic
@@ -53,6 +112,125 @@ const HomePage: React.FC = () => {
     }, 5000); // Change every 5 seconds
     return () => clearInterval(intervalId);
   }, [backgroundImages]);
+
+  // Pagination State
+  const [page, setPage] = React.useState(1);
+  const DEALS_PER_PAGE = 12;
+  const hasMore = deals.length < total;
+
+  // Fetch deals when filters change
+  React.useEffect(() => {
+    const fetchDeals = async () => {
+      // Reset page to 1 when filters change
+      setPage(1);
+      await loadDealsPaginated(1, DEALS_PER_PAGE, {
+        category: categoryFilter,
+        search: searchQuery,
+        rating: ratingFilter
+      }, false); // false = reset list
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      fetchDeals();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [categoryFilter, searchQuery, ratingFilter, loadDealsPaginated]);
+
+  const handleLoadMore = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await loadDealsPaginated(nextPage, DEALS_PER_PAGE, {
+      category: categoryFilter,
+      search: searchQuery,
+      rating: ratingFilter
+    }, true); // true = append
+  };
+
+  const saveSearch = (query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    const updatedSearches = [
+      trimmedQuery,
+      ...recentSearches.filter(s => s.toLowerCase() !== trimmedQuery.toLowerCase())
+    ].slice(0, 5);
+
+    setRecentSearches(updatedSearches);
+    localStorage.setItem('wanderwise_recent_searches', JSON.stringify(updatedSearches));
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      saveSearch(searchQuery);
+      e.currentTarget.blur();
+    }
+  };
+
+  const handleRecentSearchClick = (query: string) => {
+    setSearchQuery(query);
+    saveSearch(query);
+    setIsSearchFocused(false);
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem('wanderwise_recent_searches');
+  };
+
+  const categories = [
+    { key: 'All', name: t('categoryAll') },
+    { key: 'Flights', name: t('categoryFlights') || 'Flights' },
+    { key: 'Food & Dining', name: t('categoryDining') },
+    { key: 'Services', name: t('categoryWellness') },
+    { key: 'Travel', name: t('categoryTravel') },
+  ];
+
+  const ratingFilters = [
+    { value: 0, label: t('allRatings') },
+    { value: 4, label: `4+ ★` },
+    { value: 3, label: `3+ ★` },
+  ];
+
+  // No more client-side filtering
+  const filteredDeals = deals;
+
+  const flightRoutes = deals.filter(d => d.category === 'FlightWidget');
+
+  const handleRouteClick = (route: any) => {
+    setFlightWidgetParams({
+      origin: route.vendor,
+      destination: route.redemptionCode,
+      departDate: route.expiresAt
+    });
+    flightWidgetRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const [recommendations, setRecommendations] = React.useState<Deal[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (user && deals.length > 0) {
+        setLoadingRecommendations(true);
+        try {
+          // Get stored preferences
+          const storedPrefs = localStorage.getItem('tripzy_user_preferences');
+          const preferences = storedPrefs ? JSON.parse(storedPrefs) : undefined;
+
+          const recs = await getAIRecommendations(user, deals, preferences);
+          setRecommendations(recs);
+        } catch (error) {
+          console.error("Failed to fetch recommendations", error);
+        } finally {
+          setLoadingRecommendations(false);
+        }
+      }
+    };
+
+    fetchRecommendations();
+  }, [user, deals]);
 
   return (
     <div className="min-h-screen">
