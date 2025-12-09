@@ -88,11 +88,11 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
                         <div className="flex items-end justify-between mt-auto">
                             <div className="flex flex-col">
                                 <span className="text-white/40 text-sm line-through font-medium mb-1">
-                                    ${deal.originalPrice}
+                                    ₺{deal.originalPrice}
                                 </span>
                                 <div className="flex items-baseline gap-3">
                                     <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 shadow-sm">
-                                        ${deal.discountedPrice}
+                                        ₺{deal.discountedPrice}
                                     </span>
                                     {deal.discountPercentage && (
                                         <span className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-400 px-2 py-1 rounded-lg text-sm font-bold backdrop-blur-sm">

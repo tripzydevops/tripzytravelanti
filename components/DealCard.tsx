@@ -174,9 +174,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
           <div className="flex justify-between items-end">
             <div className="flex flex-col">
-              {deal.originalPrice > 0 && <span className="text-xs text-white/40 line-through mb-0.5">${deal.originalPrice}</span>}
+              {deal.originalPrice > 0 && <span className="text-xs text-white/40 line-through mb-0.5">₺{deal.originalPrice}</span>}
               <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 shadow-sm">
-                {deal.originalPrice > 0 ? `$${deal.discountedPrice}` : (language === 'tr' ? `%${discount}` : `${discount}%`)}
+                {deal.originalPrice > 0 ? `₺${deal.discountedPrice}` : (language === 'tr' ? `%${discount}` : `${discount}%`)}
               </div>
             </div>
             <p className={`text-xs font-semibold ${daysLeftText === t('expired') ? 'text-red-400' : 'text-emerald-400'} bg-white/5 px-2 py-1 rounded-md border border-white/5`}>
