@@ -11,6 +11,7 @@ import {
   getReferralNetwork,
   updatePassword,
   deleteUserProfile,
+  redeemDeal as redeemDealService,
 } from '../lib/supabaseService';
 
 interface AuthContextType {
@@ -26,6 +27,7 @@ interface AuthContextType {
   updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  redeemDeal: (dealId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -311,6 +313,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Redeem a deal
+  const redeemDeal = useCallback(async (dealId: string) => {
+    if (!user) return;
+    try {
+      const redemption = await redeemDealService(user.id, dealId);
+
+      // Update local state
+      setUser(currentUser => {
+        if (!currentUser) return null;
+        const currentRedemptions = currentUser.redemptions || [];
+        return {
+          ...currentUser,
+          redemptions: [...currentRedemptions, redemption]
+        };
+      });
+    } catch (error) {
+      console.error('Error redeeming deal:', error);
+      throw error;
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -325,6 +348,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signInWithGoogle,
         updatePassword: handleUpdatePassword,
         updateUserNotificationPreferences,
+        redeemDeal,
       }}
     >
       {children}

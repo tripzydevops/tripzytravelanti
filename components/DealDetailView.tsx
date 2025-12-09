@@ -424,20 +424,19 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
                         <button
                             onClick={() => {
-                                console.log('Redeem button clicked');
                                 if (isPreview) {
-                                    console.log('Is preview, confirming');
                                     handleRedeemConfirm(false);
                                 } else if (!user) {
-                                    console.log('No user, redirecting to login');
                                     navigate('/login');
                                 } else {
+                                    if (!onRedeem) {
+                                        console.error('Redeem function not provided');
+                                        return;
+                                    }
                                     const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
-                                    console.log('User logged in. DontShowAgain:', dontShowAgain);
                                     if (dontShowAgain) {
                                         handleRedeemConfirm(false);
                                     } else {
-                                        console.log('Opening warning modal');
                                         setIsWarningModalOpen(true);
                                     }
                                 }

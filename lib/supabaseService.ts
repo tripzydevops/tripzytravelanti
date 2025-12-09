@@ -598,6 +598,36 @@ export async function getSavedDeals(userId: string): Promise<string[]> {
 }
 
 // =====================================================
+// REDEMPTION OPERATIONS
+// =====================================================
+export const redeemDeal = async (userId: string, dealId: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('redemptions')
+            .insert({
+                user_id: userId,
+                deal_id: dealId,
+                redeemed_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Transform snake_case to camelCase
+        return {
+            id: data.id,
+            userId: data.user_id,
+            dealId: data.deal_id,
+            redeemedAt: data.redeemed_at
+        };
+    } catch (error) {
+        console.error('Error redeeming deal:', error);
+        throw error;
+    }
+};
+
+// =====================================================
 // REFERRAL OPERATIONS
 // =====================================================
 
