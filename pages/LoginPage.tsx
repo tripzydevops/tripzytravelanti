@@ -86,21 +86,14 @@ const LoginPage: React.FC = () => {
       const images = await getBackgroundImages(timeOfDay);
       if (images && images.length > 0) {
         setBackgroundImages(images.map(img => img.url));
+        // Pick a random image from the set to display
+        setCurrentImageIndex(Math.floor(Math.random() * images.length));
       }
     };
     fetchBackgrounds();
   }, []);
 
-  // Rotate images
-  useEffect(() => {
-    if (backgroundImages.length <= 1) return;
-
-    const intervalId = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
-    }, 5000); // Change every 5 seconds
-
-    return () => clearInterval(intervalId);
-  }, [backgroundImages]);
+  // Removed auto-rotation interval. Use static random image per session.
 
 
   return (

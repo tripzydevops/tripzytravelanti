@@ -995,3 +995,69 @@ export async function getBackgroundImages(timeOfDay?: string): Promise<Backgroun
 
     return data as BackgroundImage[];
 }
+
+export async function uploadBackgroundImage(file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('backgrounds')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        throw uploadError;
+    }
+
+    const { data } = supabase.storage
+        .from('backgrounds')
+        .getPublicUrl(filePath);
+
+    return data.publicUrl;
+}
+
+export async function addBackgroundImage(url: string, timeOfDay: string) {
+    const { data, error } = await supabase
+        .from('background_images')
+        .insert({
+            url,
+            time_of_day: timeOfDay,
+            is_active: true
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding background image:', error);
+        throw error;
+    }
+
+    return data;
+}
+
+export async function deleteBackgroundImage(id: string, url: string) {
+    // Delete from DB first
+    const { error } = await supabase
+        .from('background_images')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting background image record:', error);
+        throw error;
+    }
+
+    // Try to delete from storage if it's a supabase storage URL
+    if (url.includes('storage/v1/object/public/backgrounds/')) {
+        const path = url.split('backgrounds/')[1];
+        if (path) {
+            const { error: storageError } = await supabase.storage
+                .from('backgrounds')
+                .remove([path]);
+
+            if (storageError) {
+                console.warn('Error deleting file from storage (orphan file may remain):', storageError);
+            }
+        }
+    }
+}
