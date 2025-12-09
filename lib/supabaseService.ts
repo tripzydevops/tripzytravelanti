@@ -684,16 +684,7 @@ export async function getDirectReferrals(userId: string): Promise<string[]> {
 // DEAL REDEMPTION OPERATIONS
 // =====================================================
 
-export async function redeemDeal(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('deal_redemptions')
-        .insert({ user_id: userId, deal_id: dealId });
 
-    if (error) {
-        console.error('Error redeeming deal:', error);
-        throw error;
-    }
-}
 
 export async function getUserRedemptions(userId: string): Promise<any[]> {
     const { data, error } = await supabase
