@@ -117,12 +117,7 @@ export async function updateUserProfile(
 
 export async function getAllUsers(): Promise<User[]> {
     const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-      *,
-      saved_deals:saved_deals(deal_id),
-      deal_redemptions:deal_redemptions(id, deal_id, user_id, redeemed_at)
-    `);
+        .rpc('get_users_with_status');
 
     if (error) {
         console.error('Error fetching users:', error);
@@ -131,9 +126,9 @@ export async function getAllUsers(): Promise<User[]> {
 
     return data.map((user: any) => ({
         id: user.id,
-        name: user.name,
+        name: user.name || 'Unknown',
         email: user.email,
-        tier: user.tier as SubscriptionTier,
+        tier: (user.tier as SubscriptionTier) || SubscriptionTier.FREE,
         isAdmin: user.is_admin,
         savedDeals: user.saved_deals?.map((sd: { deal_id: string }) => sd.deal_id) || [],
         avatarUrl: user.avatar_url,
@@ -149,10 +144,21 @@ export async function getAllUsers(): Promise<User[]> {
         mobile: user.mobile,
         address: user.address,
         billingAddress: user.billing_address,
-
         role: user.role,
-        status: user.status,
+        status: user.status || 'active',
+        emailConfirmedAt: user.email_confirmed_at,
+        lastSignInAt: user.last_sign_in_at,
+        createdAt: user.created_at
     }));
+}
+
+export async function confirmUserEmail(userId: string) {
+    const { error } = await supabase.rpc('admin_confirm_user_email', { target_user_id: userId });
+
+    if (error) {
+        console.error('Error confirming user email:', error);
+        throw error;
+    }
 }
 
 export async function deleteUserProfile(userId: string) {

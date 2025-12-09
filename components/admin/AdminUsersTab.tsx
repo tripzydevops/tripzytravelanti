@@ -6,7 +6,7 @@ import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals, getUserTransactions } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions, confirmUserEmail } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -53,6 +53,20 @@ const AdminUsersTab: React.FC = () => {
         setPendingDeals(fetchedDeals);
     };
 
+    const handleVerifyUser = async (userId: string) => {
+        if (window.confirm('Are you sure you want to manually verify this user\'s email?')) {
+            try {
+                await confirmUserEmail(userId);
+                setShowSuccess('User email verified successfully');
+                setTimeout(() => setShowSuccess(''), 3000);
+                refreshUsers();
+            } catch (error) {
+                console.error('Failed to verify user', error);
+                alert('Failed to verify user. Check console for details.');
+            }
+        }
+    };
+
     const sortedUsers = useMemo(() => {
         let filtered = [...users];
 
@@ -69,7 +83,13 @@ const AdminUsersTab: React.FC = () => {
             filtered = filtered.filter(u => u.tier === tierFilter);
         }
 
-        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+        // Sort by Created At DESC (newest first) by default, then Name
+        return filtered.sort((a, b) => {
+            if (a.createdAt && b.createdAt) {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }
+            return a.name.localeCompare(b.name);
+        });
     }, [users, searchQuery, tierFilter]);
 
     const userIdToNameMap = useMemo(() =>
@@ -490,7 +510,22 @@ const AdminUsersTab: React.FC = () => {
                                                 {user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
                                                 {user.status === 'banned' && <span className="ml-2 text-xs bg-red-500 text-white font-bold px-2 py-0.5 rounded-full">Banned</span>}
                                             </th>
-                                            <td className="px-6 py-4">{user.email}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span>{user.email}</span>
+                                                    {user.emailConfirmedAt ? (
+                                                        <span className="flex items-center text-xs text-green-500 mt-1">
+                                                            <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                            Verified
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center text-xs text-yellow-500 mt-1">
+                                                            <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                            Pending Verification
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4">{user.mobile || '-'}</td>
                                             <td className="px-6 py-4">{user.tier}</td>
                                             <td className="px-6 py-4">
@@ -500,6 +535,9 @@ const AdminUsersTab: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4">{renewalDate}</td>
                                             <td className="px-6 py-4 text-right space-x-2">
+                                                {!user.emailConfirmedAt && (
+                                                    <button onClick={() => handleVerifyUser(user.id)} className="font-medium text-blue-500 hover:underline">Verify</button>
+                                                )}
                                                 <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
                                                 <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
                                                 <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>

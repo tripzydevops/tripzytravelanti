@@ -40,6 +40,9 @@ export interface User {
   subscriptionStartDate?: string; // For yearly renewal tracking
   role?: 'user' | 'admin' | 'partner';
   status?: 'active' | 'banned' | 'suspended';
+  emailConfirmedAt?: string | null;
+  lastSignInAt?: string | null;
+  createdAt?: string;
 }
 
 export interface PartnerStats {
