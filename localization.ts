@@ -368,6 +368,12 @@ export const translations = {
     addToWalletShort: 'Add',
     failedToClaimDeal: 'Failed to add deal to wallet.',
     confirmAddToWallet: 'Add to Wallet',
+    // Limit Reached Modal
+    limitReachedTitle: 'Limit Reached',
+    monthlyLimitReached: 'Monthly Limit Reached',
+    upgradePrompt: 'You have used all your redemptions for this month. Upgrade your plan to unlock more amazing deals!',
+    upgradePlan: 'Upgrade Plan',
+    maybeLater: 'Maybe Later',
   },
   tr: {
     // Header
@@ -740,5 +746,11 @@ export const translations = {
     addToWalletShort: 'Ekle',
     failedToClaimDeal: 'Fırsat cüzdana eklenemedi.',
     confirmAddToWallet: 'Cüzdana Ekle',
+    // Limit Reached Modal
+    limitReachedTitle: 'Limit Aşıldı',
+    monthlyLimitReached: 'Aylık Limit Aşıldı',
+    upgradePrompt: 'Bu ayki tüm kullanım haklarınızı doldurdunuz. Daha fazla harika fırsat için planınızı yükseltin!',
+    upgradePlan: 'Planı Yükselt',
+    maybeLater: 'Belki Daha Sonra',
   },
 };

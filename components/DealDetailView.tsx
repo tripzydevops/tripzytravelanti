@@ -116,20 +116,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
     const [hasRated, setHasRated] = useState(false);
     const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
-    const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
+    const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
 
     const handleActionClick = (action: 'redeem' | 'claim') => {
         if (!user) {
             navigate('/login');
             return;
         }
-
-        // If "Don't show again" is set, we might bypass warning?
-        // User requested: "warning should pop up... telling user this count towards limit"
-        // So we strictly SHOW the warning, unless specifically for this new logic we want to respect the flag?
-        // The user said "warning should pop up". Let's force it for now or respect the flag but update text.
-        // Actually, let's respect the flag to be consistent with existing code, but maybe reset it since logic changed?
-        // Simpler: Check flag.
 
         const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
         setPendingAction(action);
@@ -154,13 +147,15 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             } else if (action === 'claim') {
                 await claimDeal(deal.id);
                 triggerConfetti('default');
-                // Optional: Show a toast/success message here? 
-                // For now, button state change (to "In Wallet") is feedback enough?
-                // Or we could show a small modal saying "Added to Wallet"
             }
         } catch (error: any) {
             console.error(`Failed to ${action} deal:`, error);
-            alert(error.message || 'Action failed'); // Basic error handling for limit reached
+            // Check for limit error (including the "Could not determine" one as a safe fallback for now)
+            if (error.message?.includes('limit') || error.message?.includes('Could not determine')) {
+                setIsLimitModalOpen(true);
+            } else {
+                alert(error.message || 'Action failed');
+            }
         } finally {
             setIsWarningModalOpen(false);
             setPendingAction(null);
@@ -600,6 +595,41 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     >
                         {t('close')}
                     </button>
+                </div>
+            </Modal>
+            
+            {/* Limit Reached Modal */}
+            <Modal
+                isOpen={isLimitModalOpen}
+                onClose={() => setIsLimitModalOpen(false)}
+                title={t('limitReachedTitle') || 'Limit Reached'}
+            >
+                <div className="p-6 text-center">
+                    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        {t('monthlyLimitReached') || 'Monthly Limit Reached'}
+                    </h3>
+                    <p className="text-gray-600 dark:text-brand-text-muted mb-6">
+                        {t('upgradePrompt') || 'You have used all your redemptions for this month. Upgrade your plan to unlock more amazing deals!'}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg transform hover:scale-[1.02] transition-all"
+                        >
+                            {t('upgradePlan') || 'Upgrade Plan'}
+                        </button>
+                        <button
+                            onClick={() => setIsLimitModalOpen(false)}
+                            className="text-gray-500 dark:text-brand-text-muted hover:text-gray-700 dark:hover:text-white font-medium"
+                        >
+                            {t('maybeLater') || 'Maybe Later'}
+                        </button>
+                    </div>
                 </div>
             </Modal>
         </div>
