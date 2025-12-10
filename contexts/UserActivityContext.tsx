@@ -1,15 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { saveDeal, unsaveDeal, redeemDeal } from '../lib/supabaseService';
+import { saveDeal, unsaveDeal, redeemDeal, claimDeal } from '../lib/supabaseService';
 import { User } from '../types';
 
 interface UserActivityContextType {
     savedDeals: string[];
+    ownedDeals: string[];
     redemptions: any[]; // using any for now, should be Redemption type if available
     saveDeal: (dealId: string) => Promise<void>;
     unsaveDeal: (dealId: string) => Promise<void>;
+    claimDeal: (dealId: string) => Promise<void>;
     redeemDeal: (dealId: string) => Promise<void>;
     isDealSaved: (dealId: string) => boolean;
+    isDealOwned: (dealId: string) => boolean;
     hasRedeemed: (dealId: string) => boolean;
 }
 
@@ -18,15 +21,18 @@ const UserActivityContext = createContext<UserActivityContextType | undefined>(u
 export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user } = useAuth();
     const [savedDeals, setSavedDeals] = useState<string[]>([]);
+    const [ownedDeals, setOwnedDeals] = useState<string[]>([]);
     const [redemptions, setRedemptions] = useState<any[]>([]);
 
     // Sync state with user object when it changes (initial load)
     useEffect(() => {
         if (user) {
             setSavedDeals(user.savedDeals || []);
+            setOwnedDeals(user.ownedDeals || []);
             setRedemptions(user.redemptions || []);
         } else {
             setSavedDeals([]);
+            setOwnedDeals([]);
             setRedemptions([]);
         }
     }, [user]);
@@ -53,6 +59,17 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     }, [user]);
 
+    const handleClaimDeal = useCallback(async (dealId: string) => {
+        if (!user) return;
+        try {
+            await claimDeal(user.id, dealId);
+            setOwnedDeals(prev => [...new Set([...prev, dealId])]);
+        } catch (error) {
+            console.error('Error claiming deal:', error);
+            throw error;
+        }
+    }, [user]);
+
     const handleRedeemDeal = useCallback(async (dealId: string) => {
         if (!user) return;
         try {
@@ -74,19 +91,26 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         return savedDeals.includes(dealId);
     }, [savedDeals]);
 
+    const isDealOwned = useCallback((dealId: string) => {
+        return ownedDeals.includes(dealId);
+    }, [ownedDeals]);
+
     const hasRedeemed = useCallback((dealId: string) => {
         return redemptions.some(r => r.dealId === dealId);
     }, [redemptions]);
 
     const contextValue = useMemo(() => ({
         savedDeals,
+        ownedDeals,
         redemptions,
         saveDeal: handleSaveDeal,
         unsaveDeal: handleUnsaveDeal,
+        claimDeal: handleClaimDeal,
         redeemDeal: handleRedeemDeal,
         isDealSaved,
+        isDealOwned,
         hasRedeemed
-    }), [savedDeals, redemptions, handleSaveDeal, handleUnsaveDeal, handleRedeemDeal, isDealSaved, hasRedeemed]);
+    }), [savedDeals, ownedDeals, redemptions, handleSaveDeal, handleUnsaveDeal, handleClaimDeal, handleRedeemDeal, isDealSaved, isDealOwned, hasRedeemed]);
 
     return (
         <UserActivityContext.Provider value={contextValue}>

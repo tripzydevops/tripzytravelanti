@@ -107,7 +107,7 @@ interface DealDetailViewProps {
 const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false, onRate, onRedeem }) => {
     const { t, language } = useLanguage();
     const { user } = useAuth();
-    const { saveDeal, unsaveDeal, isDealSaved } = useUserActivity();
+    const { saveDeal, unsaveDeal, isDealSaved, claimDeal, isDealOwned } = useUserActivity();
     const navigate = useNavigate();
 
     const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
@@ -423,27 +423,43 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         </div>
 
                         <button
-                            onClick={() => {
+                            onClick={async () => {
                                 if (isPreview) {
                                     handleRedeemConfirm(false);
                                 } else if (!user) {
                                     navigate('/login');
                                 } else {
-                                    if (!onRedeem) {
-                                        console.error('Redeem function not provided');
-                                        return;
-                                    }
-                                    const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
-                                    if (dontShowAgain) {
-                                        handleRedeemConfirm(false);
+                                    // Check ownership
+                                    if (isDealOwned(deal.id)) {
+                                        // Already owned: Redeem Logic
+                                        if (!onRedeem) {
+                                            console.error('Redeem function not provided');
+                                            return;
+                                        }
+                                        const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
+                                        if (dontShowAgain) {
+                                            handleRedeemConfirm(false);
+                                        } else {
+                                            setIsWarningModalOpen(true);
+                                        }
                                     } else {
-                                        setIsWarningModalOpen(true);
+                                        // Not owned: Claim Logic (Add to Wallet)
+                                        try {
+                                            await claimDeal(deal.id);
+                                            triggerConfetti('default');
+                                            // Optional: Show success feedback? Context update is instant, so button text will change.
+                                        } catch (error) {
+                                            console.error('Failed to claim deal:', error);
+                                            alert(t('failedToClaimDeal') || 'Failed to add deal to wallet.'); // Simple fallback
+                                        }
                                     }
                                 }
                             }}
-                            className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer"
+                            className={`flex-1 ${isDealOwned(deal.id)
+                                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B]'
+                                : 'bg-gradient-to-r from-blue-600 to-blue-500'} text-white font-bold py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
                         >
-                            <span>{t('useCoupon') || 'Get Code'}</span>
+                            <span>{isDealOwned(deal.id) ? (t('useCoupon') || 'Use Code') : (t('addToWallet') || 'Add to Wallet')}</span>
                         </button>
                     </div>
                 </div>

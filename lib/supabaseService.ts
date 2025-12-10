@@ -200,6 +200,24 @@ export async function removeDealFromUser(userId: string, dealId: string) {
     }
 }
 
+export async function claimDeal(userId: string, dealId: string) {
+    const { error } = await supabase
+        .from('user_deals')
+        .insert({
+            user_id: userId,
+            deal_id: dealId,
+            status: 'active',
+            acquired_at: new Date().toISOString()
+        });
+
+    if (error) {
+        // If unique constraint violation (already claimed), we might want to return a specific error or just ignore
+        if (error.code === '23505') return;
+        console.error('Error claiming deal:', error);
+        throw error;
+    }
+}
+
 export async function updateUserProfile(
     userId: string,
     updates: Partial<{
