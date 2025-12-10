@@ -210,12 +210,12 @@ const AdminUsersTab: React.FC = () => {
         setSelectedUsers(new Set());
     };
 
-    const userSavedDeals = useMemo(() => {
-        if (!userFormData.savedDeals) return [];
-        return userFormData.savedDeals
+    const userOwnedDeals = useMemo(() => {
+        if (!userFormData.ownedDeals) return [];
+        return userFormData.ownedDeals
             .map(dealId => deals.find(d => d.id === dealId)) // Use deals from context
             .filter((d): d is Deal => !!d);
-    }, [userFormData.savedDeals, deals]);
+    }, [userFormData.ownedDeals, deals]);
 
     return (
         <>
@@ -318,11 +318,11 @@ const AdminUsersTab: React.FC = () => {
                             <h4 className="text-lg font-medium text-white mb-4">Kullanıcı Cüzdanı (Tanımlanmış Fırsatlar)</h4>
 
                             <div className="flex gap-2 mb-4">
-                                {userSavedDeals.length > 0 ? (
-                                    userSavedDeals.map(deal => (
+                                {userOwnedDeals.length > 0 ? (
+                                    userOwnedDeals.map(deal => (
                                         <div key={deal.id} className="flex justify-between items-center bg-gray-100 dark:bg-brand-bg p-2 rounded-md">
                                             <p className="text-sm text-gray-800 dark:text-brand-text-light">{language === 'tr' ? deal.title_tr : deal.title}</p>
-                                            <button type="button" onClick={() => handleRemoveDealFromUser(deal.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 font-semibold">{t('remove')}</button>
+                                            <button type="button" onClick={() => handleRemoveDeal(deal.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 font-semibold">{t('remove')}</button>
                                         </div>
                                     ))
                                 ) : (
@@ -333,7 +333,7 @@ const AdminUsersTab: React.FC = () => {
                                 <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                     <option value="">{t('selectDeal')}</option>
                                     {deals.map(deal => (
-                                        <option key={deal.id} value={deal.id} disabled={userFormData.savedDeals?.includes(deal.id)}>
+                                        <option key={deal.id} value={deal.id} disabled={userFormData.ownedDeals?.includes(deal.id)}>
                                             {language === 'tr' ? deal.title_tr : deal.title}
                                         </option>
                                     ))}
@@ -558,16 +558,14 @@ const AdminUsersTab: React.FC = () => {
             >
                 <div className="p-4">
                     {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                            {(userFormData.ownedDeals || []).map(dealId => {
-                                const deal = deals.find(d => d.id === dealId);
+                        <div className="space-y-4">
+                            {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
+                                const deal = deals.find(d => d.id === redemption.dealId);
                                 return (
-                                    <div key={dealId} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                                         <p className="font-semibold text-gray-900 dark:text-white">
                                             {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
                                         </p>
-                                        {/* Note: Original redemption details like 'redeemedAt' and 'redemptionCode' are not available when mapping 'ownedDeals'. */}
-                                        {/* If these details are needed, the mapping logic should iterate over actual redemption objects. */}
                                         <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
                                             <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
                                             {deal && <span>Code: {deal.redemptionCode}</span>}
