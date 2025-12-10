@@ -26,6 +26,7 @@ export interface User {
   tier: SubscriptionTier;
   isAdmin?: boolean;
   savedDeals?: string[];
+  ownedDeals?: string[];
   avatarUrl?: string;
   referredBy?: string; // ID of the user who referred this user
   referrals?: string[]; // Array of user IDs this user has directly referred

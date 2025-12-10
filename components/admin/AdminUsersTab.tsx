@@ -133,20 +133,21 @@ const AdminUsersTab: React.FC = () => {
         resetUserForm();
     };
 
+
     const handleAddDealToUser = () => {
-        if (dealToAdd && !userFormData.savedDeals?.includes(dealToAdd)) {
+        if (dealToAdd && !userFormData.ownedDeals?.includes(dealToAdd)) {
             setUserFormData(prev => ({
                 ...prev,
-                savedDeals: [...(prev.savedDeals || []), dealToAdd]
+                ownedDeals: [...(prev.ownedDeals || []), dealToAdd]
             }));
             setDealToAdd('');
         }
     };
 
-    const handleRemoveDealFromUser = (dealIdToRemove: string) => {
+    const handleRemoveDeal = (dealId: string) => {
         setUserFormData(prev => ({
             ...prev,
-            savedDeals: (prev.savedDeals || []).filter(id => id !== dealIdToRemove)
+            ownedDeals: prev.ownedDeals?.filter(id => id !== dealId) || []
         }));
     };
 
@@ -313,9 +314,10 @@ const AdminUsersTab: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold mb-3">{t('manageSavedDeals')}</h3>
-                            <div className="space-y-2 mb-4">
+                        <div className="border-t border-white/10 pt-6">
+                            <h4 className="text-lg font-medium text-white mb-4">Kullanıcı Cüzdanı (Tanımlanmış Fırsatlar)</h4>
+
+                            <div className="flex gap-2 mb-4">
                                 {userSavedDeals.length > 0 ? (
                                     userSavedDeals.map(deal => (
                                         <div key={deal.id} className="flex justify-between items-center bg-gray-100 dark:bg-brand-bg p-2 rounded-md">
@@ -556,14 +558,16 @@ const AdminUsersTab: React.FC = () => {
             >
                 <div className="p-4">
                     {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
-                        <div className="space-y-4">
-                            {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
-                                const deal = deals.find(d => d.id === redemption.dealId);
+                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                            {(userFormData.ownedDeals || []).map(dealId => {
+                                const deal = deals.find(d => d.id === dealId);
                                 return (
-                                    <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <div key={dealId} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                                         <p className="font-semibold text-gray-900 dark:text-white">
                                             {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
                                         </p>
+                                        {/* Note: Original redemption details like 'redeemedAt' and 'redemptionCode' are not available when mapping 'ownedDeals'. */}
+                                        {/* If these details are needed, the mapping logic should iterate over actual redemption objects. */}
                                         <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
                                             <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
                                             {deal && <span>Code: {deal.redemptionCode}</span>}

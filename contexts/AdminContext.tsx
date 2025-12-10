@@ -7,7 +7,9 @@ import {
     deleteUserProfile,
     updateAllUsersNotificationPreferences as updateAllUsersNotificationPreferencesService,
     saveDeal,
-    unsaveDeal
+    unsaveDeal,
+    assignDealToUser,
+    removeDealFromUser
 } from '../lib/supabaseService';
 
 interface AdminContextType {
@@ -59,26 +61,25 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 referred_by: updatedUser.referredBy,
             });
 
-            // Handle Saved Deals logic
-            // We need to compare the old list with the new list to see what was added or removed
+            // Handle Owned Deals logic (Wallet)
             const currentUser = users.find(u => u.id === updatedUser.id);
             if (currentUser) {
-                const oldSavedDeals = new Set(currentUser.savedDeals || []);
-                const newSavedDeals = new Set(updatedUser.savedDeals || []);
+                const oldOwnedDeals = new Set(currentUser.ownedDeals || []);
+                const newOwnedDeals = new Set(updatedUser.ownedDeals || []);
 
                 // Deals to add (in new but not in old)
-                const dealsToAdd = [...newSavedDeals].filter(id => !oldSavedDeals.has(id));
+                const dealsToAdd = [...newOwnedDeals].filter(id => !oldOwnedDeals.has(id));
                 // Deals to remove (in old but not in new)
-                const dealsToRemove = [...oldSavedDeals].filter(id => !newSavedDeals.has(id));
+                const dealsToRemove = [...oldOwnedDeals].filter(id => !newOwnedDeals.has(id));
 
                 // Process additions
                 for (const dealId of dealsToAdd) {
-                    await saveDeal(updatedUser.id, dealId);
+                    await assignDealToUser(updatedUser.id, dealId);
                 }
 
                 // Process removals 
                 for (const dealId of dealsToRemove) {
-                    await unsaveDeal(updatedUser.id, dealId);
+                    await removeDealFromUser(updatedUser.id, dealId);
                 }
             }
 
