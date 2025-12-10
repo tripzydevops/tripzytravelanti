@@ -25,7 +25,10 @@ const AdminUsersTab: React.FC = () => {
     const { t, language } = useLanguage();
     const { user: loggedInUser } = useAuth();
     const { users, refreshUsers, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAdmin();
-    const { deals, refreshDeals } = useDeals(); // Use deals from context for lookups
+    // Removed useDeals since we fetch all deals manually for admin purposes
+    // const { deals, refreshDeals } = useDeals(); 
+
+    const [allDeals, setAllDeals] = useState<Deal[]>([]);
 
     const [isUserFormVisible, setIsUserFormVisible] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -41,11 +44,20 @@ const AdminUsersTab: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<SubscriptionTier | 'All'>('All');
 
-    // Fetch users when admin tab mounts
+    // Fetch users AND all deals when admin tab mounts
     useEffect(() => {
         refreshUsers();
-        refreshDeals();
+        fetchAllDeals();
     }, []);
+
+    const fetchAllDeals = async () => {
+        try {
+            const dealsData = await getAllDeals(true); // true = include expired
+            setAllDeals(dealsData);
+        } catch (error) {
+            console.error('Failed to fetch deals for admin:', error);
+        }
+    };
 
     const handleVerifyUser = async (userId: string) => {
         if (window.confirm('Are you sure you want to manually verify this user\'s email?')) {
@@ -213,9 +225,9 @@ const AdminUsersTab: React.FC = () => {
     const userOwnedDeals = useMemo(() => {
         if (!userFormData.ownedDeals) return [];
         return userFormData.ownedDeals
-            .map(dealId => deals.find(d => d.id === dealId)) // Use deals from context
+            .map(dealId => allDeals.find(d => d.id === dealId)) // Use allDeals
             .filter((d): d is Deal => !!d);
-    }, [userFormData.ownedDeals, deals]);
+    }, [userFormData.ownedDeals, allDeals]);
 
     return (
         <>
@@ -332,7 +344,7 @@ const AdminUsersTab: React.FC = () => {
                             <div className="flex gap-2">
                                 <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                     <option value="">{t('selectDeal')}</option>
-                                    {deals.map(deal => (
+                                    {allDeals.map(deal => (
                                         <option key={deal.id} value={deal.id} disabled={userFormData.ownedDeals?.includes(deal.id)}>
                                             {language === 'tr' ? deal.title_tr : deal.title}
                                         </option>
@@ -560,7 +572,7 @@ const AdminUsersTab: React.FC = () => {
                     {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
                         <div className="space-y-4">
                             {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
-                                const deal = deals.find(d => d.id === redemption.dealId);
+                                const deal = allDeals.find(d => d.id === redemption.dealId);
                                 return (
                                     <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                                         <p className="font-semibold text-gray-900 dark:text-white">
