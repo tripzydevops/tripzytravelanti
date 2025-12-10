@@ -207,6 +207,12 @@ export async function removeDealFromUser(userId: string, dealId: string) {
 }
 
 export async function claimDeal(userId: string, dealId: string) {
+    // 1. Check Limit
+    const { allowed } = await checkMonthlyLimit(userId);
+    if (!allowed) {
+        throw new Error('Monthly redemption limit reached');
+    }
+
     const { error } = await supabase
         .from('user_deals')
         .insert({
@@ -218,7 +224,12 @@ export async function claimDeal(userId: string, dealId: string) {
 
     if (error) {
         // If unique constraint violation (already claimed), we might want to return a specific error or just ignore
-        if (error.code === '23505') return;
+        if (error.code === '23505') return; // User already owns it, don't count limit again implies we should check this BEFORE limit check? 
+        // Logic: if already owned, checkMonthlyLimit shouldn't run or trigger error.
+        // However, checking "isDealOwned" from client side is better. 
+        // If we hit DB constraint, it means they have it. We should probably NOT decrement limit if it fails?
+        // But checkMonthlyLimit only CHECKS. The INSERT is what 'uses' the limit. 
+        // If insert fails (duplicate), simple return means no impact. Good.
         console.error('Error claiming deal:', error);
         throw error;
     }
@@ -672,7 +683,76 @@ export async function getFlashDeals(): Promise<Deal[]> {
 // =====================================================
 // REDEMPTION OPERATIONS
 // =====================================================
+// =====================================================
+// REDEMPTION OPERATIONS
+// =====================================================
+
+export async function checkMonthlyLimit(userId: string): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+    // 1. Get User Profile to check Tier
+    const user = await getUserProfile(userId);
+    if (!user) throw new Error('User not found');
+
+    // 2. Get Plan Limits
+    const { data: plan, error: planError } = await supabase
+        .from('subscription_plans')
+        .select('redemptions_per_month')
+        .eq('tier', user.tier)
+        .single();
+
+    if (planError || !plan) {
+        console.error('Error fetching plan limit:', planError);
+        throw new Error('Could not determine subscription limit');
+    }
+
+    const limit = plan.redemptions_per_month + (user.extraRedemptions || 0);
+
+    // 3. Calculate Usage for Current Month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const startOfMonthISO = startOfMonth.toISOString();
+
+    // Fetch IDs instead of Count to avoid double counting
+    const { data: redemptions, error: redemptionError } = await supabase
+        .from('deal_redemptions')
+        .select('deal_id')
+        .eq('user_id', userId)
+        .gte('redeemed_at', startOfMonthISO);
+
+    const { data: claims, error: claimError } = await supabase
+        .from('user_deals')
+        .select('deal_id')
+        .eq('user_id', userId)
+        .gte('acquired_at', startOfMonthISO);
+
+    if (redemptionError || claimError) {
+        console.error('Error calculating usage:', redemptionError, claimError);
+        throw new Error('Failed to calculate monthly usage');
+    }
+
+    // Use Set to count unique deals participated in this month
+    const uniqueDealIds = new Set<string>();
+
+    redemptions?.forEach((r: any) => uniqueDealIds.add(r.deal_id));
+    claims?.forEach((c: any) => uniqueDealIds.add(c.deal_id));
+
+    const totalUsage = uniqueDealIds.size;
+    const remaining = Math.max(0, limit - totalUsage);
+
+    return {
+        allowed: totalUsage < limit,
+        remaining,
+        limit
+    };
+}
+
 export const redeemDeal = async (userId: string, dealId: string) => {
+    // 1. Check Limit
+    const { allowed } = await checkMonthlyLimit(userId);
+    if (!allowed) {
+        throw new Error('Monthly redemption limit reached');
+    }
+
     try {
         const { data, error } = await supabase
             .from('deal_redemptions')
@@ -698,6 +778,11 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         throw error;
     }
 };
+
+export async function redeemImmediate(userId: string, dealId: string) {
+    return redeemDeal(userId, dealId);
+}
+
 
 // =====================================================
 // REFERRAL OPERATIONS

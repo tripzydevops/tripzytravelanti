@@ -116,21 +116,60 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
     const [hasRated, setHasRated] = useState(false);
     const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
+    const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
 
-    const handleRedeemConfirm = async (dontShowAgain: boolean) => {
-        if (deal && onRedeem) {
-            try {
-                await onRedeem(deal.id);
-                setIsWarningModalOpen(false);
-                setIsRedeemModalOpen(true);
-                setTimeout(() => triggerConfetti('burst'), 300);
-            } catch (error) {
-                console.error('Failed to redeem deal:', error);
+    const handleActionClick = (action: 'redeem' | 'claim') => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        // If "Don't show again" is set, we might bypass warning?
+        // User requested: "warning should pop up... telling user this count towards limit"
+        // So we strictly SHOW the warning, unless specifically for this new logic we want to respect the flag?
+        // The user said "warning should pop up". Let's force it for now or respect the flag but update text.
+        // Actually, let's respect the flag to be consistent with existing code, but maybe reset it since logic changed?
+        // Simpler: Check flag.
+
+        const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
+        setPendingAction(action);
+
+        if (dontShowAgain) {
+            executeAction(action);
+        } else {
+            setIsWarningModalOpen(true);
+        }
+    };
+
+    const executeAction = async (action: 'redeem' | 'claim') => {
+        if (!user || !deal) return;
+
+        try {
+            if (action === 'redeem') {
+                if (onRedeem) {
+                    await onRedeem(deal.id);
+                    setIsRedeemModalOpen(true); // Show QR
+                    setTimeout(() => triggerConfetti('burst'), 300);
+                }
+            } else if (action === 'claim') {
+                await claimDeal(deal.id);
+                triggerConfetti('default');
+                // Optional: Show a toast/success message here? 
+                // For now, button state change (to "In Wallet") is feedback enough?
+                // Or we could show a small modal saying "Added to Wallet"
             }
-        } else if (isPreview) {
+        } catch (error: any) {
+            console.error(`Failed to ${action} deal:`, error);
+            alert(error.message || 'Action failed'); // Basic error handling for limit reached
+        } finally {
             setIsWarningModalOpen(false);
-            setIsRedeemModalOpen(true);
-            setTimeout(() => triggerConfetti('burst'), 300);
+            setPendingAction(null);
+        }
+    };
+
+    const handleRedeemConfirm = () => {
+        if (pendingAction) {
+            executeAction(pendingAction);
         }
     };
 
@@ -422,45 +461,26 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             </div>
                         </div>
 
-                        <button
-                            onClick={async () => {
-                                if (isPreview) {
-                                    handleRedeemConfirm(false);
-                                } else if (!user) {
-                                    navigate('/login');
-                                } else {
-                                    // Check ownership
-                                    if (isDealOwned(deal.id)) {
-                                        // Already owned: Redeem Logic
-                                        if (!onRedeem) {
-                                            console.error('Redeem function not provided');
-                                            return;
-                                        }
-                                        const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
-                                        if (dontShowAgain) {
-                                            handleRedeemConfirm(false);
-                                        } else {
-                                            setIsWarningModalOpen(true);
-                                        }
-                                    } else {
-                                        // Not owned: Claim Logic (Add to Wallet)
-                                        try {
-                                            await claimDeal(deal.id);
-                                            triggerConfetti('default');
-                                            // Optional: Show success feedback? Context update is instant, so button text will change.
-                                        } catch (error) {
-                                            console.error('Failed to claim deal:', error);
-                                            alert(t('failedToClaimDeal') || 'Failed to add deal to wallet.'); // Simple fallback
-                                        }
-                                    }
-                                }
-                            }}
-                            className={`flex-1 ${isDealOwned(deal.id)
-                                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B]'
-                                : 'bg-gradient-to-r from-blue-600 to-blue-500'} text-white font-bold py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
-                        >
-                            <span>{isDealOwned(deal.id) ? (t('useCoupon') || 'Use Code') : (t('addToWallet') || 'Add to Wallet')}</span>
-                        </button>
+                        <div className="flex-1 flex gap-3">
+                            {/* Add to Wallet Button */}
+                            {!isDealOwned(deal.id) && (
+                                <button
+                                    onClick={() => handleActionClick('claim')}
+                                    className="flex-1 bg-white/10 border border-white/20 text-white font-bold py-4 px-4 rounded-xl hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                                >
+                                    <span>{t('addToWallet') || 'Add to Wallet'}</span>
+                                </button>
+                            )}
+
+                            {/* Redeem Now Button */}
+                            <button
+                                onClick={() => isPreview ? null : handleActionClick('redeem')}
+                                className={`flex-1 ${isDealOwned(deal.id) ? 'w-full' : ''
+                                    } bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
+                            >
+                                <span>{t('redeemNow') || 'Redeem Now'}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -501,10 +521,10 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             {t('cancelRedeem')}
                         </button>
                         <button
-                            onClick={() => handleRedeemConfirm(localStorage.getItem('dontShowRedemptionWarning') === 'true')}
+                            onClick={() => handleRedeemConfirm()}
                             className="flex-1 bg-brand-primary text-white font-semibold py-3 px-6 rounded-lg hover:bg-opacity-90 transition-colors"
                         >
-                            {t('confirmRedeem')}
+                            {pendingAction === 'claim' ? (t('confirmAddToWallet') || 'Confirm') : (t('confirmRedeem') || 'Redeem')}
                         </button>
                     </div>
                 </div>

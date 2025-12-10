@@ -363,6 +363,11 @@ export const translations = {
     cancelRedeem: 'Cancel',
     recommendedForYou: 'Recommended for You',
     startExploringForRecommendations: 'Start exploring deals to get personalized recommendations!',
+    redeemNow: 'Redeem Now',
+    addToWallet: 'Add to Wallet',
+    addToWalletShort: 'Add',
+    failedToClaimDeal: 'Failed to add deal to wallet.',
+    confirmAddToWallet: 'Add to Wallet',
   },
   tr: {
     // Header
@@ -730,5 +735,10 @@ export const translations = {
     cancelRedeem: 'İptal',
     recommendedForYou: 'Sizin İçin Önerilenler',
     startExploringForRecommendations: 'Kişiselleştirilmiş öneriler almak için fırsatları keşfetmeye başlayın!',
+    redeemNow: 'Şimdi Kullan',
+    addToWallet: 'Cüzdana Ekle',
+    addToWalletShort: 'Ekle',
+    failedToClaimDeal: 'Fırsat cüzdana eklenemedi.',
+    confirmAddToWallet: 'Cüzdana Ekle',
   },
 };
