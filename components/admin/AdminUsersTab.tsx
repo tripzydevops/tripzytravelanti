@@ -115,6 +115,7 @@ const AdminUsersTab: React.FC = () => {
         setDealToAdd('');
         setRedemptionsToAdd(0);
         setIsUserFormVisible(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDeleteUserClick = (userId: string) => {
@@ -541,8 +542,8 @@ const AdminUsersTab: React.FC = () => {
                                                 )}
                                                 <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
                                                 <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
-                                                <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editDeal')}</button>
-                                                <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteDeal')}</button>
+                                                <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editUser')}</button>
+                                                <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteUser')}</button>
                                             </td>
                                         </tr>
                                     );
