@@ -179,9 +179,15 @@ export async function getSavedDeals(userId: string): Promise<string[]> {
 export async function assignDealToUser(userId: string, dealId: string) {
     const { error } = await supabase
         .from('user_deals')
-        .insert({ user_id: userId, deal_id: dealId });
+        .insert({
+            user_id: userId,
+            deal_id: dealId,
+            status: 'active',
+            acquired_at: new Date().toISOString()
+        });
 
     if (error) {
+        if (error.code === '23505') return;
         console.error('Error assigning deal to user:', error);
         throw error;
     }
