@@ -232,7 +232,7 @@ export async function updateUserProfile(
 
         billing_address: string;
         status: 'active' | 'banned' | 'suspended';
-        referred_by: string;
+        referred_by: string | null;
     }>
 ) {
     const { data, error } = await supabase

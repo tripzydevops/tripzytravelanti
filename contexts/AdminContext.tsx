@@ -58,7 +58,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 notification_preferences: updatedUser.notificationPreferences,
                 mobile: updatedUser.mobile,
                 status: updatedUser.status,
-                referred_by: updatedUser.referredBy,
+                referred_by: updatedUser.referredBy || null,
             });
 
             // Handle Owned Deals logic (Wallet)
