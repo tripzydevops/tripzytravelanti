@@ -695,7 +695,7 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
     // 2. Get Plan Limits
     const { data: plan, error: planError } = await supabase
         .from('subscription_plans')
-        .select('redemptions_per_month')
+        .select('redemptions_per_period')
         .eq('tier', user.tier)
         .single();
 
@@ -704,7 +704,7 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         throw new Error('Could not determine subscription limit');
     }
 
-    const limit = plan.redemptions_per_month + (user.extraRedemptions || 0);
+    const limit = plan.redemptions_per_period + (user.extraRedemptions || 0);
 
     // 3. Calculate Usage for Current Month
     const startOfMonth = new Date();
@@ -747,10 +747,22 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
 }
 
 export const redeemDeal = async (userId: string, dealId: string) => {
-    // 1. Check Limit
-    const { allowed } = await checkMonthlyLimit(userId);
-    if (!allowed) {
-        throw new Error('Monthly redemption limit reached');
+    // 0. Check if deal is already owned (in wallet)
+    // If owned, the redemption count was already taken when claimed (acquired).
+    // So we do NOT check limit again.
+    const { data: ownedDeal } = await supabase
+        .from('user_deals')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('deal_id', dealId)
+        .maybeSingle();
+
+    if (!ownedDeal) {
+        // 1. Check Limit ONLY if not owned
+        const { allowed } = await checkMonthlyLimit(userId);
+        if (!allowed) {
+            throw new Error('Monthly redemption limit reached');
+        }
     }
 
     try {
