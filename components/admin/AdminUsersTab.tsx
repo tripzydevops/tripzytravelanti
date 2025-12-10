@@ -25,7 +25,7 @@ const AdminUsersTab: React.FC = () => {
     const { t, language } = useLanguage();
     const { user: loggedInUser } = useAuth();
     const { users, refreshUsers, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAdmin();
-    const { deals } = useDeals(); // Use deals from context for lookups
+    const { deals, refreshDeals } = useDeals(); // Use deals from context for lookups
 
     const [isUserFormVisible, setIsUserFormVisible] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -44,6 +44,7 @@ const AdminUsersTab: React.FC = () => {
     // Fetch users when admin tab mounts
     useEffect(() => {
         refreshUsers();
+        refreshDeals();
     }, []);
 
     const handleVerifyUser = async (userId: string) => {
