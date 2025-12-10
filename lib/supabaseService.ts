@@ -232,43 +232,7 @@ export async function updateUserProfile(
     return data;
 }
 
-export async function getAllUsers(): Promise<User[]> {
-    const { data, error } = await supabase
-        .rpc('get_admin_users_list', {});
 
-    if (error) {
-        console.error('Error fetching users:', error);
-        return [];
-    }
-
-    return data.map((user: any) => ({
-        id: user.id,
-        name: user.name || 'Unknown',
-        email: user.email,
-        tier: (user.tier as SubscriptionTier) || SubscriptionTier.FREE,
-        isAdmin: user.is_admin,
-        savedDeals: user.saved_deals?.map((sd: { deal_id: string }) => sd.deal_id) || [],
-        ownedDeals: user.owned_deals?.map((od: { deal_id: string }) => od.deal_id) || [],
-        avatarUrl: user.avatar_url,
-        referredBy: user.referred_by,
-        extraRedemptions: user.extra_redemptions,
-        notificationPreferences: user.notification_preferences,
-        redemptions: user.deal_redemptions?.map((r: any) => ({
-            id: r.id,
-            dealId: r.deal_id,
-            userId: r.user_id,
-            redeemedAt: r.redeemed_at
-        })) || [],
-        mobile: user.mobile,
-        address: user.address,
-        billingAddress: user.billing_address,
-        role: user.role,
-        status: user.status || 'active',
-        emailConfirmedAt: user.email_confirmed_at,
-        lastSignInAt: user.last_sign_in_at,
-        createdAt: user.created_at
-    }));
-}
 
 export async function confirmUserEmail(userId: string) {
     const { error } = await supabase.rpc('admin_confirm_user_email', { target_user_id: userId });
@@ -679,47 +643,7 @@ export async function getFlashDeals(): Promise<Deal[]> {
     return data.map(transformDealFromDB);
 }
 
-// =====================================================
-// SAVED DEALS OPERATIONS
-// =====================================================
 
-export async function saveDeal(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('saved_deals')
-        .insert({ user_id: userId, deal_id: dealId });
-
-    if (error) {
-        console.error('Error saving deal:', error);
-        throw error;
-    }
-}
-
-export async function unsaveDeal(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('saved_deals')
-        .delete()
-        .eq('user_id', userId)
-        .eq('deal_id', dealId);
-
-    if (error) {
-        console.error('Error unsaving deal:', error);
-        throw error;
-    }
-}
-
-export async function getSavedDeals(userId: string): Promise<string[]> {
-    const { data, error } = await supabase
-        .from('saved_deals')
-        .select('deal_id')
-        .eq('user_id', userId);
-
-    if (error) {
-        console.error('Error fetching saved deals:', error);
-        return [];
-    }
-
-    return data.map((sd: { deal_id: string }) => sd.deal_id);
-}
 
 // =====================================================
 // REDEMPTION OPERATIONS

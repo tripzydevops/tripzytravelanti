@@ -1,36 +1,35 @@
 -- Function to get all users mixed with their profile data and auth verification status
 -- Renamed to get_admin_users_list to avoid caching issues
 create or replace function get_admin_users_list() returns table (
-        create or replace function get_admin_users_list() returns table (
-                id uuid,
-                name text,
-                email text,
-                tier text,
-                is_admin boolean,
-                role text,
-                avatar_url text,
-                referred_by text,
-                extra_redemptions int,
-                notification_preferences jsonb,
-                saved_deals jsonb,
-                deal_redemptions jsonb,
-                owned_deals jsonb,
-                mobile text,
-                address text,
-                billing_address text,
-                status text,
-                email_confirmed_at timestamptz,
-                last_sign_in_at timestamptz,
-                created_at timestamptz
-            ) security definer
-        set search_path = public,
-            auth language plpgsql as $$ begin -- Check if the requesting user is an admin
-            if not exists (
-                select 1
-                from public.profiles p_admin
-                where p_admin.id = auth.uid()
-                    and p_admin.is_admin = true
-            ) then return;
+        id uuid,
+        name text,
+        email text,
+        tier text,
+        is_admin boolean,
+        role text,
+        avatar_url text,
+        referred_by text,
+        extra_redemptions int,
+        notification_preferences jsonb,
+        saved_deals jsonb,
+        deal_redemptions jsonb,
+        owned_deals jsonb,
+        mobile text,
+        address text,
+        billing_address text,
+        status text,
+        email_confirmed_at timestamptz,
+        last_sign_in_at timestamptz,
+        created_at timestamptz
+    ) security definer
+set search_path = public,
+    auth language plpgsql as $$ begin -- Check if the requesting user is an admin
+    if not exists (
+        select 1
+        from public.profiles p_admin
+        where p_admin.id = auth.uid()
+            and p_admin.is_admin = true
+    ) then return;
 end if;
 return query
 select p.id,
