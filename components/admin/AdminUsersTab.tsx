@@ -37,7 +37,6 @@ const AdminUsersTab: React.FC = () => {
     const [userPayments, setUserPayments] = useState<PaymentTransaction[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
     const [showSuccess, setShowSuccess] = useState('');
-    const [pendingDeals, setPendingDeals] = useState<Deal[]>([]);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<SubscriptionTier | 'All'>('All');
@@ -45,13 +44,7 @@ const AdminUsersTab: React.FC = () => {
     // Fetch users when admin tab mounts
     useEffect(() => {
         refreshUsers();
-        loadPendingDeals();
     }, []);
-
-    const loadPendingDeals = async () => {
-        const fetchedDeals = await getPendingDeals();
-        setPendingDeals(fetchedDeals);
-    };
 
     const handleVerifyUser = async (userId: string) => {
         if (window.confirm('Are you sure you want to manually verify this user\'s email?')) {
@@ -336,7 +329,7 @@ const AdminUsersTab: React.FC = () => {
                             <div className="flex gap-2">
                                 <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                     <option value="">{t('selectDeal')}</option>
-                                    {pendingDeals.map(deal => (
+                                    {deals.map(deal => (
                                         <option key={deal.id} value={deal.id} disabled={userFormData.savedDeals?.includes(deal.id)}>
                                             {language === 'tr' ? deal.title_tr : deal.title}
                                         </option>
