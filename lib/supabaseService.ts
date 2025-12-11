@@ -774,6 +774,10 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     // 0. Check if deal is already owned (in wallet)
     // If owned, the redemption count was already taken when claimed (acquired).
     // So we do NOT check limit again.
+    // DEBUG: Fetch ALL owned deals to see what supabase can see
+    const { data: allDeals } = await supabase.from('user_deals').select('deal_id').eq('user_id', userId);
+    console.log('[redeemDeal] ALL owned deals for user:', allDeals);
+
     const { data: ownedDeal, error: ownedError } = await supabase
         .from('user_deals')
         .select('*')
