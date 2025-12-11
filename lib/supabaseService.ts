@@ -1167,6 +1167,72 @@ export async function getAnalyticsData() {
     }
 }
 
+export interface VendorAnalytics {
+    name: string;
+    dealCount: number;
+    totalRedemptions: number;
+    estimatedRevenue: number;
+}
+
+export async function getVendorAnalytics(): Promise<VendorAnalytics[]> {
+    try {
+        // 1. Fetch all deals (needed to link vendor to deal ID)
+        const { data: deals, error: dealsError } = await supabase
+            .from('deals')
+            .select('id, vendor, discounted_price, status');
+
+        if (dealsError) throw dealsError;
+
+        // 2. Fetch all redemptions
+        const { data: redemptions, error: redemptionsError } = await supabase
+            .from('deal_redemptions')
+            .select('deal_id');
+
+        if (redemptionsError) throw redemptionsError;
+
+        // 3. Aggregate Data
+        const vendorStats: Record<string, VendorAnalytics> = {};
+
+        // Helper to normalize vendor name
+        const normalize = (name: string) => (name || 'Unknown').trim();
+
+        deals.forEach((deal: any) => {
+            const vendorName = normalize(deal.vendor);
+
+            if (!vendorStats[vendorName]) {
+                vendorStats[vendorName] = {
+                    name: vendorName,
+                    dealCount: 0,
+                    totalRedemptions: 0,
+                    estimatedRevenue: 0
+                };
+            }
+
+            // Increment deal count if active/approved (optional, or just total created?)
+            // Let's count all non-rejected deals or just check status
+            if (deal.status !== 'rejected') {
+                vendorStats[vendorName].dealCount += 1;
+            }
+
+            // Calculate redemptions for this deal
+            const dealRedemptions = redemptions.filter((r: any) => r.deal_id === deal.id).length;
+            vendorStats[vendorName].totalRedemptions += dealRedemptions;
+
+            // Estimate revenue: redemptions * price
+            // (Assuming price was constant, which is an estimation)
+            const revenue = dealRedemptions * (deal.discounted_price || 0);
+            vendorStats[vendorName].estimatedRevenue += revenue;
+        });
+
+        // Convert to array and sort by revenue
+        return Object.values(vendorStats).sort((a, b) => b.estimatedRevenue - a.estimatedRevenue);
+
+    } catch (error) {
+        console.error('Error fetching vendor analytics:', error);
+        return [];
+    }
+}
+
 // =====================================================
 // COMMUNICATIONS (Announcements & Notifications)
 // =====================================================
