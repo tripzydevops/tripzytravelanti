@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getBackgroundImages, addBackgroundImage, deleteBackgroundImage, uploadBackgroundImage, BackgroundImage } from '../../lib/supabaseService';
+import { getBackgroundImages, addBackgroundImage, deleteBackgroundImage, uploadBackgroundImage, updateBackgroundImage, BackgroundImage } from '../../lib/supabaseService';
 import { TrashIcon, UploadIcon, PlusIcon, SpinnerIcon } from '../Icons';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -82,6 +82,30 @@ const AdminBackgroundsTab: React.FC = () => {
         } catch (err) {
             setError('Failed to delete image.');
         }
+    };
+
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editTimeOfDay, setEditTimeOfDay] = useState('');
+
+    const handleUpdate = async (id: string) => {
+        try {
+            await updateBackgroundImage(id, editTimeOfDay);
+            setImages(prev => prev.map(img => img.id === id ? { ...img, time_of_day: editTimeOfDay } : img));
+            setSuccess('Image updated successfully!');
+            setEditingId(null);
+        } catch (err) {
+            setError('Failed to update image.');
+        }
+    };
+
+    const startEditing = (img: BackgroundImage) => {
+        setEditingId(img.id);
+        setEditTimeOfDay(img.time_of_day);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditTimeOfDay('');
     };
 
     const times = ['morning', 'afternoon', 'evening', 'night'];
@@ -196,9 +220,9 @@ const AdminBackgroundsTab: React.FC = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                                 <div className="flex justify-between items-end">
                                     <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${img.time_of_day === 'morning' ? 'bg-yellow-400 text-yellow-900' :
-                                            img.time_of_day === 'afternoon' ? 'bg-orange-400 text-orange-900' :
-                                                img.time_of_day === 'evening' ? 'bg-purple-400 text-white' :
-                                                    'bg-blue-900 text-white'
+                                        img.time_of_day === 'afternoon' ? 'bg-orange-400 text-orange-900' :
+                                            img.time_of_day === 'evening' ? 'bg-purple-400 text-white' :
+                                                'bg-blue-900 text-white'
                                         }`}>
                                         {img.time_of_day}
                                     </span>

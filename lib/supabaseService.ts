@@ -721,31 +721,38 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         .from('deal_redemptions')
         .select('deal_id')
         .eq('user_id', userId);
-        // Removed .gte('redeemed_at', startOfMonthISO) to count lifetime
+    // Removed .gte('redeemed_at', startOfMonthISO) to count lifetime
 
     const { data: claims, error: claimError } = await supabase
         .from('user_deals')
         .select('deal_id')
         .eq('user_id', userId);
-        // Removed .gte('acquired_at', startOfMonthISO) to count lifetime
+    // Removed .gte('acquired_at', startOfMonthISO) to count lifetime
 
     if (redemptionError || claimError) {
         console.error('Error calculating usage:', redemptionError, claimError);
         throw new Error('Failed to calculate usage');
     }
 
-    // Use Set to count unique deals participated in (Lifetime)
-    const uniqueDealIds = new Set<string>();
+    // 4. Calculate Total Usage (Lifetime)
+    // Usage = (All Wallet Claims) + (Redemptions of deals NOT in wallet)
+    // - Wallet Claims: Cost 1 credit (granting effective unlimited usage of that deal)
+    // - Direct Redemptions: Cost 1 credit per use (if not in wallet)
 
-    redemptions?.forEach((r: any) => uniqueDealIds.add(r.deal_id));
-    claims?.forEach((c: any) => uniqueDealIds.add(c.deal_id));
+    const claimedDealIds = new Set<string>();
+    claims?.forEach((c: any) => claimedDealIds.add(c.deal_id));
 
-    const totalLifetimeUsage = uniqueDealIds.size;
+    // Count redemptions for deals that are NOT currently in wallet
+    // (If they are in wallet, the cost is covered by the claim)
+    const nonWalletRedemptionCount = redemptions?.filter((r: any) => !claimedDealIds.has(r.deal_id)).length || 0;
+
+    // Total Usage = Wallet Count + Direct Redemption Count
+    const totalLifetimeUsage = (claims?.length || 0) + nonWalletRedemptionCount;
 
     // 4. Calculate Total Accrued Allowance
     const createdAt = new Date(user.created_at || new Date());
     const now = new Date();
-    
+
     // Calculate months difference roughly
     let monthsActive = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
     // Add current month (e.g. if created today, it's 1st month)
@@ -1220,6 +1227,19 @@ export async function addBackgroundImage(url: string, timeOfDay: string) {
 
     return data;
 }
+
+
+export const updateBackgroundImage = async (id: string, timeOfDay: string) => {
+    const { error } = await supabase
+        .from('background_images')
+        .update({ time_of_day: timeOfDay })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error updating background image:', error);
+        throw error;
+    }
+};
 
 export async function deleteBackgroundImage(id: string, url: string) {
     // Delete from DB first
