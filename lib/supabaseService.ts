@@ -695,7 +695,7 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
     // 2. Get Plan Limits
     const { data: plan, error: planError } = await supabase
         .from('subscription_plans')
-        .select('redemptions_per_period')
+        .select('redemptions_per_period, billing_period')
         .eq('tier', user.tier)
         .single();
 
@@ -704,7 +704,12 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         throw new Error('Could not determine subscription limit');
     }
 
-    const limit = plan.redemptions_per_period + (user.extraRedemptions || 0);
+    let baseLimit = plan.redemptions_per_period;
+    if (plan.billing_period === 'yearly') {
+        baseLimit = Math.floor(baseLimit / 12);
+    }
+
+    const limit = baseLimit + (user.extraRedemptions || 0);
 
     // 3. Calculate Usage for Current Month
     const startOfMonth = new Date();
