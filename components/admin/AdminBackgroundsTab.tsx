@@ -218,22 +218,72 @@ const AdminBackgroundsTab: React.FC = () => {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                                <div className="flex justify-between items-end">
-                                    <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${img.time_of_day === 'morning' ? 'bg-yellow-400 text-yellow-900' :
-                                        img.time_of_day === 'afternoon' ? 'bg-orange-400 text-orange-900' :
-                                            img.time_of_day === 'evening' ? 'bg-purple-400 text-white' :
-                                                'bg-blue-900 text-white'
-                                        }`}>
-                                        {img.time_of_day}
-                                    </span>
-                                    <button
-                                        onClick={() => handleDelete(img.id, img.url)}
-                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-transform hover:scale-110"
-                                        title="Delete Image"
-                                    >
-                                        <TrashIcon className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                {editingId === img.id ? (
+                                    <div className="flex items-center gap-2 bg-white/90 p-2 rounded-lg w-full">
+                                        <select
+                                            value={editTimeOfDay}
+                                            onChange={(e) => setEditTimeOfDay(e.target.value)}
+                                            className="flex-1 text-xs py-1 px-2 rounded border border-gray-300 text-gray-900"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {times.map(t => (
+                                                <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleUpdate(img.id);
+                                            }}
+                                            className="p-1 bg-green-500 hover:bg-green-600 text-white rounded shadow"
+                                            title="Save"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                cancelEditing();
+                                            }}
+                                            className="p-1 bg-gray-500 hover:bg-gray-600 text-white rounded shadow"
+                                            title="Cancel"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex justify-between items-end w-full">
+                                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${img.time_of_day === 'morning' ? 'bg-yellow-400 text-yellow-900' :
+                                            img.time_of_day === 'afternoon' ? 'bg-orange-400 text-orange-900' :
+                                                img.time_of_day === 'evening' ? 'bg-purple-400 text-white' :
+                                                    'bg-blue-900 text-white'
+                                            }`}>
+                                            {img.time_of_day}
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    startEditing(img);
+                                                }}
+                                                className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg transition-transform hover:scale-110"
+                                                title="Edit Time of Day"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(img.id, img.url);
+                                                }}
+                                                className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-transform hover:scale-110"
+                                                title="Delete Image"
+                                            >
+                                                <TrashIcon className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
