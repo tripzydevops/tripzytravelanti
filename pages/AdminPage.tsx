@@ -5,6 +5,7 @@ import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import PaymentTransactionTable from '../components/PaymentTransactionTable';
 import AdminDealsTab from '../components/admin/AdminDealsTab';
 import AdminUsersTab from '../components/admin/AdminUsersTab';
+import AdminVendorStats from '../components/admin/AdminVendorStats';
 import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminPendingApprovalsTab from '../components/admin/AdminPendingApprovalsTab';
 import AdminContentTab from '../components/admin/AdminContentTab';
@@ -14,7 +15,7 @@ import { AdminAnnouncementsTab } from '../components/admin/AdminAnnouncementsTab
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'deals' | 'users' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'analytics' | 'announcements' | 'backgrounds'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds'>('analytics');
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -32,12 +33,9 @@ const AdminPage: React.FC = () => {
       </header>
 
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
-        <button onClick={() => setActiveTab('analytics')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'analytics' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          {t('adminAnalytics')}
-        </button>
-        <button onClick={() => setActiveTab('deals')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'deals' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
-          {t('manageDeals')}
-        </button>
+        <button onClick={() => setActiveTab('analytics')} className={`py-2 px-4 whitespace-nowrap border-b-2 font-medium transition-colors ${activeTab === 'analytics' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}>{t('adminAnalytics')}</button>
+        <button onClick={() => setActiveTab('vendor_stats')} className={`py-2 px-4 whitespace-nowrap border-b-2 font-medium transition-colors ${activeTab === 'vendor_stats' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}>Vendor Reports</button>
+        <button onClick={() => setActiveTab('deals')} className={`py-2 px-4 whitespace-nowrap border-b-2 font-medium transition-colors ${activeTab === 'deals' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}>{t('manageDeals')}</button>
         <button onClick={() => setActiveTab('users')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           {t('manageUsers')}
         </button>
@@ -68,6 +66,7 @@ const AdminPage: React.FC = () => {
       </div>
 
       {activeTab === 'analytics' && <AnalyticsDashboard />}
+      {activeTab === 'vendor_stats' && <AdminVendorStats />}
       {activeTab === 'deals' && <AdminDealsTab />}
       {activeTab === 'users' && <AdminUsersTab />}
       {activeTab === 'subscriptions' && <AdminSubscriptionsTab />}
