@@ -106,6 +106,7 @@ export const translations = {
     dealRequired: 'Required',
     // Bottom Navigation
     bottomNavHome: 'Home',
+    bottomNavFavorites: 'Favorites',
     bottomNavSearch: 'Search',
     bottomNavTrips: 'Trips',
     bottomNavDeals: 'Deals',
@@ -488,6 +489,7 @@ export const translations = {
     dealRequired: 'Gerekli',
     // Bottom Navigation
     bottomNavHome: 'Anasayfa',
+    bottomNavFavorites: 'Favorilerim',
     bottomNavSearch: 'Ara',
     bottomNavTrips: 'Seyahatlerim',
     bottomNavDeals: 'Fırsatlar',
