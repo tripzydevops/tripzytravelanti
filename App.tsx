@@ -145,7 +145,6 @@ function AnimatedRoutes() {
             element={
               <AuthenticatedRoute>
                 <PageTransition><ProfilePage /></PageTransition>
-                <PageTransition><ProfilePage /></PageTransition>
               </AuthenticatedRoute>
             }
           />
