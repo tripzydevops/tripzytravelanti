@@ -135,11 +135,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             return;
         }
 
-        // Check limit for "Redeem Now" AND "Add to Wallet" on non-owned deals
-        if ((action === 'redeem' || action === 'claim') && !isDealOwned(deal.id) && remainingRedemptions !== null && remainingRedemptions <= 0) {
-            setIsLimitModalOpen(true);
-            return;
-        }
+
 
         const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
         setPendingAction(action);
