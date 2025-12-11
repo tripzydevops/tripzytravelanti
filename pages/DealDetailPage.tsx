@@ -1,4 +1,3 @@
-```
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDeals } from '../contexts/DealContext';
@@ -80,7 +79,7 @@ const DealDetailPage: React.FC = () => {
 
   return (
     <>
-      <MetaHead 
+      <MetaHead
         title={fetchedDeal.title}
         description={fetchedDeal.description}
         image={fetchedDeal.imageUrl}
