@@ -128,6 +128,73 @@ export async function getAllUsers(): Promise<User[]> {
     }));
 }
 
+export async function getUsersPaginated(
+    page: number,
+    limit: number,
+    filters?: { search?: string; tier?: SubscriptionTier | 'All' }
+): Promise<{ users: User[]; total: number }> {
+    let query = supabase
+        .from('profiles')
+        .select(`
+            *,
+            saved_deals:saved_deals(deal_id),
+            deal_redemptions:deal_redemptions(id, deal_id, user_id, redeemed_at),
+            user_deals:user_deals(deal_id)
+        `, { count: 'exact' });
+
+    if (filters?.search) {
+        const searchTerm = `%${filters.search}%`;
+        query = query.or(`name.ilike.${searchTerm},email.ilike.${searchTerm},mobile.ilike.${searchTerm}`);
+    }
+
+    if (filters?.tier && filters.tier !== 'All') {
+        query = query.eq('tier', filters.tier);
+    }
+
+    // Sort by created_at desc (newest first)
+    query = query.order('created_at', { ascending: false });
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, count, error } = await query.range(from, to);
+
+    if (error) {
+        console.error('Error fetching paginated users:', error);
+        return { users: [], total: 0 };
+    }
+
+    const users = data.map((user: any) => ({
+        id: user.id,
+        name: user.name || 'Unknown',
+        email: user.email,
+        tier: (user.tier as SubscriptionTier) || SubscriptionTier.FREE,
+        isAdmin: user.is_admin,
+        savedDeals: user.saved_deals?.map((sd: { deal_id: string }) => sd.deal_id) || [],
+        ownedDeals: user.user_deals?.map((od: { deal_id: string }) => od.deal_id) || [],
+        avatarUrl: user.avatar_url,
+        referredBy: user.referred_by,
+        extraRedemptions: user.extra_redemptions,
+        notificationPreferences: user.notification_preferences,
+        redemptions: user.deal_redemptions?.map((r: any) => ({
+            id: r.id,
+            dealId: r.deal_id,
+            userId: r.user_id,
+            redeemedAt: r.redeemed_at
+        })) || [],
+        mobile: user.mobile,
+        address: user.address,
+        billingAddress: user.billing_address,
+        role: user.role,
+        status: user.status || 'active',
+        emailConfirmedAt: user.email_confirmed_at,
+        lastSignInAt: user.last_sign_in_at,
+        createdAt: user.created_at
+    }));
+
+    return { users, total: count || 0 };
+}
+
 // ... (existing functions)
 
 // =====================================================
@@ -750,7 +817,7 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
     const totalLifetimeUsage = (claims?.length || 0) + nonWalletRedemptionCount;
 
     // 4. Calculate Total Accrued Allowance
-    const createdAt = new Date(user.created_at || new Date());
+    const createdAt = new Date(user.createdAt || new Date());
     const now = new Date();
 
     // Calculate months difference roughly
@@ -782,7 +849,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         .from('user_deals')
         .select('deal_id')
         .eq('user_id', cleanUserId);
-    
+
     console.log('[redeemDeal] ALL owned deals for user:', allDeals);
 
     // Check if the current deal is in the list of all deals (Client-side fallback check)
@@ -795,12 +862,12 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         .eq('deal_id', cleanDealId)
         .maybeSingle();
 
-    console.log('[redeemDeal] Checking ownership direct query:', { 
-        userId: cleanUserId, 
-        dealId: cleanDealId, 
-        ownedDeal, 
+    console.log('[redeemDeal] Checking ownership direct query:', {
+        userId: cleanUserId,
+        dealId: cleanDealId,
+        ownedDeal,
         ownedError,
-        isOwnedInList 
+        isOwnedInList
     });
 
     const isOwned = !!ownedDeal || !!isOwnedInList;

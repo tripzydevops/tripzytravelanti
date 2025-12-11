@@ -6,7 +6,7 @@ import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -65,7 +65,7 @@ const AdminUsersTab: React.FC = () => {
                 await confirmUserEmail(userId);
                 setShowSuccess('User email verified successfully');
                 setTimeout(() => setShowSuccess(''), 3000);
-                refreshUsers();
+                fetchUsersData();
             } catch (error) {
                 console.error('Failed to verify user', error);
                 alert('Failed to verify user. Check console for details.');
@@ -73,37 +73,47 @@ const AdminUsersTab: React.FC = () => {
         }
     };
 
-    const sortedUsers = useMemo(() => {
-        let filtered = [...users];
+    const [paginatedUsers, setPaginatedUsers] = useState<User[]>([]);
+    const [page, setPage] = useState(1);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const USERS_PER_PAGE = 20;
 
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(u =>
-                u.name.toLowerCase().includes(query) ||
-                u.email.toLowerCase().includes(query) ||
-                (u.mobile && u.mobile.includes(query))
-            );
+    const fetchUsersData = async () => {
+        setIsLoading(true);
+        try {
+            const { users, total } = await getUsersPaginated(page, USERS_PER_PAGE, {
+                search: searchQuery,
+                tier: tierFilter
+            });
+            setPaginatedUsers(users);
+            setTotalUsers(total);
+        } catch (error) {
+            console.error('Failed to fetch users:', error);
+        } finally {
+            setIsLoading(false);
         }
+    };
 
-        if (tierFilter !== 'All') {
-            filtered = filtered.filter(u => u.tier === tierFilter);
-        }
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchUsersData();
+        }, 500); // Debounce search
+        return () => clearTimeout(timer);
+    }, [page, searchQuery, tierFilter]);
 
-        // Sort by Created At DESC (newest first) by default, then Name
-        return filtered.sort((a, b) => {
-            if (a.createdAt && b.createdAt) {
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-            }
-            return a.name.localeCompare(b.name);
-        });
-    }, [users, searchQuery, tierFilter]);
+    // Force refresh when component mounts
+    useEffect(() => {
+        refreshUsers(); // Keep context sync for other components if needed
+        fetchAllDeals();
+    }, []);
 
     const userIdToNameMap = useMemo(() =>
-        users.reduce((acc, user) => {
+        paginatedUsers.reduce((acc, user) => {
             acc[user.id] = user.name;
             return acc;
         }, {} as Record<string, string>),
-        [users]);
+        [paginatedUsers]);
 
     const handleEditUserClick = (user: User) => {
         setEditingUser(user);
@@ -124,8 +134,11 @@ const AdminUsersTab: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDeleteUserClick = (userId: string) => {
-        if (window.confirm(t('deleteUserConfirmation'))) deleteUser(userId);
+    const handleDeleteUserClick = async (userId: string) => {
+        if (window.confirm(t('deleteUserConfirmation'))) {
+            await deleteUser(userId);
+            fetchUsersData();
+        }
     };
 
     const handleUserFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -139,9 +152,12 @@ const AdminUsersTab: React.FC = () => {
         setDealToAdd('');
     };
 
-    const handleUserFormSubmit = (e: React.FormEvent) => {
+    const handleUserFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingUser) updateUser(userFormData);
+        if (editingUser) {
+            await updateUser(userFormData);
+            fetchUsersData(); // Refresh list after update
+        }
         resetUserForm();
     };
 
@@ -163,9 +179,9 @@ const AdminUsersTab: React.FC = () => {
         }));
     };
 
-    const handleAddRedemptions = () => {
+    const handleAddRedemptions = async () => {
         if (redemptionsToAdd > 0 && editingUser) {
-            addExtraRedemptions(editingUser.id, redemptionsToAdd);
+            await addExtraRedemptions(editingUser.id, redemptionsToAdd);
             setUserFormData(prev => ({
                 ...prev,
                 extraRedemptions: (prev.extraRedemptions || 0) + redemptionsToAdd
@@ -173,6 +189,7 @@ const AdminUsersTab: React.FC = () => {
             setShowSuccess(t('redemptionsAddedSuccess'));
             setTimeout(() => setShowSuccess(''), 2000);
             setRedemptionsToAdd(0);
+            fetchUsersData(); // Refresh list
         }
     };
 
@@ -194,7 +211,7 @@ const AdminUsersTab: React.FC = () => {
 
     const handleSelectAllUsers = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            setSelectedUsers(new Set(sortedUsers.map(u => u.id)));
+            setSelectedUsers(new Set(paginatedUsers.map(u => u.id)));
         } else {
             setSelectedUsers(new Set());
         }
@@ -205,14 +222,14 @@ const AdminUsersTab: React.FC = () => {
         if (!window.confirm(`Are you sure you want to ${action} ${selectedUsers.size} users?`)) return;
 
         if (action === 'email') {
-            const emails = users.filter(u => selectedUsers.has(u.id)).map(u => u.email).join(',');
+            const emails = paginatedUsers.filter(u => selectedUsers.has(u.id)).map(u => u.email).join(',');
             window.location.href = `mailto:?bcc=${emails}`;
             return;
         }
 
         const status = action === 'ban' ? 'banned' : 'active';
         for (const userId of selectedUsers) {
-            const user = users.find(u => u.id === userId);
+            const user = paginatedUsers.find(u => u.id === userId);
             if (user) {
                 await updateUser({ ...user, status });
             }
@@ -220,6 +237,7 @@ const AdminUsersTab: React.FC = () => {
         setShowSuccess(`Users ${action === 'ban' ? 'banned' : 'activated'} successfully`);
         setTimeout(() => setShowSuccess(''), 3000);
         setSelectedUsers(new Set());
+        fetchUsersData();
     };
 
     const userOwnedDeals = useMemo(() => {
@@ -377,7 +395,7 @@ const AdminUsersTab: React.FC = () => {
                                             className="w-1/2 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
                                         >
                                             <option value="">Select User...</option>
-                                            {sortedUsers.filter(u => u.id !== userFormData.id).map(u => (
+                                            {paginatedUsers.filter(u => u.id !== userFormData.id).map(u => (
                                                 <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                                             ))}
                                         </select>
@@ -458,14 +476,14 @@ const AdminUsersTab: React.FC = () => {
                             type="text"
                             placeholder="Search by name, email, or mobile..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                             className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         />
                     </div>
                     <div className="w-full md:w-48">
                         <select
                             value={tierFilter}
-                            onChange={(e) => setTierFilter(e.target.value as SubscriptionTier | 'All')}
+                            onChange={(e) => { setTierFilter(e.target.value as SubscriptionTier | 'All'); setPage(1); }}
                             className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         >
                             <option value="All">All Tiers</option>
@@ -494,7 +512,7 @@ const AdminUsersTab: React.FC = () => {
                             <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                                 <tr>
                                     <th scope="col" className="px-6 py-3">
-                                        <input type="checkbox" onChange={handleSelectAllUsers} checked={selectedUsers.size === sortedUsers.length && sortedUsers.length > 0} className="rounded text-brand-primary focus:ring-brand-primary" />
+                                        <input type="checkbox" onChange={handleSelectAllUsers} checked={selectedUsers.size === paginatedUsers.length && paginatedUsers.length > 0} className="rounded text-brand-primary focus:ring-brand-primary" />
                                     </th>
                                     <th scope="col" className="px-6 py-3">{t('fullNameLabel')}</th>
                                     <th scope="col" className="px-6 py-3">{t('emailLabel')}</th>
@@ -506,7 +524,9 @@ const AdminUsersTab: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedUsers.map(user => {
+                                {isLoading ? (
+                                    <tr><td colSpan={8} className="text-center py-8">Loading users...</td></tr>
+                                ) : paginatedUsers.map(user => {
                                     const { remaining, total } = calculateRemainingRedemptions(user);
                                     const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
 
@@ -558,6 +578,28 @@ const AdminUsersTab: React.FC = () => {
                                 })}
                             </tbody>
                         </table>
+                    </div>
+                    {/* Pagination Controls */}
+                    <div className="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-brand-bg border-t border-gray-200 dark:border-gray-700">
+                        <span className="text-sm text-gray-700 dark:text-brand-text-muted">
+                            Showing {((page - 1) * USERS_PER_PAGE) + 1} to {Math.min(page * USERS_PER_PAGE, totalUsers)} of {totalUsers} users
+                        </span>
+                        <div className="space-x-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-4 py-2 bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-brand-text-light hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setPage(p => p + 1)}
+                                disabled={page * USERS_PER_PAGE >= totalUsers}
+                                className="px-4 py-2 bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-brand-text-light hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
