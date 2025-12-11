@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { SubscriptionTier } from '../types';
-import { CheckCircle, Lock } from '../components/Icons';
+import { CheckCircle, Lock, TagIcon, SpinnerIcon } from '../components/Icons';
 import { createPaymentTransaction, updatePaymentTransactionStatus } from '../lib/paymentService';
+import { verifyPromoCode, applyPromoCode } from '../lib/supabaseService';
 import { useToast } from '../contexts/ToastContext';
 
 const CheckoutPage: React.FC = () => {
@@ -26,6 +28,12 @@ const CheckoutPage: React.FC = () => {
     const [cvc, setCvc] = useState('');
     const [nameOnCard, setNameOnCard] = useState('');
 
+    // Promo Code State
+    const [promoCodeInput, setPromoCodeInput] = useState('');
+    const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountType: 'percentage' | 'fixed_amount'; discountValue: number } | null>(null);
+    const [promoLoading, setPromoLoading] = useState(false);
+    const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
     useEffect(() => {
         if (!selectedPlan || !user) {
             navigate('/subscriptions');
@@ -33,6 +41,49 @@ const CheckoutPage: React.FC = () => {
     }, [selectedPlan, user, navigate]);
 
     if (!selectedPlan || !user) return null;
+
+    const planName = language === 'tr' ? selectedPlan.name_tr : selectedPlan.name;
+    const planPrice = language === 'tr' ? selectedPlan.price_tr : selectedPlan.price;
+    const currencySymbol = language === 'tr' ? '₺' : '$';
+
+    // Calculate prorated amount for upgrades
+    const currentPlan = user ? plans.find(p => p.tier === user.tier) : null;
+    const currentPrice = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
+    const isUpgrade = currentPlan && planPrice > currentPrice;
+    const basePrice = isUpgrade ? planPrice - currentPrice : planPrice;
+
+    // Apply Discount
+    let discountAmount = 0;
+    if (appliedPromo) {
+        if (appliedPromo.discountType === 'percentage') {
+            discountAmount = (basePrice * appliedPromo.discountValue) / 100;
+        } else {
+            discountAmount = appliedPromo.discountValue;
+        }
+    }
+    // Ensure we don't go below zero
+    const amountToBill = Math.max(0, basePrice - discountAmount);
+
+    const handleApplyPromo = async () => {
+        if (!promoCodeInput.trim()) return;
+        setPromoLoading(true);
+        setPromoMessage(null);
+
+        const result = await verifyPromoCode(promoCodeInput);
+
+        if (result.valid && result.code) {
+            setAppliedPromo({
+                code: result.code,
+                discountType: result.discountType!,
+                discountValue: result.discountValue!
+            });
+            setPromoMessage({ type: 'success', text: result.message });
+        } else {
+            setAppliedPromo(null);
+            setPromoMessage({ type: 'error', text: result.message });
+        }
+        setPromoLoading(false);
+    };
 
     const handlePayment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,6 +118,11 @@ const CheckoutPage: React.FC = () => {
                     mockTransactionId
                 );
 
+                // If promo was used, record it
+                if (appliedPromo) {
+                    await applyPromoCode(appliedPromo.code, transaction.id);
+                }
+
                 // Update user tier
                 await updateTier(selectedPlan.tier);
 
@@ -96,17 +152,6 @@ const CheckoutPage: React.FC = () => {
         }
     };
 
-    const planName = language === 'tr' ? selectedPlan.name_tr : selectedPlan.name;
-    const planPrice = language === 'tr' ? selectedPlan.price_tr : selectedPlan.price;
-    const currencySymbol = language === 'tr' ? '₺' : '$';
-
-    // Calculate prorated amount for upgrades
-    const currentPlan = user ? plans.find(p => p.tier === user.tier) : null;
-    const currentPrice = currentPlan ? (language === 'tr' ? currentPlan.price_tr : currentPlan.price) : 0;
-    const isUpgrade = currentPlan && planPrice > currentPrice;
-    const priceDifference = isUpgrade ? planPrice - currentPrice : planPrice;
-    const amountToBill = priceDifference;
-
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-brand-bg py-12">
             <div className="container mx-auto px-4 max-w-4xl">
@@ -115,7 +160,7 @@ const CheckoutPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Order Summary */}
                     <div className="md:col-span-1 order-2 md:order-1">
-                        <div className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('orderSummary') || 'Order Summary'}</h2>
 
                             {isUpgrade && currentPlan && (
@@ -137,11 +182,54 @@ const CheckoutPage: React.FC = () => {
                                         <h3 className="font-medium text-gray-900 dark:text-white">{planName}</h3>
                                         <p className="text-sm text-gray-500 dark:text-brand-text-muted">{t('monthlySubscription') || 'Monthly Subscription'}</p>
                                     </div>
-                                    <span className="font-bold text-gray-900 dark:text-white">{currencySymbol}{planPrice.toFixed(2)}</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">{currencySymbol}{basePrice.toFixed(2)}</span>
                                 </div>
                             )}
 
-                            <div className="flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white mb-6">
+                            {/* Promo Code Input */}
+                            <div className="mb-6 pt-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Promo Code</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={promoCodeInput}
+                                        onChange={(e) => setPromoCodeInput(e.target.value)}
+                                        placeholder="e.g. SAVE20"
+                                        disabled={!!appliedPromo}
+                                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
+                                    />
+                                    {appliedPromo ? (
+                                        <button
+                                            onClick={() => { setAppliedPromo(null); setPromoCodeInput(''); setPromoMessage(null); }}
+                                            className="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg text-sm font-medium"
+                                        >
+                                            Remove
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleApplyPromo}
+                                            disabled={promoLoading || !promoCodeInput}
+                                            className="px-3 py-2 bg-brand-primary text-white rounded-lg text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-50"
+                                        >
+                                            {promoLoading ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : 'Apply'}
+                                        </button>
+                                    )}
+                                </div>
+                                {promoMessage && (
+                                    <p className={`text-xs mt-1 ${promoMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                        {promoMessage.text}
+                                    </p>
+                                )}
+                            </div>
+
+                            {appliedPromo && (
+                                <div className="flex justify-between items-center mb-4 text-green-600 font-medium text-sm animate-fade-in">
+                                    <span className="flex items-center"><TagIcon className="w-4 h-4 mr-1" /> Discount ({appliedPromo.code})</span>
+                                    <span>-{currencySymbol}{discountAmount.toFixed(2)}</span>
+                                </div>
+                            )}
+
+                            <div className="flex justify-between items-center text-lg font-bold text-gray-900 dark:text-white mb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <span>{isUpgrade ? (t('amountDue') || 'Amount Due Today') : (t('total') || 'Total')}</span>
                                 <span className="text-brand-primary">{currencySymbol}{amountToBill.toFixed(2)}</span>
                             </div>

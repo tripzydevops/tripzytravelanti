@@ -12,10 +12,11 @@ import AdminContentTab from '../components/admin/AdminContentTab';
 import AdminFlightRoutesTab from '../components/admin/AdminFlightRoutesTab';
 import AdminBackgroundsTab from '../components/admin/AdminBackgroundsTab';
 import { AdminAnnouncementsTab } from '../components/admin/AdminAnnouncementsTab';
+import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes'>('analytics');
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -63,6 +64,9 @@ const AdminPage: React.FC = () => {
         <button onClick={() => setActiveTab('backgrounds')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'backgrounds' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
           Backgrounds
         </button>
+        <button onClick={() => setActiveTab('promo_codes')} className={`py-2 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'promo_codes' ? 'border-b-2 border-brand-primary text-brand-primary' : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-800 dark:hover:text-brand-text-light'}`}>
+          Promo Codes
+        </button>
       </div>
 
       {activeTab === 'analytics' && <AnalyticsDashboard />}
@@ -76,6 +80,7 @@ const AdminPage: React.FC = () => {
       {activeTab === 'pending_approvals' && <AdminPendingApprovalsTab />}
       {activeTab === 'announcements' && <AdminAnnouncementsTab />}
       {activeTab === 'backgrounds' && <AdminBackgroundsTab />}
+      {activeTab === 'promo_codes' && <AdminPromoCodesTab />}
     </div>
   );
 };
