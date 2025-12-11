@@ -110,6 +110,7 @@ export const translations = {
     bottomNavTrips: 'Trips',
     bottomNavDeals: 'Deals',
     bottomNavMyDeals: 'My Deals',
+    bottomNavWallet: 'Wallet',
     bottomNavTravel: 'Travel',
     bottomNavProfile: 'Profile',
     bottomNavAdmin: 'Admin',
@@ -266,6 +267,10 @@ export const translations = {
     noSavedDeals: 'You haven\'t saved any deals yet. Start exploring!',
     saveDealAction: 'Save Deal',
     unsaveDealAction: 'Unsave Deal',
+    // Wallet Page
+    myWalletTitle: 'My Wallet',
+    myWalletSubtitle: 'Deals you have purchased or won',
+    emptyWallet: 'Your wallet is empty',
     // Admin Page
     adminDashboard: 'Admin Dashboard',
     manageDeals: 'Manage Deals',
@@ -487,6 +492,7 @@ export const translations = {
     bottomNavTrips: 'Seyahatlerim',
     bottomNavDeals: 'Fırsatlar',
     bottomNavMyDeals: 'Fırsatlarım',
+    bottomNavWallet: 'Cüzdanım',
     bottomNavTravel: 'Seyahat',
     bottomNavProfile: 'Profil',
     bottomNavAdmin: 'Yönetici',
@@ -644,6 +650,10 @@ export const translations = {
     noSavedDeals: 'Henüz hiç fırsat kaydetmediniz. Keşfetmeye başlayın!',
     saveDealAction: 'Fırsatı Kaydet',
     unsaveDealAction: 'Kaydedileni Kaldır',
+    // Wallet Page
+    myWalletTitle: 'Cüzdanım',
+    myWalletSubtitle: 'Satın aldığınız veya kazandığınız fırsatlar',
+    emptyWallet: 'Cüzdanınız boş',
     // Admin Page
     adminDashboard: 'Yönetici Paneli',
     manageDeals: 'Fırsatları Yönet',
