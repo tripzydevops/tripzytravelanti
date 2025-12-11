@@ -117,6 +117,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [hasRated, setHasRated] = useState(false);
     const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+    const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
 
     const handleActionClick = (action: 'redeem' | 'claim') => {
         if (!user) {
