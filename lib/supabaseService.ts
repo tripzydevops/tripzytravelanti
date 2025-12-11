@@ -1263,9 +1263,13 @@ export async function deleteBackgroundImage(id: string, url: string) {
         if (path) {
             const { error: storageError } = await supabase.storage
                 .from('backgrounds')
+                .remove([path]);
+
+            if (storageError) {
+                console.warn('Error deleting file from storage (orphan file may remain):', storageError);
+            }
         }
     }
-}
 }
 
 export async function removeDealFromUser(userId: string, dealId: string) {
