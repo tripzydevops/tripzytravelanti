@@ -83,7 +83,7 @@ const DealDetailPage: React.FC = () => {
         title={fetchedDeal.title}
         description={fetchedDeal.description}
         image={fetchedDeal.imageUrl}
-        url={`https://tripzy.app/deals/${fetchedDeal.id}`}
+        url={'https://tripzy.app/deals/' + fetchedDeal.id}
         type="article"
       />
       <DealDetailView
