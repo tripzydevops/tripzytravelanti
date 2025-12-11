@@ -6,7 +6,7 @@ import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -37,6 +37,8 @@ const AdminUsersTab: React.FC = () => {
     const [redemptionsToAdd, setRedemptionsToAdd] = useState(0);
     const [viewingRedemptionsForUser, setViewingRedemptionsForUser] = useState<User | null>(null);
     const [viewingPaymentsForUser, setViewingPaymentsForUser] = useState<User | null>(null);
+    const [viewingActivityForUser, setViewingActivityForUser] = useState<User | null>(null);
+    const [userActivityLog, setUserActivityLog] = useState<ActivityLogItem[]>([]);
     const [userPayments, setUserPayments] = useState<PaymentTransaction[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
     const [showSuccess, setShowSuccess] = useState('');
@@ -197,6 +199,12 @@ const AdminUsersTab: React.FC = () => {
         setViewingPaymentsForUser(user);
         const transactions = await getUserTransactions(user.id);
         setUserPayments(transactions);
+    };
+
+    const handleViewActivityClick = async (user: User) => {
+        setViewingActivityForUser(user);
+        const log = await getUserActivityLog(user.id);
+        setUserActivityLog(log);
     };
 
     const handleSelectUser = (userId: string) => {
@@ -569,6 +577,7 @@ const AdminUsersTab: React.FC = () => {
                                                     <button onClick={() => handleVerifyUser(user.id)} className="font-medium text-blue-500 hover:underline">Verify</button>
                                                 )}
                                                 <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
+                                                <button onClick={() => handleViewActivityClick(user)} className="font-medium text-purple-500 hover:underline">Activity</button>
                                                 <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
                                                 <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editUser')}</button>
                                                 <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteUser')}</button>
@@ -671,6 +680,63 @@ const AdminUsersTab: React.FC = () => {
                     )}
                     <div className="mt-6 flex justify-end">
                         <button onClick={() => setViewingPaymentsForUser(null)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">{t('close')}</button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* User Activity Modal */}
+            <Modal
+                isOpen={!!viewingActivityForUser}
+                onClose={() => setViewingActivityForUser(null)}
+                title={`Activity Log: ${viewingActivityForUser?.name}`}
+            >
+                <div className="p-4 max-h-[70vh] overflow-y-auto">
+                    {userActivityLog.length > 0 ? (
+                        <div className="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3 space-y-6">
+                            {userActivityLog.map((item) => (
+                                <div key={item.id} className="mb-8 ml-6 relative">
+                                    <span className={`absolute -left-9 flex items-center justify-center w-6 h-6 rounded-full ring-4 ring-white dark:ring-brand-surface ${item.type === 'joined' ? 'bg-blue-100 ring-blue-50' :
+                                        item.type === 'deal_claimed' ? 'bg-yellow-100 ring-yellow-50' :
+                                            item.type === 'deal_redeemed' ? 'bg-green-100 ring-green-50' :
+                                                item.type === 'subscription_payment' ? 'bg-purple-100 ring-purple-50' :
+                                                    'bg-gray-100 ring-gray-50'
+                                        }`}>
+                                        {/* Simple dot or icon based on type */}
+                                        <div className={`w-2 h-2 rounded-full ${item.type === 'joined' ? 'bg-blue-600' :
+                                            item.type === 'deal_claimed' ? 'bg-yellow-600' :
+                                                item.type === 'deal_redeemed' ? 'bg-green-600' :
+                                                    item.type === 'subscription_payment' ? 'bg-purple-600' :
+                                                        'bg-gray-600'
+                                            }`}></div>
+                                    </span>
+                                    <h3 className="flex items-center mb-1 text-base font-semibold text-gray-900 dark:text-white">
+                                        {item.type === 'joined' && 'Joined Platform'}
+                                        {item.type === 'deal_claimed' && 'Claimed Deal'}
+                                        {item.type === 'deal_redeemed' && 'Redeemed Deal'}
+                                        {item.type === 'subscription_payment' && 'Payment'}
+                                        {item.type === 'deal_unsaved' && 'Unsaved Deal'}
+                                    </h3>
+                                    <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+                                        {new Date(item.timestamp).toLocaleString()}
+                                    </time>
+                                    <p className="text-base font-normal text-gray-500 dark:text-brand-text-muted">
+                                        {item.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
+                            No activity recorded for this user.
+                        </p>
+                    )}
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            onClick={() => setViewingActivityForUser(null)}
+                            className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        >
+                            {t('close')}
+                        </button>
                     </div>
                 </div>
             </Modal>

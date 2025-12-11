@@ -1435,3 +1435,96 @@ export async function deleteBackgroundImage(id: string, url: string) {
 }
 
 
+
+export interface ActivityLogItem {
+    id: string;
+    type: 'joined' | 'deal_claimed' | 'deal_redeemed' | 'subscription_payment' | 'deal_unsaved';
+    description: string;
+    timestamp: string;
+    metadata?: any;
+}
+
+export async function getUserActivityLog(userId: string): Promise<ActivityLogItem[]> {
+    const activities: ActivityLogItem[] = [];
+
+    // 1. Get Profile Creation (Joined)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('created_at, name')
+        .eq('id', userId)
+        .single();
+
+    if (profile) {
+        activities.push({
+            id: 'join-' + userId,
+            type: 'joined',
+            description: `User joined the platform`,
+            timestamp: profile.created_at
+        });
+    }
+
+    // 2. Get Deal Claims (Added to Wallet)
+    const { data: claims } = await supabase
+        .from('user_deals')
+        .select(`
+            id,
+            acquired_at,
+            deal:deals(title, title_tr)
+        `)
+        .eq('user_id', userId);
+
+    if (claims) {
+        claims.forEach((claim: any) => {
+            const title = claim.deal?.title || 'Unknown Deal';
+            activities.push({
+                id: claim.id,
+                type: 'deal_claimed',
+                description: `Claimed deal: ${title}`,
+                timestamp: claim.acquired_at
+            });
+        });
+    }
+
+    // 3. Get Redemptions
+    const { data: redemptions } = await supabase
+        .from('deal_redemptions')
+        .select(`
+            id,
+            redeemed_at,
+            deal:deals(title, title_tr)
+        `)
+        .eq('user_id', userId);
+
+    if (redemptions) {
+        redemptions.forEach((r: any) => {
+            const title = r.deal?.title || 'Unknown Deal';
+            activities.push({
+                id: r.id,
+                type: 'deal_redeemed',
+                description: `Redeemed deal: ${title}`,
+                timestamp: r.redeemed_at
+            });
+        });
+    }
+
+    // 4. Get Payments
+    const { data: payments } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('user_id', userId);
+
+    if (payments) {
+        payments.forEach((p: any) => {
+            activities.push({
+                id: p.id,
+                type: 'subscription_payment',
+                description: `Payment of ${p.amount} ${p.currency} (${p.status})`,
+                timestamp: p.created_at || new Date().toISOString(), // Fallback if created_at missing in type
+                metadata: { status: p.status }
+            });
+        });
+    }
+
+    // Sort by timestamp DESC
+    return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
