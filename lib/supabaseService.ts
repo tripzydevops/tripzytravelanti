@@ -774,16 +774,20 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     // 0. Check if deal is already owned (in wallet)
     // If owned, the redemption count was already taken when claimed (acquired).
     // So we do NOT check limit again.
-    const { data: ownedDeal } = await supabase
+    const { data: ownedDeal, error: ownedError } = await supabase
         .from('user_deals')
         .select('*')
         .eq('user_id', userId)
         .eq('deal_id', dealId)
         .maybeSingle();
 
+    console.log('[redeemDeal] Checking ownership:', { userId, dealId, ownedDeal, ownedError });
+
     if (!ownedDeal) {
         // 1. Check Limit ONLY if not owned
-        const { allowed } = await checkMonthlyLimit(userId);
+        const { allowed, limit, remaining } = await checkMonthlyLimit(userId);
+        console.log('[redeemDeal] Check Limit:', { allowed, limit, remaining });
+
         if (!allowed) {
             throw new Error('Monthly redemption limit reached');
         }
