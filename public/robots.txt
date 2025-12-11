@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /payment-success
+Disallow: /wallet
+Disallow: /profile
+
+Sitemap: https://tripzy.app/sitemap.xml

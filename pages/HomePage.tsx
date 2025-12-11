@@ -14,7 +14,7 @@ import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
 import { getBackgroundImages, getFlashDeals } from '../lib/supabaseService';
 import { Deal } from '../types';
-import { Helmet } from 'react-helmet-async';
+import MetaHead from '../components/MetaHead';
 import FlashDealCard from '../components/FlashDealCard';
 
 // ... (existing imports)
@@ -230,7 +230,11 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* ... (Helmet) ... */}
+      <MetaHead
+        title={t('homeTitle') || "Tripzy - Travel Discounts & Deals"}
+        description={t('homeDescription') || "Save on travel, hotels, and flights with Tripzy subscriptions."}
+        url="https://tripzy.app/"
+      />
 
       {/* Ambient Background Glows */}
       {/* ... */}

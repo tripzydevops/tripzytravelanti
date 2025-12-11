@@ -1,11 +1,14 @@
+```
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDeals } from '../contexts/DealContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLayout } from '../contexts/LayoutContext';
+import MetaHead from '../components/MetaHead';
 import { Deal } from '../types';
 import DealDetailView from '../components/DealDetailView';
+import { SpinnerIcon } from '../components/Icons';
 
 const DealDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,11 +79,20 @@ const DealDetailPage: React.FC = () => {
   }
 
   return (
-    <DealDetailView
-      deal={fetchedDeal}
-      onRate={rateDeal}
-      onRedeem={redeemDeal}
-    />
+    <>
+      <MetaHead 
+        title={fetchedDeal.title}
+        description={fetchedDeal.description}
+        image={fetchedDeal.imageUrl}
+        url={`https://tripzy.app/deals/${fetchedDeal.id}`}
+        type="article"
+      />
+      <DealDetailView
+        deal={fetchedDeal}
+        onRate={rateDeal}
+        onRedeem={redeemDeal}
+      />
+    </>
   );
 };
 

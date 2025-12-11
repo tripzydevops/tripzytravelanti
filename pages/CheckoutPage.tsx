@@ -187,38 +187,46 @@ const CheckoutPage: React.FC = () => {
                             )}
 
                             {/* Promo Code Input */}
-                            <div className="mb-6 pt-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Promo Code</label>
-                                <div className="flex gap-2">
+                            <div className="mb-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
+                                    Promo Code
+                                </label>
+                                <div className="relative flex items-center">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <TagIcon className="h-4 w-4 text-gray-400" />
+                                    </div>
                                     <input
                                         type="text"
                                         value={promoCodeInput}
                                         onChange={(e) => setPromoCodeInput(e.target.value)}
-                                        placeholder="e.g. SAVE20"
+                                        placeholder="Enter code"
                                         disabled={!!appliedPromo}
-                                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm"
+                                        className="block w-full pl-10 pr-20 py-2.5 sm:text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white focus:ring-brand-primary focus:border-brand-primary transition-colors disabled:opacity-60"
                                     />
-                                    {appliedPromo ? (
-                                        <button
-                                            onClick={() => { setAppliedPromo(null); setPromoCodeInput(''); setPromoMessage(null); }}
-                                            className="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg text-sm font-medium"
-                                        >
-                                            Remove
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={handleApplyPromo}
-                                            disabled={promoLoading || !promoCodeInput}
-                                            className="px-3 py-2 bg-brand-primary text-white rounded-lg text-sm font-medium hover:bg-brand-primary/90 disabled:opacity-50"
-                                        >
-                                            {promoLoading ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : 'Apply'}
-                                        </button>
-                                    )}
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+                                        {appliedPromo ? (
+                                            <button
+                                                onClick={() => { setAppliedPromo(null); setPromoCodeInput(''); setPromoMessage(null); }}
+                                                className="mr-1 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={handleApplyPromo}
+                                                disabled={promoLoading || !promoCodeInput}
+                                                className="mr-1 px-4 py-1.5 bg-brand-primary text-white text-xs font-bold rounded-md hover:bg-brand-primary/90 disabled:opacity-50 transition-all shadow-sm"
+                                            >
+                                                {promoLoading ? <SpinnerIcon className="w-3 h-3 animate-spin" /> : 'APPLY'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 {promoMessage && (
-                                    <p className={`text-xs mt-1 ${promoMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                    <div className={`mt-2 text-xs flex items-center ${promoMessage.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
+                                        {promoMessage.type === 'success' ? <CheckCircle className="w-3 h-3 mr-1" /> : null}
                                         {promoMessage.text}
-                                    </p>
+                                    </div>
                                 )}
                             </div>
 
