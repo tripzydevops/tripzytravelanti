@@ -711,43 +711,55 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
 
     const limit = baseLimit + (user.extraRedemptions || 0);
 
-    // 3. Calculate Usage for Current Month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const startOfMonthISO = startOfMonth.toISOString();
+    // 3. Calculate Cumulative Usage (Lifetime)
+    // Rollover Logic: Unused redemptions carry over.
+    // Total Allowance = (MonthlyRate * MonthsActive) + ExtraRedemptions
+    // Remaining = Total Allowance - Total Lifetime Usage
 
     // Fetch IDs instead of Count to avoid double counting
     const { data: redemptions, error: redemptionError } = await supabase
         .from('deal_redemptions')
         .select('deal_id')
-        .eq('user_id', userId)
-        .gte('redeemed_at', startOfMonthISO);
+        .eq('user_id', userId);
+        // Removed .gte('redeemed_at', startOfMonthISO) to count lifetime
 
     const { data: claims, error: claimError } = await supabase
         .from('user_deals')
         .select('deal_id')
-        .eq('user_id', userId)
-        .gte('acquired_at', startOfMonthISO);
+        .eq('user_id', userId);
+        // Removed .gte('acquired_at', startOfMonthISO) to count lifetime
 
     if (redemptionError || claimError) {
         console.error('Error calculating usage:', redemptionError, claimError);
-        throw new Error('Failed to calculate monthly usage');
+        throw new Error('Failed to calculate usage');
     }
 
-    // Use Set to count unique deals participated in this month
+    // Use Set to count unique deals participated in (Lifetime)
     const uniqueDealIds = new Set<string>();
 
     redemptions?.forEach((r: any) => uniqueDealIds.add(r.deal_id));
     claims?.forEach((c: any) => uniqueDealIds.add(c.deal_id));
 
-    const totalUsage = uniqueDealIds.size;
-    const remaining = Math.max(0, limit - totalUsage);
+    const totalLifetimeUsage = uniqueDealIds.size;
+
+    // 4. Calculate Total Accrued Allowance
+    const createdAt = new Date(user.created_at || new Date());
+    const now = new Date();
+    
+    // Calculate months difference roughly
+    let monthsActive = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
+    // Add current month (e.g. if created today, it's 1st month)
+    monthsActive = Math.max(1, monthsActive + 1);
+
+    const monthlyRate = baseLimit; // baseLimit is already divided by 12 for yearly plans
+    const totalAccruedLimit = (monthlyRate * monthsActive) + (user.extraRedemptions || 0);
+
+    const remaining = Math.max(0, totalAccruedLimit - totalLifetimeUsage);
 
     return {
-        allowed: totalUsage < limit,
+        allowed: totalLifetimeUsage < totalAccruedLimit,
         remaining,
-        limit
+        limit: totalAccruedLimit
     };
 }
 
