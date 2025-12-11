@@ -493,6 +493,14 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Redemption History Expandable */}
+            <SettingsItem
+              onClick={() => navigate('/redemptions')} // Or expand in place
+              icon={<div className="w-6 h-6">🎟️</div>}
+              title={t('redemptionHistory') || 'Redemption History'}
+              action={<ChevronRightIcon className="w-5 h-5 text-gray-400" />}
+            />
           </SettingsSection>
 
           {/* Support Section */}

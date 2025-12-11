@@ -64,6 +64,7 @@ const SavedDealsPage = lazyLoadRetry(() => import('./pages/SavedDealsPage'));
 const WalletPage = lazyLoadRetry(() => import('./pages/WalletPage'));
 const CheckoutPage = lazyLoadRetry(() => import('./pages/CheckoutPage'));
 const PaymentSuccessPage = lazyLoadRetry(() => import('./pages/PaymentSuccessPage'));
+const RedemptionHistoryPage = lazyLoadRetry(() => import('./pages/RedemptionHistoryPage'));
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -144,6 +145,15 @@ function AnimatedRoutes() {
             element={
               <AuthenticatedRoute>
                 <PageTransition><ProfilePage /></PageTransition>
+                <PageTransition><ProfilePage /></PageTransition>
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/redemptions"
+            element={
+              <AuthenticatedRoute>
+                <PageTransition><RedemptionHistoryPage /></PageTransition>
               </AuthenticatedRoute>
             }
           />

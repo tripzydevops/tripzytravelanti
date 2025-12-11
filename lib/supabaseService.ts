@@ -802,6 +802,31 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
         if (error) throw error;
 
+        // CHECK USAGE LIMIT LOGIC
+        // Fetch deal usage limit
+        const { data: dealData } = await supabase
+            .from('deals')
+            .select('usage_limit')
+            .eq('id', dealId)
+            .single();
+
+        if (dealData && dealData.usage_limit && dealData.usage_limit !== 'Unlimited') {
+            const limitNum = parseInt(dealData.usage_limit);
+            if (!isNaN(limitNum)) {
+                // Count how many times USER has redeemed THIS deal
+                const { count } = await supabase
+                    .from('deal_redemptions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', userId)
+                    .eq('deal_id', dealId);
+
+                if (count !== null && count >= limitNum) {
+                    // Remove from wallet if limit reached
+                    await removeDealFromUser(userId, dealId);
+                }
+            }
+        }
+
         // Transform snake_case to camelCase
         return {
             id: data.id,
