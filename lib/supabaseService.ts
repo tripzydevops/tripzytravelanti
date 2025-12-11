@@ -1272,15 +1272,4 @@ export async function deleteBackgroundImage(id: string, url: string) {
     }
 }
 
-export async function removeDealFromUser(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('user_deals')
-        .delete()
-        .eq('user_id', userId)
-        .eq('deal_id', dealId);
 
-    if (error) {
-        console.error('Error removing deal from user:', error);
-        throw error;
-    }
-}
