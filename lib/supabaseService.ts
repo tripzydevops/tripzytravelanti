@@ -774,27 +774,48 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     // 0. Check if deal is already owned (in wallet)
     // If owned, the redemption count was already taken when claimed (acquired).
     // So we do NOT check limit again.
+    const cleanUserId = userId.trim();
+    const cleanDealId = dealId.trim();
+
     // DEBUG: Fetch ALL owned deals to see what supabase can see
-    const { data: allDeals } = await supabase.from('user_deals').select('deal_id').eq('user_id', userId);
+    const { data: allDeals, error: allDealsError } = await supabase
+        .from('user_deals')
+        .select('deal_id')
+        .eq('user_id', cleanUserId);
+    
     console.log('[redeemDeal] ALL owned deals for user:', allDeals);
+
+    // Check if the current deal is in the list of all deals (Client-side fallback check)
+    const isOwnedInList = allDeals?.some((d: { deal_id: string }) => d.deal_id === cleanDealId);
 
     const { data: ownedDeal, error: ownedError } = await supabase
         .from('user_deals')
         .select('*')
-        .eq('user_id', userId)
-        .eq('deal_id', dealId)
+        .eq('user_id', cleanUserId)
+        .eq('deal_id', cleanDealId)
         .maybeSingle();
 
-    console.log('[redeemDeal] Checking ownership:', { userId, dealId, ownedDeal, ownedError });
+    console.log('[redeemDeal] Checking ownership direct query:', { 
+        userId: cleanUserId, 
+        dealId: cleanDealId, 
+        ownedDeal, 
+        ownedError,
+        isOwnedInList 
+    });
 
-    if (!ownedDeal) {
+    const isOwned = !!ownedDeal || !!isOwnedInList;
+
+    if (!isOwned) {
         // 1. Check Limit ONLY if not owned
-        const { allowed, limit, remaining } = await checkMonthlyLimit(userId);
-        console.log('[redeemDeal] Check Limit:', { allowed, limit, remaining });
+        console.log('[redeemDeal] Deal NOT found in wallet. Checking monthly limit...');
+        const { allowed, limit, remaining } = await checkMonthlyLimit(cleanUserId);
+        console.log('[redeemDeal] Check Limit Result:', { allowed, limit, remaining });
 
         if (!allowed) {
             throw new Error('Monthly redemption limit reached');
         }
+    } else {
+        console.log('[redeemDeal] Deal IS found in wallet. Bypassing limit check.');
     }
 
     try {
