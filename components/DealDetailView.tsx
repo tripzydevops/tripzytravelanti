@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getHeroImageUrl } from '../lib/imageUtils';
+import { checkMonthlyLimit } from '../lib/supabaseService';
 import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -117,11 +118,26 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [hasRated, setHasRated] = useState(false);
     const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+    const [remainingRedemptions, setRemainingRedemptions] = useState<number | null>(null);
     const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
+
+    useEffect(() => {
+        if (user) {
+            checkMonthlyLimit(user.id)
+                .then(result => setRemainingRedemptions(result.remaining))
+                .catch(err => console.error('Failed to check limit:', err));
+        }
+    }, [user]);
 
     const handleActionClick = (action: 'redeem' | 'claim') => {
         if (!user) {
             navigate('/login');
+            return;
+        }
+
+        // Check limit for "Redeem Now" on non-owned deals
+        if (action === 'redeem' && !isDealOwned(deal.id) && remainingRedemptions !== null && remainingRedemptions <= 0) {
+            setIsLimitModalOpen(true);
             return;
         }
 
@@ -598,7 +614,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     </button>
                 </div>
             </Modal>
-            
+
             {/* Limit Reached Modal */}
             <Modal
                 isOpen={isLimitModalOpen}
