@@ -372,7 +372,7 @@ export const translations = {
     limitReachedTitle: 'Limit Reached',
     monthlyLimitReached: 'Monthly Limit Reached',
     upgradePrompt: 'You have used all your redemptions for this month. Upgrade your plan to unlock more amazing deals!',
-    upgradePlan: 'Upgrade Plan',
+    upgradePlanButton: 'Upgrade Plan',
     maybeLater: 'Maybe Later',
   },
   tr: {
@@ -750,7 +750,7 @@ export const translations = {
     limitReachedTitle: 'Limit Aşıldı',
     monthlyLimitReached: 'Aylık Limit Aşıldı',
     upgradePrompt: 'Bu ayki tüm kullanım haklarınızı doldurdunuz. Daha fazla harika fırsat için planınızı yükseltin!',
-    upgradePlan: 'Planı Yükselt',
+    upgradePlanButton: 'Planı Yükselt',
     maybeLater: 'Belki Daha Sonra',
   },
 };

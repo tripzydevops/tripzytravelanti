@@ -44,7 +44,8 @@ import {
   ArrowLeft,
   Save,
   Megaphone,
-  AlertCircle
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
 
 type IconProps = {
@@ -102,6 +103,7 @@ export const ArrowLeftIcon: React.FC<IconProps> = ({ className }) => <ArrowLeft 
 export const SaveIcon: React.FC<IconProps> = ({ className }) => <Save className={className} strokeWidth={1.5} />;
 export const MegaphoneIcon: React.FC<IconProps> = ({ className }) => <Megaphone className={className} strokeWidth={1.5} />;
 export const AlertCircleIcon: React.FC<IconProps> = ({ className }) => <AlertCircle className={className} strokeWidth={1.5} />;
+export const CalendarIcon: React.FC<IconProps> = ({ className }) => <Calendar className={className} strokeWidth={1.5} />;
 
 export { Compass };
 
