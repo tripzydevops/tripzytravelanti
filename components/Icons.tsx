@@ -7,6 +7,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   X,
   Share2,
   Pencil,
@@ -63,6 +65,8 @@ export const UserIcon: React.FC<IconProps> = ({ className }) => <User className=
 export const CogIcon: React.FC<IconProps> = ({ className }) => <Settings className={className} />;
 export const ChevronLeftIcon: React.FC<IconProps> = ({ className }) => <ChevronLeft className={className} />;
 export const ChevronRightIcon: React.FC<IconProps> = ({ className }) => <ChevronRight className={className} />;
+export const ChevronUpIcon: React.FC<IconProps> = ({ className }) => <ChevronUp className={className} />;
+export const ChevronDownIcon: React.FC<IconProps> = ({ className }) => <ChevronDown className={className} />;
 export const XMarkIcon: React.FC<IconProps> = ({ className }) => <X className={className} />;
 export const XCircle: React.FC<IconProps> = ({ className }) => <X className={className} />; // Mapping XCircle to X for now or use XCircle from lucide if available
 export const ShareIcon: React.FC<IconProps> = ({ className }) => <Share2 className={className} />;
