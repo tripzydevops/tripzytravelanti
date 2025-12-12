@@ -11,6 +11,7 @@ const Footer: React.FC = () => {
         <div className="flex justify-center space-x-6 mb-4">
           <a href="/privacy" className="hover:text-brand-primary transition-colors text-sm">{t('privacyPolicyLink') || 'Privacy Policy'}</a>
           <a href="/terms" className="hover:text-brand-primary transition-colors text-sm">{t('termsOfService') || 'Terms of Service'}</a>
+          <a href="/faq" className="hover:text-brand-primary transition-colors text-sm">{t('helpCenter') || 'Q&A'}</a>
         </div>
         <p className="text-sm opacity-70">{t('footerText') || '© 2024 Tripzy. All rights reserved.'}</p>
       </div>

@@ -14,6 +14,7 @@ import { LayoutProvider, useLayout } from './contexts/LayoutContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ToastProvider } from './contexts/ToastContext';
 import BottomNav from './components/BottomNav';
+import Footer from './components/Footer';
 import PartnerLayout from './components/layouts/PartnerLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
@@ -67,6 +68,7 @@ const PaymentSuccessPage = lazyLoadRetry(() => import('./pages/PaymentSuccessPag
 const RedemptionHistoryPage = lazyLoadRetry(() => import('./pages/RedemptionHistoryPage'));
 const PrivacyPage = lazyLoadRetry(() => import('./pages/PrivacyPage'));
 const TermsPage = lazyLoadRetry(() => import('./pages/TermsPage'));
+const FAQPage = lazyLoadRetry(() => import('./pages/FAQPage'));
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -144,6 +146,7 @@ function AnimatedRoutes() {
           <Route path="/plan" element={<PageTransition><TripPlannerPage /></PageTransition>} />
           <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
+          <Route path="/faq" element={<PageTransition><FAQPage /></PageTransition>} />
           <Route
             path="/profile"
             element={
@@ -207,6 +210,7 @@ function AppContent() {
           </Suspense>
         )}
         {user && <BottomNav />}
+        <Footer />
       </div>
     </SearchProvider>
   );
