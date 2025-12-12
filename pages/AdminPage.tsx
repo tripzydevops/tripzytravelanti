@@ -30,7 +30,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   HomeIcon,
-  LogOut
+  LogoutIcon
 } from '../components/Icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -208,7 +208,7 @@ const AdminPage: React.FC = () => {
             className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors`}
             title="Logout"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <LogoutIcon className="w-5 h-5 flex-shrink-0" />
             {!isCollapsed && <span>Logout</span>}
           </button>
         </div>
