@@ -65,6 +65,8 @@ const WalletPage = lazyLoadRetry(() => import('./pages/WalletPage'));
 const CheckoutPage = lazyLoadRetry(() => import('./pages/CheckoutPage'));
 const PaymentSuccessPage = lazyLoadRetry(() => import('./pages/PaymentSuccessPage'));
 const RedemptionHistoryPage = lazyLoadRetry(() => import('./pages/RedemptionHistoryPage'));
+const PrivacyPage = lazyLoadRetry(() => import('./pages/PrivacyPage'));
+const TermsPage = lazyLoadRetry(() => import('./pages/TermsPage'));
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -140,6 +142,8 @@ function AnimatedRoutes() {
           <Route path="/flights" element={<PageTransition><FlightsPage /></PageTransition>} />
           <Route path="/travel" element={<PageTransition><TravelPage /></PageTransition>} />
           <Route path="/plan" element={<PageTransition><TripPlannerPage /></PageTransition>} />
+          <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
           <Route
             path="/profile"
             element={

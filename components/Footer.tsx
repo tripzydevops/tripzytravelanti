@@ -8,7 +8,11 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-brand-dark text-white mt-12">
       <div className="container mx-auto px-6 py-4 text-center">
-        <p>{t('footerText')}</p>
+        <div className="flex justify-center space-x-6 mb-4">
+          <a href="/privacy" className="hover:text-brand-primary transition-colors text-sm">{t('privacyPolicyLink') || 'Privacy Policy'}</a>
+          <a href="/terms" className="hover:text-brand-primary transition-colors text-sm">{t('termsOfService') || 'Terms of Service'}</a>
+        </div>
+        <p className="text-sm opacity-70">{t('footerText') || '© 2024 Tripzy. All rights reserved.'}</p>
       </div>
     </footer>
   );
