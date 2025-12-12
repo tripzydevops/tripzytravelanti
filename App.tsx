@@ -198,19 +198,23 @@ function AppContent() {
     );
   }
 
+  /* Check if we are on an admin route */
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
     <SearchProvider>
       <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
-        <main className={`flex-grow ${user ? 'pb-24' : ''}`}>
+        <main className={`flex-grow ${user && !isAdminRoute ? 'pb-24' : ''}`}>
           <AnimatedRoutes />
         </main>
-        {isChatbotVisible && user && (
+        {isChatbotVisible && user && !isAdminRoute && (
           <Suspense fallback={<div />}>
             <Chatbot />
           </Suspense>
         )}
-        {user && <BottomNav />}
-        <Footer />
+        {user && !isAdminRoute && <BottomNav />}
+        {!isAdminRoute && <Footer />}
       </div>
     </SearchProvider>
   );
