@@ -30,6 +30,7 @@ const CreateDealPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [neverExpires, setNeverExpires] = useState(false);
     const [formTab, setFormTab] = useState('Basic Info');
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -122,6 +123,38 @@ const CreateDealPage: React.FC = () => {
         fetchDeal();
     }, [id]);
 
+    // Inline Validation - Real-time price validation
+    useEffect(() => {
+        const errors: string[] = [];
+        const original = parseFloat(formData.originalPrice);
+        const discounted = parseFloat(formData.discountedPrice);
+        const percentage = parseFloat(formData.discountPercentage);
+
+        // Skip validation for custom deal type
+        if (formData.dealTypeKey === 'custom') {
+            setValidationErrors([]);
+            return;
+        }
+
+        if (!isNaN(original) && original < 0) {
+            errors.push('Original price cannot be negative');
+        }
+        if (!isNaN(discounted) && discounted < 0) {
+            errors.push('Discounted price cannot be negative');
+        }
+        if (!isNaN(original) && !isNaN(discounted) && original > 0 && discounted >= original) {
+            errors.push('Discounted price must be lower than original price');
+        }
+        if (!isNaN(percentage) && percentage > 100) {
+            errors.push('Discount cannot exceed 100%');
+        }
+        if (!isNaN(percentage) && percentage < 0) {
+            errors.push('Discount cannot be negative');
+        }
+
+        setValidationErrors(errors);
+    }, [formData.originalPrice, formData.discountedPrice, formData.discountPercentage, formData.dealTypeKey]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
@@ -132,11 +165,21 @@ const CreateDealPage: React.FC = () => {
             setFormData(prev => {
                 const updated = { ...prev, [name]: value };
 
-                // Handle Deal Type Change
+                // Handle Deal Type Change with Smart Defaults
                 if (name === 'dealTypeKey') {
-                    // Reset or adjust fields based on new type if needed
-                    // For example, if switching to 'fixed_price', clear original price? 
-                    // Keeping it simple for now.
+                    const newType = value as DealDiscountType;
+
+                    // Apply smart defaults based on deal type
+                    if (newType === 'percentage_off' && !updated.originalPrice) {
+                        updated.originalPrice = '100';
+                        updated.discountPercentage = '20';
+                        updated.discountedPrice = '80';
+                    } else if (newType === 'bogo') {
+                        updated.discountPercentage = '50';
+                    } else if (newType === 'fixed_price') {
+                        updated.originalPrice = '';
+                        updated.discountPercentage = '';
+                    }
                 }
 
                 // Handle Time Type Change
@@ -437,6 +480,19 @@ const CreateDealPage: React.FC = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Inline Validation Errors */}
+                            {validationErrors.length > 0 && (
+                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 space-y-1">
+                                    {validationErrors.map((err, idx) => (
+                                        <p key={idx} className="text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                                            <Info className="w-4 h-4 flex-shrink-0" />
+                                            {err}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+
                             <p className="text-xs text-gray-500 -mt-4">
                                 {language === 'tr' ? (dealTypeConfig as any)?.description_tr : dealTypeConfig?.description || 'Enter pricing details.'}
                             </p>
