@@ -2,15 +2,17 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getHeroImageUrl } from '../lib/imageUtils';
 import { checkMonthlyLimit } from '../lib/supabaseService';
+import { supabase } from '../lib/supabaseClient';
 import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActivity } from '../contexts/UserActivityContext';
 import { SubscriptionTier, Deal } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon, StarIcon } from './Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon, StarIcon, SparklesIcon, CustomBriefcaseIcon } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import QRCode from 'react-qr-code';
+import { getWalletLimit, isWalletFull } from '../lib/walletUtils';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
     [SubscriptionTier.NONE]: 0,
@@ -118,14 +120,24 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [hasRated, setHasRated] = useState(false);
     const [activeTab, setActiveTab] = useState<'conditions' | 'locations'>('conditions');
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+    const [isWalletFullModalOpen, setIsWalletFullModalOpen] = useState(false);
     const [remainingRedemptions, setRemainingRedemptions] = useState<number | null>(null);
     const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
+    const [activeDealsCount, setActiveDealsCount] = useState(0);
 
     useEffect(() => {
         if (user) {
             checkMonthlyLimit(user.id)
                 .then(result => setRemainingRedemptions(result.remaining))
                 .catch(err => console.error('Failed to check limit:', err));
+
+            // Fetch active deals count for wallet capacity check
+            supabase
+                .from('user_deals')
+                .select('id', { count: 'exact' })
+                .eq('user_id', user.id)
+                .eq('status', 'active')
+                .then(({ count }) => setActiveDealsCount(count || 0));
         }
     }, [user]);
 
@@ -135,7 +147,14 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             return;
         }
 
-
+        // Check wallet capacity for claim action
+        if (action === 'claim') {
+            const userTier = user.tier || SubscriptionTier.FREE;
+            if (isWalletFull(activeDealsCount, userTier, user.walletLimit)) {
+                setIsWalletFullModalOpen(true);
+                return;
+            }
+        }
 
         const dontShowAgain = localStorage.getItem('dontShowRedemptionWarning') === 'true';
         setPendingAction(action);
@@ -638,6 +657,55 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         </button>
                         <button
                             onClick={() => setIsLimitModalOpen(false)}
+                            className="text-gray-500 dark:text-brand-text-muted hover:text-gray-700 dark:hover:text-white font-medium"
+                        >
+                            {t('maybeLater') || 'Maybe Later'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Wallet Full Modal */}
+            <Modal
+                isOpen={isWalletFullModalOpen}
+                onClose={() => setIsWalletFullModalOpen(false)}
+                title={t('walletLimitReached') || 'Wallet Full'}
+            >
+                <div className="p-6 text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gold-500/20 to-gold-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-gold-500/30">
+                        <CustomBriefcaseIcon className="w-10 h-10 text-gold-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        {t('walletCapacityFull') || 'Wallet Full!'}
+                    </h3>
+                    <p className="text-gray-600 dark:text-brand-text-muted mb-2">
+                        {t('walletLimitReachedDesc') || 'Please upgrade your plan or remove some deals to add more.'}
+                    </p>
+                    <p className="text-sm text-gold-400 mb-6">
+                        {`${activeDealsCount} / ${getWalletLimit(user?.tier || SubscriptionTier.FREE, user?.walletLimit)} ${language === 'tr' ? 'fırsat cüzdanda' : 'deals in wallet'}`}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => {
+                                setIsWalletFullModalOpen(false);
+                                navigate('/subscriptions');
+                            }}
+                            className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-3 px-6 rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transform hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                        >
+                            <SparklesIcon className="w-5 h-5" />
+                            {t('walletUpgradePrompt') || 'Upgrade to add more deals'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setIsWalletFullModalOpen(false);
+                                navigate('/wallet');
+                            }}
+                            className="w-full bg-white/10 border border-white/20 text-white font-medium py-3 px-6 rounded-xl hover:bg-white/20 transition-all"
+                        >
+                            {language === 'tr' ? 'Cüzdanımı Görüntüle' : 'View My Wallet'}
+                        </button>
+                        <button
+                            onClick={() => setIsWalletFullModalOpen(false)}
                             className="text-gray-500 dark:text-brand-text-muted hover:text-gray-700 dark:hover:text-white font-medium"
                         >
                             {t('maybeLater') || 'Maybe Later'}
