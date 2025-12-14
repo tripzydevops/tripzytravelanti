@@ -18,6 +18,7 @@ import {
     DealTimeType,
     DEFAULT_DEAL_VALUES
 } from '../../shared/dealTypes';
+import { generateRedemptionCode } from '../../lib/codeGenerator';
 
 const CreateDealPage: React.FC = () => {
     const { t, language } = useLanguage();
@@ -523,7 +524,6 @@ const CreateDealPage: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            const { generateRedemptionCode } = require('../../lib/codeGenerator');
                                             const code = generateRedemptionCode(formData.category, formData.vendor);
                                             setFormData(prev => ({ ...prev, redemptionCode: code }));
                                         }}

@@ -20,6 +20,7 @@ import {
     DealTimeType,
     DEFAULT_DEAL_VALUES
 } from '../../shared/dealTypes';
+import { generateRedemptionCode } from '../../lib/codeGenerator';
 
 const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     id: '',
@@ -606,7 +607,6 @@ const AdminDealsTab: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    const { generateRedemptionCode } = require('../../lib/codeGenerator');
                                                     const code = generateRedemptionCode(dealFormData.category, dealFormData.vendor);
                                                     setDealFormData(prev => ({ ...prev, redemptionCode: code }));
                                                 }}
