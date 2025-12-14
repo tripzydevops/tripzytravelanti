@@ -590,7 +590,33 @@ const AdminDealsTab: React.FC = () => {
                             {/* Redemption & Terms Tab */}
                             {formTab === 'Redemption & Terms' && (
                                 <div className="space-y-4 animate-fade-in">
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label><input type="text" name="redemptionCode" value={dealFormData.redemptionCode} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                name="redemptionCode"
+                                                value={dealFormData.redemptionCode}
+                                                onChange={handleDealInputChange}
+                                                required
+                                                className="flex-1 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                                                placeholder="e.g., DIN-L7K9M2"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const { generateRedemptionCode } = require('../../lib/codeGenerator');
+                                                    const code = generateRedemptionCode(dealFormData.category, dealFormData.vendor);
+                                                    setDealFormData(prev => ({ ...prev, redemptionCode: code }));
+                                                }}
+                                                className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-1 whitespace-nowrap"
+                                                title="Generate unique code"
+                                            >
+                                                <Save className="w-4 h-4" />
+                                                Generate
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Redemption Style</label>
                                         <div className="flex gap-4">

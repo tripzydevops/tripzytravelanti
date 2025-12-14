@@ -454,7 +454,30 @@ const CreateDealPage: React.FC = () => {
                         <div className="space-y-6 animate-fade-in">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Redemption Code</label>
-                                <input type="text" name="redemptionCode" required value={formData.redemptionCode} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        name="redemptionCode"
+                                        required
+                                        value={formData.redemptionCode}
+                                        onChange={handleChange}
+                                        className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                        placeholder="e.g., DIN-L7K9M2"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const { generateRedemptionCode } = require('../../lib/codeGenerator');
+                                            const code = generateRedemptionCode(formData.category, formData.vendor);
+                                            setFormData(prev => ({ ...prev, redemptionCode: code }));
+                                        }}
+                                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 whitespace-nowrap"
+                                        title="Generate unique code"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        Generate
+                                    </button>
+                                </div>
                                 <p className="text-xs text-gray-500 mt-1">This code will be used to generate a QR code for the user.</p>
                             </div>
                             <div>
