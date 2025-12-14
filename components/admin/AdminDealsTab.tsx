@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { Deal, SubscriptionTier } from '../../types';
 
 import { SpinnerIcon, EyeIcon } from '../Icons';
+import { Save } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
 import { getDealsPaginated, createDeal } from '../../lib/supabaseService';
 import DealDetailView from '../DealDetailView';
