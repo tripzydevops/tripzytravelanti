@@ -387,13 +387,13 @@ const HomePage: React.FC = () => {
             </div>
 
             {loadingRecommendations ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="h-[400px] bg-white/5 rounded-2xl animate-pulse border border-white/5"></div>
                 ))}
               </div>
             ) : recommendations.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-1000">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
                 {recommendations.map(deal => (
                   <DealCard key={deal.id} deal={deal} />
                 ))}
@@ -416,7 +416,7 @@ const HomePage: React.FC = () => {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
               {deals
                 .filter(d => d.latitude && d.longitude)
                 .map(d => {
@@ -542,7 +542,7 @@ const HomePage: React.FC = () => {
 
               {filteredDeals.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-1000">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
                     {filteredDeals.map(deal => (
                       <DealCard key={deal.id} deal={deal} />
                     ))}

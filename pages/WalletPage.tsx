@@ -86,7 +86,7 @@ const WalletPage: React.FC = () => {
             {loading ? (
                 <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div></div>
             ) : walletDeals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                     {walletDeals.map(deal => (
                         <div key={deal.id} className="relative">
                             <DealCard deal={deal} />

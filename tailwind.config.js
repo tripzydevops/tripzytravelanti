@@ -11,6 +11,14 @@ export default {
   ],
   darkMode: 'class',
   theme: {
+    screens: {
+      'xs': '350px',    // Custom: 2 cards on wider mobile phones
+      'sm': '640px',    // Default Tailwind
+      'md': '768px',    // Default Tailwind
+      'lg': '1024px',   // Default Tailwind
+      'xl': '1280px',   // Default Tailwind
+      '2xl': '1400px',  // 5 cards on large desktops
+    },
     extend: {
       colors: {
         'brand-bg': '#001F3F', // Deep Ocean Blue (Top)

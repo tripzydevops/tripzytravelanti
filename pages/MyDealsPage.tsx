@@ -20,7 +20,7 @@ const MyDealsPage: React.FC = () => {
       </header>
 
       {savedDeals.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
           {savedDeals.map(deal => (
             <DealCard key={deal.id} deal={deal} />
           ))}
