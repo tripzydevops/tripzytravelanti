@@ -9,7 +9,6 @@ import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon, StarIcon, SparklesIcon, FireIcon } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 
-import { AdBanner } from '../components/AdBanner';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { getAIRecommendations } from '../lib/recommendationLogic';
 import { getBackgroundImages, getFlashDeals } from '../lib/supabaseService';
@@ -594,10 +593,7 @@ const HomePage: React.FC = () => {
             </>
           )}
         </section>
-        {/* Ad Banner Test */}
-        <div className="mt-20 opacity-50 hover:opacity-100 transition-opacity">
-          <AdBanner position="BOTTOM" />
-        </div>
+
       </div>
     </div >
   );

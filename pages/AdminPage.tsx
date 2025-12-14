@@ -38,7 +38,7 @@ import { Menu } from 'lucide-react';
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes'>('analytics');
   const [pendingCount, setPendingCount] = useState(0);
@@ -100,7 +100,7 @@ const AdminPage: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       navigate('/login');
     } catch (error) {
       console.error('Logout failed', error);
