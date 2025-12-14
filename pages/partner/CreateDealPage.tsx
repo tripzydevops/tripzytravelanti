@@ -3,11 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDeal, getDealById, updateDeal } from '../../lib/supabaseService';
-import { SubscriptionTier } from '../../types';
-import { ArrowLeft, Save } from 'lucide-react';
+
+import { SubscriptionTier, Deal } from '../../types';
+import { ArrowLeft, Save, Info } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
+import { useLanguage } from '../../contexts/LanguageContext';
+import {
+    getCategoryOptions,
+    getDiscountTypeOptions,
+    getTimeTypeOptions,
+    getDiscountTypeConfig,
+    getTimeTypeConfig,
+    DealDiscountType,
+    DealTimeType,
+    DEFAULT_DEAL_VALUES
+} from '../../constants/dealTypes';
 
 const CreateDealPage: React.FC = () => {
+    const { t, language } = useLanguage();
     const { user } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -27,6 +40,8 @@ const CreateDealPage: React.FC = () => {
         companyLogoUrl: '',
         category: 'Dining',
         category_tr: 'Yemek',
+        dealTypeKey: DEFAULT_DEAL_VALUES.discountType,
+        timeType: DEFAULT_DEAL_VALUES.timeType,
         originalPrice: '',
         discountedPrice: '',
         discountPercentage: '',
@@ -34,10 +49,10 @@ const CreateDealPage: React.FC = () => {
         isExternal: false,
         vendor: user?.name || '',
         expiresAt: '',
-        usageLimit: 'Unlimited',
-        usageLimit_tr: 'Sınırsız',
-        validity: 'Valid all days',
-        validity_tr: 'Her gün geçerli',
+        usageLimit: DEFAULT_DEAL_VALUES.usageLimit,
+        usageLimit_tr: DEFAULT_DEAL_VALUES.usageLimit_tr,
+        validity: DEFAULT_DEAL_VALUES.validity,
+        validity_tr: DEFAULT_DEAL_VALUES.validity_tr,
         termsUrl: '',
         redemptionCode: '',
         redemptionStyle: [] as ('online' | 'in_store')[],
@@ -46,6 +61,9 @@ const CreateDealPage: React.FC = () => {
         is_flash_deal: false,
         flash_end_time: ''
     });
+
+    const dealTypeConfig = getDiscountTypeConfig(formData.dealTypeKey);
+    const timeTypeConfig = getTimeTypeConfig(formData.timeType);
 
     useEffect(() => {
         const fetchDeal = async () => {
@@ -63,6 +81,8 @@ const CreateDealPage: React.FC = () => {
                             companyLogoUrl: deal.companyLogoUrl || '',
                             category: deal.category,
                             category_tr: deal.category_tr,
+                            dealTypeKey: deal.dealTypeKey || 'percentage_off',
+                            timeType: deal.timeType || 'standard',
                             originalPrice: deal.originalPrice.toString(),
                             discountedPrice: deal.discountedPrice.toString(),
                             discountPercentage: deal.discountPercentage?.toString() || '',
@@ -111,6 +131,43 @@ const CreateDealPage: React.FC = () => {
         } else {
             setFormData(prev => {
                 const updated = { ...prev, [name]: value };
+
+                // Handle Deal Type Change
+                if (name === 'dealTypeKey') {
+                    // Reset or adjust fields based on new type if needed
+                    // For example, if switching to 'fixed_price', clear original price? 
+                    // Keeping it simple for now.
+                }
+
+                // Handle Time Type Change
+                if (name === 'timeType') {
+                    const newTimeConfig = getTimeTypeConfig(value as DealTimeType);
+                    if (newTimeConfig) {
+                        if (newTimeConfig.key === 'flash') {
+                            updated.is_flash_deal = true;
+                        } else {
+                            updated.is_flash_deal = false;
+                        }
+
+                        if (newTimeConfig.defaultValidity) {
+                            updated.validity = newTimeConfig.defaultValidity;
+                            updated.validity_tr = newTimeConfig.defaultValidity_tr || updated.validity;
+                        }
+                    }
+                }
+
+                // Handle Category Change (Update Turkish equivalent automatically if possible)
+                if (name === 'category') {
+                    const catOptions = getCategoryOptions('en');
+                    const selectedCat = catOptions.find(c => c.value === value);
+                    if (selectedCat) {
+                        const catOptionsTr = getCategoryOptions('tr');
+                        const trCat = catOptionsTr.find(c => c.key === selectedCat.key);
+                        if (trCat) {
+                            updated.category_tr = trCat.value;
+                        }
+                    }
+                }
 
                 // Smart Pricing Logic
                 if (name === 'originalPrice') {
@@ -163,7 +220,7 @@ const CreateDealPage: React.FC = () => {
         const hasPrice = !isNaN(original) && !isNaN(discounted) && original > 0;
         const hasPercentage = !isNaN(percentage) && percentage > 0;
 
-        if (!hasPrice && !hasPercentage) {
+        if (!hasPrice && !hasPercentage && formData.dealTypeKey !== 'custom') {
             setError('Please enter either a Price (Original & Discounted) OR a Discount Percentage.');
             setLoading(false);
             return;
@@ -185,7 +242,7 @@ const CreateDealPage: React.FC = () => {
                 new Date(new Date().setFullYear(new Date().getFullYear() + 100)).toISOString() :
                 formData.expiresAt;
 
-            const dealData = {
+            const dealData: Partial<Deal> = {
                 ...formData,
                 originalPrice: hasPrice ? original : 0,
                 discountedPrice: hasPrice ? discounted : 0,
@@ -198,13 +255,15 @@ const CreateDealPage: React.FC = () => {
                 latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
                 longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
                 is_flash_deal: formData.is_flash_deal,
-                flash_end_time: formData.flash_end_time ? new Date(formData.flash_end_time).toISOString() : undefined
+                flash_end_time: formData.flash_end_time ? new Date(formData.flash_end_time).toISOString() : undefined,
+                dealTypeKey: formData.dealTypeKey,
+                timeType: formData.timeType
             };
 
             if (isEditing && id) {
                 await updateDeal(id, dealData);
             } else {
-                await createDeal(dealData);
+                await createDeal(dealData as any);
             }
 
             navigate('/partner/dashboard');
@@ -302,25 +361,87 @@ const CreateDealPage: React.FC = () => {
                     {/* Pricing & Category Tab */}
                     {formTab === 'Pricing & Category' && (
                         <div className="space-y-6 animate-fade-in">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        {t('dealTypeLabel')}
+                                    </label>
+                                    <select
+                                        name="dealTypeKey"
+                                        value={formData.dealTypeKey}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    >
+                                        {getDiscountTypeOptions(language).map(opt => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {getDiscountTypeOptions(language).find(o => o.value === formData.dealTypeKey)?.description}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        {t('timeTypeLabel')}
+                                    </label>
+                                    <select
+                                        name="timeType"
+                                        value={formData.timeType}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    >
+                                        {getTimeTypeOptions(language).map(opt => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                                <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                    <option>Dining</option>
-                                    <option>Wellness</option>
-                                    <option>Travel</option>
-                                    <option>Flights</option>
-                                    <option>Shopping</option>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('categoryLabel')}</label>
+                                <select
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                >
+                                    {getCategoryOptions(language).map(opt => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Original Price</label><input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discounted Price</label><input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount %</label><input type="number" name="discountPercentage" min="0" max="100" value={formData.discountPercentage} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                                {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('originalPriceLabel')} {dealTypeConfig?.requiredFields.includes('originalPrice') && <span className="text-red-500">*</span>}</label>
+                                        <input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    </div>
+                                )}
+                                {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountedPriceLabel')} {dealTypeConfig?.requiredFields.includes('discountedPrice') && <span className="text-red-500">*</span>}</label>
+                                        <input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    </div>
+                                )}
+                                {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountPercentageLabel')} {dealTypeConfig?.requiredFields.includes('discountPercentage') && <span className="text-red-500">*</span>}</label>
+                                        <input type="number" name="discountPercentage" min="0" max="100" value={formData.discountPercentage} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    </div>
+                                )}
                             </div>
-                            <p className="text-xs text-gray-500 -mt-4">Enter either a specific price (Original & Discounted) OR just a Discount Percentage.</p>
+                            <p className="text-xs text-gray-500 -mt-4">
+                                {language === 'tr' ? (dealTypeConfig as any)?.description_tr : dealTypeConfig?.description || 'Enter pricing details.'}
+                            </p>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Required Tier</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('requiredTierLabel')}</label>
                                 <select name="requiredTier" value={formData.requiredTier} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                                     {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}
                                 </select>
@@ -378,12 +499,14 @@ const CreateDealPage: React.FC = () => {
 
                             <div className="flex items-center space-x-2 pt-2">
                                 <input type="checkbox" id="is_flash_deal" name="is_flash_deal" checked={formData.is_flash_deal} onChange={handleChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" />
-                                <label htmlFor="is_flash_deal" className="text-sm font-medium text-gray-700 dark:text-gray-300">Flash Deal ⚡</label>
+                                <label htmlFor="is_flash_deal" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {t('flashDealLabel')} ⚡ {formData.timeType === 'flash' && <span className="text-xs text-brand-primary">({language === 'tr' ? 'Süre Tipi ile uygulandı' : 'Applied via Time Type'})</span>}
+                                </label>
                             </div>
 
                             {formData.is_flash_deal && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Flash Deal End Time</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('flashEndTimeLabel')}</label>
                                     <input
                                         type="datetime-local"
                                         name="flash_end_time"

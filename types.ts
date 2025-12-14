@@ -89,6 +89,9 @@ export interface Deal {
   is_flash_deal?: boolean;
   flash_end_time?: string;
   companyWebsiteUrl?: string;
+  // Deal type classification
+  dealTypeKey?: 'percentage_off' | 'fixed_amount_off' | 'fixed_price' | 'bogo' | 'bundle' | 'free_gift' | 'cashback';
+  timeType?: 'standard' | 'flash' | 'daily' | 'weekend' | 'seasonal' | 'evergreen';
 }
 
 export interface SubscriptionPlan {

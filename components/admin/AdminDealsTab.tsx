@@ -9,6 +9,16 @@ import ImageUpload from '../ImageUpload';
 import { getDealsPaginated, createDeal } from '../../lib/supabaseService';
 import DealDetailView from '../DealDetailView';
 import Modal from '../Modal';
+import {
+    getCategoryOptions,
+    getDiscountTypeOptions,
+    getTimeTypeOptions,
+    getDiscountTypeConfig,
+    getTimeTypeConfig,
+    DealDiscountType,
+    DealTimeType,
+    DEFAULT_DEAL_VALUES
+} from '../../constants/dealTypes';
 
 const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     id: '',
@@ -19,6 +29,8 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     imageUrl: '',
     category: 'Dining',
     category_tr: 'Yemek',
+    dealTypeKey: DEFAULT_DEAL_VALUES.discountType,
+    timeType: DEFAULT_DEAL_VALUES.timeType,
     originalPrice: 0,
     discountedPrice: 0,
     discountPercentage: 0,
@@ -29,8 +41,8 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     ratingCount: 0,
     usageLimit: '',
     usageLimit_tr: '',
-    validity: '',
-    validity_tr: '',
+    validity: DEFAULT_DEAL_VALUES.validity,
+    validity_tr: DEFAULT_DEAL_VALUES.validity_tr,
     termsUrl: '',
     redemptionCode: '',
     publishAt: undefined,
@@ -97,6 +109,10 @@ const AdminDealsTab: React.FC = () => {
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
     const [formTab, setFormTab] = useState('Basic Info');
+
+
+    const dealTypeConfig = getDiscountTypeConfig(dealFormData.dealTypeKey || 'percentage_off');
+    const timeTypeConfig = getTimeTypeConfig(dealFormData.timeType || 'standard');
 
     const loadAdminDeals = useCallback(async (page: number) => {
         try {
@@ -210,6 +226,38 @@ const AdminDealsTab: React.FC = () => {
 
         setDealFormData(prev => {
             const updated = { ...prev, [name]: newValue };
+
+            // Handle Time Type Change
+            if (name === 'timeType') {
+                const newTimeConfig = getTimeTypeConfig(value as DealTimeType);
+                if (newTimeConfig) {
+                    if (newTimeConfig.key === 'flash') {
+                        updated.is_flash_deal = true;
+                    } else {
+                        updated.is_flash_deal = false;
+                    }
+
+                    if (newTimeConfig.defaultValidity) {
+                        updated.validity = newTimeConfig.defaultValidity;
+                        updated.validity_tr = newTimeConfig.defaultValidity_tr || updated.validity;
+                    }
+                }
+            }
+
+            // Handle Category Change
+            if (name === 'category') {
+                const catOptions = getCategoryOptions('en');
+                const selectedCat = catOptions.find(c => c.value === value);
+                if (selectedCat) {
+                    const catOptionsTr = getCategoryOptions('tr');
+                    const trCat = catOptionsTr.find(c => c.key === selectedCat.key);
+                    if (trCat) {
+                        updated.category_tr = trCat.value;
+                    }
+                }
+            }
+
+
             if (name === 'discountPercentage' && updated.originalPrice > 0) {
                 const discount = parseFloat(value);
                 if (!isNaN(discount)) {
@@ -494,12 +542,47 @@ const AdminDealsTab: React.FC = () => {
                             {/* Pricing & Category Tab */}
                             {formTab === 'Pricing & Category' && (
                                 <div className="space-y-4 animate-fade-in">
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label><select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"><option>Dining</option><option>Wellness</option><option>Travel</option><option>Flights</option><option>Shopping</option></select></div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('dealTypeLabel')}</label>
+                                            <select name="dealTypeKey" value={dealFormData.dealTypeKey} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                                {getDiscountTypeOptions(language, true).map(opt => (
+                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                            <p className="text-xs text-gray-500 mt-1">{getDiscountTypeOptions(language, true).find(o => o.value === dealFormData.dealTypeKey)?.description}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('timeTypeLabel')}</label>
+                                            <select name="timeType" value={dealFormData.timeType} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                                {getTimeTypeOptions(language).map(opt => (
+                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label>
+                                        <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                            {getCategoryOptions(language).map(opt => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
+                                            <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required={dealTypeConfig?.requiredFields.includes('originalPrice')} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                        )}
+                                        {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
+                                            <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} required={dealTypeConfig?.requiredFields.includes('discountPercentage')} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
+                                        )}
+                                        {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
+                                            <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} required={dealTypeConfig?.requiredFields.includes('discountedPrice')} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                        )}
+                                    </div>
+
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
                                 </div>
                             )}
@@ -588,13 +671,13 @@ const AdminDealsTab: React.FC = () => {
                                             className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
                                         />
                                         <label htmlFor="is_flash_deal" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">
-                                            Flash Deal ⚡
+                                            {t('flashDealLabel')} ⚡ {dealFormData.timeType === 'flash' && <span className="text-xs text-brand-primary">(Applied via Time Type)</span>}
                                         </label>
                                     </div>
 
                                     {dealFormData.is_flash_deal && (
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Flash Deal End Time</label>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('flashEndTimeLabel')}</label>
                                             <input
                                                 type="datetime-local"
                                                 name="flash_end_time"
@@ -688,11 +771,10 @@ const AdminDealsTab: React.FC = () => {
                             onChange={(e) => setCategoryFilter(e.target.value)}
                             className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         >
-                            <option value="All">All Categories</option>
-                            <option value="Dining">Dining</option>
-                            <option value="Wellness">Wellness</option>
-                            <option value="Travel">Travel</option>
-                            <option value="Flights">Flights</option>
+                            <option value="All">{t('categoryAll')}</option>
+                            {getCategoryOptions(language).map(cat => (
+                                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
