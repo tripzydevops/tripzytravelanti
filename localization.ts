@@ -32,6 +32,15 @@ export const translations = {
     onboardingTravelStyleSubtitle: 'What excites you the most? Select one or more.',
     welcome: 'Welcome',
     searchPlaceholder: 'Search for deals',
+    // Personalized Greetings
+    greetingMorning: 'Good morning',
+    greetingAfternoon: 'Good afternoon',
+    greetingEvening: 'Good evening',
+    greetingNight: 'Good night',
+    greetingSubtitleMorning: "Start your day with amazing deals! ☀️",
+    greetingSubtitleAfternoon: "Here are today's best picks for you 🌤️",
+    greetingSubtitleEvening: "Wind down with these exclusive offers 🌙",
+    greetingSubtitleNight: "Late night deals just for you 🌟",
     // Home Page
     heroTitle: 'Exclusive Global Travel Deals & VIP Experiences',
     heroSubtitle: 'Unlock up to 70% off on luxury hotels, flights, and dining experiences worldwide.',
@@ -417,6 +426,15 @@ export const translations = {
     onboardingTravelStyleSubtitle: 'Sizi en çok ne heyecanlandırır? Birini veya birkaçını seçin.',
     welcome: 'Hoş geldiniz',
     searchPlaceholder: 'Fırsatları ara',
+    // Personalized Greetings
+    greetingMorning: 'Günaydın',
+    greetingAfternoon: 'İyi günler',
+    greetingEvening: 'İyi akşamlar',
+    greetingNight: 'İyi geceler',
+    greetingSubtitleMorning: "Güne harika fırsatlarla başlayın! ☀️",
+    greetingSubtitleAfternoon: "İşte bugünün sizin için en iyi seçimleri 🌤️",
+    greetingSubtitleEvening: "Bu özel tekliflerle rahatlayın 🌙",
+    greetingSubtitleNight: "Sadece sizin için gece fırsatları 🌟",
     // Home Page
     heroTitle: 'Dünya Çapında Özel Seyahat Fırsatları',
     heroSubtitle: 'Dünya genelinde lüks oteller, uçuşlar ve restoranlarda %70\'e varan indirimleri keşfedin.',
