@@ -79,6 +79,15 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const daysLeftText = calculateDaysLeft(deal.expiresAt);
 
+  // Check if deal is "new" (created within last 48 hours)
+  const isNewDeal = React.useMemo(() => {
+    if (!deal.createdAt) return false;
+    const createdDate = new Date(deal.createdAt);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
+    return hoursDiff <= 48;
+  }, [deal.createdAt]);
+
   const handleSaveToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -111,6 +120,12 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {discount > 0 && !isLocked && (
           <div className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-20 border border-white/10 backdrop-blur-sm">
             {language === 'tr' ? `%${discount} ${t('off')}` : `${discount}% ${t('off')}`}
+          </div>
+        )}
+        {/* "New" badge for recently added deals */}
+        {isNewDeal && !isLocked && (
+          <div className={`absolute ${discount > 0 ? 'top-12' : 'top-3'} left-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg z-20 border border-white/10 backdrop-blur-sm animate-pulse`}>
+            {language === 'tr' ? '✨ YENİ' : '✨ NEW'}
           </div>
         )}
         {user && !isLocked && (

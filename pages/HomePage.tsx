@@ -4,6 +4,7 @@ import { useDeals } from '../contexts/DealContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useContent } from '../contexts/ContentContext';
 import DealCard from '../components/DealCard';
+import DealCardSkeleton from '../components/DealCardSkeleton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
 import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon, StarIcon, SparklesIcon, FireIcon } from '../components/Icons';
@@ -425,9 +426,7 @@ const HomePage: React.FC = () => {
 
               {loadingRecommendations ? (
                 <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-[400px] bg-white/5 rounded-2xl animate-pulse border border-white/5"></div>
-                  ))}
+                  <DealCardSkeleton count={5} />
                 </div>
               ) : recommendations.length > 0 ? (
                 <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
