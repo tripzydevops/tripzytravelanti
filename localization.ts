@@ -380,6 +380,8 @@ export const translations = {
     upgradePrompt: 'You have used all your redemptions for this month. Upgrade your plan to unlock more amazing deals!',
     upgradePlanButton: 'Upgrade Plan',
     maybeLater: 'Maybe Later',
+    // Footer
+    footerText: '© 2024 Tripzy. All rights reserved.',
   },
   tr: {
     // Header
@@ -764,5 +766,7 @@ export const translations = {
     upgradePrompt: 'Bu ayki tüm kullanım haklarınızı doldurdunuz. Daha fazla harika fırsat için planınızı yükseltin!',
     upgradePlanButton: 'Planı Yükselt',
     maybeLater: 'Belki Daha Sonra',
+    // Footer
+    footerText: '© 2024 Tripzy. Tüm hakları saklıdır.',
   },
 };
