@@ -262,12 +262,12 @@ const WalletPage: React.FC = () => {
                         <DealCardSkeleton count={6} />
                     </div>
                 ) : filteredDeals.length > 0 ? (
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 items-stretch">
                         {filteredDeals.map(deal => {
                             const expiryWarning = deal.walletStatus === 'active' ? getExpiryWarning(deal.expiresAt) : null;
 
                             return (
-                                <div key={deal.id} className="relative group">
+                                <div key={deal.id} className="relative group h-full">
                                     {/* Status Badge */}
                                     <StatusBadge status={deal.walletStatus} />
 

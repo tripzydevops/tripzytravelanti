@@ -204,7 +204,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div className="relative flex flex-col rounded-2xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:border-gold-500/50 group">
+    <div className="relative flex flex-col h-full rounded-2xl overflow-hidden bg-white/5 backdrop-blur-xl border border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:border-gold-500/50 group">
       {/* Glow Effect on Hover */}
       <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
 
