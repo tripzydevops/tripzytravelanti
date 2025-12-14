@@ -214,7 +214,7 @@ function AppContent() {
           </Suspense>
         )}
         {user && !isAdminRoute && <BottomNav />}
-        {!isAdminRoute && <Footer />}
+        {!isAdminRoute && !user && <Footer />}
       </div>
     </SearchProvider>
   );

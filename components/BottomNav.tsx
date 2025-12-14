@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { CustomHomeIcon, CustomSearchIcon, CustomUserIcon, CustomShieldCheckIcon, CustomBriefcaseIcon, CustomHeartIcon, CustomCreditCardIcon } from './Icons';
+import { CustomHomeIcon, CustomUserIcon, CustomShieldCheckIcon, CustomHeartIcon, CustomCreditCardIcon } from './Icons';
 
 const BottomNav: React.FC = () => {
   const { t } = useLanguage();
@@ -10,41 +10,75 @@ const BottomNav: React.FC = () => {
 
   const navItems = [
     { path: '/', label: t('bottomNavHome') || 'Home', icon: CustomHomeIcon, admin: false },
-    { path: '/saved', label: t('bottomNavFavorites') || 'Favorilerim', icon: CustomHeartIcon, admin: false },
-    { path: '/wallet', label: t('bottomNavWallet') || 'Cüzdanım', icon: CustomCreditCardIcon, admin: false },
+    { path: '/saved', label: t('bottomNavFavorites') || 'Favorites', icon: CustomHeartIcon, admin: false },
+    { path: '/wallet', label: t('bottomNavWallet') || 'Wallet', icon: CustomCreditCardIcon, admin: false },
     { path: '/profile', label: t('bottomNavProfile') || 'Profile', icon: CustomUserIcon, admin: false },
     { path: '/admin', label: t('bottomNavAdmin') || 'Admin', icon: CustomShieldCheckIcon, admin: true },
   ];
 
   const accessibleNavItems = navItems.filter(item => !item.admin || (item.admin && user?.isAdmin));
 
-  const activeClassName = "text-brand-primary scale-110 icon-glow";
-  const inactiveClassName = "text-white/60 hover:text-white hover:scale-105";
-
   return (
-    <nav className="fixed bottom-6 left-4 right-4 z-50">
-      <div className="glass rounded-2xl shadow-2xl backdrop-blur-xl bg-black/20 border border-white/10">
-        <div className="flex justify-around items-center px-2 py-3">
-          {accessibleNavItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'} // for exact matching on home route
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center w-full py-1 transition-all duration-300 ease-in-out group ${isActive ? activeClassName : inactiveClassName}`
-              }
-            >
-              <item.icon className={`w-6 h-6 mb-1 transition-transform duration-300 ${item.path === '/admin' ? '' : ''}`} />
-              <span className="text-[10px] font-medium tracking-wide">{item.label}</span>
-              {/* Active Indicator Dot */}
+    <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
+      {/* Gradient fade effect at bottom of content */}
+      <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-brand-bg to-transparent pointer-events-none" />
+
+      {/* Main navigation container */}
+      <div className="mx-3 mb-3 sm:mx-4 sm:mb-4">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+          {/* Subtle top highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+          {/* Navigation items */}
+          <div className="flex justify-around items-center px-1 py-2 sm:py-3">
+            {accessibleNavItems.map((item) => (
               <NavLink
+                key={item.path}
                 to={item.path}
+                end={item.path === '/'}
                 className={({ isActive }) =>
-                  `absolute -bottom-1 w-1 h-1 rounded-full bg-brand-primary transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-0'}`
+                  `relative flex flex-col items-center justify-center flex-1 py-2 px-1 transition-all duration-300 ease-out group ${isActive
+                    ? 'text-brand-primary'
+                    : 'text-white/50 hover:text-white/80'
+                  }`
                 }
-              />
-            </NavLink>
-          ))}
+              >
+                {({ isActive }) => (
+                  <>
+                    {/* Active background glow */}
+                    {isActive && (
+                      <div className="absolute inset-x-2 -top-1 bottom-0 rounded-xl bg-brand-primary/15 blur-sm animate-pulse-slow" />
+                    )}
+
+                    {/* Active pill background */}
+                    <div className={`absolute inset-x-2 top-0 bottom-1 rounded-xl transition-all duration-300 ${isActive
+                        ? 'bg-brand-primary/10 scale-100 opacity-100'
+                        : 'bg-transparent scale-95 opacity-0'
+                      }`} />
+
+                    {/* Icon container */}
+                    <div className={`relative z-10 transition-all duration-300 ${isActive ? 'scale-110 -translate-y-0.5' : 'scale-100'
+                      }`}>
+                      <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${isActive
+                          ? 'drop-shadow-[0_0_8px_rgba(var(--color-brand-primary-rgb),0.5)]'
+                          : ''
+                        }`} />
+                    </div>
+
+                    {/* Label */}
+                    <span className={`relative z-10 text-[10px] sm:text-xs font-medium mt-1 transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-70'
+                      }`}>
+                      {item.label}
+                    </span>
+
+                    {/* Active indicator dot */}
+                    <div className={`absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-primary transition-all duration-300 ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
+                      }`} />
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </div>
         </div>
       </div>
     </nav>
