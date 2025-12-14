@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { CustomBriefcaseIcon, SparklesIcon, ClockIcon, CheckCircle, XCircle } from '../components/Icons';
+import { CustomBriefcaseIcon, SparklesIcon, ClockIcon, CheckCircle, XCircle, ArrowRightIcon } from '../components/Icons';
 import { supabase } from '../lib/supabaseClient';
 import DealCard from '../components/DealCard';
 import DealCardSkeleton from '../components/DealCardSkeleton';
 import PullToRefresh from '../components/PullToRefresh';
-import { Deal } from '../types';
+import { Deal, SubscriptionTier } from '../types';
+import { getWalletLimit, getWalletUsagePercent, isWalletNearCapacity, isWalletFull, formatWalletLimit } from '../lib/walletUtils';
 
 interface WalletDeal extends Deal {
     walletStatus: 'active' | 'redeemed' | 'expired';
@@ -222,6 +223,91 @@ const WalletPage: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {/* Wallet Capacity Progress Bar */}
+                {user && (
+                    (() => {
+                        const userTier = user.tier || SubscriptionTier.FREE;
+                        const limit = getWalletLimit(userTier, user.walletLimit);
+                        const usagePercent = getWalletUsagePercent(counts.active, userTier, user.walletLimit);
+                        const nearCapacity = isWalletNearCapacity(counts.active, userTier, user.walletLimit);
+                        const isFull = isWalletFull(counts.active, userTier, user.walletLimit);
+                        const isUnlimited = limit >= 999999;
+
+                        return (
+                            <div className="mb-8 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <CustomBriefcaseIcon className="w-5 h-5 text-gold-400" />
+                                        <span className="text-sm font-medium text-white/80">
+                                            {t('walletCapacity')}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {isFull && !isUnlimited && (
+                                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">
+                                                {t('walletCapacityFull')}
+                                            </span>
+                                        )}
+                                        {nearCapacity && !isFull && !isUnlimited && (
+                                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                                {t('walletCapacityNearFull')}
+                                            </span>
+                                        )}
+                                        <span className="text-sm font-bold text-white">
+                                            {isUnlimited ? (
+                                                <span className="text-gold-400">∞ {t('walletCapacityUnlimited')}</span>
+                                            ) : (
+                                                <span>{counts.active} / {limit}</span>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Premium Progress Bar */}
+                                {!isUnlimited && (
+                                    <div className="relative h-3 rounded-full overflow-hidden bg-white/10">
+                                        {/* Glow effect */}
+                                        <div
+                                            className="absolute inset-0 rounded-full blur-sm"
+                                            style={{
+                                                background: `linear-gradient(90deg, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0.5) ${usagePercent}%, transparent ${usagePercent}%)`
+                                            }}
+                                        />
+                                        {/* Main bar */}
+                                        <div
+                                            className={`relative h-full rounded-full transition-all duration-500 ease-out ${isFull
+                                                    ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500'
+                                                    : nearCapacity
+                                                        ? 'bg-gradient-to-r from-orange-500 via-gold-400 to-orange-500'
+                                                        : 'bg-gradient-to-r from-gold-600 via-gold-400 to-gold-500'
+                                                }`}
+                                            style={{ width: `${usagePercent}%` }}
+                                        >
+                                            {/* Shine effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent" />
+                                            {/* Animated shimmer */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"
+                                                style={{ animationDuration: '2s' }} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Upgrade prompt when near/at capacity */}
+                                {(nearCapacity || isFull) && !isUnlimited && (
+                                    <Link
+                                        to="/subscriptions"
+                                        className="mt-3 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/30 text-gold-400 text-sm font-medium hover:from-gold-500/30 hover:to-gold-600/30 transition-all group"
+                                    >
+                                        <SparklesIcon className="w-4 h-4" />
+                                        {t('walletUpgradePrompt')}
+                                        <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                )}
+                            </div>
+                        );
+                    })()
                 )}
 
                 {/* Filter Tabs */}

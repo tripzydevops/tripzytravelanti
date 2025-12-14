@@ -43,6 +43,7 @@ export interface User {
   status?: 'active' | 'banned' | 'suspended';
   emailConfirmedAt?: string | null;
   lastSignInAt?: string | null;
+  walletLimit?: number | null; // Admin override for wallet capacity (null = use tier default)
   createdAt?: string;
 }
 
