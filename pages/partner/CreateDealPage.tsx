@@ -17,7 +17,7 @@ import {
     DealDiscountType,
     DealTimeType,
     DEFAULT_DEAL_VALUES
-} from '../../constants/dealTypes';
+} from '../../shared/dealTypes';
 
 const CreateDealPage: React.FC = () => {
     const { t, language } = useLanguage();

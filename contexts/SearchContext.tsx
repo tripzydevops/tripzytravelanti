@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CategoryFilter } from '../constants/dealTypes';
+import { CategoryFilter } from '../shared/dealTypes';
 
 interface SearchContextType {
   searchQuery: string;

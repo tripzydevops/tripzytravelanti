@@ -18,7 +18,7 @@ import {
     DealDiscountType,
     DealTimeType,
     DEFAULT_DEAL_VALUES
-} from '../../constants/dealTypes';
+} from '../../shared/dealTypes';
 
 const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     id: '',
