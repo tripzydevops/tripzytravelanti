@@ -439,13 +439,15 @@ const AdminDealsTab: React.FC = () => {
             return;
         }
 
-        if (dealFormData.originalPrice <= 0) {
-            alert('Original Price must be greater than 0.');
+        // Price Validation: Allow 0 for generic discounts (e.g. 20% off bill), but strictly disallow negative numbers.
+        if (dealFormData.originalPrice < 0) {
+            alert('Original Price cannot be negative.');
             setIsSaving(false);
             return;
         }
 
-        if (dealFormData.discountedPrice >= dealFormData.originalPrice) {
+        // Only enforce logic if both prices are positive (standard product discount)
+        if (dealFormData.originalPrice > 0 && dealFormData.discountedPrice >= dealFormData.originalPrice) {
             alert('Discounted Price must be lower than the Original Price.');
             setIsSaving(false);
             return;
@@ -453,6 +455,19 @@ const AdminDealsTab: React.FC = () => {
 
         if (!dealFormData.category) {
             alert('Please select a Category.');
+            setIsSaving(false);
+            return;
+        }
+
+        // Strict Validation for Usage Limit & Validity
+        if (!dealFormData.usageLimit?.trim() || !dealFormData.usageLimit_tr?.trim()) {
+            alert('Please provide Usage Limit in both English and Turkish.');
+            setIsSaving(false);
+            return;
+        }
+
+        if (!dealFormData.validity?.trim() || !dealFormData.validity_tr?.trim()) {
+            alert('Please provide Validity in both English and Turkish.');
             setIsSaving(false);
             return;
         }
@@ -678,10 +693,10 @@ const AdminDealsTab: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitLabel')}</label><input type="text" name="usageLimit" value={dealFormData.usageLimit} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitTrLabel')}</label><input type="text" name="usageLimit_tr" value={dealFormData.usageLimit_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityLabel')}</label><input type="text" name="validity" value={dealFormData.validity} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityTrLabel')}</label><input type="text" name="validity_tr" value={dealFormData.validity_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitLabel')} <span className="text-red-500">*</span></label><input type="text" name="usageLimit" value={dealFormData.usageLimit} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitTrLabel')} <span className="text-red-500">*</span></label><input type="text" name="usageLimit_tr" value={dealFormData.usageLimit_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityLabel')} <span className="text-red-500">*</span></label><input type="text" name="validity" value={dealFormData.validity} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityTrLabel')} <span className="text-red-500">*</span></label><input type="text" name="validity_tr" value={dealFormData.validity_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                     </div>
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('termsUrlLabel')}</label><input type="text" name="termsUrl" value={dealFormData.termsUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                 </div>
