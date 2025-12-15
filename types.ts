@@ -90,7 +90,7 @@ export interface Deal {
   flash_end_time?: string;
   companyWebsiteUrl?: string;
   // Deal type classification
-  dealTypeKey?: 'percentage_off' | 'fixed_amount_off' | 'fixed_price' | 'bogo' | 'bundle' | 'free_gift' | 'cashback';
+  dealTypeKey?: 'percentage_off' | 'fixed_amount_off' | 'fixed_price' | 'bogo' | 'bundle' | 'free_gift' | 'cashback' | 'custom';
   timeType?: 'standard' | 'flash' | 'daily' | 'weekend' | 'seasonal' | 'evergreen';
 }
 

@@ -343,7 +343,7 @@ const CreateDealPage: React.FC = () => {
 
                 {/* Form Tabs */}
                 <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
-                    {['Basic Info', 'Pricing & Category', 'Redemption & Terms', 'Settings & Location'].map((tab) => (
+                    {['Deal Info', 'Pricing & Details', 'Redemption & Location'].map((tab) => (
                         <button
                             key={tab}
                             type="button"
@@ -360,8 +360,8 @@ const CreateDealPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    {/* Basic Info Tab */}
-                    {formTab === 'Basic Info' && (
+                    {/* Tab 1: Deal Info */}
+                    {formTab === 'Deal Info' && (
                         <div className="space-y-6 animate-fade-in">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -399,11 +399,48 @@ const CreateDealPage: React.FC = () => {
                                     <ImageUpload value={formData.companyLogoUrl} onChange={(url) => setFormData(prev => ({ ...prev, companyLogoUrl: url }))} bucketName="deals" />
                                 </div>
                             </div>
+
+                            {/* Expiration */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date</label>
+                                <input
+                                    type="date"
+                                    name="expiresAt"
+                                    required={!neverExpires}
+                                    disabled={neverExpires}
+                                    value={formData.expiresAt}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                                <div className="flex items-center mt-2">
+                                    <input
+                                        type="checkbox"
+                                        id="neverExpires"
+                                        checked={neverExpires}
+                                        onChange={(e) => setNeverExpires(e.target.checked)}
+                                        className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="neverExpires" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">Never Expires</label>
+                                </div>
+                            </div>
+
+                            {/* External Deal */}
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="isExternal"
+                                    name="isExternal"
+                                    checked={formData.isExternal}
+                                    onChange={handleChange}
+                                    className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
+                                />
+                                <label htmlFor="isExternal" className="text-sm font-medium text-gray-700 dark:text-gray-300">Is External Deal?</label>
+                            </div>
                         </div>
                     )}
 
-                    {/* Pricing & Category Tab */}
-                    {formTab === 'Pricing & Category' && (
+                    {/* Tab 2: Pricing & Details */}
+                    {formTab === 'Pricing & Details' && (
                         <div className="space-y-6 animate-fade-in">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -503,11 +540,32 @@ const CreateDealPage: React.FC = () => {
                                     {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}
                                 </select>
                             </div>
+
+                            {/* Flash End Time (conditional) */}
+                            {formData.timeType === 'flash' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('flashEndTimeLabel')}</label>
+                                    <input
+                                        type="datetime-local"
+                                        name="flash_end_time"
+                                        value={formData.flash_end_time ? new Date(new Date(formData.flash_end_time).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                                        onChange={(e) => {
+                                            if (!e.target.value) {
+                                                setFormData(prev => ({ ...prev, flash_end_time: '' }));
+                                                return;
+                                            }
+                                            const date = new Date(e.target.value);
+                                            setFormData(prev => ({ ...prev, flash_end_time: date.toISOString() }));
+                                        }}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Redemption & Terms Tab */}
-                    {formTab === 'Redemption & Terms' && (
+                    {/* Tab 3: Redemption & Location */}
+                    {formTab === 'Redemption & Location' && (
                         <div className="space-y-6 animate-fade-in">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Redemption Code</label>
@@ -556,53 +614,8 @@ const CreateDealPage: React.FC = () => {
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Validity (Turkish)</label><input type="text" name="validity_tr" value={formData.validity_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
                             </div>
                             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms URL</label><input type="text" name="termsUrl" value={formData.termsUrl} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-                        </div>
-                    )}
 
-                    {/* Settings & Location Tab */}
-                    {formTab === 'Settings & Location' && (
-                        <div className="space-y-6 animate-fade-in">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date</label>
-                                <input type="date" name="expiresAt" required={!neverExpires} disabled={neverExpires} value={formData.expiresAt} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed" />
-                                <div className="flex items-center mt-2">
-                                    <input type="checkbox" id="neverExpires" checked={neverExpires} onChange={(e) => setNeverExpires(e.target.checked)} className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded" />
-                                    <label htmlFor="neverExpires" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">Never Expires</label>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2 pt-2">
-                                <input type="checkbox" id="isExternal" name="isExternal" checked={formData.isExternal} onChange={handleChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" />
-                                <label htmlFor="isExternal" className="text-sm font-medium text-gray-700 dark:text-gray-300">Is External Deal?</label>
-                            </div>
-
-                            <div className="flex items-center space-x-2 pt-2">
-                                <input type="checkbox" id="is_flash_deal" name="is_flash_deal" checked={formData.is_flash_deal} onChange={handleChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" />
-                                <label htmlFor="is_flash_deal" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {t('flashDealLabel')} ⚡ {formData.timeType === 'flash' && <span className="text-xs text-brand-primary">({language === 'tr' ? 'Süre Tipi ile uygulandı' : 'Applied via Time Type'})</span>}
-                                </label>
-                            </div>
-
-                            {formData.is_flash_deal && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('flashEndTimeLabel')}</label>
-                                    <input
-                                        type="datetime-local"
-                                        name="flash_end_time"
-                                        value={formData.flash_end_time ? new Date(new Date(formData.flash_end_time).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                                        onChange={(e) => {
-                                            if (!e.target.value) {
-                                                setFormData(prev => ({ ...prev, flash_end_time: '' }));
-                                                return;
-                                            }
-                                            const date = new Date(e.target.value);
-                                            setFormData(prev => ({ ...prev, flash_end_time: date.toISOString() }));
-                                        }}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    />
-                                </div>
-                            )}
-
+                            {/* Location (Optional) */}
                             <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <div className="col-span-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Location (Optional)</div>
                                 <div>
