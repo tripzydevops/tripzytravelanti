@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { GoogleGenAI } from "@google/genai";
 import { useDeals } from '../../contexts/DealContext';
 import { useLanguage } from '../../contexts/LanguageContext';

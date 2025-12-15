@@ -19,6 +19,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [imageError, setImageError] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFile = async (file: File) => {
@@ -34,6 +35,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         }
 
         setIsLoading(true);
+        setImageError(false);
 
         try {
             // Generate a unique file name
@@ -88,13 +90,41 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         fileInputRef.current?.click();
     };
 
-    const handleRemove = (e: React.MouseEvent) => {
+    const handleRemove = async (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // Try to delete from Supabase storage if it's a Supabase URL
+        if (value && value.includes('supabase.co/storage')) {
+            try {
+                // Extract file path from URL
+                const urlParts = value.split('/storage/v1/object/public/');
+                if (urlParts.length === 2) {
+                    const pathParts = urlParts[1].split('/');
+                    const bucket = pathParts[0];
+                    const filePath = pathParts.slice(1).join('/');
+
+                    await supabase.storage.from(bucket).remove([filePath]);
+                    console.log('Image deleted from storage:', filePath);
+                }
+            } catch (error) {
+                console.error('Failed to delete image from storage:', error);
+                // Continue anyway - we still want to clear the URL
+            }
+        }
+
         onChange('');
+        setImageError(false);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
     };
+
+    const handleImageError = () => {
+        setImageError(true);
+    };
+
+    // Check if we should show the upload area (no value or broken image)
+    const showUploadArea = !value || imageError;
 
     return (
         <div className={`w-full ${className}`}>
@@ -106,7 +136,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 className={`
                     relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all duration-200
                     ${isDragging ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-300 dark:border-gray-600 hover:border-brand-primary'}
-                    ${value ? 'h-auto' : 'h-32 flex items-center justify-center'}
+                    ${!showUploadArea ? 'h-auto' : 'h-32 flex items-center justify-center'}
                 `}
             >
                 <input
@@ -122,12 +152,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                         <SpinnerIcon className="w-8 h-8 animate-spin mb-2 text-brand-primary" />
                         <span>Uploading...</span>
                     </div>
-                ) : value ? (
+                ) : !showUploadArea ? (
                     <div className="relative group">
                         <img
                             src={value}
                             alt="Uploaded preview"
                             className="max-h-64 mx-auto rounded-md shadow-sm object-contain"
+                            onError={handleImageError}
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                             <p className="text-white font-semibold">Click to change</p>
@@ -153,3 +184,4 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 };
 
 export default ImageUpload;
+
