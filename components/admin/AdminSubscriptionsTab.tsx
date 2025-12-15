@@ -5,6 +5,7 @@ const AdminSubscriptionsTab: React.FC = () => {
     const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
     const [isSubscriptionFormVisible, setIsSubscriptionFormVisible] = useState(false);
     const [editingPlan, setEditingPlan] = useState<any | null>(null);
+    const [showTranslations, setShowTranslations] = useState(false);
     const [planFormData, setPlanFormData] = useState<any>({
         tier: '',
         name: '',
@@ -16,6 +17,9 @@ const AdminSubscriptionsTab: React.FC = () => {
         features_tr: [],
         is_active: true
     });
+    // Features as text (one per line for easy editing)
+    const [featuresText, setFeaturesText] = useState('');
+    const [featuresTrText, setFeaturesTrText] = useState('');
 
     useEffect(() => {
         loadSubscriptionPlans();
@@ -33,10 +37,15 @@ const AdminSubscriptionsTab: React.FC = () => {
     const handlePlanSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const dataToSave = {
+                ...planFormData,
+                features: featuresText.split('\n').filter(f => f.trim()),
+                features_tr: featuresTrText.split('\n').filter(f => f.trim())
+            };
             if (editingPlan) {
-                await updateSubscriptionPlan(editingPlan.id, planFormData);
+                await updateSubscriptionPlan(editingPlan.id, dataToSave);
             } else {
-                await createSubscriptionPlan(planFormData);
+                await createSubscriptionPlan(dataToSave);
             }
             setIsSubscriptionFormVisible(false);
             setEditingPlan(null);
@@ -49,6 +58,8 @@ const AdminSubscriptionsTab: React.FC = () => {
     const handleEditPlanClick = (plan: any) => {
         setEditingPlan(plan);
         setPlanFormData(plan);
+        setFeaturesText(Array.isArray(plan.features) ? plan.features.join('\n') : '');
+        setFeaturesTrText(Array.isArray(plan.features_tr) ? plan.features_tr.join('\n') : '');
         setIsSubscriptionFormVisible(true);
     };
 
@@ -63,10 +74,19 @@ const AdminSubscriptionsTab: React.FC = () => {
         }
     };
 
+    const resetForm = () => {
+        setEditingPlan(null);
+        setPlanFormData({ tier: '', name: '', name_tr: '', price: 0, price_tr: 0, redemptions_per_period: 0, features: [], features_tr: [], is_active: true });
+        setFeaturesText('');
+        setFeaturesTrText('');
+        setShowTranslations(false);
+        setIsSubscriptionFormVisible(true);
+    };
+
     return (
         <>
             {!isSubscriptionFormVisible && (
-                <button onClick={() => { setEditingPlan(null); setPlanFormData({ tier: '', name: '', name_tr: '', price: 0, price_tr: 0, redemptions_per_period: 0, features: [], features_tr: [], is_active: true }); setIsSubscriptionFormVisible(true); }} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
+                <button onClick={resetForm} className="mb-6 bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">
                     Add Plan
                 </button>
             )}
@@ -75,26 +95,37 @@ const AdminSubscriptionsTab: React.FC = () => {
                 <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
                     <h2 className="text-2xl font-bold mb-4">{editingPlan ? 'Edit Plan' : 'Add Plan'}</h2>
                     <form onSubmit={handlePlanSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label className="block text-sm font-medium mb-1">Tier Key (Unique)</label><input type="text" value={planFormData.tier} onChange={e => setPlanFormData({ ...planFormData, tier: e.target.value })} className="w-full p-2 border rounded" required /></div>
-                            <div><label className="block text-sm font-medium mb-1">Redemptions/Year</label><input type="number" value={planFormData.redemptions_per_period} onChange={e => setPlanFormData({ ...planFormData, redemptions_per_period: parseInt(e.target.value) })} className="w-full p-2 border rounded" required /></div>
-                            <div><label className="block text-sm font-medium mb-1">Name (EN)</label><input type="text" value={planFormData.name} onChange={e => setPlanFormData({ ...planFormData, name: e.target.value })} className="w-full p-2 border rounded" required /></div>
-                            <div><label className="block text-sm font-medium mb-1">Name (TR)</label><input type="text" value={planFormData.name_tr} onChange={e => setPlanFormData({ ...planFormData, name_tr: e.target.value })} className="w-full p-2 border rounded" required /></div>
-                            <div><label className="block text-sm font-medium mb-1">Price (USD)</label><input type="number" step="0.01" value={planFormData.price} onChange={e => setPlanFormData({ ...planFormData, price: parseFloat(e.target.value) })} className="w-full p-2 border rounded" required /></div>
-                            <div><label className="block text-sm font-medium mb-1">Price (TL)</label><input type="number" step="0.01" value={planFormData.price_tr} onChange={e => setPlanFormData({ ...planFormData, price_tr: parseFloat(e.target.value) })} className="w-full p-2 border rounded" required /></div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium mb-1">Features (EN) - JSON Array</label>
-                                <textarea value={JSON.stringify(planFormData.features)} onChange={e => { try { setPlanFormData({ ...planFormData, features: JSON.parse(e.target.value) }); } catch (err) { } }} className="w-full p-2 border rounded h-24" />
-                                <p className="text-xs text-gray-500">Enter as valid JSON array, e.g. ["Feature 1", "Feature 2"]</p>
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium mb-1">Features (TR) - JSON Array</label>
-                                <textarea value={JSON.stringify(planFormData.features_tr)} onChange={e => { try { setPlanFormData({ ...planFormData, features_tr: JSON.parse(e.target.value) }); } catch (err) { } }} className="w-full p-2 border rounded h-24" />
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label className="block text-sm font-medium mb-1">Tier Key (Unique)</label><input type="text" value={planFormData.tier} onChange={e => setPlanFormData({ ...planFormData, tier: e.target.value })} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" required /></div>
+                            <div><label className="block text-sm font-medium mb-1">Redemptions/Year</label><input type="number" value={planFormData.redemptions_per_period} onChange={e => setPlanFormData({ ...planFormData, redemptions_per_period: parseInt(e.target.value) })} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" required /></div>
+                            <div><label className="block text-sm font-medium mb-1">Price (₺ TRY)</label><input type="number" step="0.01" value={planFormData.price_tr} onChange={e => setPlanFormData({ ...planFormData, price_tr: parseFloat(e.target.value) })} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" required /></div>
                         </div>
-                        <div className="flex justify-end gap-4">
-                            <button type="button" onClick={() => setIsSubscriptionFormVisible(false)} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-                            <button type="submit" className="px-4 py-2 bg-brand-primary text-white rounded">Save</button>
+
+                        <div><label className="block text-sm font-medium mb-1">Plan Name</label><input type="text" value={planFormData.name} onChange={e => setPlanFormData({ ...planFormData, name: e.target.value })} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. Premium" required /></div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Features (one per line)</label>
+                            <textarea value={featuresText} onChange={e => setFeaturesText(e.target.value)} className="w-full p-2 border rounded h-24 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Unlimited deals&#10;Priority support&#10;Early access" />
+                        </div>
+
+                        {/* Collapsible Translations */}
+                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                            <button type="button" onClick={() => setShowTranslations(!showTranslations)} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 text-left text-sm font-medium text-gray-600 dark:text-gray-400 flex justify-between items-center">
+                                <span>📝 {showTranslations ? 'Hide' : 'View/Edit'} Turkish Translations</span>
+                                <span className={`transform transition-transform ${showTranslations ? 'rotate-180' : ''}`}>▼</span>
+                            </button>
+                            {showTranslations && (
+                                <div className="p-3 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
+                                    <div><label className="block text-xs font-medium text-gray-500 mb-1">Plan Name (Turkish)</label><input type="text" value={planFormData.name_tr} onChange={e => setPlanFormData({ ...planFormData, name_tr: e.target.value })} className="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" /></div>
+                                    <div><label className="block text-xs font-medium text-gray-500 mb-1">Features (Turkish - one per line)</label><textarea value={featuresTrText} onChange={e => setFeaturesTrText(e.target.value)} className="w-full p-2 border rounded h-20 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" /></div>
+                                    <div><label className="block text-xs font-medium text-gray-500 mb-1">Price ($ USD - for international users)</label><input type="number" step="0.01" value={planFormData.price} onChange={e => setPlanFormData({ ...planFormData, price: parseFloat(e.target.value) })} className="w-full p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" /></div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end gap-4 pt-4 border-t">
+                            <button type="button" onClick={() => setIsSubscriptionFormVisible(false)} className="px-4 py-2 bg-gray-200 rounded dark:bg-gray-600 dark:text-white">Cancel</button>
+                            <button type="submit" className="px-4 py-2 bg-brand-primary text-white rounded">Save Plan</button>
                         </div>
                     </form>
                 </section>
@@ -114,12 +145,16 @@ const AdminSubscriptionsTab: React.FC = () => {
                     </thead>
                     <tbody>
                         {subscriptionPlans.map(plan => (
-                            <tr key={plan.id} className="border-b">
-                                <td className="px-6 py-4">{plan.tier}</td>
-                                <td className="px-6 py-4">{plan.name} / {plan.name_tr}</td>
-                                <td className="px-6 py-4">${plan.price} / ₺{plan.price_tr}</td>
+                            <tr key={plan.id} className="border-b dark:border-gray-700">
+                                <td className="px-6 py-4 font-medium">{plan.tier}</td>
+                                <td className="px-6 py-4">{plan.name}</td>
+                                <td className="px-6 py-4">₺{plan.price_tr}</td>
                                 <td className="px-6 py-4">{plan.redemptions_per_period}</td>
-                                <td className="px-6 py-4">{plan.is_active ? 'Active' : 'Inactive'}</td>
+                                <td className="px-6 py-4">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${plan.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                        {plan.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
                                 <td className="px-6 py-4 text-right space-x-2">
                                     <button onClick={() => handleEditPlanClick(plan)} className="text-blue-500 hover:underline">Edit</button>
                                     {plan.is_active && <button onClick={() => handleDeletePlanClick(plan.id)} className="text-red-500 hover:underline">Deactivate</button>}
@@ -134,3 +169,4 @@ const AdminSubscriptionsTab: React.FC = () => {
 };
 
 export default AdminSubscriptionsTab;
+

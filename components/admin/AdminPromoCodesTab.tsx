@@ -91,7 +91,7 @@ const AdminPromoCodesTab: React.FC = () => {
                                 <tr key={code.code} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                     <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">{code.code}</td>
                                     <td className="px-6 py-4">
-                                        {code.discountType === 'percentage' ? `${code.discountValue}%` : `$${code.discountValue}`}
+                                        {code.discountType === 'percentage' ? `${code.discountValue}%` : `₺${code.discountValue}`}
                                     </td>
                                     <td className="px-6 py-4">{code.currentUses}</td>
                                     <td className="px-6 py-4">{code.maxUses || '∞'}</td>
