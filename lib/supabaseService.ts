@@ -239,18 +239,16 @@ export async function getAllDeals(includeExpired: boolean = false): Promise<Deal
         query = query.eq('status', 'approved');
         // HIDE SOLD OUT DEALS
         query = query.eq('is_sold_out', false);
-    }    // HIDE SOLD OUT DEALS
-    query = query.eq('is_sold_out', false);
-}
+    }
 
-const { data, error } = await query;
+    const { data, error } = await query;
 
-if (error) {
-    console.error('Error fetching all deals:', error);
-    return [];
-}
+    if (error) {
+        console.error('Error fetching all deals:', error);
+        return [];
+    }
 
-return data.map(transformDealFromDB);
+    return data.map(transformDealFromDB);
 }
 
 export async function getFlashDeals(): Promise<Deal[]> {
