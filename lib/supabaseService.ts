@@ -36,532 +36,17 @@ interface DBDeal {
     flash_end_time?: string;
     deal_type_key?: string;
     time_type?: string;
+    max_redemptions_total?: number;
+    redemptions_count?: number;
+    is_sold_out?: boolean;
 }
 
-// =====================================================
-// USER PROFILE OPERATIONS
-// =====================================================
-
-// =====================================================
-// USER PROFILE OPERATIONS
-// =====================================================
-
-export async function getUserProfile(userId: string): Promise<User | null> {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-      *,
-      saved_deals:saved_deals(deal_id),
-      deal_redemptions:deal_redemptions(id, deal_id, user_id, redeemed_at),
-      user_deals:user_deals(deal_id)
-    `)
-        .eq('id', userId)
-        .single();
-
-    if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
-    }
-
-    // Transform database format to app format
-    return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        tier: data.tier as SubscriptionTier,
-        isAdmin: data.is_admin,
-        savedDeals: data.saved_deals?.map((sd: { deal_id: string }) => sd.deal_id) || [],
-        ownedDeals: data.user_deals?.map((ud: { deal_id: string }) => ud.deal_id) || [],
-        avatarUrl: data.avatar_url,
-        referredBy: data.referred_by,
-        extraRedemptions: data.extra_redemptions,
-        notificationPreferences: data.notification_preferences,
-        redemptions: data.deal_redemptions?.map((r: any) => ({
-            id: r.id,
-            dealId: r.deal_id,
-            userId: r.user_id,
-            redeemedAt: r.redeemed_at
-        })) || [],
-        mobile: data.mobile,
-        address: data.address,
-        billingAddress: data.billing_address,
-
-        role: data.role,
-        status: data.status,
-    };
-}
-// ... (updateUserProfile implementation unchanged)
-
-export async function getAllUsers(): Promise<User[]> {
-    const { data, error } = await supabase
-        .rpc('get_admin_users_list', {});
-
-    if (error) {
-        console.error('Error fetching users:', error);
-        return [];
-    }
-
-    return data.map((user: any) => ({
-        id: user.id,
-        name: user.name || 'Unknown',
-        email: user.email,
-        tier: (user.tier as SubscriptionTier) || SubscriptionTier.FREE,
-        isAdmin: user.is_admin,
-        savedDeals: user.saved_deals?.map((sd: { deal_id: string }) => sd.deal_id) || [],
-        ownedDeals: user.owned_deals?.map((od: { deal_id: string }) => od.deal_id) || [],
-        avatarUrl: user.avatar_url,
-        referredBy: user.referred_by,
-        extraRedemptions: user.extra_redemptions,
-        notificationPreferences: user.notification_preferences,
-        redemptions: user.deal_redemptions?.map((r: any) => ({
-            id: r.id,
-            dealId: r.deal_id,
-            userId: r.user_id,
-            redeemedAt: r.redeemed_at
-        })) || [],
-        mobile: user.mobile,
-        address: user.address,
-        billingAddress: user.billing_address,
-        role: user.role,
-        status: user.status || 'active',
-        emailConfirmedAt: user.email_confirmed_at,
-        lastSignInAt: user.last_sign_in_at,
-        createdAt: user.created_at
-    }));
-}
-
-export async function getUsersPaginated(
-    page: number,
-    limit: number,
-    filters?: { search?: string; tier?: SubscriptionTier | 'All' }
-): Promise<{ users: User[]; total: number }> {
-    let query = supabase
-        .from('profiles')
-        .select(`
-            *,
-            saved_deals:saved_deals(deal_id),
-            deal_redemptions:deal_redemptions(id, deal_id, user_id, redeemed_at),
-            user_deals:user_deals(deal_id)
-        `, { count: 'exact' });
-
-    if (filters?.search) {
-        const searchTerm = `%${filters.search}%`;
-        query = query.or(`name.ilike.${searchTerm},email.ilike.${searchTerm},mobile.ilike.${searchTerm}`);
-    }
-
-    if (filters?.tier && filters.tier !== 'All') {
-        query = query.eq('tier', filters.tier);
-    }
-
-    // Sort by created_at desc (newest first)
-    query = query.order('created_at', { ascending: false });
-
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-
-    const { data, count, error } = await query.range(from, to);
-
-    if (error) {
-        console.error('Error fetching paginated users:', error);
-        return { users: [], total: 0 };
-    }
-
-    const users = data.map((user: any) => ({
-        id: user.id,
-        name: user.name || 'Unknown',
-        email: user.email,
-        tier: (user.tier as SubscriptionTier) || SubscriptionTier.FREE,
-        isAdmin: user.is_admin,
-        savedDeals: user.saved_deals?.map((sd: { deal_id: string }) => sd.deal_id) || [],
-        ownedDeals: user.user_deals?.map((od: { deal_id: string }) => od.deal_id) || [],
-        avatarUrl: user.avatar_url,
-        referredBy: user.referred_by,
-        extraRedemptions: user.extra_redemptions,
-        notificationPreferences: user.notification_preferences,
-        redemptions: user.deal_redemptions?.map((r: any) => ({
-            id: r.id,
-            dealId: r.deal_id,
-            userId: r.user_id,
-            redeemedAt: r.redeemed_at
-        })) || [],
-        mobile: user.mobile,
-        address: user.address,
-        billingAddress: user.billing_address,
-        role: user.role,
-        status: user.status || 'active',
-        emailConfirmedAt: user.email_confirmed_at,
-        lastSignInAt: user.last_sign_in_at,
-        createdAt: user.created_at
-    }));
-
-    return { users, total: count || 0 };
-}
-
-// ... (existing functions)
-
-// =====================================================
-// SAVED DEALS OPERATIONS
-// =====================================================
-
-export async function saveDeal(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('saved_deals')
-        .insert({ user_id: userId, deal_id: dealId });
-
-    if (error) {
-        console.error('Error saving deal:', error);
-        throw error;
-    }
-}
-
-export async function unsaveDeal(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('saved_deals')
-        .delete()
-        .eq('user_id', userId)
-        .eq('deal_id', dealId);
-
-    if (error) {
-        console.error('Error unsaving deal:', error);
-        throw error;
-    }
-}
-
-export async function getSavedDeals(userId: string): Promise<string[]> {
-    const { data, error } = await supabase
-        .from('saved_deals')
-        .select('deal_id')
-        .eq('user_id', userId);
-
-    if (error) {
-        console.error('Error fetching saved deals:', error);
-        return [];
-    }
-
-    return data.map((sd: { deal_id: string }) => sd.deal_id);
-}
-
-// =====================================================
-// OWNED DEALS (WALLET) OPERATIONS
-// =====================================================
-
-export async function assignDealToUser(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('user_deals')
-        .insert({
-            user_id: userId,
-            deal_id: dealId,
-            status: 'active',
-            acquired_at: new Date().toISOString()
-        });
-
-    if (error) {
-        if (error.code === '23505') return;
-        console.error('Error assigning deal to user:', error);
-        throw error;
-    }
-}
-
-export async function removeDealFromUser(userId: string, dealId: string) {
-    const { error } = await supabase
-        .from('user_deals')
-        .delete()
-        .eq('user_id', userId)
-        .eq('deal_id', dealId);
-
-    if (error) {
-        console.error('Error removing deal from user:', error);
-        throw error;
-    }
-}
-
-export async function claimDeal(userId: string, dealId: string) {
-    // 1. Check Limit
-    const { allowed } = await checkMonthlyLimit(userId);
-    if (!allowed) {
-        throw new Error('Monthly redemption limit reached');
-    }
-
-    const { error } = await supabase
-        .from('user_deals')
-        .insert({
-            user_id: userId,
-            deal_id: dealId,
-            status: 'active',
-            acquired_at: new Date().toISOString()
-        });
-
-    if (error) {
-        // If unique constraint violation (already claimed), we might want to return a specific error or just ignore
-        if (error.code === '23505') return; // User already owns it, don't count limit again implies we should check this BEFORE limit check? 
-        // Logic: if already owned, checkMonthlyLimit shouldn't run or trigger error.
-        // However, checking "isDealOwned" from client side is better. 
-        // If we hit DB constraint, it means they have it. We should probably NOT decrement limit if it fails?
-        // But checkMonthlyLimit only CHECKS. The INSERT is what 'uses' the limit. 
-        // If insert fails (duplicate), simple return means no impact. Good.
-        console.error('Error claiming deal:', error);
-        throw error;
-    }
-}
-
-export async function updateUserProfile(
-    userId: string,
-    updates: Partial<{
-        name: string;
-        email: string;
-        tier: SubscriptionTier;
-        avatar_url: string;
-        extra_redemptions: number;
-        notification_preferences: UserNotificationPreferences;
-        mobile: string;
-        address: string;
-
-        billing_address: string;
-        status: 'active' | 'banned' | 'suspended';
-        referred_by: string | null;
-    }>
-) {
-    const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', userId)
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error updating user profile:', error);
-        throw error;
-    }
-
-    return data;
-}
-
-
-
-export async function confirmUserEmail(userId: string) {
-    const { error } = await supabase.rpc('admin_confirm_user_email', { target_user_id: userId });
-
-    if (error) {
-        console.error('Error confirming user email:', error);
-        throw error;
-    }
-}
-
-export async function deleteUserProfile(userId: string) {
-    const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-    if (error) {
-        console.error('Error deleting user profile:', error);
-        throw error;
-    }
-}
-
-export async function updateAllUsersNotificationPreferences(
-    preferences: Record<string, boolean>
-) {
-    const { error } = await supabase.rpc('update_all_notification_preferences', {
-        new_prefs: preferences
-    });
-
-    if (error) {
-        console.error('Error updating all users notification preferences:', error);
-        throw error;
-    }
-}
-
-
-// =====================================================
-// SUBSCRIPTION PLANS OPERATIONS
-// =====================================================
-
-export async function getAllSubscriptionPlans() {
-    const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .order('price', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching subscription plans:', error);
-        return [];
-    }
-
-    return data;
-}
-
-export async function createSubscriptionPlan(plan: any) {
-    const { data, error } = await supabase
-        .from('subscription_plans')
-        .insert(plan)
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error creating subscription plan:', error);
-        throw error;
-    }
-
-    return data;
-}
-
-export async function updateSubscriptionPlan(tier: string, updates: any) {
-    const { data, error } = await supabase
-        .from('subscription_plans')
-        .update(updates)
-        .eq('tier', tier)
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error updating subscription plan:', error);
-        throw error;
-    }
-
-    return data;
-}
-
-export async function deleteSubscriptionPlan(tier: string) {
-    const { error } = await supabase
-        .from('subscription_plans')
-        .delete()
-        .eq('tier', tier);
-
-    if (error) {
-        console.error('Error deleting subscription plan:', error);
-        throw error;
-    }
-}
-
-// =====================================================
-// DEAL OPERATIONS
-// =====================================================
-
-export async function getDealsPaginated(
-    page: number,
-    limit: number,
-    filters?: { category?: string; search?: string; searchQuery?: string; tier?: SubscriptionTier; includeExpired?: boolean }
-): Promise<{ deals: Deal[]; total: number }> {
-    let query = supabase
-        .from('deals')
-        .select('*', { count: 'exact' });
-
-    if (filters?.category && filters.category !== 'All') {
-        query = query.eq('category', filters.category);
-    }
-
-    // Support both 'search' and 'searchQuery' for compatibility
-    const searchTerm = filters?.search || filters?.searchQuery;
-    if (searchTerm) {
-        query = query.ilike('title', `%${searchTerm}%`);
-    }
-
-    if (filters?.tier) {
-        // Filter logic for tiers if needed
-    }
-
-    // Filter out expired deals by default unless explicitly requested
-    if (!filters?.includeExpired) {
-        const now = new Date().toISOString();
-        query = query.gt('expires_at', now);
-        // Also filter out future published deals
-        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
-        // Only show approved deals
-        query = query.eq('status', 'approved');
-    }
-
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-
-    const { data, count, error } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-    if (error) {
-        console.error('Error fetching paginated deals:', error);
-        return { deals: [], total: 0 };
-    }
-
-    const deals = data.map(transformDealFromDB);
-    return { deals, total: count || 0 };
-}
-
-export async function getAllDeals(includeExpired: boolean = false): Promise<Deal[]> {
-    let query = supabase
-        .from('deals')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (!includeExpired) {
-        const now = new Date().toISOString();
-        query = query.gt('expires_at', now);
-        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
-        // Only show approved deals
-        query = query.eq('status', 'approved');
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        console.error('Error fetching deals:', error);
-        return [];
-    }
-
-    return data.map(transformDealFromDB);
-}
-
-export async function getDealById(id: string): Promise<Deal | null> {
-    const { data, error } = await supabase
-        .from('deals')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-    if (error) {
-        console.error('Error fetching deal:', error);
-        return null;
-    }
-
-    return transformDealFromDB(data);
-}
-
-export async function getDealsForTier(tier: SubscriptionTier, includeExpired: boolean = false): Promise<Deal[]> {
-    const tierHierarchy = {
-        [SubscriptionTier.NONE]: [],
-        [SubscriptionTier.FREE]: ['FREE'],
-        [SubscriptionTier.BASIC]: ['FREE', 'BASIC'],
-        [SubscriptionTier.PREMIUM]: ['FREE', 'BASIC', 'PREMIUM'],
-        [SubscriptionTier.VIP]: ['FREE', 'BASIC', 'PREMIUM', 'VIP'],
-    };
-
-    const allowedTiers = tierHierarchy[tier] || [];
-
-    let query = supabase
-        .from('deals')
-        .select('*')
-        .in('required_tier', allowedTiers)
-        .order('created_at', { ascending: false });
-
-    if (!includeExpired) {
-        const now = new Date().toISOString();
-        query = query.gt('expires_at', now);
-        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        console.error('Error fetching deals for tier:', error);
-        return [];
-    }
-
-    return data.map(transformDealFromDB);
-}
+// ... (existing code)
 
 // Helper function to transform database deal to app format
 function transformDealFromDB(dbDeal: DBDeal): Deal {
     return {
+        // ... (existing fields)
         id: dbDeal.id,
         title: dbDeal.title,
         title_tr: dbDeal.title_tr,
@@ -593,7 +78,10 @@ function transformDealFromDB(dbDeal: DBDeal): Deal {
         is_flash_deal: dbDeal.is_flash_deal,
         flash_end_time: dbDeal.flash_end_time,
         dealTypeKey: dbDeal.deal_type_key as any,
-        timeType: dbDeal.time_type as any
+        timeType: dbDeal.time_type as any,
+        maxRedemptionsTotal: dbDeal.max_redemptions_total,
+        redemptionsCount: dbDeal.redemptions_count || 0,
+        isSoldOut: dbDeal.is_sold_out
     };
 }
 
@@ -629,7 +117,8 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         is_flash_deal: deal.is_flash_deal,
         flash_end_time: deal.flash_end_time,
         deal_type_key: deal.dealTypeKey,
-        time_type: deal.timeType
+        time_type: deal.timeType,
+        max_redemptions_total: deal.maxRedemptionsTotal
     };
 
     const { data, error } = await supabase
@@ -677,6 +166,7 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
     if (updates.flash_end_time) dbUpdates.flash_end_time = updates.flash_end_time;
     if (updates.dealTypeKey) dbUpdates.deal_type_key = updates.dealTypeKey;
     if (updates.timeType) dbUpdates.time_type = updates.timeType;
+    if (updates.maxRedemptionsTotal !== undefined) dbUpdates.max_redemptions_total = updates.maxRedemptionsTotal;
 
     const { data, error } = await supabase
         .from('deals')
@@ -735,6 +225,34 @@ export async function getPendingDeals(): Promise<Deal[]> {
     return data.map(transformDealFromDB);
 }
 
+export async function getAllDeals(includeExpired: boolean = false): Promise<Deal[]> {
+    let query = supabase
+        .from('deals')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (!includeExpired) {
+        const now = new Date().toISOString();
+        query = query.gt('expires_at', now);
+        query = query.or(`publish_at.is.null,publish_at.lte.${now}`);
+        // Only show approved deals
+        query = query.eq('status', 'approved');
+        // HIDE SOLD OUT DEALS
+        query = query.eq('is_sold_out', false);
+    }    // HIDE SOLD OUT DEALS
+    query = query.eq('is_sold_out', false);
+}
+
+const { data, error } = await query;
+
+if (error) {
+    console.error('Error fetching all deals:', error);
+    return [];
+}
+
+return data.map(transformDealFromDB);
+}
+
 export async function getFlashDeals(): Promise<Deal[]> {
     const now = new Date().toISOString();
     const { data, error } = await supabase
@@ -743,6 +261,7 @@ export async function getFlashDeals(): Promise<Deal[]> {
         .eq('is_flash_deal', true)
         .gt('flash_end_time', now)
         .eq('status', 'approved')
+        .eq('is_sold_out', false) // HIDE SOLD OUT DEALS
         .order('flash_end_time', { ascending: true });
 
     if (error) {
@@ -883,9 +402,24 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     if (!isOwned) {
         // 1. Check Limit ONLY if not owned
         console.log('[redeemDeal] Deal NOT found in wallet. Checking monthly limit...');
-        const { allowed, limit, remaining } = await checkMonthlyLimit(cleanUserId);
-        console.log('[redeemDeal] Check Limit Result:', { allowed, limit, remaining });
+        // 0. Check GLOBAL Limit (Total codes available)
+        const { data: dealData, error: dealError } = await supabase
+            .from('deals')
+            .select('max_redemptions_total, redemptions_count')
+            .eq('id', dealId)
+            .single();
 
+        if (dealError) {
+            console.error('Error fetching deal limits:', dealError);
+            throw dealError;
+        }
+
+        if (dealData.max_redemptions_total !== null && (dealData.redemptions_count || 0) >= dealData.max_redemptions_total) {
+            throw new Error('This deal has reached its global usage limit and is sold out.');
+        }
+
+        // 1. Check Limit
+        const { allowed } = await checkMonthlyLimit(userId);
         if (!allowed) {
             throw new Error('Monthly redemption limit reached');
         }

@@ -99,6 +99,9 @@ export interface Deal {
   // Deal type classification
   dealTypeKey?: 'percentage_off' | 'fixed_amount_off' | 'fixed_price' | 'bogo' | 'bundle' | 'free_gift' | 'cashback' | 'custom';
   timeType?: 'standard' | 'flash' | 'daily' | 'weekend' | 'seasonal' | 'evergreen';
+  maxRedemptionsTotal?: number | null;
+  redemptionsCount?: number;
+  isSoldOut?: boolean;
 }
 
 export interface SubscriptionPlan {

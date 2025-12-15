@@ -55,7 +55,8 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     storeLocations: [],
     countries: [],
     is_flash_deal: false,
-    flash_end_time: undefined
+    flash_end_time: undefined,
+    maxRedemptionsTotal: null
 };
 
 const getExpiryDate = (days: number): string => {
@@ -683,8 +684,30 @@ const AdminDealsTab: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Smart Location Fields */}
-                                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    {/* Global & Smart Location Fields */}
+                                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                                                Global Redemption Limit (Total Supply)
+                                            </label>
+                                            <div className="flex flex-col gap-1">
+                                                <input
+                                                    type="number"
+                                                    name="maxRedemptionsTotal"
+                                                    value={dealFormData.maxRedemptionsTotal ?? ''}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value === '' ? null : parseInt(e.target.value);
+                                                        setDealFormData(prev => ({ ...prev, maxRedemptionsTotal: val }));
+                                                    }}
+                                                    placeholder="Leave empty for infinite supply"
+                                                    className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                                                />
+                                                <span className="text-xs text-gray-500">
+                                                    Current total usage: {dealFormData.redemptionsCount || 0}
+                                                </span>
+                                            </div>
+                                        </div>
+
                                         <StoreLocationFields
                                             redemptionStyle={dealFormData.redemptionStyle || []}
                                             storeLocations={dealFormData.storeLocations || []}
@@ -692,23 +715,19 @@ const AdminDealsTab: React.FC = () => {
                                         />
                                     </div>
 
+                                    {/* Usage Limit & Validity Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitLabel')} <span className="text-red-500">*</span></label><input type="text" name="usageLimit" value={dealFormData.usageLimit} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                         <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitTrLabel')} <span className="text-red-500">*</span></label><input type="text" name="usageLimit_tr" value={dealFormData.usageLimit_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                         <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityLabel')} <span className="text-red-500">*</span></label><input type="text" name="validity" value={dealFormData.validity} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                         <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('validityTrLabel')} <span className="text-red-500">*</span></label><input type="text" name="validity_tr" value={dealFormData.validity_tr} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                     </div>
+                                    {/* Terms URL */}
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('termsUrlLabel')}</label><input type="text" name="termsUrl" value={dealFormData.termsUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                 </div>
                             )}
-
-
                         </div>
-                        <div className="md:col-span-2 flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button type="button" onClick={handlePreviewClick} className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
-                                <EyeIcon className="w-5 h-5 mr-2" />
-                                {t('preview') || 'Preview'}
-                            </button>
+                        <div className="flex justify-end gap-2 mt-6">
                             <button type="button" onClick={resetDealForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button>
                             <button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors flex items-center justify-center disabled:bg-gray-500 w-44" disabled={isSaving}>
                                 {isSaving ? (
@@ -719,7 +738,7 @@ const AdminDealsTab: React.FC = () => {
                             </button>
                         </div>
                     </form>
-                </section>
+                </section >
             )}
 
             {/* Preview Modal */}
