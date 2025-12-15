@@ -193,10 +193,9 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
 }
 
 export async function confirmUserEmail(userId: string) {
+    // Use the RPC function that has SECURITY DEFINER and can update auth.users
     const { error } = await supabase
-        .from('profiles')
-        .update({ email_confirmed_at: new Date().toISOString() })
-        .eq('id', userId);
+        .rpc('admin_confirm_user_email', { target_user_id: userId });
 
     if (error) {
         console.error('Error confirming user email:', error);
@@ -821,7 +820,13 @@ export async function getSavedDeals(userId: string): Promise<Deal[]> {
 }
 
 export async function claimDeal(userId: string, dealId: string) {
-    // 1. Check Global Redemption Limit
+    // 1. Check User's Monthly/Yearly Redemption Limit
+    const limitCheck = await checkMonthlyLimit(userId);
+    if (!limitCheck.allowed) {
+        throw new Error('You have reached your monthly redemption limit. Please upgrade your plan or wait for renewal.');
+    }
+
+    // 2. Check Global Redemption Limit
     const { data: deal, error: dealError } = await supabase
         .from('deals')
         .select('max_redemptions_total, redemptions_count, is_sold_out')
@@ -834,7 +839,7 @@ export async function claimDeal(userId: string, dealId: string) {
         throw new Error('This deal has reached its global usage limit and is sold out.');
     }
 
-    // 2. Add to Wallet
+    // 3. Add to Wallet
     return saveDeal(userId, dealId);
 }
 
