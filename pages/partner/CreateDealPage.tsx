@@ -7,6 +7,7 @@ import { createDeal, getDealById, updateDeal } from '../../lib/supabaseService';
 import { SubscriptionTier, Deal } from '../../types';
 import { ArrowLeft, Save, Info } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
+import StoreLocationFields from '../../components/StoreLocationFields';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
     getCategoryOptions,
@@ -58,8 +59,7 @@ const CreateDealPage: React.FC = () => {
         termsUrl: '',
         redemptionCode: '',
         redemptionStyle: [] as ('online' | 'in_store')[],
-        latitude: '',
-        longitude: '',
+        storeLocations: [] as { name: string; address: string; city?: string }[],
         is_flash_deal: false,
         flash_end_time: ''
     });
@@ -99,8 +99,7 @@ const CreateDealPage: React.FC = () => {
                             termsUrl: deal.termsUrl,
                             redemptionCode: deal.redemptionCode,
                             redemptionStyle: deal.redemptionStyle || [],
-                            latitude: deal.latitude?.toString() || '',
-                            longitude: deal.longitude?.toString() || '',
+                            storeLocations: deal.storeLocations || [],
                             is_flash_deal: deal.is_flash_deal || false,
                             flash_end_time: deal.flash_end_time || ''
                         });
@@ -296,8 +295,7 @@ const CreateDealPage: React.FC = () => {
                 expiresAt: finalExpiresAt,
                 rating: 0,
                 ratingCount: 0,
-                latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
-                longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+                storeLocations: formData.storeLocations.filter(loc => loc.name || loc.address),
                 is_flash_deal: formData.is_flash_deal,
                 flash_end_time: formData.flash_end_time ? new Date(formData.flash_end_time).toISOString() : undefined,
                 dealTypeKey: formData.dealTypeKey,
@@ -341,9 +339,9 @@ const CreateDealPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Form Tabs */}
+                {/* Form Tabs - Reduced to 2 tabs */}
                 <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
-                    {['Deal Info', 'Pricing & Details', 'Redemption & Location'].map((tab) => (
+                    {['Deal Details', 'Redemption'].map((tab) => (
                         <button
                             key={tab}
                             type="button"
@@ -360,9 +358,10 @@ const CreateDealPage: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    {/* Tab 1: Deal Info */}
-                    {formTab === 'Deal Info' && (
+                    {/* Tab 1: Deal Details (merged basic info + pricing) */}
+                    {formTab === 'Deal Details' && (
                         <div className="space-y-6 animate-fade-in">
+                            {/* Basic Info Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (English)</label>
@@ -378,16 +377,12 @@ const CreateDealPage: React.FC = () => {
                                 <input type="text" name="vendor" required value={formData.vendor} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Website (Optional)</label>
-                                <input type="url" name="companyWebsiteUrl" value={formData.companyWebsiteUrl || ''} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="https://example.com" />
-                            </div>
-                            <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (English)</label>
-                                <textarea name="description" rows={3} value={formData.description} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                <textarea name="description" rows={2} value={formData.description} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Turkish)</label>
-                                <textarea name="description_tr" rows={3} value={formData.description_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                <textarea name="description_tr" rows={2} value={formData.description_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -400,233 +395,121 @@ const CreateDealPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Expiration */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date</label>
-                                <input
-                                    type="date"
-                                    name="expiresAt"
-                                    required={!neverExpires}
-                                    disabled={neverExpires}
-                                    value={formData.expiresAt}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                />
-                                <div className="flex items-center mt-2">
-                                    <input
-                                        type="checkbox"
-                                        id="neverExpires"
-                                        checked={neverExpires}
-                                        onChange={(e) => setNeverExpires(e.target.checked)}
-                                        className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="neverExpires" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">Never Expires</label>
+                            {/* Pricing Section */}
+                            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Pricing & Category</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('dealTypeLabel')}</label>
+                                        <select name="dealTypeKey" value={formData.dealTypeKey} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                            {getDiscountTypeOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('categoryLabel')}</label>
+                                        <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                            {getCategoryOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                        </select>
+                                    </div>
                                 </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('originalPriceLabel')}</label>
+                                            <input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                        </div>
+                                    )}
+                                    {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountedPriceLabel')}</label>
+                                            <input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                        </div>
+                                    )}
+                                    {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountPercentageLabel')}</label>
+                                            <input type="number" name="discountPercentage" min="0" max="100" value={formData.discountPercentage} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                                {validationErrors.length > 0 && (
+                                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 space-y-1 mt-4">
+                                        {validationErrors.map((err, idx) => (
+                                            <p key={idx} className="text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+                                                <Info className="w-4 h-4 flex-shrink-0" />{err}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
-                            {/* External Deal */}
+                            {/* Settings */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('requiredTierLabel')}</label>
+                                    <select name="requiredTier" value={formData.requiredTier} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date</label>
+                                    <input type="date" name="expiresAt" required={!neverExpires} disabled={neverExpires} value={formData.expiresAt} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50" />
+                                    <label className="flex items-center mt-2">
+                                        <input type="checkbox" checked={neverExpires} onChange={(e) => setNeverExpires(e.target.checked)} className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded mr-2" />
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">Never Expires</span>
+                                    </label>
+                                </div>
+                            </div>
                             <div className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    id="isExternal"
-                                    name="isExternal"
-                                    checked={formData.isExternal}
-                                    onChange={handleChange}
-                                    className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
-                                />
+                                <input type="checkbox" id="isExternal" name="isExternal" checked={formData.isExternal} onChange={handleChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" />
                                 <label htmlFor="isExternal" className="text-sm font-medium text-gray-700 dark:text-gray-300">Is External Deal?</label>
                             </div>
                         </div>
                     )}
 
-                    {/* Tab 2: Pricing & Details */}
-                    {formTab === 'Pricing & Details' && (
-                        <div className="space-y-6 animate-fade-in">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        {t('dealTypeLabel')}
-                                    </label>
-                                    <select
-                                        name="dealTypeKey"
-                                        value={formData.dealTypeKey}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    >
-                                        {getDiscountTypeOptions(language).map(opt => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {getDiscountTypeOptions(language).find(o => o.value === formData.dealTypeKey)?.description}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        {t('timeTypeLabel')}
-                                    </label>
-                                    <select
-                                        name="timeType"
-                                        value={formData.timeType}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    >
-                                        {getTimeTypeOptions(language).map(opt => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('categoryLabel')}</label>
-                                <select
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                >
-                                    {getCategoryOptions(language).map(opt => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('originalPriceLabel')} {dealTypeConfig?.requiredFields.includes('originalPrice') && <span className="text-red-500">*</span>}</label>
-                                        <input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                    </div>
-                                )}
-                                {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountedPriceLabel')} {dealTypeConfig?.requiredFields.includes('discountedPrice') && <span className="text-red-500">*</span>}</label>
-                                        <input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                    </div>
-                                )}
-                                {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountPercentageLabel')} {dealTypeConfig?.requiredFields.includes('discountPercentage') && <span className="text-red-500">*</span>}</label>
-                                        <input type="number" name="discountPercentage" min="0" max="100" value={formData.discountPercentage} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Inline Validation Errors */}
-                            {validationErrors.length > 0 && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 space-y-1">
-                                    {validationErrors.map((err, idx) => (
-                                        <p key={idx} className="text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
-                                            <Info className="w-4 h-4 flex-shrink-0" />
-                                            {err}
-                                        </p>
-                                    ))}
-                                </div>
-                            )}
-
-                            <p className="text-xs text-gray-500 -mt-4">
-                                {language === 'tr' ? (dealTypeConfig as any)?.description_tr : dealTypeConfig?.description || 'Enter pricing details.'}
-                            </p>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('requiredTierLabel')}</label>
-                                <select name="requiredTier" value={formData.requiredTier} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                    {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}
-                                </select>
-                            </div>
-
-                            {/* Flash End Time (conditional) */}
-                            {formData.timeType === 'flash' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('flashEndTimeLabel')}</label>
-                                    <input
-                                        type="datetime-local"
-                                        name="flash_end_time"
-                                        value={formData.flash_end_time ? new Date(new Date(formData.flash_end_time).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                                        onChange={(e) => {
-                                            if (!e.target.value) {
-                                                setFormData(prev => ({ ...prev, flash_end_time: '' }));
-                                                return;
-                                            }
-                                            const date = new Date(e.target.value);
-                                            setFormData(prev => ({ ...prev, flash_end_time: date.toISOString() }));
-                                        }}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Tab 3: Redemption & Location */}
-                    {formTab === 'Redemption & Location' && (
+                    {/* Tab 2: Redemption */}
+                    {formTab === 'Redemption' && (
                         <div className="space-y-6 animate-fade-in">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Redemption Code</label>
                                 <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        name="redemptionCode"
-                                        required
-                                        value={formData.redemptionCode}
-                                        onChange={handleChange}
-                                        className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                        placeholder="e.g., DIN-L7K9M2"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const code = generateRedemptionCode(formData.category, formData.vendor);
-                                            setFormData(prev => ({ ...prev, redemptionCode: code }));
-                                        }}
-                                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 whitespace-nowrap"
-                                        title="Generate unique code"
-                                    >
-                                        <Save className="w-4 h-4" />
-                                        Generate
+                                    <input type="text" name="redemptionCode" required value={formData.redemptionCode} onChange={handleChange} className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="e.g., DIN-L7K9M2" />
+                                    <button type="button" onClick={() => { const code = generateRedemptionCode(formData.category, formData.vendor); setFormData(prev => ({ ...prev, redemptionCode: code })); }} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 whitespace-nowrap">
+                                        <Save className="w-4 h-4" />Generate
                                     </button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">This code will be used to generate a QR code for the user.</p>
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Redemption Style</label>
                                 <div className="flex gap-4">
                                     <label className="flex items-center space-x-2">
-                                        <input type="checkbox" checked={formData.redemptionStyle?.includes('online') || false} onChange={(e) => { const current = formData.redemptionStyle || []; const updated = e.target.checked ? [...current, 'online'] : current.filter(s => s !== 'online'); setFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] })); }} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" />
+                                        <input type="checkbox" checked={formData.redemptionStyle?.includes('online') || false} onChange={(e) => { const current = formData.redemptionStyle || []; const updated = e.target.checked ? [...current, 'online'] : current.filter(s => s !== 'online'); setFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] })); }} className="h-4 w-4 rounded text-brand-primary" />
                                         <span className="text-sm text-gray-700 dark:text-gray-300">Online</span>
                                     </label>
                                     <label className="flex items-center space-x-2">
-                                        <input type="checkbox" checked={formData.redemptionStyle?.includes('in_store') || false} onChange={(e) => { const current = formData.redemptionStyle || []; const updated = e.target.checked ? [...current, 'in_store'] : current.filter(s => s !== 'in_store'); setFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] })); }} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" />
+                                        <input type="checkbox" checked={formData.redemptionStyle?.includes('in_store') || false} onChange={(e) => { const current = formData.redemptionStyle || []; const updated = e.target.checked ? [...current, 'in_store'] : current.filter(s => s !== 'in_store'); setFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] })); }} className="h-4 w-4 rounded text-brand-primary" />
                                         <span className="text-sm text-gray-700 dark:text-gray-300">In Store</span>
                                     </label>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {/* Smart Location Fields */}
+                            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <StoreLocationFields
+                                    redemptionStyle={formData.redemptionStyle}
+                                    storeLocations={formData.storeLocations}
+                                    onChange={(locations) => setFormData(prev => ({ ...prev, storeLocations: locations }))}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usage Limit (English)</label><input type="text" name="usageLimit" value={formData.usageLimit} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usage Limit (Turkish)</label><input type="text" name="usageLimit_tr" value={formData.usageLimit_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Validity (English)</label><input type="text" name="validity" value={formData.validity} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
                                 <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Validity (Turkish)</label><input type="text" name="validity_tr" value={formData.validity_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
                             </div>
                             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms URL</label><input type="text" name="termsUrl" value={formData.termsUrl} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-
-                            {/* Location (Optional) */}
-                            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <div className="col-span-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Location (Optional)</div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label>
-                                    <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="e.g. 41.0082" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label>
-                                    <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="e.g. 28.9784" />
-                                </div>
-                            </div>
                         </div>
                     )}
 

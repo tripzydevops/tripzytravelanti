@@ -7,6 +7,7 @@ import { Deal, SubscriptionTier } from '../../types';
 import { SpinnerIcon, EyeIcon } from '../Icons';
 import { Save } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
+import StoreLocationFields from '../StoreLocationFields';
 import { getDealsPaginated, createDeal } from '../../lib/supabaseService';
 import DealDetailView from '../DealDetailView';
 import Modal from '../Modal';
@@ -49,6 +50,7 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     redemptionCode: '',
     publishAt: undefined,
     redemptionStyle: [],
+    storeLocations: [],
     is_flash_deal: false,
     flash_end_time: undefined
 };
@@ -487,9 +489,9 @@ const AdminDealsTab: React.FC = () => {
                 <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
                     <h2 className="text-2xl font-bold mb-4">{editingDeal ? t('editDeal') : t('addDeal')}</h2>
 
-                    {/* Form Tabs */}
+                    {/* Form Tabs - Reduced to 2 tabs */}
                     <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-                        {['Deal Info', 'Pricing & Details', 'Redemption & Location'].map((tab) => (
+                        {['Deal Details', 'Redemption'].map((tab) => (
                             <button
                                 key={tab}
                                 type="button"
@@ -507,152 +509,96 @@ const AdminDealsTab: React.FC = () => {
                     <form onSubmit={handleDealSubmit}>
                         <div className="grid grid-cols-1 gap-6">
 
-                            {/* Tab 1: Deal Info */}
-                            {formTab === 'Deal Info' && (
+                            {/* Tab 1: Deal Details (merged basic info + pricing) */}
+                            {formTab === 'Deal Details' && (
                                 <div className="space-y-4 animate-fade-in">
+                                    {/* Basic Info */}
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleLabel')}</label><div className="relative"><input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title_tr' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleTrLabel')}</label><div className="relative"><input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionLabel')}</label><div className="relative"><textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description_tr' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionTrLabel')}</label><div className="relative"><textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-24" />{isTranslating.description && lastEditedField === 'description' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
+                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionLabel')}</label><div className="relative"><textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" />{isTranslating.description && lastEditedField === 'description_tr' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
+                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionTrLabel')}</label><div className="relative"><textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" />{isTranslating.description && lastEditedField === 'description' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('vendorLabel')}</label><input type="text" name="vendor" value={dealFormData.vendor} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Company Website (Optional)</label><input type="url" name="companyWebsiteUrl" value={dealFormData.companyWebsiteUrl || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="https://example.com" /></div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label>
-                                            <ImageUpload
-                                                value={dealFormData.imageUrl}
-                                                onChange={(url) => setDealFormData(prev => ({ ...prev, imageUrl: url }))}
-                                                placeholder={t('imageUrlOptionalHint') || "Upload Deal Image"}
-                                            />
-                                            <div className="mt-2">
-                                                <p className="text-xs text-gray-500 mb-1">Or enter URL manually:</p>
-                                                <input type="text" name="imageUrl" value={dealFormData.imageUrl} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-xs" placeholder="https://..." />
-                                            </div>
+                                            <ImageUpload value={dealFormData.imageUrl} onChange={(url) => setDealFormData(prev => ({ ...prev, imageUrl: url }))} placeholder={t('imageUrlOptionalHint') || "Upload Deal Image"} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Company Logo (Optional)</label>
-                                            <ImageUpload
-                                                value={dealFormData.companyLogoUrl || ''}
-                                                onChange={(url) => setDealFormData(prev => ({ ...prev, companyLogoUrl: url }))}
-                                                placeholder="Upload Company Logo"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Tab 2: Pricing & Details */}
-                            {formTab === 'Pricing & Details' && (
-                                <div className="space-y-4 animate-fade-in">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('dealTypeLabel')}</label>
-                                            <select name="dealTypeKey" value={dealFormData.dealTypeKey} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
-                                                {getDiscountTypeOptions(language, true).map(opt => (
-                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
-                                            <p className="text-xs text-gray-500 mt-1">{getDiscountTypeOptions(language, true).find(o => o.value === dealFormData.dealTypeKey)?.description}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('timeTypeLabel')}</label>
-                                            <select name="timeType" value={dealFormData.timeType} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
-                                                {getTimeTypeOptions(language).map(opt => (
-                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
+                                            <ImageUpload value={dealFormData.companyLogoUrl || ''} onChange={(url) => setDealFormData(prev => ({ ...prev, companyLogoUrl: url }))} placeholder="Upload Company Logo" />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label>
-                                        <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
-                                            {getCategoryOptions(language).map(opt => (
-                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
-                                            <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required={dealTypeConfig?.requiredFields.includes('originalPrice')} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                        )}
-                                        {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
-                                            <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} required={dealTypeConfig?.requiredFields.includes('discountPercentage')} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
-                                        )}
-                                        {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
-                                            <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} required={dealTypeConfig?.requiredFields.includes('discountedPrice')} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                                        )}
+                                    {/* Pricing Section */}
+                                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <h3 className="text-sm font-semibold text-gray-600 dark:text-brand-text-muted mb-3">Pricing & Category</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('dealTypeLabel')}</label>
+                                                <select name="dealTypeKey" value={dealFormData.dealTypeKey} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                                    {getDiscountTypeOptions(language, true).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label>
+                                                <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                                    {getCategoryOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                            )}
+                                            {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
+                                            )}
+                                            {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
                                 </div>
                             )}
 
-                            {/* Tab 3: Redemption & Location */}
-                            {formTab === 'Redemption & Location' && (
+                            {/* Tab 2: Redemption */}
+                            {formTab === 'Redemption' && (
                                 <div className="space-y-4 animate-fade-in">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label>
                                         <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                name="redemptionCode"
-                                                value={dealFormData.redemptionCode}
-                                                onChange={handleDealInputChange}
-                                                required
-                                                className="flex-1 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                                                placeholder="e.g., DIN-L7K9M2"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const code = generateRedemptionCode(dealFormData.category, dealFormData.vendor);
-                                                    setDealFormData(prev => ({ ...prev, redemptionCode: code }));
-                                                }}
-                                                className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-1 whitespace-nowrap"
-                                                title="Generate unique code"
-                                            >
-                                                <Save className="w-4 h-4" />
-                                                Generate
+                                            <input type="text" name="redemptionCode" value={dealFormData.redemptionCode} onChange={handleDealInputChange} required className="flex-1 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g., DIN-L7K9M2" />
+                                            <button type="button" onClick={() => { const code = generateRedemptionCode(dealFormData.category, dealFormData.vendor); setDealFormData(prev => ({ ...prev, redemptionCode: code })); }} className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-1 whitespace-nowrap">
+                                                <Save className="w-4 h-4" />Generate
                                             </button>
                                         </div>
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Redemption Style</label>
                                         <div className="flex gap-4">
                                             <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={dealFormData.redemptionStyle?.includes('online') || false}
-                                                    onChange={(e) => {
-                                                        const current = dealFormData.redemptionStyle || [];
-                                                        const updated = e.target.checked
-                                                            ? [...current, 'online']
-                                                            : current.filter(s => s !== 'online');
-                                                        setDealFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] }));
-                                                    }}
-                                                    className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
-                                                />
+                                                <input type="checkbox" checked={dealFormData.redemptionStyle?.includes('online') || false} onChange={(e) => { const current = dealFormData.redemptionStyle || []; const updated = e.target.checked ? [...current, 'online'] : current.filter(s => s !== 'online'); setDealFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] })); }} className="h-4 w-4 rounded text-brand-primary" />
                                                 <span className="text-sm text-gray-700 dark:text-brand-text-light">Online</span>
                                             </label>
                                             <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={dealFormData.redemptionStyle?.includes('in_store') || false}
-                                                    onChange={(e) => {
-                                                        const current = dealFormData.redemptionStyle || [];
-                                                        const updated = e.target.checked
-                                                            ? [...current, 'in_store']
-                                                            : current.filter(s => s !== 'in_store');
-                                                        setDealFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] }));
-                                                    }}
-                                                    className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
-                                                />
+                                                <input type="checkbox" checked={dealFormData.redemptionStyle?.includes('in_store') || false} onChange={(e) => { const current = dealFormData.redemptionStyle || []; const updated = e.target.checked ? [...current, 'in_store'] : current.filter(s => s !== 'in_store'); setDealFormData(prev => ({ ...prev, redemptionStyle: updated as ('online' | 'in_store')[] })); }} className="h-4 w-4 rounded text-brand-primary" />
                                                 <span className="text-sm text-gray-700 dark:text-brand-text-light">In Store</span>
                                             </label>
                                         </div>
                                     </div>
+
+                                    {/* Smart Location Fields */}
+                                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <StoreLocationFields
+                                            redemptionStyle={dealFormData.redemptionStyle || []}
+                                            storeLocations={dealFormData.storeLocations || []}
+                                            onChange={(locations) => setDealFormData(prev => ({ ...prev, storeLocations: locations }))}
+                                        />
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitLabel')}</label><input type="text" name="usageLimit" value={dealFormData.usageLimit} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                         <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('usageLimitTrLabel')}</label><input type="text" name="usageLimit_tr" value={dealFormData.usageLimit_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>

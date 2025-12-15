@@ -81,6 +81,12 @@ export interface Deal {
   redemptionCode: string;
   latitude?: number;
   longitude?: number;
+  // Store locations (for in-store deals)
+  storeLocations?: {
+    name: string;
+    address: string;
+    city?: string;
+  }[];
   partnerId?: string;
   companyLogoUrl?: string;
   status?: 'pending' | 'approved' | 'rejected';
