@@ -82,6 +82,8 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     if (updates.referredBy) dbUpdates.referred_by = updates.referredBy;
     if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
     if (updates.mobile) dbUpdates.mobile = updates.mobile;
+    if (updates.address) dbUpdates.address = updates.address;
+    if (updates.billingAddress) dbUpdates.billing_address = updates.billingAddress;
     if (updates.status) dbUpdates.status = updates.status;
 
     const { error } = await supabase
@@ -139,6 +141,8 @@ export async function getAllUsers(): Promise<User[]> {
         notificationPreferences: data.notification_preferences,
         avatarUrl: data.avatar_url,
         mobile: data.mobile,
+        address: data.address,
+        billingAddress: data.billing_address,
         status: data.status,
         referredBy: data.referred_by,
         emailConfirmedAt: data.email_confirmed_at
@@ -184,6 +188,8 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
         notificationPreferences: d.notification_preferences,
         avatarUrl: d.avatar_url,
         mobile: d.mobile,
+        address: d.address,
+        billingAddress: d.billing_address,
         status: d.status,
         referredBy: d.referred_by,
         emailConfirmedAt: d.email_confirmed_at

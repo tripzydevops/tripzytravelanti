@@ -51,21 +51,22 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             // Logic from AuthContext
             await updateUserProfile(updatedUser.id, {
                 name: updatedUser.name,
-                email: updatedUser.email,
                 tier: updatedUser.tier,
-                avatar_url: updatedUser.avatarUrl,
-                extra_redemptions: updatedUser.extraRedemptions,
-                notification_preferences: updatedUser.notificationPreferences,
+                avatarUrl: updatedUser.avatarUrl,
+                extraRedemptions: updatedUser.extraRedemptions,
+                notificationPreferences: updatedUser.notificationPreferences,
                 mobile: updatedUser.mobile,
+                address: updatedUser.address,
+                billingAddress: updatedUser.billingAddress,
                 status: updatedUser.status,
-                referred_by: updatedUser.referredBy || null,
+                referredBy: updatedUser.referredBy || undefined,
             });
 
             // Handle Owned Deals logic (Wallet)
             const currentUser = users.find(u => u.id === updatedUser.id);
             if (currentUser) {
-                const oldOwnedDeals = new Set(currentUser.ownedDeals || []);
-                const newOwnedDeals = new Set(updatedUser.ownedDeals || []);
+                const oldOwnedDeals = new Set<string>(currentUser.ownedDeals || []);
+                const newOwnedDeals = new Set<string>(updatedUser.ownedDeals || []);
 
                 // Deals to add (in new but not in old)
                 const dealsToAdd = [...newOwnedDeals].filter(id => !oldOwnedDeals.has(id));
@@ -108,7 +109,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             if (!targetUser) return;
 
             const newRedemptions = (targetUser.extraRedemptions || 0) + amount;
-            await updateUserProfile(userId, { extra_redemptions: newRedemptions });
+            await updateUserProfile(userId, { extraRedemptions: newRedemptions });
 
             setUsers((currentUsers) =>
                 currentUsers.map((u) =>
