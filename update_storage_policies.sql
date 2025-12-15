@@ -1,7 +1,8 @@
 -- Secure Storage Policies for 'deals' bucket
 -- Enforces user-scoped access: Users can only modify files in 'deals/userId/*'
 -- 1. Enable RLS on objects (standard safety)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Skipped: ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY; 
+-- (Usually already enabled, and requires superuser to change)
 -- 2. Allow Public Read Access (Images are public)
 -- Note: 'storage.objects' policies are additive. 
 DROP POLICY IF EXISTS "Public deals view" ON storage.objects;
