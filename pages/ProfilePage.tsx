@@ -141,7 +141,7 @@ const ProfilePage: React.FC = () => {
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
     if (user && (name !== user.name || email !== user.email || mobile !== (user.mobile || ''))) {
-      updateUserDetails({ name, email, mobile });
+      updateUserDetails({ name, email, mobile, address, billingAddress });
       setShowSuccess(t('profileUpdatedSuccess'));
       setTimeout(() => setShowSuccess(''), 3000);
     }
@@ -368,6 +368,73 @@ const ProfilePage: React.FC = () => {
               </button>
             </div>
           </div>
+        </SettingsSection>
+      </div>
+
+      {/* Personal Info Section */}
+      <div className="mb-6">
+        <SettingsSection title={t('personalInfo') || 'Personal Information'}>
+          <form onSubmit={handleSaveChanges} className="p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('fullNameLabel') || 'Full Name'}</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500/50"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
+                <input
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500/50"
+                  placeholder="+1 234 567 8900"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('emailLabel') || 'Email Address'}</label>
+                <input
+                  type="email"
+                  value={email}
+                  disabled
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white/50 cursor-not-allowed"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('addressLabel') || 'Address'}</label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  rows={2}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500/50"
+                  placeholder="Your full address"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('billingAddressLabel') || 'Billing Address'}</label>
+                <textarea
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value)}
+                  rows={2}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-gold-500/50"
+                  placeholder="Billing address (if different)"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="bg-gold-500 hover:bg-gold-600 text-white font-bold py-2 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+              >
+                {t('saveChanges') || 'Save Changes'}
+              </button>
+            </div>
+          </form>
         </SettingsSection>
       </div>
 

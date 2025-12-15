@@ -240,8 +240,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: details.email,
         mobile: details.mobile,
         address: details.address,
-        billing_address: details.billingAddress,
-        referred_by: details.referredBy,
+        billingAddress: details.billingAddress,
+        referredBy: details.referredBy,
       });
       setUser((currentUser) => (currentUser ? { ...currentUser, ...details } : null));
     } catch (error) {
