@@ -90,6 +90,25 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     }
 }
 
+export async function deleteUserProfile(userId: string) {
+    // 1. Delete associated data (if not handled by cascade)
+    // Supabase cascade rules should handle most, but explicit deletion is safer
+    
+    // Delete profile (this usually triggers cascade for user_deals, redemptions etc if configured)
+    const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+    if (error) {
+        console.error('Error deleting user profile:', error);
+        throw error;
+    }
+    
+    // Auth user deletion requires Admin API (service role). 
+    // Client-side can only delete public profile data.
+}
+
 
 // Helper function to transform database deal to app format
 function transformDealFromDB(dbDeal: DBDeal): Deal {
