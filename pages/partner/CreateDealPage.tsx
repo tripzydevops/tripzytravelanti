@@ -8,6 +8,7 @@ import { SubscriptionTier, Deal } from '../../types';
 import { ArrowLeft, Save, Info } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
 import StoreLocationFields from '../../components/StoreLocationFields';
+import CountrySelector from '../../components/CountrySelector';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
     getCategoryOptions,
@@ -33,6 +34,7 @@ const CreateDealPage: React.FC = () => {
     const [neverExpires, setNeverExpires] = useState(false);
     const [formTab, setFormTab] = useState('Deal Details');
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const [showTranslations, setShowTranslations] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -60,6 +62,7 @@ const CreateDealPage: React.FC = () => {
         redemptionCode: '',
         redemptionStyle: [] as ('online' | 'in_store')[],
         storeLocations: [] as { name: string; address: string; city?: string }[],
+        countries: [] as string[],
         is_flash_deal: false,
         flash_end_time: ''
     });
@@ -361,29 +364,50 @@ const CreateDealPage: React.FC = () => {
                     {/* Tab 1: Deal Details (merged basic info + pricing) */}
                     {formTab === 'Deal Details' && (
                         <div className="space-y-6 animate-fade-in">
-                            {/* Basic Info Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (English)</label>
-                                    <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (Turkish)</label>
-                                    <input type="text" name="title_tr" value={formData.title_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                </div>
+                            {/* Title - Primary */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                                <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Enter title (auto-translates)" />
                             </div>
+
+                            {/* Description - Primary */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                <textarea name="description" rows={2} value={formData.description} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Enter description (auto-translates)" />
+                            </div>
+
+                            {/* Collapsible Translations */}
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                <button type="button" onClick={() => setShowTranslations(!showTranslations)} className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 text-left text-sm font-medium text-gray-600 dark:text-gray-400 flex justify-between items-center">
+                                    <span>📝 {showTranslations ? 'Hide' : 'View/Edit'} Translations (Turkish)</span>
+                                    <span className={`transform transition-transform ${showTranslations ? 'rotate-180' : ''}`}>▼</span>
+                                </button>
+                                {showTranslations && (
+                                    <div className="p-4 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Title (Turkish)</label>
+                                            <input type="text" name="title_tr" value={formData.title_tr} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description (Turkish)</label>
+                                            <textarea name="description_tr" rows={2} value={formData.description_tr} onChange={handleChange} className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name (Vendor)</label>
                                 <input type="text" name="vendor" required value={formData.vendor} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (English)</label>
-                                <textarea name="description" rows={2} value={formData.description} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Turkish)</label>
-                                <textarea name="description_tr" rows={2} value={formData.description_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                            </div>
+
+                            {/* Country Selector */}
+                            <CountrySelector
+                                selectedCountries={formData.countries}
+                                onChange={(countries) => setFormData(prev => ({ ...prev, countries }))}
+                                language={language === 'tr' ? 'tr' : 'en'}
+                            />
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>

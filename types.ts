@@ -87,6 +87,7 @@ export interface Deal {
     address: string;
     city?: string;
   }[];
+  countries?: string[]; // For filtering deals by country
   partnerId?: string;
   companyLogoUrl?: string;
   status?: 'pending' | 'approved' | 'rejected';

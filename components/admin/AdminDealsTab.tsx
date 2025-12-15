@@ -8,6 +8,7 @@ import { SpinnerIcon, EyeIcon } from '../Icons';
 import { Save } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
 import StoreLocationFields from '../StoreLocationFields';
+import CountrySelector from '../CountrySelector';
 import { getDealsPaginated, createDeal } from '../../lib/supabaseService';
 import DealDetailView from '../DealDetailView';
 import Modal from '../Modal';
@@ -51,6 +52,7 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     publishAt: undefined,
     redemptionStyle: [],
     storeLocations: [],
+    countries: [],
     is_flash_deal: false,
     flash_end_time: undefined
 };
@@ -113,6 +115,7 @@ const AdminDealsTab: React.FC = () => {
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
     const [formTab, setFormTab] = useState('Deal Details');
+    const [showTranslations, setShowTranslations] = useState(false);
 
 
     const dealTypeConfig = getDiscountTypeConfig(dealFormData.dealTypeKey || 'percentage_off');
@@ -512,12 +515,51 @@ const AdminDealsTab: React.FC = () => {
                             {/* Tab 1: Deal Details (merged basic info + pricing) */}
                             {formTab === 'Deal Details' && (
                                 <div className="space-y-4 animate-fade-in">
-                                    {/* Basic Info */}
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleLabel')}</label><div className="relative"><input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title_tr' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleTrLabel')}</label><div className="relative"><input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionLabel')}</label><div className="relative"><textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" />{isTranslating.description && lastEditedField === 'description_tr' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('descriptionTrLabel')}</label><div className="relative"><textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" />{isTranslating.description && lastEditedField === 'description' && (<SpinnerIcon className="absolute right-2 top-3 w-5 h-5 text-brand-primary" />)}</div></div>
+                                    {/* Title - Primary Input */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                                            Title {isTranslating.title && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
+                                        </label>
+                                        <input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="Enter title (auto-translates)" />
+                                    </div>
+
+                                    {/* Description - Primary Input */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                                            Description {isTranslating.description && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
+                                        </label>
+                                        <textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" placeholder="Enter description (auto-translates)" />
+                                    </div>
+
+                                    {/* Collapsible Translation Override */}
+                                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                        <button type="button" onClick={() => setShowTranslations(!showTranslations)} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 text-left text-sm font-medium text-gray-600 dark:text-gray-400 flex justify-between items-center">
+                                            <span>📝 {showTranslations ? 'Hide' : 'View/Edit'} Translations (Turkish)</span>
+                                            <span className={`transform transition-transform ${showTranslations ? 'rotate-180' : ''}`}>▼</span>
+                                        </button>
+                                        {showTranslations && (
+                                            <div className="p-3 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Title (Turkish)</label>
+                                                    <input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} className="w-full bg-white dark:bg-gray-700 rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-sm" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description (Turkish)</label>
+                                                    <textarea name="description_tr" value={dealFormData.description_tr} onChange={handleDealInputChange} className="w-full bg-white dark:bg-gray-700 rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-16 text-sm" />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('vendorLabel')}</label><input type="text" name="vendor" value={dealFormData.vendor} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+
+                                    {/* Country Selector */}
+                                    <CountrySelector
+                                        selectedCountries={dealFormData.countries || []}
+                                        onChange={(countries) => setDealFormData(prev => ({ ...prev, countries }))}
+                                        language={language === 'tr' ? 'tr' : 'en'}
+                                    />
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('imageUrlLabel')}</label>
