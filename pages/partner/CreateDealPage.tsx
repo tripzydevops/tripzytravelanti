@@ -31,7 +31,7 @@ const CreateDealPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [neverExpires, setNeverExpires] = useState(false);
-    const [formTab, setFormTab] = useState('Basic Info');
+    const [formTab, setFormTab] = useState('Deal Details');
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
     const [formData, setFormData] = useState({

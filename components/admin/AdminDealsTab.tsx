@@ -112,7 +112,7 @@ const AdminDealsTab: React.FC = () => {
 
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
-    const [formTab, setFormTab] = useState('Deal Info');
+    const [formTab, setFormTab] = useState('Deal Details');
 
 
     const dealTypeConfig = getDiscountTypeConfig(dealFormData.dealTypeKey || 'percentage_off');
