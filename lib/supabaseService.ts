@@ -93,7 +93,7 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
 export async function deleteUserProfile(userId: string) {
     // 1. Delete associated data (if not handled by cascade)
     // Supabase cascade rules should handle most, but explicit deletion is safer
-    
+
     // Delete profile (this usually triggers cascade for user_deals, redemptions etc if configured)
     const { error } = await supabase
         .from('profiles')
@@ -104,7 +104,7 @@ export async function deleteUserProfile(userId: string) {
         console.error('Error deleting user profile:', error);
         throw error;
     }
-    
+
     // Auth user deletion requires Admin API (service role). 
     // Client-side can only delete public profile data.
 }
@@ -581,8 +581,81 @@ export async function getDirectReferrals(userId: string): Promise<string[]> {
 }
 
 // =====================================================
-// DEAL REDEMPTION OPERATIONS
+// USER DEAL OPERATIONS
 // =====================================================
+
+export async function saveDeal(userId: string, dealId: string) {
+    // Check if already saved
+    const { data: existing } = await supabase
+        .from('user_deals')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('deal_id', dealId)
+        .single();
+
+    if (existing) return; // Already saved
+
+    const { error } = await supabase
+        .from('user_deals')
+        .insert({ user_id: userId, deal_id: dealId });
+
+    if (error) throw error;
+}
+
+export async function unsaveDeal(userId: string, dealId: string) {
+    const { error } = await supabase
+        .from('user_deals')
+        .delete()
+        .eq('user_id', userId)
+        .eq('deal_id', dealId);
+
+    if (error) throw error;
+}
+
+export async function checkDealSavedStatus(userId: string, dealId: string): Promise<boolean> {
+    const { data, error } = await supabase
+        .from('user_deals')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('deal_id', dealId)
+        .single();
+
+    return !!data && !error;
+}
+
+export async function getSavedDeals(userId: string): Promise<Deal[]> {
+    const { data, error } = await supabase
+        .from('user_deals')
+        .select('deal_id, deals(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching saved deals:', error);
+        return [];
+    }
+
+    return data.map((item: any) => transformDealFromDB(item.deals));
+}
+
+export async function claimDeal(userId: string, dealId: string) {
+    // 1. Check Global Redemption Limit
+    const { data: deal, error: dealError } = await supabase
+        .from('deals')
+        .select('max_redemptions_total, redemptions_count, is_sold_out')
+        .eq('id', dealId)
+        .single();
+
+    if (dealError || !deal) throw new Error('Deal not found');
+
+    if (deal.is_sold_out || (deal.max_redemptions_total !== null && (deal.redemptions_count || 0) >= deal.max_redemptions_total)) {
+        throw new Error('This deal has reached its global usage limit and is sold out.');
+    }
+
+    // 2. Add to Wallet
+    return saveDeal(userId, dealId);
+}
+
 
 
 
