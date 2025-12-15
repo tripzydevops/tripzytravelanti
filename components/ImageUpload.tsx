@@ -95,20 +95,30 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
         // Try to delete from Supabase storage if it's a Supabase URL
         if (value && value.includes('supabase.co/storage')) {
-            try {
-                // Extract file path from URL
-                const urlParts = value.split('/storage/v1/object/public/');
-                if (urlParts.length === 2) {
-                    const pathParts = urlParts[1].split('/');
-                    const bucket = pathParts[0];
-                    const filePath = pathParts.slice(1).join('/');
+            if (!window.confirm('Delete this image? This cannot be undone.')) {
+                return;
+            }
 
-                    await supabase.storage.from(bucket).remove([filePath]);
-                    console.log('Image deleted from storage:', filePath);
+            try {
+                // Robust URL parsing
+                const url = new URL(value);
+                const pathParts = url.pathname.split('/object/public/');
+
+                if (pathParts.length === 2) {
+                    const fullPath = pathParts[1]; // e.g., "deals/folder/file.jpg"
+                    const pathSegments = fullPath.split('/');
+                    const bucket = pathSegments[0]; // "deals"
+                    const filePath = pathSegments.slice(1).join('/'); // "folder/file.jpg"
+
+                    if (bucket && filePath) {
+                        const { error } = await supabase.storage.from(bucket).remove([filePath]);
+                        if (error) throw error;
+                        console.log('Image deleted from storage:', filePath);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to delete image from storage:', error);
-                // Continue anyway - we still want to clear the URL
+                // Continue anyway - we still want to clear the URL in the UI
             }
         }
 

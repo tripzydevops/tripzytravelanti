@@ -76,18 +76,7 @@ const isFarFuture = (dateString: string): boolean => {
     return expiry.getFullYear() > now.getFullYear() + 50;
 };
 
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-    return debouncedValue;
-}
+
 
 const AdminDealsTab: React.FC = () => {
     const { t, language } = useLanguage();
@@ -301,6 +290,11 @@ const AdminDealsTab: React.FC = () => {
         if (!deal.discountPercentage && deal.originalPrice > 0 && deal.discountedPrice < deal.originalPrice) {
             const discount = ((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100;
             setDealFormData(prev => ({ ...prev, discountPercentage: Math.round(discount) }));
+        }
+        if (deal.title_tr || deal.description_tr) {
+            setShowTranslations(true);
+        } else {
+            setShowTranslations(false);
         }
         setIsDealFormVisible(true); window.scrollTo(0, 0);
     };
