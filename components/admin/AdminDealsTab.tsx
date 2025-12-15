@@ -439,6 +439,24 @@ const AdminDealsTab: React.FC = () => {
             return;
         }
 
+        if (dealFormData.originalPrice <= 0) {
+            alert('Original Price must be greater than 0.');
+            setIsSaving(false);
+            return;
+        }
+
+        if (dealFormData.discountedPrice >= dealFormData.originalPrice) {
+            alert('Discounted Price must be lower than the Original Price.');
+            setIsSaving(false);
+            return;
+        }
+
+        if (!dealFormData.category) {
+            alert('Please select a Category.');
+            setIsSaving(false);
+            return;
+        }
+
         let finalImageUrl = dealFormData.imageUrl;
 
         if (!finalImageUrl) {
@@ -536,17 +554,17 @@ const AdminDealsTab: React.FC = () => {
                                     {/* Title - Primary Input */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                                            Title {isTranslating.title && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
+                                            Title <span className="text-red-500">*</span> {isTranslating.title && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
                                         </label>
-                                        <input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="Enter title (auto-translates)" />
+                                        <input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="Enter title (auto-translates)" />
                                     </div>
 
                                     {/* Description - Primary Input */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                                            Description {isTranslating.description && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
+                                            Description <span className="text-red-500">*</span> {isTranslating.description && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
                                         </label>
-                                        <textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" placeholder="Enter description (auto-translates)" />
+                                        <textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" placeholder="Enter description (auto-translates)" />
                                     </div>
 
                                     {/* Collapsible Translation Override */}
@@ -569,7 +587,7 @@ const AdminDealsTab: React.FC = () => {
                                         )}
                                     </div>
 
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('vendorLabel')}</label><input type="text" name="vendor" value={dealFormData.vendor} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('vendorLabel')} <span className="text-red-500">*</span></label><input type="text" name="vendor" value={dealFormData.vendor} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
 
                                     {/* Country Selector */}
                                     <CountrySelector
@@ -600,7 +618,7 @@ const AdminDealsTab: React.FC = () => {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')}</label>
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')} <span className="text-red-500">*</span></label>
                                                 <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                                     {getCategoryOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                                                 </select>
@@ -608,7 +626,7 @@ const AdminDealsTab: React.FC = () => {
                                         </div>
                                         <div className="grid grid-cols-3 gap-4">
                                             {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
-                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')}</label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')} <span className="text-red-500">*</span></label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required min="0.01" step="0.01" className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                             )}
                                             {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
                                                 <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
