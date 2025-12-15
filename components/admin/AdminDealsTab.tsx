@@ -110,7 +110,7 @@ const AdminDealsTab: React.FC = () => {
 
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
-    const [formTab, setFormTab] = useState('Basic Info');
+    const [formTab, setFormTab] = useState('Deal Info');
 
 
     const dealTypeConfig = getDiscountTypeConfig(dealFormData.dealTypeKey || 'percentage_off');
@@ -489,7 +489,7 @@ const AdminDealsTab: React.FC = () => {
 
                     {/* Form Tabs */}
                     <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-                        {['Basic Info', 'Pricing & Category', 'Redemption & Terms', 'Settings & Location'].map((tab) => (
+                        {['Deal Info', 'Pricing & Details', 'Redemption & Location'].map((tab) => (
                             <button
                                 key={tab}
                                 type="button"
@@ -507,8 +507,8 @@ const AdminDealsTab: React.FC = () => {
                     <form onSubmit={handleDealSubmit}>
                         <div className="grid grid-cols-1 gap-6">
 
-                            {/* Basic Info Tab */}
-                            {formTab === 'Basic Info' && (
+                            {/* Tab 1: Deal Info */}
+                            {formTab === 'Deal Info' && (
                                 <div className="space-y-4 animate-fade-in">
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleLabel')}</label><div className="relative"><input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title_tr' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
                                     <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('titleTrLabel')}</label><div className="relative"><input type="text" name="title_tr" value={dealFormData.title_tr} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" />{isTranslating.title && lastEditedField === 'title' && (<SpinnerIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-primary" />)}</div></div>
@@ -541,8 +541,8 @@ const AdminDealsTab: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Pricing & Category Tab */}
-                            {formTab === 'Pricing & Category' && (
+                            {/* Tab 2: Pricing & Details */}
+                            {formTab === 'Pricing & Details' && (
                                 <div className="space-y-4 animate-fade-in">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
@@ -589,8 +589,8 @@ const AdminDealsTab: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Redemption & Terms Tab */}
-                            {formTab === 'Redemption & Terms' && (
+                            {/* Tab 3: Redemption & Location */}
+                            {formTab === 'Redemption & Location' && (
                                 <div className="space-y-4 animate-fade-in">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('redemptionCodeLabel')}</label>
@@ -663,78 +663,6 @@ const AdminDealsTab: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Settings & Location Tab */}
-                            {formTab === 'Settings & Location' && (
-                                <div className="space-y-4 animate-fade-in">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Publish Date (Optional)</label>
-                                        <input
-                                            type="datetime-local"
-                                            name="publishAt"
-                                            value={dealFormData.publishAt ? new Date(new Date(dealFormData.publishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                                            onChange={(e) => {
-                                                if (!e.target.value) {
-                                                    setDealFormData(prev => ({ ...prev, publishAt: undefined }));
-                                                    return;
-                                                }
-                                                const date = new Date(e.target.value);
-                                                setDealFormData(prev => ({ ...prev, publishAt: date.toISOString() }));
-                                            }}
-                                            className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">Leave empty to publish immediately.</p>
-                                    </div>
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('expiresInDaysLabel')}</label><input type="number" value={expiresInDays} onChange={e => setExpiresInDays(e.target.value === '' ? '' : parseInt(e.target.value, 10))} required disabled={neverExpires} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:cursor-not-allowed" /></div>
-                                    <div className="flex items-center space-x-2"><input type="checkbox" id="neverExpires" name="neverExpires" checked={neverExpires} onChange={e => setNeverExpires(e.target.checked)} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="neverExpires" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">{t('neverExpires')}</label></div>
-                                    <div className="flex items-center space-x-2 pt-5"><input type="checkbox" id="isExternal" name="isExternal" checked={dealFormData.isExternal} onChange={handleDealInputChange} className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary" /><label htmlFor="isExternal" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">Is External Deal?</label></div>
-
-                                    <div className="flex items-center space-x-2 pt-5">
-                                        <input
-                                            type="checkbox"
-                                            id="is_flash_deal"
-                                            name="is_flash_deal"
-                                            checked={dealFormData.is_flash_deal || false}
-                                            onChange={handleDealInputChange}
-                                            className="h-4 w-4 rounded text-brand-primary bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
-                                        />
-                                        <label htmlFor="is_flash_deal" className="text-sm font-medium text-gray-600 dark:text-brand-text-muted">
-                                            {t('flashDealLabel')} ⚡ {dealFormData.timeType === 'flash' && <span className="text-xs text-brand-primary">(Applied via Time Type)</span>}
-                                        </label>
-                                    </div>
-
-                                    {dealFormData.is_flash_deal && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('flashEndTimeLabel')}</label>
-                                            <input
-                                                type="datetime-local"
-                                                name="flash_end_time"
-                                                value={dealFormData.flash_end_time ? new Date(new Date(dealFormData.flash_end_time).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                                                onChange={(e) => {
-                                                    if (!e.target.value) {
-                                                        setDealFormData(prev => ({ ...prev, flash_end_time: undefined }));
-                                                        return;
-                                                    }
-                                                    const date = new Date(e.target.value);
-                                                    setDealFormData(prev => ({ ...prev, flash_end_time: date.toISOString() }));
-                                                }}
-                                                className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                                            />
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                        <div className="col-span-2 text-sm font-semibold text-gray-700 dark:text-brand-text-light">Location (Optional)</div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Latitude</label>
-                                            <input type="number" step="any" name="latitude" value={dealFormData.latitude || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 41.0082" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">Longitude</label>
-                                            <input type="number" step="any" name="longitude" value={dealFormData.longitude || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 28.9784" />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                         </div>
                         <div className="md:col-span-2 flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
