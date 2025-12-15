@@ -161,20 +161,36 @@ const AdminDealsTab: React.FC = () => {
 
     const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
         if (!text.trim()) return '';
+
+        // 1. Try Google Gemini API
         try {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) {
-                console.warn('VITE_GEMINI_API_KEY is not set - translation disabled');
-                return '';
+            if (apiKey) {
+                const ai = new GoogleGenAI({ apiKey });
+                const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
+                const result = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
+                // Handle different SDK versions/response structures safely
+                const generatedText = typeof (result as any).text === 'function' ? (result as any).text() : (result as any).text;
+                if (generatedText) return generatedText.trim();
             }
-            const ai = new GoogleGenAI({ apiKey });
-            const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
-            return response.text?.trim() || '';
         } catch (error) {
-            console.error('Translation failed:', error);
-            return '';
+            console.warn('Gemini translation failed, falling back to free API:', error);
         }
+
+        // 2. Fallback: MyMemory Translation API (Free, no key needed for small usage)
+        try {
+            const langPair = targetLanguage === 'Turkish' ? 'en|tr' : 'tr|en';
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.responseStatus === 200) {
+                return data.responseData.translatedText;
+            }
+        } catch (err) {
+            console.error('All translation methods failed:', err);
+        }
+
+        return '';
     }, []);
 
     useEffect(() => {
@@ -428,42 +444,22 @@ const AdminDealsTab: React.FC = () => {
         if (!finalImageUrl) {
             setIsGeneratingImage(true);
 
-            // First try AI image generation (requires paid Vertex AI)
-            try {
-                const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    console.warn('VITE_GEMINI_API_KEY not set - using fallback image');
-                    throw new Error("API Key missing");
-                }
-                const ai = new GoogleGenAI({ apiKey });
-                const dealContext = dealFormData.description?.trim() ? `"${dealFormData.title}" - ${dealFormData.description.substring(0, 200)}` : dealFormData.title;
-                const prompt = `A professional, high-quality promotional photo for: ${dealContext}. Category: ${dealFormData.category}. Style: clean, appetizing if food, inviting, realistic photography, no text overlays.`;
-                console.log('Attempting AI image generation...');
-                const response = await ai.models.generateImages({ model: 'imagen-3.0-generate-002', prompt, config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '4:3' } });
-                if (response.generatedImages?.[0]) {
-                    finalImageUrl = `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
-                    console.log('AI image generated successfully');
-                }
-            } catch (error: any) {
-                console.warn('AI image generation failed (requires paid Vertex AI):', error.message);
-            } finally {
-                setIsGeneratingImage(false);
-            }
+            // Use Unsplash with category-based search for relevant images
+            console.log('Using Unsplash fallback image');
+            const categoryImages: Record<string, string> = {
+                'Dining': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
+                'Food & Dining': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop',
+                'Travel': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop',
+                'Wellness': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
+                'Shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop',
+                'Entertainment': 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop',
+                'General': 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=600&fit=crop'
+            };
+            finalImageUrl = categoryImages[dealFormData.category] || categoryImages['General'];
 
-            // Fallback: Use Unsplash with category-based search for relevant images
-            if (!finalImageUrl) {
-                console.log('Using Unsplash fallback image');
-                const categoryImages: Record<string, string> = {
-                    'Dining': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
-                    'Food & Dining': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop',
-                    'Travel': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop',
-                    'Wellness': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
-                    'Shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop',
-                    'Entertainment': 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop',
-                    'General': 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=600&fit=crop'
-                };
-                finalImageUrl = categoryImages[dealFormData.category] || categoryImages['General'];
-            }
+            // Artificial delay to show loading state
+            await new Promise(resolve => setTimeout(resolve, 500));
+            setIsGeneratingImage(false);
         }
 
 
