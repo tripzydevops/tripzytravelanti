@@ -66,4 +66,4 @@ INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 GRANT ALL ON profiles TO authenticated;
 GRANT ALL ON profiles TO service_role;
 GRANT SELECT ON profiles TO anon;
-RAISE NOTICE 'Login permissions fixed. Recursive policies removed.';
+-- Removed RAISE NOTICE to avoid syntax error
