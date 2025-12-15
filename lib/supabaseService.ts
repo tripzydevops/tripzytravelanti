@@ -41,7 +41,55 @@ interface DBDeal {
     is_sold_out?: boolean;
 }
 
-// ... (existing code)
+// =====================================================
+// USER PROFILE OPERATIONS
+// =====================================================
+
+export async function getUserProfile(userId: string): Promise<User | null> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+    }
+
+    return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        tier: data.tier,
+        createdAt: data.created_at,
+        subscriptionStatus: data.subscription_status,
+        subscriptionEndDate: data.subscription_end_date,
+        walletLimit: data.wallet_limit,
+        extraRedemptions: data.extra_redemptions
+    };
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<User>) {
+    const dbUpdates: any = {};
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.tier) dbUpdates.tier = updates.tier;
+    if (updates.subscriptionStatus) dbUpdates.subscription_status = updates.subscriptionStatus;
+    if (updates.subscriptionEndDate) dbUpdates.subscription_end_date = updates.subscriptionEndDate;
+    if (updates.walletLimit !== undefined) dbUpdates.wallet_limit = updates.walletLimit;
+
+    const { error } = await supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', userId);
+
+    if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+    }
+}
+
 
 // Helper function to transform database deal to app format
 function transformDealFromDB(dbDeal: DBDeal): Deal {
