@@ -430,7 +430,9 @@ const AdminDealsTab: React.FC = () => {
                 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                 if (!apiKey) throw new Error("API Key missing");
                 const ai = new GoogleGenAI({ apiKey });
-                const prompt = `A vibrant, high-quality promotional image for a travel and lifestyle deal titled: "${dealFormData.title}". Category: ${dealFormData.category}. The image should be appealing for a deals website.`;
+                // Improved prompt: Include title, description, and category for context-aware images
+                const dealContext = dealFormData.description?.trim() ? `"${dealFormData.title}" - ${dealFormData.description.substring(0, 200)}` : dealFormData.title;
+                const prompt = `A professional, high-quality promotional photo for: ${dealContext}. Category: ${dealFormData.category}. Style: clean, appetizing if food, inviting, realistic photography, no text overlays.`;
                 const response = await ai.models.generateImages({ model: 'imagen-4.0-generate-001', prompt, config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '4:3' } });
                 if (response.generatedImages?.[0]) {
                     finalImageUrl = `data:image/jpeg;base64,${response.generatedImages[0].image.imageBytes}`;
@@ -441,10 +443,21 @@ const AdminDealsTab: React.FC = () => {
                 setIsGeneratingImage(false);
             }
 
+            // Fallback: Use Unsplash with category-based search for relevant images
             if (!finalImageUrl) {
-                finalImageUrl = `https://picsum.photos/seed/${dealFormData.title.replace(/\s/g, '')}/400/300`;
+                const categoryTerms: Record<string, string> = {
+                    'Dining': 'restaurant,food,dining',
+                    'Travel': 'travel,vacation,destination',
+                    'Wellness': 'spa,wellness,health',
+                    'Shopping': 'shopping,retail,store',
+                    'Entertainment': 'entertainment,fun,activity',
+                    'General': 'deal,discount,offer'
+                };
+                const searchTerm = categoryTerms[dealFormData.category] || dealFormData.category.toLowerCase();
+                finalImageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(searchTerm)}`;
             }
         }
+
 
         try {
             const dealData = { ...dealFormData, imageUrl: finalImageUrl, expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7), category_tr: dealFormData.category === 'Dining' ? 'Yemek' : dealFormData.category === 'Wellness' ? 'Sağlık' : 'Seyahat' };
