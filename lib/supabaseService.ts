@@ -64,8 +64,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         role: data.role,
         tier: data.tier,
         createdAt: data.created_at,
-        subscriptionStatus: data.subscription_status,
-        subscriptionEndDate: data.subscription_end_date,
+        subscriptionStartDate: data.subscription_start_date,
         walletLimit: data.wallet_limit,
         extraRedemptions: data.extra_redemptions
     };
@@ -75,8 +74,7 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.tier) dbUpdates.tier = updates.tier;
-    if (updates.subscriptionStatus) dbUpdates.subscription_status = updates.subscriptionStatus;
-    if (updates.subscriptionEndDate) dbUpdates.subscription_end_date = updates.subscriptionEndDate;
+    if (updates.subscriptionStartDate) dbUpdates.subscription_start_date = updates.subscriptionStartDate;
     if (updates.walletLimit !== undefined) dbUpdates.wallet_limit = updates.walletLimit;
     if (updates.notificationPreferences) dbUpdates.notification_preferences = updates.notificationPreferences;
     if (updates.extraRedemptions !== undefined) dbUpdates.extra_redemptions = updates.extraRedemptions;
@@ -133,8 +131,7 @@ export async function getAllUsers(): Promise<User[]> {
         role: data.role,
         tier: data.tier,
         createdAt: data.created_at,
-        subscriptionStatus: data.subscription_status,
-        subscriptionEndDate: data.subscription_end_date,
+        subscriptionStartDate: data.subscription_start_date,
         walletLimit: data.wallet_limit,
         extraRedemptions: data.extra_redemptions,
         notificationPreferences: data.notification_preferences,
@@ -178,8 +175,7 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
         role: d.role,
         tier: d.tier,
         createdAt: d.created_at,
-        subscriptionStatus: d.subscription_status,
-        subscriptionEndDate: d.subscription_end_date,
+        subscriptionStartDate: d.subscription_start_date,
         walletLimit: d.wallet_limit,
         extraRedemptions: d.extra_redemptions,
         notificationPreferences: d.notification_preferences,
