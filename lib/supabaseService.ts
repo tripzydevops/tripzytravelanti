@@ -78,6 +78,12 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     if (updates.subscriptionStatus) dbUpdates.subscription_status = updates.subscriptionStatus;
     if (updates.subscriptionEndDate) dbUpdates.subscription_end_date = updates.subscriptionEndDate;
     if (updates.walletLimit !== undefined) dbUpdates.wallet_limit = updates.walletLimit;
+    if (updates.notificationPreferences) dbUpdates.notification_preferences = updates.notificationPreferences;
+    if (updates.extraRedemptions !== undefined) dbUpdates.extra_redemptions = updates.extraRedemptions;
+    if (updates.referredBy) dbUpdates.referred_by = updates.referredBy;
+    if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
+    if (updates.mobile) dbUpdates.mobile = updates.mobile;
+    if (updates.status) dbUpdates.status = updates.status;
 
     const { error } = await supabase
         .from('profiles')
@@ -107,6 +113,118 @@ export async function deleteUserProfile(userId: string) {
 
     // Auth user deletion requires Admin API (service role). 
     // Client-side can only delete public profile data.
+}
+
+export async function getAllUsers(): Promise<User[]> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching all users:', error);
+        return [];
+    }
+
+    return data.map((data: any) => ({
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        tier: data.tier,
+        createdAt: data.created_at,
+        subscriptionStatus: data.subscription_status,
+        subscriptionEndDate: data.subscription_end_date,
+        walletLimit: data.wallet_limit,
+        extraRedemptions: data.extra_redemptions,
+        notificationPreferences: data.notification_preferences,
+        avatarUrl: data.avatar_url,
+        mobile: data.mobile,
+        status: data.status,
+        referredBy: data.referred_by,
+        emailConfirmedAt: data.email_confirmed_at
+    }));
+}
+
+export async function getUsersPaginated(page: number, limit: number, filters?: any): Promise<{ users: User[], total: number }> {
+    let query = supabase
+        .from('profiles')
+        .select('*', { count: 'exact' });
+
+    if (filters?.search) {
+        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+    }
+
+    if (filters?.tier && filters.tier !== 'All') {
+        query = query.eq('tier', filters.tier);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    query = query.range(from, to).order('created_at', { ascending: false });
+
+    const { data, count, error } = await query;
+
+    if (error) {
+        console.error('Error fetching paginated users:', error);
+        return { users: [], total: 0 };
+    }
+
+    const users = data.map((d: any) => ({
+        id: d.id,
+        email: d.email,
+        name: d.name,
+        role: d.role,
+        tier: d.tier,
+        createdAt: d.created_at,
+        subscriptionStatus: d.subscription_status,
+        subscriptionEndDate: d.subscription_end_date,
+        walletLimit: d.wallet_limit,
+        extraRedemptions: d.extra_redemptions,
+        notificationPreferences: d.notification_preferences,
+        avatarUrl: d.avatar_url,
+        mobile: d.mobile,
+        status: d.status,
+        referredBy: d.referred_by,
+        emailConfirmedAt: d.email_confirmed_at
+    }));
+
+    return { users, total: count || 0 };
+}
+
+export async function confirmUserEmail(userId: string) {
+    const { error } = await supabase
+        .from('profiles')
+        .update({ email_confirmed_at: new Date().toISOString() })
+        .eq('id', userId);
+
+    if (error) {
+        console.error('Error confirming user email:', error);
+        throw error;
+    }
+}
+
+export async function updateAllUsersNotificationPreferences(prefs: Partial<UserNotificationPreferences>) {
+    // Note: This operation should ideally be done via a database function to be atomic and efficient for all users.
+    // Current implementation is a client-side loop which is not scalable for large user bases.
+    // For now, we will try to update using a direct update query if RLS permits (Admin).
+    // Assuming 'notification_preferences' is a JSONB column.
+
+    // Since we can't easily merge JSONB for ALL rows without a specific postgres function or value,
+    // we will rely on a potential RPC or just warn.
+    // However, to satisfy the build and basic functionality, if we assume we just want to set a default for everyone:
+
+    console.warn('updateAllUsersNotificationPreferences is not fully implemented for efficient bulk updates.');
+
+    // Placeholder: throwing error or doing nothing might be better than doing it wrong.
+    // But let's try to fetch all users and update them (slow but works for small user base of MVP).
+    const users = await getAllUsers();
+    for (const user of users) {
+        const current = user.notificationPreferences || { newDeals: true, expiringDeals: true, generalNotifications: true };
+        const newPrefs = { ...current, ...prefs };
+        await updateUserProfile(user.id, { notificationPreferences: newPrefs });
+    }
 }
 
 
@@ -316,6 +434,63 @@ export async function getAllDeals(includeExpired: boolean = false): Promise<Deal
     }
 
     return data.map(transformDealFromDB);
+}
+
+
+
+export async function getDealById(dealId: string): Promise<Deal | null> {
+    const { data, error } = await supabase
+        .from('deals')
+        .select('*')
+        .eq('id', dealId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching deal:', error);
+        return null;
+    }
+
+    return transformDealFromDB(data);
+}
+
+export async function getDealsPaginated(page: number, limit: number, filters?: any): Promise<{ deals: Deal[], total: number }> {
+    let query = supabase
+        .from('deals')
+        .select('*', { count: 'exact' });
+
+    // Basic filtering logic
+    if (filters?.category && filters.category !== 'All' && filters.category !== '') {
+        query = query.eq('category', filters.category);
+    }
+
+    if (filters?.search) {
+        query = query.ilike('title', `%${filters.search}%`);
+    }
+
+    // Default to active/approved unless specified
+    if (!filters?.includeAllStatus) {
+        const now = new Date().toISOString();
+        query = query.eq('status', 'approved')
+            .eq('is_sold_out', false)
+            .gt('expires_at', now);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    query = query.range(from, to).order('created_at', { ascending: false });
+
+    const { data, count, error } = await query;
+
+    if (error) {
+        console.error('Error fetching paginated deals:', error);
+        return { deals: [], total: 0 };
+    }
+
+    return {
+        deals: (data || []).map(transformDealFromDB),
+        total: count || 0
+    };
 }
 
 export async function getFlashDeals(): Promise<Deal[]> {
@@ -602,6 +777,10 @@ export async function saveDeal(userId: string, dealId: string) {
     if (error) throw error;
 }
 
+export async function assignDealToUser(userId: string, dealId: string) {
+    return saveDeal(userId, dealId);
+}
+
 export async function unsaveDeal(userId: string, dealId: string) {
     const { error } = await supabase
         .from('user_deals')
@@ -610,6 +789,10 @@ export async function unsaveDeal(userId: string, dealId: string) {
         .eq('deal_id', dealId);
 
     if (error) throw error;
+}
+
+export async function removeDealFromUser(userId: string, dealId: string) {
+    return unsaveDeal(userId, dealId);
 }
 
 export async function checkDealSavedStatus(userId: string, dealId: string): Promise<boolean> {
