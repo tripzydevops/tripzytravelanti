@@ -17,7 +17,7 @@ import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemp
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useSearch } from '../contexts/SearchContext';
 import InvoiceModal from '../components/InvoiceModal';
-import { getUserTransactions } from '../lib/supabaseService';
+import { getUserTransactions, uploadUserAvatar } from '../lib/supabaseService';
 import { PaymentTransaction } from '../types';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -164,15 +164,18 @@ const ProfilePage: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        updateUserAvatar(base64String);
-      };
-      reader.readAsDataURL(file);
+    if (file && user) {
+      try {
+        const publicUrl = await uploadUserAvatar(user.id, file);
+        await updateUserAvatar(publicUrl);
+        setShowSuccess(t('profileUpdatedSuccess'));
+        setTimeout(() => setShowSuccess(''), 3000);
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+        alert('Failed to upload avatar. Please try again.');
+      }
     }
   };
 

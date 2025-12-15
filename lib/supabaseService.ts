@@ -1228,6 +1228,28 @@ export async function getBackgroundImages(timeOfDay?: string): Promise<Backgroun
     return data as BackgroundImage[];
 }
 
+
+export async function uploadUserAvatar(userId: string, file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `avatar.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+        console.error('Error uploading avatar:', uploadError);
+        throw uploadError;
+    }
+
+    const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+    return `${data.publicUrl}?t=${new Date().getTime()}`;
+}
+
 export async function uploadBackgroundImage(file: File): Promise<string> {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;

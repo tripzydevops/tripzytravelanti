@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { SpinnerIcon, TrashIcon } from './Icons';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ImageUploadProps {
     value?: string;
@@ -22,6 +23,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const [imageError, setImageError] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const { user } = useAuth();
+
     const handleFile = async (file: File) => {
         if (!file.type.startsWith('image/')) {
             alert('Please upload an image file');
@@ -41,7 +44,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             // Generate a unique file name
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `${fileName}`;
+
+            // New Security Policy: User-scoped paths
+            // If user exists, save to userId/fileName
+            // If admin or public upload (rare), might fail if not admin.
+            const filePath = user ? `${user.id}/${fileName}` : fileName;
 
             // Upload to Supabase
             const { error: uploadError } = await supabase.storage
