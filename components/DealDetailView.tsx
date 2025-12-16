@@ -392,6 +392,21 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         </div>
                     )}
 
+                    {/* Stock Status Badges */}
+                    {(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)) ? (
+                        <div className="inline-flex items-center gap-2 bg-red-500/20 border border-red-500/30 px-4 py-2 rounded-full mb-8 ml-3 shadow-inner">
+                            <span className="text-red-200 font-bold text-sm tracking-wide uppercase">
+                                {t('soldOut') || 'Sold Out'}
+                            </span>
+                        </div>
+                    ) : (deal.maxRedemptionsTotal && (deal.maxRedemptionsTotal - (deal.redemptionsCount || 0) <= 10)) && (
+                        <div className="inline-flex items-center gap-2 bg-orange-500/20 border border-orange-500/30 px-4 py-2 rounded-full mb-8 ml-3 shadow-inner animate-pulse">
+                            <span className="text-orange-200 font-bold text-sm tracking-wide">
+                                🔥 {t('hurryOnly') || 'Hurry! Only'} {deal.maxRedemptionsTotal - (deal.redemptionsCount || 0)} {t('left') || 'Left!'}
+                            </span>
+                        </div>
+                    )}
+
                     {/* Tabs */}
                     <div className="flex border-b border-white/10 mb-8 relative">
                         {/* Active Tab Indicator Background (Optional Animation could be added here) */}
@@ -506,24 +521,33 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         </div>
 
                         <div className="flex-1 flex gap-3">
-                            {/* Add to Wallet Button */}
-                            {!isDealOwned(deal.id) && (
-                                <button
-                                    onClick={() => handleActionClick('claim')}
-                                    className="flex-1 bg-white/10 border border-white/20 text-white font-bold py-4 px-4 rounded-xl hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
-                                >
-                                    <span>{t('addToWallet') || 'Add to Wallet'}</span>
-                                </button>
-                            )}
+                            {/* Sold Out State */}
+                            {(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)) ? (
+                                <div className="flex-1 bg-gray-600 text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80">
+                                    <span>{t('soldOut') || 'Sold Out'}</span>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Add to Wallet Button */}
+                                    {!isDealOwned(deal.id) && (
+                                        <button
+                                            onClick={() => handleActionClick('claim')}
+                                            className="flex-1 bg-white/10 border border-white/20 text-white font-bold py-4 px-4 rounded-xl hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                                        >
+                                            <span>{t('addToWallet') || 'Add to Wallet'}</span>
+                                        </button>
+                                    )}
 
-                            {/* Redeem Now Button */}
-                            <button
-                                onClick={() => isPreview ? null : handleActionClick('redeem')}
-                                className={`flex-1 ${isDealOwned(deal.id) ? 'w-full' : ''
-                                    } bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
-                            >
-                                <span>{t('redeemNow') || 'Redeem Now'}</span>
-                            </button>
+                                    {/* Redeem Now Button */}
+                                    <button
+                                        onClick={() => isPreview ? null : handleActionClick('redeem')}
+                                        className={`flex-1 ${isDealOwned(deal.id) ? 'w-full' : ''
+                                            } bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
+                                    >
+                                        <span>{t('redeemNow') || 'Redeem Now'}</span>
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

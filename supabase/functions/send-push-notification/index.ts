@@ -52,14 +52,36 @@ serve(async (req) => {
         }
 
         // Get Firebase service account from env
-        const firebaseServiceAccount = JSON.parse(Deno.env.get('FIREBASE_SERVICE_ACCOUNT') ?? '{}')
+        const serviceAccountStr = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
+        console.log(`[Push] Service Account Env Var present: ${!!serviceAccountStr}`);
 
-        if (!firebaseServiceAccount.project_id) {
+        if (!serviceAccountStr) {
+            console.error('[Push] Missing FIREBASE_SERVICE_ACCOUNT');
             return new Response(
-                JSON.stringify({ error: 'Firebase not configured' }),
+                JSON.stringify({ error: 'Missing FIREBASE_SERVICE_ACCOUNT env var' }),
                 { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
+
+        let firebaseServiceAccount;
+        try {
+            firebaseServiceAccount = JSON.parse(serviceAccountStr);
+        } catch (e) {
+            console.error('[Push] Failed to parse service account JSON', e);
+            return new Response(
+                JSON.stringify({ error: 'Invalid JSON in FIREBASE_SERVICE_ACCOUNT' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        if (!firebaseServiceAccount.project_id) {
+            console.error('[Push] Service account missing project_id');
+            return new Response(
+                JSON.stringify({ error: 'Firebase config missing project_id' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
 
         // Get access token for FCM
         const accessToken = await getAccessToken(firebaseServiceAccount)

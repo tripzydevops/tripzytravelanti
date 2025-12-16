@@ -63,11 +63,19 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         name: data.name,
         role: data.role,
         isAdmin: data.role === 'admin' || data.is_admin === true,
-        tier: data.tier,
+        tier: data.tier || 'FREE',
         createdAt: data.created_at,
         subscriptionStartDate: data.subscription_start_date,
         walletLimit: data.wallet_limit,
-        extraRedemptions: data.extra_redemptions
+        extraRedemptions: data.extra_redemptions,
+        notificationPreferences: data.notification_preferences,
+        avatarUrl: data.avatar_url,
+        mobile: data.mobile,
+        address: data.address,
+        billingAddress: data.billing_address,
+        status: data.status,
+        referredBy: data.referred_by,
+        emailConfirmedAt: data.email_confirmed_at
     };
 }
 
@@ -1820,12 +1828,19 @@ export async function sendTestNotification(userId: string): Promise<{ success: b
 
         if (error) {
             console.error('Test notification function error:', error);
-            return { success: false, message: error.message };
+            // Try to extract a useful message if it's a known structure
+            const msg = error.message || JSON.stringify(error);
+            return { success: false, message: `Function Error: ${msg}` };
+        }
+
+        // Even if no "error" property on the invocation object, check the data itself if the function returns an error structure
+        if (data && data.error) {
+            return { success: false, message: `Push Error: ${data.error}` };
         }
 
         return { success: true, message: 'Test notification sent! Check device.' };
     } catch (error: any) {
         console.error('Test notification failed:', error);
-        return { success: false, message: error.message };
+        return { success: false, message: error.message || 'Unknown error occurred' };
     }
 }
