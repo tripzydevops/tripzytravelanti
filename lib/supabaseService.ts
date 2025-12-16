@@ -825,28 +825,10 @@ export async function getSavedDeals(userId: string): Promise<Deal[]> {
     return data.map((item: any) => transformDealFromDB(item.deals));
 }
 
-export async function claimDeal(userId: string, dealId: string) {
-    // 1. Check User's Monthly/Yearly Redemption Limit
-    const limitCheck = await checkMonthlyLimit(userId);
-    if (!limitCheck.allowed) {
-        throw new Error('You have reached your monthly redemption limit. Please upgrade your plan or wait for renewal.');
-    }
-
-    // 2. Check Global Redemption Limit
-    const { data: deal, error: dealError } = await supabase
-        .from('deals')
-        .select('max_redemptions_total, redemptions_count, is_sold_out')
-        .eq('id', dealId)
-        .single();
-
-    if (dealError || !deal) throw new Error('Deal not found');
-
-    if (deal.is_sold_out || (deal.max_redemptions_total !== null && (deal.redemptions_count || 0) >= deal.max_redemptions_total)) {
-        throw new Error('This deal has reached its global usage limit and is sold out.');
-    }
-
-    // 3. Add to Wallet
-    return saveDeal(userId, dealId);
+export async function claimDeal(userId: string, dealId: string): Promise<{ walletItemId: string; redemptionCode: string }> {
+    // Use the new secure wallet system
+    // This handles monthly limits, global limits, and generates unique codes
+    return addDealToWallet(userId, dealId);
 }
 
 

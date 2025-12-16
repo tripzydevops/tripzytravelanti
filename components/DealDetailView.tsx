@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getHeroImageUrl } from '../lib/imageUtils';
-import { checkMonthlyLimit } from '../lib/supabaseService';
+import { checkMonthlyLimit, getWalletItems } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -11,7 +11,7 @@ import { SubscriptionTier, Deal } from '../types';
 import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon, StarIcon, SparklesIcon, CustomBriefcaseIcon } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
-import QRCode from 'react-qr-code';
+import WalletQRCode from './WalletQRCode';
 import { getWalletLimit, isWalletFull } from '../lib/walletUtils';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
@@ -124,6 +124,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [remainingRedemptions, setRemainingRedemptions] = useState<number | null>(null);
     const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
     const [activeDealsCount, setActiveDealsCount] = useState(0);
+    const [walletItemInfo, setWalletItemInfo] = useState<{ id: string; redemptionCode: string } | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -138,8 +139,24 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 .eq('user_id', user.id)
                 .eq('status', 'active')
                 .then(({ count }) => setActiveDealsCount(count || 0));
+
+            // Fetch wallet item info if user owns this deal
+            if (deal?.id) {
+                supabase
+                    .from('wallet_items')
+                    .select('id, redemption_code')
+                    .eq('user_id', user.id)
+                    .eq('deal_id', deal.id)
+                    .eq('status', 'active')
+                    .single()
+                    .then(({ data }) => {
+                        if (data) {
+                            setWalletItemInfo({ id: data.id, redemptionCode: data.redemption_code });
+                        }
+                    });
+            }
         }
-    }, [user]);
+    }, [user, deal?.id]);
 
     const handleActionClick = (action: 'redeem' | 'claim') => {
         if (!user) {
@@ -564,23 +581,22 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             >
                 <div className="text-center">
                     <p className="text-sm text-gray-600 dark:text-brand-text-muted mb-4">{t('showThisCodeAtCheckout')}</p>
-                    <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 border-2 border-dashed border-brand-primary/30 rounded-xl py-8 px-4 mb-6">
-                        <p className="text-4xl font-mono font-bold tracking-widest text-gradient mb-2">{deal.redemptionCode}</p>
-                        <div className="flex justify-center my-4 p-4 bg-white rounded-xl">
-                            <QRCode value={deal.redemptionCode} size={128} />
+                    {walletItemInfo ? (
+                        <WalletQRCode
+                            walletItemId={walletItemInfo.id}
+                            redemptionCode={walletItemInfo.redemptionCode}
+                            dealTitle={title}
+                            size={160}
+                        />
+                    ) : (
+                        <div className="bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 border-2 border-dashed border-brand-primary/30 rounded-xl py-8 px-4 mb-6">
+                            <p className="text-4xl font-mono font-bold tracking-widest text-gradient mb-2">{deal.redemptionCode}</p>
+                            <p className="text-xs text-gray-500">Legacy code - add to wallet for secure QR</p>
                         </div>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(deal.redemptionCode);
-                            }}
-                            className="text-sm text-brand-primary hover:text-brand-secondary font-medium mt-2"
-                        >
-                            {t('copyCode')}
-                        </button>
-                    </div>
+                    )}
                     <button
                         onClick={() => setIsRedeemModalOpen(false)}
-                        className="w-full bg-gray-100 dark:bg-brand-surface text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-200 dark:hover:bg-brand-surface/80 transition-colors"
+                        className="w-full mt-4 bg-gray-100 dark:bg-brand-surface text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-200 dark:hover:bg-brand-surface/80 transition-colors"
                     >
                         {t('close')}
                     </button>
