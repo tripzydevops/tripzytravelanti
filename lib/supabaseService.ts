@@ -871,8 +871,7 @@ export async function getSavedDeals(userId: string): Promise<Deal[]> {
     const { data, error } = await supabase
         .from('user_deals')
         .select('deal_id, deals(*)')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .eq('user_id', userId);
 
     if (error) {
         console.error('Error fetching saved deals:', error);
