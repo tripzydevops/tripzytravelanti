@@ -1678,8 +1678,25 @@ export async function redeemWalletItem(
             })
             .eq('id', walletItemId);
 
-        // TODO: Send push notification to user here
-        // You would call your Edge Function to send FCM push
+        // Send push notification to user
+        try {
+            await supabase.functions.invoke('send-push-notification', {
+                body: {
+                    userId: walletItem.user_id,
+                    title: 'Confirm Redemption',
+                    body: `A vendor wants to redeem "${deal.title}". Tap to confirm.`,
+                    data: {
+                        type: 'redemption_confirmation',
+                        walletItemId,
+                        confirmationToken,
+                        dealTitle: deal.title
+                    }
+                }
+            });
+        } catch (pushError) {
+            console.error('Push notification failed:', pushError);
+            // Continue anyway - vendor can still wait for manual confirmation
+        }
 
         return {
             success: false,
