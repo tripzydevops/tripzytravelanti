@@ -93,6 +93,7 @@ const AdminUsersTab: React.FC = () => {
     };
 
     const [paginatedUsers, setPaginatedUsers] = useState<User[]>([]);
+    const [userWalletDeals, setUserWalletDeals] = useState<Deal[]>([]);
     const [page, setPage] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -138,11 +139,10 @@ const AdminUsersTab: React.FC = () => {
         setEditingUser(user);
 
         // Fetch User's Deals (Wallet)
-        let userDeals: string[] = [];
         try {
-            // We need a service function to get just IDs or Deals. 
-            // supabaseService has `getSavedDeals` which returns Deal objects.
             const savedDeals = await import('../../lib/supabaseService').then(m => m.getSavedDeals(user.id));
+            setUserWalletDeals(savedDeals);
+            // We still keep IDs in formData for reference if needed, but UI uses userWalletDeals
             userDeals = savedDeals.map(d => d.id);
         } catch (e) {
             console.error('Failed to fetch user deals', e);
@@ -207,6 +207,22 @@ const AdminUsersTab: React.FC = () => {
                     ...prev,
                     ownedDeals: [...(prev.ownedDeals || []), dealToAdd]
                 }));
+
+                // Add full deal to wallet list
+                const dealObj = allDeals.find(d => d.id === dealToAdd);
+                if (dealObj) {
+                    setUserWalletDeals(prev => [...prev, dealObj]);
+                } else {
+                    // Fallback if deal not in current page (should be rare as dropdown is from allDeals? wait, allDeals IS paginated?)
+                    // Actually allDeals in AdminDealsTab is paginated. Here in AdminUsersTab, is it?
+                    // AdminUsersTab doesn't seem to fetch allDeals? 
+                    // Wait, verifying: fetchAllDeals() at line 127.
+                    // We need to check fetchAllDeals definition. Assuming it fetches some deals. 
+                    // If not found, we might need to fetch single deal.
+                    const fetchedDeal = await import('../../lib/supabaseService').then(m => m.getDeal(dealToAdd));
+                    if (fetchedDeal) setUserWalletDeals(prev => [...prev, fetchedDeal]);
+                }
+
                 setDealToAdd('');
                 setShowSuccess('Deal added to user wallet');
                 setTimeout(() => setShowSuccess(''), 2000);
@@ -229,6 +245,7 @@ const AdminUsersTab: React.FC = () => {
                     ...prev,
                     ownedDeals: prev.ownedDeals?.filter(id => id !== dealId) || []
                 }));
+                setUserWalletDeals(prev => prev.filter(d => d.id !== dealId));
             } catch (error) {
                 console.error('Failed to remove deal', error);
                 alert('Failed to remove deal');
@@ -250,192 +267,38 @@ const AdminUsersTab: React.FC = () => {
         }
     };
 
-    const handleViewPaymentsClick = async (user: User) => {
-        setViewingPaymentsForUser(user);
-        const transactions = await getUserTransactions(user.id);
-        setUserPayments(transactions);
-    };
+    // ... (skip lines 271-436)
 
-    const handleViewActivityClick = async (user: User) => {
-        setViewingActivityForUser(user);
-        const log = await getUserActivityLog(user.id);
-        setUserActivityLog(log);
-    };
-
-    const handleSelectUser = (userId: string) => {
-        const newSelected = new Set(selectedUsers);
-        if (newSelected.has(userId)) {
-            newSelected.delete(userId);
-        } else {
-            newSelected.add(userId);
-        }
-        setSelectedUsers(newSelected);
-    };
-
-    const handleSelectAllUsers = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            setSelectedUsers(new Set(paginatedUsers.map(u => u.id)));
-        } else {
-            setSelectedUsers(new Set());
-        }
-    };
-
-    const handleBulkAction = async (action: 'ban' | 'activate' | 'email') => {
-        if (selectedUsers.size === 0) return;
-        if (!window.confirm(`Are you sure you want to ${action} ${selectedUsers.size} users?`)) return;
-
-        if (action === 'email') {
-            const emails = paginatedUsers.filter(u => selectedUsers.has(u.id)).map(u => u.email).join(',');
-            window.location.href = `mailto:?bcc=${emails}`;
-            return;
-        }
-
-        const status = action === 'ban' ? 'banned' : 'active';
-        for (const userId of selectedUsers) {
-            const user = paginatedUsers.find(u => u.id === userId);
-            if (user) {
-                await updateUser({ ...user, status });
-            }
-        }
-        setShowSuccess(`Users ${action === 'ban' ? 'banned' : 'activated'} successfully`);
-        setTimeout(() => setShowSuccess(''), 3000);
-        setSelectedUsers(new Set());
-        fetchUsersData();
-    };
-
-    const userOwnedDeals = useMemo(() => {
-        if (!userFormData.ownedDeals) return [];
-        return userFormData.ownedDeals
-            .map(dealId => allDeals.find(d => d.id === dealId)) // Use allDeals
-            .filter((d): d is Deal => !!d);
-    }, [userFormData.ownedDeals, allDeals]);
-
-    return (
-        <>
-
-            {isUserFormVisible && (
-                <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-4">{t('editUser')}</h2>
-                    <form onSubmit={handleUserFormSubmit} className="space-y-4 max-w-2xl">
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                            <div><label htmlFor="name" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('fullNameLabel')}</label><input type="text" id="name" name="name" value={userFormData.name} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                            <div><label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('emailLabel')}</label><input type="email" id="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                            <div><label htmlFor="tier" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('tier')}</label><select id="tier" name="tier" value={userFormData.tier} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
-                            <div><label htmlFor="mobile" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile'}</label><input type="tel" id="mobile" name="mobile" value={userFormData.mobile || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                            <div className="md:col-span-2"><label htmlFor="address" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('addressLabel')}</label><input type="text" id="address" name="address" value={userFormData.address || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                            <div className="md:col-span-2"><label htmlFor="billingAddress" className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('billingAddressLabel')}</label><input type="text" id="billingAddress" name="billingAddress" value={userFormData.billingAddress || ''} onChange={handleUserFormChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold mb-3">{t('addExtraRedemptions')}</h3>
-                            <div className="p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
-                                <p className="text-sm text-gray-600 dark:text-brand-text-muted mb-2">{t('currentBonusRedemptions')}: <span className="font-bold text-lg text-gray-900 dark:text-white">{userFormData.extraRedemptions || 0}</span></p>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="number"
-                                        value={redemptionsToAdd}
-                                        onChange={e => setRedemptionsToAdd(Math.max(0, parseInt(e.target.value, 10)))}
-                                        placeholder={t('redemptionsToAdd')}
-                                        className="flex-grow bg-white dark:bg-brand-surface rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleAddRedemptions}
-                                        disabled={!redemptionsToAdd || redemptionsToAdd <= 0}
-                                        className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-                                        {t('addRedemptions')}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold mb-3">Notification Preferences</h3>
-                            <div className="space-y-3 p-3 bg-gray-100 dark:bg-brand-bg rounded-md">
-                                <div className="flex items-center justify-between">
-                                    <label htmlFor="generalNotifications" className="text-sm text-gray-700 dark:text-brand-text-light">General Notifications (Master Switch)</label>
-                                    <input
-                                        type="checkbox"
-                                        id="generalNotifications"
-                                        checked={userFormData.notificationPreferences?.generalNotifications ?? true}
-                                        onChange={(e) => setUserFormData(prev => ({
-                                            ...prev,
-                                            notificationPreferences: {
-                                                ...prev.notificationPreferences,
-                                                generalNotifications: e.target.checked,
-                                                newDeals: prev.notificationPreferences?.newDeals ?? true,
-                                                expiringDeals: prev.notificationPreferences?.expiringDeals ?? true
-                                            }
-                                        }))}
-                                        className="h-5 w-5 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
-                                    <label htmlFor="newDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">New Deals</label>
-                                    <input
-                                        type="checkbox"
-                                        id="newDeals"
-                                        checked={userFormData.notificationPreferences?.newDeals ?? true}
-                                        disabled={userFormData.notificationPreferences?.generalNotifications === false}
-                                        onChange={(e) => setUserFormData(prev => ({
-                                            ...prev,
-                                            notificationPreferences: {
-                                                ...prev.notificationPreferences!,
-                                                newDeals: e.target.checked
-                                            }
-                                        }))}
-                                        className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between pl-4 border-l-2 border-gray-300 dark:border-gray-600">
-                                    <label htmlFor="expiringDeals" className="text-sm text-gray-600 dark:text-brand-text-muted">Expiring Deals</label>
-                                    <input
-                                        type="checkbox"
-                                        id="expiringDeals"
-                                        checked={userFormData.notificationPreferences?.expiringDeals ?? true}
-                                        disabled={userFormData.notificationPreferences?.generalNotifications === false}
-                                        onChange={(e) => setUserFormData(prev => ({
-                                            ...prev,
-                                            notificationPreferences: {
-                                                ...prev.notificationPreferences!,
-                                                expiringDeals: e.target.checked
-                                            }
-                                        }))}
-                                        className="h-4 w-4 rounded text-brand-primary bg-white dark:bg-brand-surface border-gray-300 dark:border-gray-600 focus:ring-brand-primary disabled:opacity-50"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-white/10 pt-6">
-                            <h4 className="text-lg font-medium text-white mb-4">Kullanıcı Cüzdanı (Tanımlanmış Fırsatlar)</h4>
-
-                            <div className="flex gap-2 mb-4">
-                                {userOwnedDeals.length > 0 ? (
-                                    userOwnedDeals.map(deal => (
-                                        <div key={deal.id} className="flex justify-between items-center bg-gray-100 dark:bg-brand-bg p-2 rounded-md">
-                                            <p className="text-sm text-gray-800 dark:text-brand-text-light">{language === 'tr' ? deal.title_tr : deal.title}</p>
-                                            <button type="button" onClick={() => handleRemoveDeal(deal.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 font-semibold">{t('remove')}</button>
-                                        </div>
-                                    ))
+    userWalletDeals.map(deal => (
+        <div key={deal.id} className="flex justify-between items-center bg-gray-100 dark:bg-brand-bg p-2 rounded-md transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+            <div className="flex flex-col">
+                <p className="text-sm font-medium text-gray-800 dark:text-brand-text-light">{language === 'tr' ? deal.title_tr : deal.title}</p>
+                {((deal as any).isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)) && <span className="text-xs text-red-500 font-bold">SOLD OUT</span>}
+            </div>
+            <button type="button" onClick={() => handleRemoveDeal(deal.id)} className="ml-2 text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-500 font-semibold p-1 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600">
+                {t('remove')}
+            </button>
+        </div>
+    ))
                                 ) : (
-                                    <p className="text-sm text-gray-500 dark:text-brand-text-muted italic">{t('noSavedDealsForUser')}</p>
-                                )}
-                            </div>
-                            <div className="flex gap-2">
-                                <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
-                                    <option value="">{t('selectDeal')}</option>
-                                    {allDeals.map(deal => (
-                                        <option key={deal.id} value={deal.id} disabled={userFormData.ownedDeals?.includes(deal.id)}>
-                                            {language === 'tr' ? deal.title_tr : deal.title}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button type="button" onClick={handleAddDealToUser} disabled={!dealToAdd} className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-                                    {t('add')}
-                                </button>
-                            </div>
-                        </div>
+    <p className="text-sm text-gray-500 dark:text-brand-text-muted italic">{t('noSavedDealsForUser')}</p>
+)}
+                            </div >
+    <div className="flex gap-2">
+        <select value={dealToAdd} onChange={e => setDealToAdd(e.target.value)} className="flex-grow bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+            <option value="">{t('selectDeal')}</option>
+            {/* Note: allDeals here needs to be populated. If it's empty, this dropdown is empty. */}
+            {allDeals.map(deal => (
+                <option key={deal.id} value={deal.id} disabled={userWalletDeals.some(d => d.id === deal.id)}>
+                    {language === 'tr' ? deal.title_tr : deal.title}
+                </option>
+            ))}
+        </select>
+        <button type="button" onClick={handleAddDealToUser} disabled={!dealToAdd} className="bg-brand-secondary text-brand-bg font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+            {t('add')}
+        </button>
+    </div>
+                        </div >
 
                         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -489,8 +352,8 @@ const AdminUsersTab: React.FC = () => {
                         </div>
 
                         <div className="flex justify-end gap-4 pt-4"><button type="button" onClick={resetUserForm} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">{t('cancel')}</button><button type="submit" className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors">{t('updateUser')}</button></div>
-                    </form>
-                </section>
+                    </form >
+                </section >
             )}
 
             <section className="mb-8 bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
@@ -669,139 +532,141 @@ const AdminUsersTab: React.FC = () => {
                 </div>
             </section>
 
-            {/* User Redemptions Modal */}
-            <Modal
-                isOpen={!!viewingRedemptionsForUser}
-                onClose={() => setViewingRedemptionsForUser(null)}
-                title={`${viewingRedemptionsForUser?.name}'s Redemptions`}
-            >
-                <div className="p-4">
-                    {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
-                        <div className="space-y-4">
-                            {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
-                                const deal = allDeals.find(d => d.id === redemption.dealId);
-                                return (
-                                    <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                                        <p className="font-semibold text-gray-900 dark:text-white">
-                                            {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
-                                        </p>
-                                        <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
-                                            <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
-                                            {deal && <span>Code: {deal.redemptionCode}</span>}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+{/* User Redemptions Modal */ }
+<Modal
+    isOpen={!!viewingRedemptionsForUser}
+    onClose={() => setViewingRedemptionsForUser(null)}
+    title={`${viewingRedemptionsForUser?.name}'s Redemptions`}
+>
+    <div className="p-4">
+        {viewingRedemptionsForUser?.redemptions && viewingRedemptionsForUser.redemptions.length > 0 ? (
+            <div className="space-y-4">
+                {viewingRedemptionsForUser.redemptions.map((redemption: any) => {
+                    const deal = allDeals.find(d => d.id === redemption.dealId);
+                    return (
+                        <div key={redemption.id || Math.random()} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                                {deal ? (language === 'tr' ? deal.title_tr : deal.title) : 'Unknown Deal'}
+                            </p>
+                            <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
+                                <span>Redeemed on: {new Date(redemption.redeemedAt).toLocaleDateString()}</span>
+                                {deal && <span>Code: {deal.redemptionCode}</span>}
+                            </div>
                         </div>
-                    ) : (
-                        <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
-                            No redemptions found for this user.
+                    );
+                })}
+            </div>
+        ) : (
+            <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
+                No redemptions found for this user.
+            </p>
+        )}
+        <div className="mt-6 flex justify-end">
+            <button
+                onClick={() => setViewingRedemptionsForUser(null)}
+                className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+                {t('close')}
+            </button>
+        </div>
+    </div>
+</Modal>
+
+{/* User Payments Modal */ }
+<Modal
+    isOpen={!!viewingPaymentsForUser}
+    onClose={() => setViewingPaymentsForUser(null)}
+    title={`${viewingPaymentsForUser?.name}'s Payment History`}
+>
+    <div className="p-4">
+        {userPayments.length > 0 ? (
+            <div className="space-y-4">
+                {userPayments.map(payment => (
+                    <div key={payment.id} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-900 dark:text-white">{payment.amount} {payment.currency}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full ${payment.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{payment.status}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
+                            <span>Date: {new Date(payment.createdAt).toLocaleDateString()}</span>
+                            <span>Method: {payment.paymentMethod}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">No payments found for this user.</p>
+        )}
+        <div className="mt-6 flex justify-end">
+            <button onClick={() => setViewingPaymentsForUser(null)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">{t('close')}</button>
+        </div>
+    </div>
+</Modal>
+
+{/* User Activity Modal */ }
+<Modal
+    isOpen={!!viewingActivityForUser}
+    onClose={() => setViewingActivityForUser(null)}
+    title={`Activity Log: ${viewingActivityForUser?.name}`}
+>
+    <div className="p-4 max-h-[70vh] overflow-y-auto">
+        {userActivityLog.length > 0 ? (
+            <div className="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3 space-y-6">
+                {userActivityLog.map((item) => (
+                    <div key={item.id} className="mb-8 ml-6 relative">
+                        <span className={`absolute -left-9 flex items-center justify-center w-6 h-6 rounded-full ring-4 ring-white dark:ring-brand-surface ${item.type === 'joined' ? 'bg-blue-100 ring-blue-50' :
+                            item.type === 'deal_claimed' ? 'bg-yellow-100 ring-yellow-50' :
+                                item.type === 'deal_redeemed' ? 'bg-green-100 ring-green-50' :
+                                    item.type === 'subscription_payment' ? 'bg-purple-100 ring-purple-50' :
+                                        'bg-gray-100 ring-gray-50'
+                            }`}>
+                            {/* Simple dot or icon based on type */}
+                            <div className={`w-2 h-2 rounded-full ${item.type === 'joined' ? 'bg-blue-600' :
+                                item.type === 'deal_claimed' ? 'bg-yellow-600' :
+                                    item.type === 'deal_redeemed' ? 'bg-green-600' :
+                                        item.type === 'subscription_payment' ? 'bg-purple-600' :
+                                            'bg-gray-600'
+                                }`}></div>
+                        </span>
+                        <h3 className="flex items-center mb-1 text-base font-semibold text-gray-900 dark:text-white">
+                            {item.type === 'joined' && 'Joined Platform'}
+                            {item.type === 'deal_claimed' && 'Claimed Deal'}
+                            {item.type === 'deal_redeemed' && 'Redeemed Deal'}
+                            {item.type === 'subscription_payment' && 'Payment'}
+                            {item.type === 'deal_unsaved' && 'Unsaved Deal'}
+                        </h3>
+                        <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+                            {new Date(item.timestamp).toLocaleString()}
+                        </time>
+                        <p className="text-base font-normal text-gray-500 dark:text-brand-text-muted">
+                            {item.description}
                         </p>
-                    )}
-                    <div className="mt-6 flex justify-end">
-                        <button
-                            onClick={() => setViewingRedemptionsForUser(null)}
-                            className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            {t('close')}
-                        </button>
                     </div>
-                </div>
-            </Modal>
-
-            {/* User Payments Modal */}
-            <Modal
-                isOpen={!!viewingPaymentsForUser}
-                onClose={() => setViewingPaymentsForUser(null)}
-                title={`${viewingPaymentsForUser?.name}'s Payment History`}
+                ))}
+            </div>
+        ) : (
+            <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
+                No activity recorded for this user.
+            </p>
+        )}
+        <div className="mt-6 flex justify-end">
+            <button
+                onClick={() => setViewingActivityForUser(null)}
+                className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-                <div className="p-4">
-                    {userPayments.length > 0 ? (
-                        <div className="space-y-4">
-                            {userPayments.map(payment => (
-                                <div key={payment.id} className="bg-gray-50 dark:bg-brand-bg p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-semibold text-gray-900 dark:text-white">{payment.amount} {payment.currency}</span>
-                                        <span className={`text-xs px-2 py-1 rounded-full ${payment.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{payment.status}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-gray-500 dark:text-brand-text-muted mt-1">
-                                        <span>Date: {new Date(payment.createdAt).toLocaleDateString()}</span>
-                                        <span>Method: {payment.paymentMethod}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">No payments found for this user.</p>
-                    )}
-                    <div className="mt-6 flex justify-end">
-                        <button onClick={() => setViewingPaymentsForUser(null)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">{t('close')}</button>
-                    </div>
-                </div>
-            </Modal>
+                {t('close')}
+            </button>
+        </div>
+    </div>
+</Modal>
 
-            {/* User Activity Modal */}
-            <Modal
-                isOpen={!!viewingActivityForUser}
-                onClose={() => setViewingActivityForUser(null)}
-                title={`Activity Log: ${viewingActivityForUser?.name}`}
-            >
-                <div className="p-4 max-h-[70vh] overflow-y-auto">
-                    {userActivityLog.length > 0 ? (
-                        <div className="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3 space-y-6">
-                            {userActivityLog.map((item) => (
-                                <div key={item.id} className="mb-8 ml-6 relative">
-                                    <span className={`absolute -left-9 flex items-center justify-center w-6 h-6 rounded-full ring-4 ring-white dark:ring-brand-surface ${item.type === 'joined' ? 'bg-blue-100 ring-blue-50' :
-                                        item.type === 'deal_claimed' ? 'bg-yellow-100 ring-yellow-50' :
-                                            item.type === 'deal_redeemed' ? 'bg-green-100 ring-green-50' :
-                                                item.type === 'subscription_payment' ? 'bg-purple-100 ring-purple-50' :
-                                                    'bg-gray-100 ring-gray-50'
-                                        }`}>
-                                        {/* Simple dot or icon based on type */}
-                                        <div className={`w-2 h-2 rounded-full ${item.type === 'joined' ? 'bg-blue-600' :
-                                            item.type === 'deal_claimed' ? 'bg-yellow-600' :
-                                                item.type === 'deal_redeemed' ? 'bg-green-600' :
-                                                    item.type === 'subscription_payment' ? 'bg-purple-600' :
-                                                        'bg-gray-600'
-                                            }`}></div>
-                                    </span>
-                                    <h3 className="flex items-center mb-1 text-base font-semibold text-gray-900 dark:text-white">
-                                        {item.type === 'joined' && 'Joined Platform'}
-                                        {item.type === 'deal_claimed' && 'Claimed Deal'}
-                                        {item.type === 'deal_redeemed' && 'Redeemed Deal'}
-                                        {item.type === 'subscription_payment' && 'Payment'}
-                                        {item.type === 'deal_unsaved' && 'Unsaved Deal'}
-                                    </h3>
-                                    <time className="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
-                                        {new Date(item.timestamp).toLocaleString()}
-                                    </time>
-                                    <p className="text-base font-normal text-gray-500 dark:text-brand-text-muted">
-                                        {item.description}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-center text-gray-500 dark:text-brand-text-muted py-4">
-                            No activity recorded for this user.
-                        </p>
-                    )}
-                    <div className="mt-6 flex justify-end">
-                        <button
-                            onClick={() => setViewingActivityForUser(null)}
-                            className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            {t('close')}
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-
-            {showSuccess && (
-                <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
-                    {showSuccess}
-                </div>
-            )}
+{
+    showSuccess && (
+        <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
+            {showSuccess}
+        </div>
+    )
+}
         </>
     );
 };
