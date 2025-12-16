@@ -134,11 +134,24 @@ const AdminUsersTab: React.FC = () => {
         }, {} as Record<string, string>),
         [paginatedUsers]);
 
-    const handleEditUserClick = (user: User) => {
+    const handleEditUserClick = async (user: User) => {
         setEditingUser(user);
+
+        // Fetch User's Deals (Wallet)
+        let userDeals: string[] = [];
+        try {
+            // We need a service function to get just IDs or Deals. 
+            // supabaseService has `getSavedDeals` which returns Deal objects.
+            const savedDeals = await import('../../lib/supabaseService').then(m => m.getSavedDeals(user.id));
+            userDeals = savedDeals.map(d => d.id);
+        } catch (e) {
+            console.error('Failed to fetch user deals', e);
+        }
+
         setUserFormData({
             ...user,
-            savedDeals: user.savedDeals || [],
+            savedDeals: [], // Not used in form logic below but good for type safety
+            ownedDeals: userDeals, // We'll use this state for the UI list
             referrals: user.referrals || [],
             referralChain: user.referralChain || [],
             referralNetwork: user.referralNetwork || [],
@@ -181,21 +194,46 @@ const AdminUsersTab: React.FC = () => {
     };
 
 
-    const handleAddDealToUser = () => {
-        if (dealToAdd && !userFormData.ownedDeals?.includes(dealToAdd)) {
-            setUserFormData(prev => ({
-                ...prev,
-                ownedDeals: [...(prev.ownedDeals || []), dealToAdd]
-            }));
-            setDealToAdd('');
+    const handleAddDealToUser = async () => {
+        if (dealToAdd && editingUser) {
+            try {
+                // Determine if we should use saveDeal (user_deals) or assignDealToUser
+                // Use the service directly
+                const { saveDeal } = await import('../../lib/supabaseService');
+                await saveDeal(editingUser.id, dealToAdd);
+
+                // Update local UI
+                setUserFormData(prev => ({
+                    ...prev,
+                    ownedDeals: [...(prev.ownedDeals || []), dealToAdd]
+                }));
+                setDealToAdd('');
+                setShowSuccess('Deal added to user wallet');
+                setTimeout(() => setShowSuccess(''), 2000);
+            } catch (error) {
+                console.error('Failed to add deal to user', error);
+                alert('Failed to add deal');
+            }
         }
     };
 
-    const handleRemoveDeal = (dealId: string) => {
-        setUserFormData(prev => ({
-            ...prev,
-            ownedDeals: prev.ownedDeals?.filter(id => id !== dealId) || []
-        }));
+    const handleRemoveDeal = async (dealId: string) => {
+        if (editingUser) {
+            if (!window.confirm('Remove this deal from user wallet?')) return;
+            try {
+                const { removeDealFromUser } = await import('../../lib/supabaseService');
+                await removeDealFromUser(editingUser.id, dealId);
+
+                // Update local UI
+                setUserFormData(prev => ({
+                    ...prev,
+                    ownedDeals: prev.ownedDeals?.filter(id => id !== dealId) || []
+                }));
+            } catch (error) {
+                console.error('Failed to remove deal', error);
+                alert('Failed to remove deal');
+            }
+        }
     };
 
     const handleAddRedemptions = async () => {
