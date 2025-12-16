@@ -148,7 +148,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     .eq('user_id', user.id)
                     .eq('deal_id', deal.id)
                     .eq('status', 'active')
-                    .single()
+                    .maybeSingle()
                     .then(({ data }) => {
                         if (data) {
                             setWalletItemInfo({ id: data.id, redemptionCode: data.redemption_code });
