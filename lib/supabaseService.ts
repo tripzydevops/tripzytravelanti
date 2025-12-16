@@ -488,7 +488,7 @@ export async function getDealsPaginated(page: number, limit: number, filters?: a
     if (!filters?.includeAllStatus) {
         const now = new Date().toISOString();
         query = query.eq('status', 'approved')
-            .eq('is_sold_out', false)
+            .eq('is_sold_out', false) // Only hide sold out if NOT including all status
             .gt('expires_at', now);
     }
 
@@ -1923,4 +1923,22 @@ export async function sendTestNotification(userId: string): Promise<{ success: b
         console.error('Test notification failed:', error);
         return { success: false, message: error.message || 'Unknown error occurred' };
     }
+}
+
+// =====================================================
+// HELPER FOR ADMIN
+// =====================================================
+
+export async function getWalletItems(userId: string) {
+    const { data, error } = await supabase
+        .from('user_deals')
+        .select('*, deal:deals(*)')
+        .eq('user_id', userId);
+
+    if (error) {
+        console.error('Error fetching wallet items:', error);
+        return [];
+    }
+
+    return data;
 }

@@ -104,7 +104,7 @@ const AdminDealsTab: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     const [categoryFilter, setCategoryFilter] = useState('All');
-    const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
+    const [activeTab, setActiveTab] = useState<'active' | 'expired' | 'sold_out'>('active');
     const [formTab, setFormTab] = useState('Deal Details');
     const [showTranslations, setShowTranslations] = useState(false);
 
@@ -116,6 +116,7 @@ const AdminDealsTab: React.FC = () => {
         try {
             const { deals, total } = await getDealsPaginated(page, ADMIN_DEALS_PER_PAGE, {
                 includeExpired: true,
+                includeAllStatus: true, // Crucial: Fetch sold-out deals too
                 search: searchQuery,
                 category: categoryFilter
             });
@@ -137,9 +138,13 @@ const AdminDealsTab: React.FC = () => {
     const filteredDeals = useMemo(() => {
         const now = new Date();
         return adminDeals.filter(deal => {
+            if (activeTab === 'sold_out') {
+                return deal.isSoldOut;
+            }
+
             const expiryDate = new Date(deal.expiresAt);
             if (activeTab === 'active') {
-                return expiryDate >= now;
+                return expiryDate >= now && !deal.isSoldOut; // Active = Not Expired AND Not Sold Out
             } else {
                 return expiryDate < now;
             }
@@ -758,6 +763,12 @@ const AdminDealsTab: React.FC = () => {
                         onClick={() => setActiveTab('active')}
                     >
                         Active Deals
+                    </button>
+                    <button
+                        className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'sold_out' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+                        onClick={() => setActiveTab('sold_out')}
+                    >
+                        Sold Out
                     </button>
                     <button
                         className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'expired' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}

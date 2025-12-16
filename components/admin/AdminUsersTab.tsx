@@ -141,9 +141,10 @@ const AdminUsersTab: React.FC = () => {
         // Fetch User's Deals (Wallet)
         let userDeals: string[] = [];
         try {
-            const savedDeals = await import('../../lib/supabaseService').then(m => m.getSavedDeals(user.id));
-            setUserWalletDeals(savedDeals);
-            userDeals = savedDeals.map(d => d.id);
+            const walletItems = await import('../../lib/supabaseService').then(m => m.getWalletItems(user.id));
+            const deals = walletItems.map((item: any) => item.deal).filter((d: any) => d !== null);
+            setUserWalletDeals(deals);
+            userDeals = deals.map((d: any) => d.id);
         } catch (error) {
             console.error('Failed to fetch user deals', error);
             // Even if deals fail, at least open the user form
