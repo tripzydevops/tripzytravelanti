@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabaseClient';
 import { saveDeal, unsaveDeal, redeemDeal, claimDeal } from '../lib/supabaseService';
 import { User } from '../types';
 
@@ -25,10 +26,34 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [redemptions, setRedemptions] = useState<any[]>([]);
 
     // Sync state with user object when it changes (initial load)
+    // Sync state with user object when it changes (initial load)
     useEffect(() => {
         if (user) {
-            setSavedDeals(user.savedDeals || []);
-            setOwnedDeals(user.ownedDeals || []);
+            // Fetch saved deals from Supabase
+            supabase
+                .from('user_deals')
+                .select('deal_id')
+                .eq('user_id', user.id)
+                .then(({ data }) => {
+                    if (data) {
+                        setSavedDeals(data.map(d => d.deal_id));
+                    }
+                });
+
+            // Fetch owned deals (wallet items) from Supabase
+            supabase
+                .from('wallet_items')
+                .select('deal_id')
+                .eq('user_id', user.id)
+                .neq('status', 'redeemed') // Optional: do we consider redeemed as "owned"? Usually yes, but for button visibility "active" matters. 
+                // Actually, if it's redeemed, we probably don't want to show "Add to Wallet" button again?
+                // Let's keep it simple: if it's in wallet_items (any status), it is "owned".
+                .then(({ data }) => {
+                    if (data) {
+                        setOwnedDeals(data.map(d => d.deal_id));
+                    }
+                });
+
             setRedemptions(user.redemptions || []);
         } else {
             setSavedDeals([]);

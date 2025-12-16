@@ -691,9 +691,14 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
         if (error) throw error;
 
-        // ALWAYS remove from wallet after redemption
-        // Deals in wallet are treated as single-use tickets (already paid for by credit)
-        await removeDealFromUser(userId, dealId);
+        // UPDATE wallet_items status to 'redeemed'
+        const { error: updateWalletError } = await supabase
+            .from('wallet_items')
+            .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
+            .eq('user_id', userId)
+            .eq('deal_id', dealId);
+
+        if (updateWalletError) console.error('Failed to update wallet item status:', updateWalletError);
 
         // INCREMENT GLOBAL REDEMPTION COUNT ONLY IF NOT OWNED
         // (If it was in wallet, it was counted at 'saveDeal' time)

@@ -24,7 +24,7 @@ const WalletPage: React.FC = () => {
     const navigate = useNavigate();
     const [walletDeals, setWalletDeals] = useState<WalletDeal[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+    const [activeFilter, setActiveFilter] = useState<FilterType>('active');
     const [sortBy, setSortBy] = useState<SortType>('recent');
 
     const fetchWalletDeals = useCallback(async () => {
