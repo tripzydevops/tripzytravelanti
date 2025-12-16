@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { Deal } from '../types';
-import { getAllDeals, getDealById as getSupabaseDealById, getDealsPaginated } from '../lib/supabaseService';
+import { getAllDeals, getDealById as getSupabaseDealById, getDealsPaginated, createDeal as apiCreateDeal, updateDeal as apiUpdateDeal } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 
 interface DealContextType {
@@ -121,43 +121,10 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase
-        .from('deals')
-        .insert({
-          title: newDeal.title,
-          title_tr: newDeal.title_tr,
-          description: newDeal.description,
-          description_tr: newDeal.description_tr,
-          image_url: newDeal.imageUrl,
-          category: newDeal.category,
-          category_tr: newDeal.category_tr,
-          original_price: newDeal.originalPrice,
-          discounted_price: newDeal.discountedPrice,
-          discount_percentage: newDeal.discountPercentage,
-          required_tier: newDeal.requiredTier,
-          is_external: newDeal.isExternal,
-          vendor: newDeal.vendor,
-          expires_at: newDeal.expiresAt,
-          rating: newDeal.rating,
-          rating_count: newDeal.ratingCount,
-          usage_limit: newDeal.usageLimit,
-          usage_limit_tr: newDeal.usageLimit_tr,
-          validity: newDeal.validity,
-          validity_tr: newDeal.validity_tr,
-          terms_url: newDeal.termsUrl,
-          redemption_code: newDeal.redemptionCode,
-          latitude: newDeal.latitude,
-          longitude: newDeal.longitude,
-          redemption_style: newDeal.redemptionStyle,
-          partner_id: user?.id,
-          status: newDeal.status || 'pending',
-          is_flash_deal: newDeal.is_flash_deal,
-          flash_end_time: newDeal.flash_end_time,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      await apiCreateDeal({
+        ...newDeal,
+        partnerId: user?.id,
+      });
 
       // Refresh deals to get the new one
       await refreshDeals();
@@ -170,41 +137,7 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Update existing deal (admin only)
   const updateDeal = useCallback(async (updatedDeal: Deal) => {
     try {
-      const { error } = await supabase
-        .from('deals')
-        .update({
-          title: updatedDeal.title,
-          title_tr: updatedDeal.title_tr,
-          description: updatedDeal.description,
-          description_tr: updatedDeal.description_tr,
-          image_url: updatedDeal.imageUrl,
-          category: updatedDeal.category,
-          category_tr: updatedDeal.category_tr,
-          original_price: updatedDeal.originalPrice,
-          discounted_price: updatedDeal.discountedPrice,
-          discount_percentage: updatedDeal.discountPercentage,
-          required_tier: updatedDeal.requiredTier,
-          is_external: updatedDeal.isExternal,
-          vendor: updatedDeal.vendor,
-          expires_at: updatedDeal.expiresAt,
-          rating: updatedDeal.rating,
-          rating_count: updatedDeal.ratingCount,
-          usage_limit: updatedDeal.usageLimit,
-          usage_limit_tr: updatedDeal.usageLimit_tr,
-          validity: updatedDeal.validity,
-          validity_tr: updatedDeal.validity_tr,
-          terms_url: updatedDeal.termsUrl,
-          redemption_code: updatedDeal.redemptionCode,
-          latitude: updatedDeal.latitude,
-          longitude: updatedDeal.longitude,
-          status: updatedDeal.status,
-          redemption_style: updatedDeal.redemptionStyle,
-          is_flash_deal: updatedDeal.is_flash_deal,
-          flash_end_time: updatedDeal.flash_end_time,
-        })
-        .eq('id', updatedDeal.id);
-
-      if (error) throw error;
+      await apiUpdateDeal(updatedDeal.id, updatedDeal);
 
       // Update local state
       setDeals((currentDeals) =>

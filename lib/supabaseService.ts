@@ -314,7 +314,10 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         flash_end_time: deal.flash_end_time,
         deal_type_key: deal.dealTypeKey,
         time_type: deal.timeType,
-        max_redemptions_total: deal.maxRedemptionsTotal
+        max_redemptions_total: deal.maxRedemptionsTotal,
+        latitude: deal.latitude,
+        longitude: deal.longitude,
+        store_locations: deal.storeLocations
     };
 
     const { data, error } = await supabase
@@ -363,6 +366,9 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
     if (updates.dealTypeKey) dbUpdates.deal_type_key = updates.dealTypeKey;
     if (updates.timeType) dbUpdates.time_type = updates.timeType;
     if (updates.maxRedemptionsTotal !== undefined) dbUpdates.max_redemptions_total = updates.maxRedemptionsTotal;
+    if (updates.latitude !== undefined) dbUpdates.latitude = updates.latitude;
+    if (updates.longitude !== undefined) dbUpdates.longitude = updates.longitude;
+    if (updates.storeLocations !== undefined) dbUpdates.store_locations = updates.storeLocations;
 
     const { data, error } = await supabase
         .from('deals')
