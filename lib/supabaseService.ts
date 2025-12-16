@@ -696,6 +696,21 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         // Deals in wallet are treated as single-use tickets (already paid for by credit)
         await removeDealFromUser(userId, dealId);
 
+        // INCREMENT GLOBAL REDEMPTION COUNT
+        // This is critical for the "Sold Out" logic to work
+        const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+
+        if (updateError) {
+            // Fallback to direct update if RPC doesn't exist (though RPC is safer for concurrency)
+            console.warn('RPC increment_redemptions_count failed, falling back to direct update:', updateError);
+            const { error: directUpdateError } = await supabase
+                .from('deals')
+                .update({ redemptions_count: (dealData?.redemptions_count || 0) + 1 }) // Use fetched count + 1. Not atomic but better than nothing for MVP.
+                .eq('id', dealId);
+
+            if (directUpdateError) console.error('Failed to increment redemption count:', directUpdateError);
+        }
+
         // Transform snake_case to camelCase
         return {
             id: data.id,

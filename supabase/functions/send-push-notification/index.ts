@@ -59,7 +59,7 @@ serve(async (req) => {
             console.error('[Push] Missing FIREBASE_SERVICE_ACCOUNT');
             return new Response(
                 JSON.stringify({ error: 'Missing FIREBASE_SERVICE_ACCOUNT env var' }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
@@ -70,7 +70,7 @@ serve(async (req) => {
             console.error('[Push] Failed to parse service account JSON', e);
             return new Response(
                 JSON.stringify({ error: 'Invalid JSON in FIREBASE_SERVICE_ACCOUNT' }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
@@ -78,7 +78,7 @@ serve(async (req) => {
             console.error('[Push] Service account missing project_id');
             return new Response(
                 JSON.stringify({ error: 'Firebase config missing project_id' }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
 
