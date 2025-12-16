@@ -696,19 +696,31 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         // Deals in wallet are treated as single-use tickets (already paid for by credit)
         await removeDealFromUser(userId, dealId);
 
-        // INCREMENT GLOBAL REDEMPTION COUNT
-        // This is critical for the "Sold Out" logic to work
-        const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+        // INCREMENT GLOBAL REDEMPTION COUNT ONLY IF NOT OWNED
+        // (If it was in wallet, it was counted at 'saveDeal' time)
+        if (!isOwned) {
+            const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
 
-        if (updateError) {
-            // Fallback to direct update if RPC doesn't exist (though RPC is safer for concurrency)
-            console.warn('RPC increment_redemptions_count failed, falling back to direct update:', updateError);
-            const { error: directUpdateError } = await supabase
-                .from('deals')
-                .update({ redemptions_count: (dealData?.redemptions_count || 0) + 1 }) // Use fetched count + 1. Not atomic but better than nothing for MVP.
-                .eq('id', dealId);
+            if (updateError) {
+                // Fallback to direct update if RPC doesn't exist
+                console.warn('RPC increment_redemptions_count failed, falling back to direct update:', updateError);
 
-            if (directUpdateError) console.error('Failed to increment redemption count:', directUpdateError);
+                // Fetch latest count first if we don't have it (or if it's stale)
+                const { data: currentDeal } = await supabase
+                    .from('deals')
+                    .select('redemptions_count')
+                    .eq('id', dealId)
+                    .single();
+
+                const nextCount = (currentDeal?.redemptions_count || 0) + 1;
+
+                const { error: directUpdateError } = await supabase
+                    .from('deals')
+                    .update({ redemptions_count: nextCount })
+                    .eq('id', dealId);
+
+                if (directUpdateError) console.error('Failed to increment redemption count:', directUpdateError);
+            }
         }
 
         // Transform snake_case to camelCase
@@ -787,7 +799,7 @@ export async function getDirectReferrals(userId: string): Promise<string[]> {
 // =====================================================
 
 export async function saveDeal(userId: string, dealId: string) {
-    // Check if already saved
+    // 1. Check if already saved
     const { data: existing } = await supabase
         .from('user_deals')
         .select('id')
@@ -797,11 +809,34 @@ export async function saveDeal(userId: string, dealId: string) {
 
     if (existing) return; // Already saved
 
+    // 2. CHECK GLOBAL LIMIT (Supply Check)
+    const { data: deal, error: dealError } = await supabase
+        .from('deals')
+        .select('max_redemptions_total, redemptions_count')
+        .eq('id', dealId)
+        .single();
+
+    if (dealError) throw dealError;
+
+    // Treat 'save' as 'claiming a spot'
+    if (deal.max_redemptions_total !== null && (deal.redemptions_count || 0) >= deal.max_redemptions_total) {
+        throw new Error('This deal is Sold Out (Global limit reached).');
+    }
+
+    // 3. Insert into Wallet
     const { error } = await supabase
         .from('user_deals')
         .insert({ user_id: userId, deal_id: dealId });
 
     if (error) throw error;
+
+    // 4. INCREMENT Global Counter (Reservation)
+    const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+    if (updateError) {
+        // Fallback
+        const nextCount = (deal.redemptions_count || 0) + 1;
+        await supabase.from('deals').update({ redemptions_count: nextCount }).eq('id', dealId);
+    }
 }
 
 export async function assignDealToUser(userId: string, dealId: string) {
