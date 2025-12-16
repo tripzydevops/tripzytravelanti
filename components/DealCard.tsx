@@ -147,6 +147,15 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
             </span>
           </div>
         )}
+
+        {/* Sold Out Overlay */}
+        {!isLocked && deal.isSoldOut && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 border-b border-white/10 pointer-events-none">
+            <div className="transform -rotate-12 border-4 border-red-500 text-red-500 font-black text-3xl px-6 py-2 rounded-lg bg-black/50 tracking-widest uppercase shadow-2xl">
+              SOLD OUT
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-5 flex flex-col flex-grow relative bg-gradient-to-b from-white/5 to-transparent">

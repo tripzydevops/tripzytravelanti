@@ -104,7 +104,6 @@ const CreateDealPage: React.FC = () => {
                             redemptionCode: deal.redemptionCode,
                             redemptionStyle: deal.redemptionStyle || [],
                             storeLocations: deal.storeLocations || [],
-                            storeLocations: deal.storeLocations || [],
                             is_flash_deal: deal.is_flash_deal || false,
                             flash_end_time: deal.flash_end_time || '',
                             maxRedemptionsTotal: deal.maxRedemptionsTotal || '' // Populate from DB
@@ -304,7 +303,6 @@ const CreateDealPage: React.FC = () => {
                 storeLocations: formData.storeLocations.filter(loc => loc.name || loc.address),
                 is_flash_deal: formData.is_flash_deal,
                 flash_end_time: formData.flash_end_time ? new Date(formData.flash_end_time).toISOString() : undefined,
-                dealTypeKey: formData.dealTypeKey,
                 dealTypeKey: formData.dealTypeKey,
                 timeType: formData.timeType,
                 maxRedemptionsTotal: formData.maxRedemptionsTotal ? parseInt(formData.maxRedemptionsTotal.toString()) : null

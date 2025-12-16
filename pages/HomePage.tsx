@@ -212,7 +212,14 @@ const HomePage: React.FC = () => {
   ];
 
   // No more client-side filtering
-  const filteredDeals = deals;
+  // Sort deals: Active first, then Sold Out last.
+  const filteredDeals = React.useMemo(() => {
+    return [...deals].sort((a, b) => {
+      if (a.isSoldOut && !b.isSoldOut) return 1;
+      if (!a.isSoldOut && b.isSoldOut) return -1;
+      return 0;
+    });
+  }, [deals]);
 
   const flightRoutes = deals.filter(d => d.category === 'FlightWidget');
 
