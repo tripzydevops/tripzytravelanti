@@ -1654,27 +1654,26 @@ export async function addDealToWallet(userId: string, dealId: string): Promise<{
         .single();
 
     if (error) {
-        // Unique constraint - retry with different code
-        return addDealToWallet(userId, dealId);
-    }
-    throw error;
-}
-
-// INCREMENT GLOBAL REDEMPTION COUNT (Claiming a spot)
-try {
-    const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
-    if (updateError) throw updateError;
-} catch (rpcError) {
-    console.warn('RPC increment_redemptions_count failed in addDealToWallet, falling back to direct update:', rpcError);
-    // Fallback logic
-    const { data: currentDeal } = await supabase.from('deals').select('redemptions_count').eq('id', dealId).single();
-    const nextCount = (currentDeal?.redemptions_count || 0) + 1;
-    await supabase.from('deals').update({ redemptions_count: nextCount }).eq('id', dealId);
-}
-throw error;
+        if (error.code === '23505') {
+            // Unique constraint - retry with different code
+            return addDealToWallet(userId, dealId);
+        }
+        throw error;
     }
 
-return { walletItemId: data.id, redemptionCode: data.redemption_code };
+    // INCREMENT GLOBAL REDEMPTION COUNT (Claiming a spot)
+    try {
+        const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+        if (updateError) throw updateError;
+    } catch (rpcError) {
+        console.warn('RPC increment_redemptions_count failed in addDealToWallet, falling back to direct update:', rpcError);
+        // Fallback logic
+        const { data: currentDeal } = await supabase.from('deals').select('redemptions_count').eq('id', dealId).single();
+        const nextCount = (currentDeal?.redemptions_count || 0) + 1;
+        await supabase.from('deals').update({ redemptions_count: nextCount }).eq('id', dealId);
+    }
+
+    return { walletItemId: data.id, redemptionCode: data.redemption_code };
 }
 
 /**
