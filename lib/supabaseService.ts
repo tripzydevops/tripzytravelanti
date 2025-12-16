@@ -624,8 +624,8 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
     // DEBUG: Fetch ALL owned deals to see what supabase can see
     const { data: allDeals, error: allDealsError } = await supabase
-        .from('user_deals')
-        .select('deal_id')
+        .from('wallet_items')
+        .select('deal_id, status')
         .eq('user_id', cleanUserId);
 
     console.log('[redeemDeal] ALL owned deals for user:', allDeals);
@@ -634,7 +634,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     const isOwnedInList = allDeals?.some((d: { deal_id: string }) => d.deal_id === cleanDealId);
 
     const { data: ownedDeal, error: ownedError } = await supabase
-        .from('user_deals')
+        .from('wallet_items')
         .select('*')
         .eq('user_id', cleanUserId)
         .eq('deal_id', cleanDealId)
@@ -647,6 +647,11 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         ownedError,
         isOwnedInList
     });
+
+    // Check if already redeemed
+    if (ownedDeal?.status === 'redeemed') {
+        throw new Error('This deal has already been redeemed.');
+    }
 
     const isOwned = !!ownedDeal || !!isOwnedInList;
 
@@ -1649,14 +1654,27 @@ export async function addDealToWallet(userId: string, dealId: string): Promise<{
         .single();
 
     if (error) {
-        if (error.code === '23505') {
-            // Unique constraint - retry with different code
-            return addDealToWallet(userId, dealId);
-        }
-        throw error;
+        // Unique constraint - retry with different code
+        return addDealToWallet(userId, dealId);
+    }
+    throw error;
+}
+
+// INCREMENT GLOBAL REDEMPTION COUNT (Claiming a spot)
+try {
+    const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+    if (updateError) throw updateError;
+} catch (rpcError) {
+    console.warn('RPC increment_redemptions_count failed in addDealToWallet, falling back to direct update:', rpcError);
+    // Fallback logic
+    const { data: currentDeal } = await supabase.from('deals').select('redemptions_count').eq('id', dealId).single();
+    const nextCount = (currentDeal?.redemptions_count || 0) + 1;
+    await supabase.from('deals').update({ redemptions_count: nextCount }).eq('id', dealId);
+}
+throw error;
     }
 
-    return { walletItemId: data.id, redemptionCode: data.redemption_code };
+return { walletItemId: data.id, redemptionCode: data.redemption_code };
 }
 
 /**
