@@ -30,56 +30,94 @@ const PartnerScanPage: React.FC = () => {
         setRedeemedDeal(null);
 
         try {
-            // 1. Check if code exists in redemptions table (if we store unique codes there)
-            // OR check if code matches a deal's redemption code + user ID format
-            // For this MVP, let's assume the QR code contains: "dealId:userId" or just a unique redemption ID
+            // Parse the QR code - new format: { "wi": "wallet_item_id", "rc": "redemption_code" }
+            // Also support legacy format: { "dealId": "...", "userId": "..." } or "dealId:userId"
+            let walletItemId: string | null = null;
+            let redemptionCode: string | null = null;
 
-            // Let's assume the QR code format is JSON: { "dealId": "...", "userId": "..." }
-            let dealId, userId;
             try {
                 const parsed = JSON.parse(code);
-                dealId = parsed.dealId;
-                userId = parsed.userId;
-            } catch (e) {
-                // Fallback: try splitting by colon
+                if (parsed.wi && parsed.rc) {
+                    // New secure format
+                    walletItemId = parsed.wi;
+                    redemptionCode = parsed.rc;
+                } else if (parsed.walletItemId && parsed.redemptionCode) {
+                    // Alternative new format
+                    walletItemId = parsed.walletItemId;
+                    redemptionCode = parsed.redemptionCode;
+                } else if (parsed.dealId && parsed.userId) {
+                    // Legacy format - can't use new system
+                    throw new Error('Legacy QR code format. Please have user regenerate their QR code.');
+                }
+            } catch (parseError: any) {
+                // Try splitting by colon for legacy format
                 const parts = code.split(':');
                 if (parts.length === 2) {
-                    dealId = parts[0];
-                    userId = parts[1];
-                } else {
-                    throw new Error('Invalid code format');
+                    throw new Error('Legacy code format. Please have user regenerate their QR code.');
                 }
+                // Maybe it's just the redemption code directly
+                redemptionCode = code.toUpperCase();
             }
 
-            // 2. Verify deal ownership (optional, if partners can only redeem their own deals)
-            // const { data: deal } = await supabase.from('deals').select('*').eq('id', dealId).single();
-            // if (deal.partner_id !== user.id) throw new Error('This deal does not belong to you.');
+            if (!walletItemId && redemptionCode) {
+                // User entered just the redemption code - look it up
+                const { data: item, error: lookupError } = await supabase
+                    .from('wallet_items')
+                    .select('id')
+                    .eq('redemption_code', redemptionCode)
+                    .eq('status', 'active')
+                    .single();
 
-            // 3. Check if already redeemed
-            // In a real app, we'd check a "redemptions" table. 
-            // If we are just marking it as "used" now:
-
-            const { data: redemption, error: redemptionError } = await supabase
-                .from('redemptions')
-                .insert({
-                    deal_id: dealId,
-                    user_id: userId,
-                    redeemed_at: new Date().toISOString(),
-                    // partner_id: user.id // Track who redeemed it
-                })
-                .select()
-                .single();
-
-            if (redemptionError) {
-                if (redemptionError.code === '23505') { // Unique violation if we enforce one redemption per user per deal
-                    throw new Error('This code has already been redeemed.');
+                if (lookupError || !item) {
+                    throw new Error('Invalid or expired redemption code.');
                 }
-                throw redemptionError;
+                walletItemId = item.id;
             }
 
-            // 4. Update partner stats
+            if (!walletItemId || !redemptionCode) {
+                throw new Error('Invalid code format. Please scan a valid QR code.');
+            }
+
+            // Call the secure redemption service
+            const { redeemWalletItem } = await import('../../lib/supabaseService');
+            const result = await redeemWalletItem(walletItemId, redemptionCode, user?.id);
+
+            if (result.requiresConfirmation) {
+                // High-value deal - waiting for user confirmation
+                setVerificationStatus('loading');
+                setVerificationMessage('Waiting for user to confirm on their device... (60 seconds)');
+
+                // Poll for confirmation (simple approach)
+                let attempts = 0;
+                const pollInterval = setInterval(async () => {
+                    attempts++;
+                    const { data: updated } = await supabase
+                        .from('wallet_items')
+                        .select('status')
+                        .eq('id', walletItemId)
+                        .single();
+
+                    if (updated?.status === 'redeemed') {
+                        clearInterval(pollInterval);
+                        setVerificationStatus('success');
+                        setVerificationMessage('Deal confirmed and redeemed!');
+                        setRedeemedDeal(result.dealInfo);
+                    } else if (attempts >= 30) { // 30 * 2s = 60s timeout
+                        clearInterval(pollInterval);
+                        setVerificationStatus('error');
+                        setVerificationMessage('User did not confirm in time. Please try again.');
+                    }
+                }, 2000);
+
+                return;
+            }
+
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+
+            // Update partner stats (optional, for tracking)
             if (user) {
-                // RPC call would be better here to atomic increment
                 const { data: stats } = await supabase
                     .from('partner_stats')
                     .select('total_redemptions')
@@ -89,14 +127,14 @@ const PartnerScanPage: React.FC = () => {
                 if (stats) {
                     await supabase
                         .from('partner_stats')
-                        .update({ total_redemptions: stats.total_redemptions + 1 })
+                        .update({ total_redemptions: (stats.total_redemptions || 0) + 1 })
                         .eq('partner_id', user.id);
                 }
             }
 
             setVerificationStatus('success');
-            setVerificationMessage('Deal successfully redeemed!');
-            setRedeemedDeal({ id: dealId }); // Ideally fetch deal details to show title
+            setVerificationMessage(result.message);
+            setRedeemedDeal(result.dealInfo);
 
         } catch (error: any) {
             console.error('Verification failed:', error);
