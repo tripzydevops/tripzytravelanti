@@ -32,11 +32,12 @@ const WalletPage: React.FC = () => {
         try {
             setLoading(true);
             // Fetch user's owned deals with status
+            // Fetch user's owned deals (wallet items)
             const { data: userDeals, error } = await supabase
-                .from('user_deals')
-                .select('deal_id, status, acquired_at')
+                .from('wallet_items')
+                .select('deal_id, status, created_at, redemption_code')
                 .eq('user_id', user.id)
-                .order('acquired_at', { ascending: false });
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
@@ -51,7 +52,11 @@ const WalletPage: React.FC = () => {
 
                 // Create status map from user_deals
                 const statusMap = new Map(
-                    userDeals.map(ud => [ud.deal_id, { status: ud.status, acquiredAt: ud.acquired_at }])
+                    userDeals.map(ud => [ud.deal_id, {
+                        status: ud.status,
+                        acquiredAt: ud.created_at,
+                        redemptionCode: ud.redemption_code
+                    }])
                 );
 
                 // Map and merge
@@ -78,8 +83,10 @@ const WalletPage: React.FC = () => {
                         companyLogoUrl: dbDeal.company_logo_url,
                         createdAt: dbDeal.created_at,
                         ...dbDeal,
+                        ...dbDeal,
                         walletStatus: userDealInfo?.status || 'active',
                         acquiredAt: userDealInfo?.acquiredAt || '',
+                        redemptionCode: userDealInfo?.redemptionCode || dbDeal.redemption_code, // Use unique code if available
                     };
                 }) || [];
 
@@ -278,10 +285,10 @@ const WalletPage: React.FC = () => {
                                         {/* Main bar */}
                                         <div
                                             className={`relative h-full rounded-full transition-all duration-500 ease-out ${isFull
-                                                    ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500'
-                                                    : nearCapacity
-                                                        ? 'bg-gradient-to-r from-orange-500 via-gold-400 to-orange-500'
-                                                        : 'bg-gradient-to-r from-gold-600 via-gold-400 to-gold-500'
+                                                ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500'
+                                                : nearCapacity
+                                                    ? 'bg-gradient-to-r from-orange-500 via-gold-400 to-orange-500'
+                                                    : 'bg-gradient-to-r from-gold-600 via-gold-400 to-gold-500'
                                                 }`}
                                             style={{ width: `${usagePercent}%` }}
                                         >

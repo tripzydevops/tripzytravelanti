@@ -806,7 +806,7 @@ export async function saveDeal(userId: string, dealId: string) {
         .select('deal_id')
         .eq('user_id', userId)
         .eq('deal_id', dealId)
-        .single();
+        .maybeSingle();
 
     if (existing) return; // Already saved
 
@@ -865,7 +865,8 @@ export async function checkDealSavedStatus(userId: string, dealId: string): Prom
         .select('id')
         .eq('user_id', userId)
         .eq('deal_id', dealId)
-        .single();
+        .eq('deal_id', dealId)
+        .maybeSingle();
 
     return !!data && !error;
 }
@@ -1605,7 +1606,7 @@ export async function addDealToWallet(userId: string, dealId: string): Promise<{
         .select('id, redemption_code')
         .eq('user_id', userId)
         .eq('deal_id', dealId)
-        .single();
+        .maybeSingle();
 
     if (existing) {
         return { walletItemId: existing.id, redemptionCode: existing.redemption_code };
