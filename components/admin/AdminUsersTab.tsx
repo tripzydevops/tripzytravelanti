@@ -220,7 +220,7 @@ const AdminUsersTab: React.FC = () => {
                     // Wait, verifying: fetchAllDeals() at line 127.
                     // We need to check fetchAllDeals definition. Assuming it fetches some deals. 
                     // If not found, we might need to fetch single deal.
-                    const fetchedDeal = await import('../../lib/supabaseService').then(m => m.getDeal(dealToAdd));
+                    const fetchedDeal = await import('../../lib/supabaseService').then(m => m.getDealById(dealToAdd));
                     if (fetchedDeal) setUserWalletDeals(prev => [...prev, fetchedDeal]);
                 }
 
@@ -316,6 +316,26 @@ const AdminUsersTab: React.FC = () => {
         }
     };
 
+
+    const handleViewPaymentsClick = async (user: User) => {
+        setViewingPaymentsForUser(user);
+        try {
+            const data = await getUserTransactions(user.id);
+            setUserPayments(data);
+        } catch (error) {
+            console.error('Failed to fetch user payments', error);
+        }
+    };
+
+    const handleViewActivityClick = async (user: User) => {
+        setViewingActivityForUser(user);
+        try {
+            const data = await getUserActivityLog(user.id);
+            setUserActivityLog(data);
+        } catch (error) {
+            console.error('Failed to fetch user activity', error);
+        }
+    };
 
     return (
         <>

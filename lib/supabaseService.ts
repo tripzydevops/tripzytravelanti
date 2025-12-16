@@ -801,7 +801,7 @@ export async function saveDeal(userId: string, dealId: string) {
     // 1. Check if already saved
     const { data: existing } = await supabase
         .from('user_deals')
-        .select('id')
+        .select('deal_id')
         .eq('user_id', userId)
         .eq('deal_id', dealId)
         .single();
@@ -830,9 +830,10 @@ export async function saveDeal(userId: string, dealId: string) {
     if (error) throw error;
 
     // 4. INCREMENT Global Counter (Reservation)
-    const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+    const { error: updateError } = await supabase.rpc('increment_deal_redemption', { deal_id_input: dealId });
     if (updateError) {
         // Fallback
+        console.warn('RPC increment_deal_redemption failed, trying manual update', updateError);
         const nextCount = (deal.redemptions_count || 0) + 1;
         await supabase.from('deals').update({ redemptions_count: nextCount }).eq('id', dealId);
     }
