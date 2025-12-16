@@ -1537,3 +1537,268 @@ export async function applyPromoCode(code: string, txnId?: string): Promise<bool
 
     return data;
 }
+
+// =====================================================
+// SECURE WALLET OPERATIONS (Fraud-Resistant)
+// =====================================================
+
+/**
+ * Generate a unique, short redemption code (e.g., "XA7B2K")
+ */
+export function generateRedemptionCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing chars (0, O, 1, I)
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+/**
+ * Add a deal to user's wallet with a unique redemption code
+ */
+export async function addDealToWallet(userId: string, dealId: string): Promise<{ walletItemId: string; redemptionCode: string }> {
+    // Check if already in wallet
+    const { data: existing } = await supabase
+        .from('wallet_items')
+        .select('id, redemption_code')
+        .eq('user_id', userId)
+        .eq('deal_id', dealId)
+        .single();
+
+    if (existing) {
+        return { walletItemId: existing.id, redemptionCode: existing.redemption_code };
+    }
+
+    // Check user's monthly limit
+    const limitCheck = await checkMonthlyLimit(userId);
+    if (!limitCheck.allowed) {
+        throw new Error('Monthly redemption limit reached. Please upgrade your plan.');
+    }
+
+    // Check global deal limit
+    const { data: deal, error: dealError } = await supabase
+        .from('deals')
+        .select('max_redemptions_total, redemptions_count, is_sold_out')
+        .eq('id', dealId)
+        .single();
+
+    if (dealError || !deal) throw new Error('Deal not found');
+    if (deal.is_sold_out || (deal.max_redemptions_total && (deal.redemptions_count || 0) >= deal.max_redemptions_total)) {
+        throw new Error('This deal is sold out.');
+    }
+
+    // Generate unique code and insert
+    const redemptionCode = generateRedemptionCode();
+    const { data, error } = await supabase
+        .from('wallet_items')
+        .insert({
+            user_id: userId,
+            deal_id: dealId,
+            redemption_code: redemptionCode,
+            status: 'active'
+        })
+        .select('id, redemption_code')
+        .single();
+
+    if (error) {
+        if (error.code === '23505') {
+            // Unique constraint - retry with different code
+            return addDealToWallet(userId, dealId);
+        }
+        throw error;
+    }
+
+    return { walletItemId: data.id, redemptionCode: data.redemption_code };
+}
+
+/**
+ * Get all wallet items for a user
+ */
+export async function getWalletItems(userId: string): Promise<any[]> {
+    const { data, error } = await supabase
+        .from('wallet_items')
+        .select(`
+            id,
+            redemption_code,
+            status,
+            created_at,
+            redeemed_at,
+            deal_id,
+            deals (*)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching wallet items:', error);
+        return [];
+    }
+
+    return data.map((item: any) => ({
+        ...item,
+        deal: item.deals ? transformDealFromDB(item.deals) : null
+    }));
+}
+
+/**
+ * Redeem a wallet item (called by vendor)
+ * Returns { success, requiresConfirmation, confirmationToken } for high-value deals
+ */
+export async function redeemWalletItem(
+    walletItemId: string,
+    redemptionCode: string,
+    vendorId?: string
+): Promise<{ success: boolean; message: string; requiresConfirmation?: boolean; confirmationToken?: string; dealInfo?: any }> {
+    // 1. Find wallet item
+    const { data: walletItem, error: findError } = await supabase
+        .from('wallet_items')
+        .select(`
+            id,
+            user_id,
+            deal_id,
+            status,
+            redemption_code,
+            deals (id, title, requires_confirmation)
+        `)
+        .eq('id', walletItemId)
+        .single();
+
+    if (findError || !walletItem) {
+        return { success: false, message: 'Invalid wallet item' };
+    }
+
+    // 2. Verify code
+    if (walletItem.redemption_code !== redemptionCode) {
+        return { success: false, message: 'Invalid redemption code' };
+    }
+
+    // 3. Check status
+    if (walletItem.status === 'redeemed') {
+        return { success: false, message: 'This deal has already been redeemed' };
+    }
+    if (walletItem.status === 'expired') {
+        return { success: false, message: 'This deal has expired' };
+    }
+
+    // 4. Check if requires confirmation (high-value deal)
+    const deal = (walletItem as any).deals;
+    if (deal?.requires_confirmation) {
+        // Generate confirmation token
+        const confirmationToken = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 60000).toISOString(); // 60 seconds
+
+        await supabase
+            .from('wallet_items')
+            .update({
+                confirmation_token: confirmationToken,
+                confirmation_expires_at: expiresAt
+            })
+            .eq('id', walletItemId);
+
+        // TODO: Send push notification to user here
+        // You would call your Edge Function to send FCM push
+
+        return {
+            success: false,
+            message: 'User confirmation required',
+            requiresConfirmation: true,
+            confirmationToken,
+            dealInfo: { title: deal.title }
+        };
+    }
+
+    // 5. Complete redemption
+    const { error: updateError } = await supabase
+        .from('wallet_items')
+        .update({
+            status: 'redeemed',
+            redeemed_at: new Date().toISOString()
+        })
+        .eq('id', walletItemId);
+
+    if (updateError) {
+        return { success: false, message: 'Failed to redeem' };
+    }
+
+    // 6. Log redemption
+    await supabase.from('redemption_logs').insert({
+        wallet_item_id: walletItemId,
+        user_id: walletItem.user_id,
+        deal_id: walletItem.deal_id,
+        vendor_id: vendorId
+    });
+
+    // 7. Increment global redemption count
+    await supabase.rpc('increment_deal_redemption', { deal_id_input: walletItem.deal_id });
+
+    return {
+        success: true,
+        message: 'Deal redeemed successfully!',
+        dealInfo: { title: deal?.title }
+    };
+}
+
+/**
+ * Confirm a high-value redemption (called by user from app)
+ */
+export async function confirmRedemption(walletItemId: string, confirmationToken: string): Promise<{ success: boolean; message: string }> {
+    const { data: walletItem, error } = await supabase
+        .from('wallet_items')
+        .select('id, confirmation_token, confirmation_expires_at, status, user_id, deal_id')
+        .eq('id', walletItemId)
+        .single();
+
+    if (error || !walletItem) {
+        return { success: false, message: 'Wallet item not found' };
+    }
+
+    if (walletItem.confirmation_token !== confirmationToken) {
+        return { success: false, message: 'Invalid confirmation token' };
+    }
+
+    if (new Date(walletItem.confirmation_expires_at) < new Date()) {
+        return { success: false, message: 'Confirmation expired. Please try again.' };
+    }
+
+    // Complete redemption
+    const { error: updateError } = await supabase
+        .from('wallet_items')
+        .update({
+            status: 'redeemed',
+            redeemed_at: new Date().toISOString(),
+            confirmation_token: null,
+            confirmation_expires_at: null
+        })
+        .eq('id', walletItemId);
+
+    if (updateError) {
+        return { success: false, message: 'Failed to confirm redemption' };
+    }
+
+    // Log redemption
+    await supabase.from('redemption_logs').insert({
+        wallet_item_id: walletItemId,
+        user_id: walletItem.user_id,
+        deal_id: walletItem.deal_id
+    });
+
+    // Increment global redemption count
+    await supabase.rpc('increment_deal_redemption', { deal_id_input: walletItem.deal_id });
+
+    return { success: true, message: 'Redemption confirmed!' };
+}
+
+/**
+ * Update user's FCM token for push notifications
+ */
+export async function updateFcmToken(userId: string, fcmToken: string): Promise<void> {
+    const { error } = await supabase
+        .from('profiles')
+        .update({ fcm_token: fcmToken })
+        .eq('id', userId);
+
+    if (error) {
+        console.error('Error updating FCM token:', error);
+    }
+}
