@@ -64,7 +64,8 @@ const CreateDealPage: React.FC = () => {
         storeLocations: [] as { name: string; address: string; city?: string }[],
         countries: [] as string[],
         is_flash_deal: false,
-        flash_end_time: ''
+        flash_end_time: '',
+        maxRedemptionsTotal: '' as string | number, // Added global limit field
     });
 
     const dealTypeConfig = getDiscountTypeConfig(formData.dealTypeKey);
@@ -103,8 +104,10 @@ const CreateDealPage: React.FC = () => {
                             redemptionCode: deal.redemptionCode,
                             redemptionStyle: deal.redemptionStyle || [],
                             storeLocations: deal.storeLocations || [],
+                            storeLocations: deal.storeLocations || [],
                             is_flash_deal: deal.is_flash_deal || false,
-                            flash_end_time: deal.flash_end_time || ''
+                            flash_end_time: deal.flash_end_time || '',
+                            maxRedemptionsTotal: deal.maxRedemptionsTotal || '' // Populate from DB
                         });
 
                         // Check if expires far in the future (approx 100 years)
@@ -302,7 +305,9 @@ const CreateDealPage: React.FC = () => {
                 is_flash_deal: formData.is_flash_deal,
                 flash_end_time: formData.flash_end_time ? new Date(formData.flash_end_time).toISOString() : undefined,
                 dealTypeKey: formData.dealTypeKey,
-                timeType: formData.timeType
+                dealTypeKey: formData.dealTypeKey,
+                timeType: formData.timeType,
+                maxRedemptionsTotal: formData.maxRedemptionsTotal ? parseInt(formData.maxRedemptionsTotal.toString()) : null
             };
 
             if (isEditing && id) {
@@ -501,6 +506,27 @@ const CreateDealPage: React.FC = () => {
                                     <button type="button" onClick={() => { const code = generateRedemptionCode(formData.category, formData.vendor); setFormData(prev => ({ ...prev, redemptionCode: code })); }} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 whitespace-nowrap">
                                         <Save className="w-4 h-4" />Generate
                                     </button>
+                                </div>
+                            </div>
+
+                            {/* Global Redemption Limit */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Total Global Redemptions (Optional)
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="number"
+                                        name="maxRedemptionsTotal"
+                                        min="1"
+                                        value={formData.maxRedemptionsTotal || ''}
+                                        onChange={handleChange}
+                                        placeholder="e.g. 100 (Leave empty for unlimited)"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Limit the total number of times this deal can be redeemed by ALL users combined.
+                                    </p>
                                 </div>
                             </div>
 

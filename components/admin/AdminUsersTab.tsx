@@ -6,7 +6,7 @@ import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem, sendTestNotification } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -71,6 +71,23 @@ const AdminUsersTab: React.FC = () => {
             } catch (error) {
                 console.error('Failed to verify user', error);
                 alert('Failed to verify user. Check console for details.');
+            }
+        }
+    };
+
+    const handleSendTestPush = async (userId: string) => {
+        if (window.confirm('Send a test push notification to this user?')) {
+            try {
+                const result = await sendTestNotification(userId);
+                if (result.success) {
+                    setShowSuccess(result.message);
+                } else {
+                    alert('Failed: ' + result.message);
+                }
+                setTimeout(() => setShowSuccess(''), 3000);
+            } catch (error) {
+                console.error('Failed to send push', error);
+                alert('Error sending push notification');
             }
         }
     };
@@ -578,6 +595,7 @@ const AdminUsersTab: React.FC = () => {
                                                 )}
                                                 <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
                                                 <button onClick={() => handleViewActivityClick(user)} className="font-medium text-purple-500 hover:underline">Activity</button>
+                                                <button onClick={() => handleSendTestPush(user.id)} className="font-medium text-orange-500 hover:underline" title="Send Test Push Notification">Push</button>
                                                 <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
                                                 <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editUser')}</button>
                                                 <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteUser')}</button>

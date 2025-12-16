@@ -97,9 +97,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Listen to auth state changes
+  // Listen to auth state changes AND Realtime Profile Updates
   useEffect(() => {
     let mounted = true;
+    let profileSubscription: any = null;
 
     // Safety timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
@@ -109,11 +110,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }, 5000);
 
+    const setupProfileSubscription = (userId: string) => {
+      if (profileSubscription) supabase.removeChannel(profileSubscription);
+
+      profileSubscription = supabase
+        .channel(`public:profiles:id=eq.${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${userId}`,
+          },
+          async (payload) => {
+            console.log('Profile updated via Realtime:', payload.new);
+            // Reload full profile to get joined data (referrals etc) or just patch local state
+            // For safety, reloading full profile ensures all transforms run
+            const currentUser = (await supabase.auth.getUser()).data.user;
+            if (currentUser && currentUser.id === userId) {
+              await loadUserProfile(currentUser);
+            }
+          }
+        )
+        .subscribe();
+    };
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         try {
           await loadUserProfile(session.user);
+          setupProfileSubscription(session.user.id);
         } catch (err) {
           console.error('Error loading profile in initial session:', err);
         }
@@ -133,11 +161,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
+        if (event === 'SIGNED_IN') {
+          setupProfileSubscription(session.user.id);
+        }
         // We don't await here to avoid blocking UI updates on auth change events
         loadUserProfile(session.user).catch(console.error);
       } else {
+        if (profileSubscription) supabase.removeChannel(profileSubscription);
         setUser(null);
       }
     });
@@ -146,6 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       mounted = false;
       clearTimeout(loadingTimeout);
       subscription.unsubscribe();
+      if (profileSubscription) supabase.removeChannel(profileSubscription);
     };
   }, [loadUserProfile]);
 

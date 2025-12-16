@@ -1801,3 +1801,31 @@ export async function updateFcmToken(userId: string, fcmToken: string): Promise<
         console.error('Error updating FCM token:', error);
     }
 }
+
+/**
+ * Send a test notification to a specific user (Admin Debugging)
+ */
+export async function sendTestNotification(userId: string): Promise<{ success: boolean; message: string }> {
+    try {
+        const { data, error } = await supabase.functions.invoke('send-push-notification', {
+            body: {
+                userId,
+                title: 'Test Notification',
+                body: 'This is a test notification from the Admin Panel.',
+                data: {
+                    type: 'test_notification'
+                }
+            }
+        });
+
+        if (error) {
+            console.error('Test notification function error:', error);
+            return { success: false, message: error.message };
+        }
+
+        return { success: true, message: 'Test notification sent! Check device.' };
+    } catch (error: any) {
+        console.error('Test notification failed:', error);
+        return { success: false, message: error.message };
+    }
+}
