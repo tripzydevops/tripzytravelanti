@@ -795,8 +795,45 @@ const AdminDealsTab: React.FC = () => {
                 <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
-                            <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg"><tr><th scope="col" className="px-6 py-3">Title</th><th scope="col" className="px-6 py-3">Category</th><th scope="col" className="px-6 py-3">Price</th><th scope="col" className="px-6 py-3">Discount</th><th scope="col" className="px-6 py-3">Status</th><th scope="col" className="px-6 py-3">Expires</th><th scope="col" className="px-6 py-3 text-right">Actions</th></tr></thead>
-                            <tbody>{filteredDeals.map(deal => (<tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th><td className="px-6 py-4">{deal.category}</td><td className="px-6 py-4">${deal.discountedPrice}</td><td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td><td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${deal.status === 'approved' ? 'bg-green-100 text-green-800' : deal.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>{deal.status || 'pending'}</span></td><td className="px-6 py-4 text-xs">{new Date(deal.expiresAt).toLocaleDateString()}</td><td className="px-6 py-4 text-right space-x-2"><button onClick={() => updateDeal({ ...deal, status: deal.status === 'approved' ? 'pending' : 'approved' }).then(() => loadAdminDeals(adminPage))} className={`font-medium hover:underline ${deal.status === 'approved' ? 'text-yellow-600' : 'text-green-600'}`}>{deal.status === 'approved' ? 'Suspend' : 'Approve'}</button><button onClick={() => handleCloneDealClick(deal)} className="font-medium text-blue-600 hover:underline">Clone</button><button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button><button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button></td></tr>))}</tbody>
+                            <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">Title</th>
+                                    <th scope="col" className="px-6 py-3">Category</th>
+                                    <th scope="col" className="px-6 py-3">Price</th>
+                                    <th scope="col" className="px-6 py-3">Discount</th>
+                                    <th scope="col" className="px-6 py-3">Redemptions</th>
+                                    <th scope="col" className="px-6 py-3">Status</th>
+                                    <th scope="col" className="px-6 py-3">Expires</th>
+                                    <th scope="col" className="px-6 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredDeals.map(deal => (
+                                    <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th>
+                                        <td className="px-6 py-4">{deal.category}</td>
+                                        <td className="px-6 py-4">${deal.discountedPrice}</td>
+                                        <td className="px-6 py-4">{deal.discountPercentage ? `${deal.discountPercentage}%` : '-'}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="font-mono text-sm font-semibold">
+                                                {deal.redemptionsCount || 0} / {deal.maxRedemptionsTotal ? deal.maxRedemptionsTotal : '∞'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${deal.status === 'approved' ? 'bg-green-100 text-green-800' : deal.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                {deal.status || 'pending'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-xs">{new Date(deal.expiresAt).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 text-right space-x-2">
+                                            <button onClick={() => updateDeal({ ...deal, status: deal.status === 'approved' ? 'pending' : 'approved' }).then(() => loadAdminDeals(adminPage))} className={`font-medium hover:underline ${deal.status === 'approved' ? 'text-yellow-600' : 'text-green-600'}`}>{deal.status === 'approved' ? 'Suspend' : 'Approve'}</button>
+                                            <button onClick={() => handleCloneDealClick(deal)} className="font-medium text-blue-600 hover:underline">Clone</button>
+                                            <button onClick={() => handleEditDealClick(deal)} className="font-medium text-brand-secondary hover:underline">Edit</button>
+                                            <button onClick={() => handleDeleteDealClick(deal.id)} className="font-medium text-red-500 hover:underline">Delete</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
                         </table>
                     </div>
                     {/* Pagination Controls */}

@@ -241,43 +241,8 @@ export async function updateAllUsersNotificationPreferences(prefs: Partial<UserN
 
 
 // Helper function to transform database deal to app format
-function transformDealFromDB(dbDeal: DBDeal): Deal {
-    return {
-        // ... (existing fields)
-        id: dbDeal.id,
-        title: dbDeal.title,
-        title_tr: dbDeal.title_tr,
-        description: dbDeal.description,
-        description_tr: dbDeal.description_tr,
-        imageUrl: dbDeal.image_url,
-        category: dbDeal.category,
-        category_tr: dbDeal.category_tr,
-        originalPrice: dbDeal.original_price,
-        discountedPrice: dbDeal.discounted_price,
-        discountPercentage: dbDeal.discount_percentage,
-        requiredTier: dbDeal.required_tier as SubscriptionTier,
-        isExternal: dbDeal.is_external,
-        vendor: dbDeal.vendor,
-        expiresAt: dbDeal.expires_at,
-        rating: dbDeal.rating,
-        ratingCount: dbDeal.rating_count,
-        usageLimit: dbDeal.usage_limit,
-        usageLimit_tr: dbDeal.usage_limit_tr,
-        validity: dbDeal.validity,
-        validity_tr: dbDeal.validity_tr,
-        termsUrl: dbDeal.terms_url,
-        redemptionCode: dbDeal.redemption_code,
-        partnerId: dbDeal.partner_id,
-        companyLogoUrl: dbDeal.company_logo_url,
-        status: dbDeal.status,
-        publishAt: dbDeal.publish_at,
-        redemptionStyle: dbDeal.redemption_style,
-        is_flash_deal: dbDeal.is_flash_deal,
-        flash_end_time: dbDeal.flash_end_time,
-        dealTypeKey: dbDeal.deal_type_key as any,
-        timeType: dbDeal.time_type as any,
-        maxRedemptionsTotal: dbDeal.max_redemptions_total,
-        redemptionsCount: dbDeal.redemptions_count || 0,
+maxRedemptionsTotal: dbDeal.max_redemptions_total,
+    redemptionsCount: dbDeal.redemptions_count || 0,
         isSoldOut: dbDeal.is_sold_out
     };
 }
