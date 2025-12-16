@@ -139,32 +139,32 @@ const AdminUsersTab: React.FC = () => {
         setEditingUser(user);
 
         // Fetch User's Deals (Wallet)
+        let userDeals: string[] = [];
         try {
             const savedDeals = await import('../../lib/supabaseService').then(m => m.getSavedDeals(user.id));
             setUserWalletDeals(savedDeals);
-            // We still keep IDs in formData for reference if needed, but UI uses userWalletDeals
-            const userDeals = savedDeals.map(d => d.id);
-            setUserFormData({
-                ...user,
-                savedDeals: [], // Not used in form logic below but good for type safety
-                ownedDeals: userDeals, // We'll use this state for the UI list
-                referrals: user.referrals || [],
-                referralChain: user.referralChain || [],
-                referralNetwork: user.referralNetwork || [],
-                extraRedemptions: user.extraRedemptions || 0,
-                address: user.address || '',
-                billingAddress: user.billingAddress || '',
-                referredBy: user.referredBy || '',
-            });
-            setDealToAdd('');
-            setRedemptionsToAdd(0);
-            setIsUserFormVisible(true);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            userDeals = savedDeals.map(d => d.id);
         } catch (error) {
             console.error('Failed to fetch user deals', error);
             // Even if deals fail, at least open the user form
-            setIsUserFormVisible(true);
         }
+
+        setUserFormData({
+            ...user,
+            savedDeals: [], // Not used in form logic below but good for type safety
+            ownedDeals: userDeals, // Now safely defined
+            referrals: user.referrals || [],
+            referralChain: user.referralChain || [],
+            referralNetwork: user.referralNetwork || [],
+            extraRedemptions: user.extraRedemptions || 0,
+            address: user.address || '',
+            billingAddress: user.billingAddress || '',
+            referredBy: user.referredBy || '',
+        });
+        setDealToAdd('');
+        setRedemptionsToAdd(0);
+        setIsUserFormVisible(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDeleteUserClick = async (userId: string) => {

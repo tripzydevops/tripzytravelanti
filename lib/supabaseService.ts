@@ -698,11 +698,13 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         // INCREMENT GLOBAL REDEMPTION COUNT ONLY IF NOT OWNED
         // (If it was in wallet, it was counted at 'saveDeal' time)
         if (!isOwned) {
-            const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+            try {
+                const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
 
-            if (updateError) {
-                // Fallback to direct update if RPC doesn't exist
-                console.warn('RPC increment_redemptions_count failed, falling back to direct update:', updateError);
+                if (updateError) throw updateError;
+            } catch (rpcError) {
+                // Fallback to direct update if RPC doesn't exist or fails
+                console.warn('RPC increment_redemptions_count failed, falling back to direct update:', rpcError);
 
                 // Fetch latest count first if we don't have it (or if it's stale)
                 const { data: currentDeal } = await supabase
