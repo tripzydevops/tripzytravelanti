@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "984573371529",
+    "project_id": "travel-c8012",
+    "storage_bucket": "travel-c8012.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:984573371529:android:29b41bb6f779fe56665258",
+        "android_client_info": {
+          "package_name": "com.tripzy.travel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXW8qcZe5c3PWpEVBCwaP5t96z9x7GYo8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
