@@ -1925,20 +1925,4 @@ export async function sendTestNotification(userId: string): Promise<{ success: b
     }
 }
 
-// =====================================================
-// HELPER FOR ADMIN
-// =====================================================
 
-export async function getWalletItems(userId: string) {
-    const { data, error } = await supabase
-        .from('user_deals')
-        .select('*, deal:deals(*)')
-        .eq('user_id', userId);
-
-    if (error) {
-        console.error('Error fetching wallet items:', error);
-        return [];
-    }
-
-    return data;
-}
