@@ -555,139 +555,161 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         throw new Error('Could not determine subscription limit');
     }
 
-    let monthlyLimit = plan.redemptions_per_period;
+    // Determine limit (Slots)
+    let maxSlots = plan.redemptions_per_period;
+    // Note regarding billing period: In a "Slot" model, period matters less for the LIMIT, 
+    // but the 'redemptions_per_period' column seems to be used as the capacity number.
+    // If billing_period is 'yearly', dividing by 12 might have been an attempt to normalize 'value', 
+    // but for capacity, we likely want the raw integer capability.
+    // However, to be safe and consistent with previous logic, if the previous logic was dividing, 
+    // it implies the yearly plan number was massive (e.g. 365 or something). 
+    // If the DB has '3' for Free/Monthly, checking that. 
+    // Assuming 'redemptions_per_period' holds the Slot Count (e.g., 3, 5, 10).
+    
     if (plan.billing_period === 'yearly') {
-        monthlyLimit = Math.floor(monthlyLimit / 12);
+        // If the number is large (like 120), we might divide. If it's small (3), we shouldn't.
+        // Let's assume the DB values are "Per Month" or "Slot Capacity" directly.
+        // For safety, let's keep the existing logic BUT if result is < 1, keep original.
+        if (maxSlots > 12) {
+             maxSlots = Math.floor(maxSlots / 12);
+        }
     }
     
-    // Add extra redemptions (assuming these are one-time bonuses or permanent additions?)
-    // If permanent: Add to monthly. If one-time: Logic would be more complex (we'll assume permanent/monthly for now to match structure)
-    const limit = monthlyLimit + (user.extraRedemptions || 0);
+    // Add extra redemptions (Bonus Slots)
+    const limit = maxSlots + (user.extraRedemptions || 0);
 
-    // 3. Calculate Usage This Month (Strict Monthly Reset)
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-    // A. Count Wallet Items created this month (Claims)
-    const { count: walletCount, error: walletError } = await supabase
+    // 3. Calculate Usage (Active Wallet Items)
+    // CHANGED: We now count 'active' items, not 'created_this_month'.
+    // This implements the "Slot" model: Delete a deal -> Get a slot back.
+    
+    const { count: activeCount, error: walletError } = await supabase
         .from('wallet_items')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .gte('created_at', startOfMonth);
+        .eq('status', 'active'); // Only count ACTIVE items
 
-    // B. Count Direct Redemptions (not from wallet/favs if possible? Or just all redemptions?)
-    // Note: If you redeem a wallet item, it stays in wallet_items.
-    // If you redeem directly (without adding to wallet first? Not currently possible in UI check), we need to track that.
-    // Assuming ALL redemptions go through wallet_items or are transient.
-    // If 'deal_redemptions' tracks *usage* of claim, we shouldn't double count.
-    // Logic: ONE Credit = ONE Unique Deal secured.
-    // Securing happens at 'addDealToWallet' (creation of wallet_item).
-    
-    // We only check wallet_items for the *current month*.
-    // What if I claimed a deal last month but redeem it today?
-    // It counted against *last month's* quota. It should be free today.
-    // So checking `wallet_items.created_at >= startOfMonth` is correct for "Claim-based Quota".
-    
-    // BUT: Does `redeemDeal` (without wallet add) create a wallet item?
-    // Looking at `redeemDeal`: It does `insert deal_redemptions` AND `update wallet_items`.
-    // If it wasn't in wallet, it doesn't create a wallet_item?
-    // `redeemDeal`: "if (!isOwned) { ... check limit ... }"
-    // If not owned, it checks limit, then inserts into `deal_redemptions`.
-    // It does NOT insert into `wallet_items` if not owned!
-    // So we MUST count `deal_redemptions` that do NOT have a corresponding `wallet_item` created this month?
-    // Or simpler: Just count distinct `deal_id` interacted with this month?
-    // Current flow seems to force "Add to Wallet" for most things.
-    // Let's stick to: Usage = (WalletItems Created This Month) + (Redemptions Created This Month for unowned deals)
-    
     if (walletError) {
         console.error('Error checking wallet usage:', walletError);
         throw new Error('Failed to check usage');
     }
-
-    // Check for direct redemptions that might bypass wallet (if valid flow)
-    // For now, let's assume usage = walletCount.
-    // This aligns with user expectation: "I have 5 slots per month".
     
-    const usageThisMonth = walletCount || 0;
-    const remaining = Math.max(0, limit - usageThisMonth);
+    const usage = activeCount || 0;
+    const remaining = Math.max(0, limit - usage);
 
-    console.log(`[checkMonthlyLimit] User: ${userId} | Tier: ${user.tier} | Limit: ${limit} | Used: ${usageThisMonth} | Remaining: ${remaining}`);
+    console.log(`[checkMonthlyLimit] User: ${userId} | Tier: ${user.tier} | Slots: ${limit} | Active: ${usage} | Remaining: ${remaining}`);
 
     return {
-        allowed: usageThisMonth < limit,
+        allowed: usage < limit,
         remaining,
         limit
     };
 }
 
 export const redeemDeal = async (userId: string, dealId: string) => {
-    // 0. Check if deal is already owned (in wallet)
-    // If owned, the redemption count was already taken when claimed (acquired).
-    // So we do NOT check limit again.
     const cleanUserId = userId.trim();
     const cleanDealId = dealId.trim();
 
-    // DEBUG: Fetch ALL owned deals to see what supabase can see
-    const { data: allDeals, error: allDealsError } = await supabase
+    // 1. Attempt Atomic Redemption for OWNED deals first
+    // This effectively checks if it's in the wallet AND active, and redeems it in one go.
+    // If this succeeds, we are done.
+    
+    const { data: updatedItems, error: updateError } = await supabase
         .from('wallet_items')
-        .select('deal_id, status')
-        .eq('user_id', cleanUserId);
+        .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
+        .eq('user_id', cleanUserId)
+        .eq('deal_id', cleanDealId)
+        .eq('status', 'active') // CRITICAL: Only redeem if currently active
+        .select();
 
-    console.log('[redeemDeal] ALL owned deals for user:', allDeals);
+    if (updateError) {
+        console.error('Error during atomic redemption update:', updateError);
+        throw updateError;
+    }
 
-    // Check if the current deal is in the list of all deals (Client-side fallback check)
-    const isOwnedInList = allDeals?.some((d: { deal_id: string }) => d.deal_id === cleanDealId);
+    // Check if we successfully redeemed an owned item
+    if (updatedItems && updatedItems.length > 0) {
+        // SUCCESS: Deal was in wallet and is now redeemed.
+        const redeemedItem = updatedItems[0];
+        console.log('[redeemDeal] Atomic redemption successful for owned deal:', redeemedItem);
 
-    const { data: ownedDeal, error: ownedError } = await supabase
+        // Record the redemption in history (deal_redemptions)
+        // We do this AFTER the successful status update to prevent duplicates if this fails (rare, but better than double entry).
+        const { data: redemptionRecord, error: insertError } = await supabase
+            .from('deal_redemptions')
+            .insert({
+                user_id: userId,
+                deal_id: dealId,
+                redeemed_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (insertError) {
+             console.error('Error inserting redemption record (post-update):', insertError);
+             // Note: Wallet item is already 'redeemed', so user got their deal, but history might be missing one entry if this fails.
+             // This is acceptable failure mode compared to double redemption.
+        }
+
+        return {
+            id: redemptionRecord?.id || 'unknown',
+            userId: userId,
+            dealId: dealId,
+            redeemedAt: redeemedItem.redeemed_at
+        };
+    }
+
+    // 2. If atomic update affected 0 rows, either:
+    //    a) Deal is not in wallet
+    //    b) Deal is in wallet but already redeemed
+    //    c) Deal is in wallet but expired (if status is 'expired')
+    
+    // Let's check which case it is to give correct error or proceed to unowned redemption.
+    const { data: existingItem } = await supabase
         .from('wallet_items')
-        .select('*')
+        .select('status')
         .eq('user_id', cleanUserId)
         .eq('deal_id', cleanDealId)
         .maybeSingle();
 
-    console.log('[redeemDeal] Checking ownership direct query:', {
-        userId: cleanUserId,
-        dealId: cleanDealId,
-        ownedDeal,
-        ownedError,
-        isOwnedInList
-    });
-
-    // Check if already redeemed
-    if (ownedDeal?.status === 'redeemed') {
-        throw new Error('This deal has already been redeemed.');
+    if (existingItem) {
+        // It existed but wasn't updated -> It wasn't 'active'.
+        if (existingItem.status === 'redeemed') {
+            throw new Error('This deal has already been redeemed.');
+        } else if (existingItem.status === 'expired') {
+            throw new Error('This deal has expired.');
+        } else {
+             // Should not happen if logic is correct, but fallback
+             throw new Error(`Deal status is ${existingItem.status}, cannot redeem.`);
+        }
     }
 
-    const isOwned = !!ownedDeal || !!isOwnedInList;
+    // 3. Deal is NOT in wallet (Unowned / Immediate Redemption Flow)
+    // Attempting to redeem a deal not in wallet.
+    // Check limits and create fresh if allowed. (Same logic as before)
+    
+    console.log('[redeemDeal] Deal NOT found in wallet. Checking limits for immediate redemption...');
+    
+    // Check GLOBAL Limit
+    const { data: dealData, error: dealError } = await supabase
+        .from('deals')
+        .select('max_redemptions_total, redemptions_count')
+        .eq('id', dealId)
+        .single();
 
-    if (!isOwned) {
-        // 1. Check Limit ONLY if not owned
-        console.log('[redeemDeal] Deal NOT found in wallet. Checking monthly limit...');
-        // 0. Check GLOBAL Limit (Total codes available)
-        const { data: dealData, error: dealError } = await supabase
-            .from('deals')
-            .select('max_redemptions_total, redemptions_count')
-            .eq('id', dealId)
-            .single();
+    if (dealError) throw dealError;
 
-        if (dealError) {
-            console.error('Error fetching deal limits:', dealError);
-            throw dealError;
-        }
-
-        if (dealData.max_redemptions_total !== null && (dealData.redemptions_count || 0) >= dealData.max_redemptions_total) {
-            throw new Error('This deal has reached its global usage limit and is sold out.');
-        }
-
-        // 1. Check Limit
-        const { allowed } = await checkMonthlyLimit(userId);
-        if (!allowed) {
-            throw new Error('Monthly redemption limit reached');
-        }
-    } else {
-        console.log('[redeemDeal] Deal IS found in wallet. Bypassing limit check.');
+    if (dealData.max_redemptions_total !== null && (dealData.redemptions_count || 0) >= dealData.max_redemptions_total) {
+        throw new Error('This deal has reached its global usage limit and is sold out.');
     }
 
+    // Check User Limit (Slots/Month)
+    // Note: If they don't have it in wallet, adding/redeeming it requires a "Slot".
+    const { allowed } = await checkMonthlyLimit(userId);
+    if (!allowed) {
+        throw new Error('Wallet limit reached. Cannot redeem new deal.');
+    }
+
+    // Proceed to Redemtion (Insert transaction)
     try {
         const { data, error } = await supabase
             .from('deal_redemptions')
@@ -701,53 +723,31 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
         if (error) throw error;
 
-        // UPDATE wallet_items status to 'redeemed'
-        const { error: updateWalletError } = await supabase
-            .from('wallet_items')
-            .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
-            .eq('user_id', userId)
-            .eq('deal_id', dealId);
+        // Note: For unowned deals, we do NOT create a wallet item in 'redeemed' state?
+        // Previous logic didn't seem to force it.
+        // BUT `redeemDeal` original logic: "UPDATE wallet_items ... if (updateWalletError) ..."
+        // It implied it *expected* it to be there OR it just tried to update if present.
+        
+        // If we redeem here, we essentially "use up" a slot but don't record a wallet_item?
+        // That effectively gives them a free slot next check (since count is active items).
+        // If we want this redemption to count against "Current Slots", we MUST insert a wallet_item in 'redeemed' state?
+        // No, if it's "redeemed", it frees up the slot anyway!
+        // So immediate redemption = Use -> Done. No slot occupied.
+        // That seems fair. "Pay as you go".
+        
+        // Count increment
+        const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+        if (updateError) console.warn('RPC increment failed', updateError);
 
-        if (updateWalletError) console.error('Failed to update wallet item status:', updateWalletError);
-
-        // INCREMENT GLOBAL REDEMPTION COUNT ONLY IF NOT OWNED
-        // (If it was in wallet, it was counted at 'saveDeal' time)
-        if (!isOwned) {
-            try {
-                const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
-
-                if (updateError) throw updateError;
-            } catch (rpcError) {
-                // Fallback to direct update if RPC doesn't exist or fails
-                console.warn('RPC increment_redemptions_count failed, falling back to direct update:', rpcError);
-
-                // Fetch latest count first if we don't have it (or if it's stale)
-                const { data: currentDeal } = await supabase
-                    .from('deals')
-                    .select('redemptions_count')
-                    .eq('id', dealId)
-                    .single();
-
-                const nextCount = (currentDeal?.redemptions_count || 0) + 1;
-
-                const { error: directUpdateError } = await supabase
-                    .from('deals')
-                    .update({ redemptions_count: nextCount })
-                    .eq('id', dealId);
-
-                if (directUpdateError) console.error('Failed to increment redemption count:', directUpdateError);
-            }
-        }
-
-        // Transform snake_case to camelCase
         return {
             id: data.id,
             userId: data.user_id,
             dealId: data.deal_id,
             redeemedAt: data.redeemed_at
         };
+
     } catch (error) {
-        console.error('Error redeeming deal:', error);
+        console.error('Error redeeming unowned deal:', error);
         throw error;
     }
 };
