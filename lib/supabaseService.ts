@@ -37,6 +37,7 @@ interface DBDeal {
     deal_type_key?: string;
     time_type?: string;
     max_redemptions_total?: number;
+    max_user_redemptions?: number;
     redemptions_count?: number;
     is_sold_out?: boolean;
 }
@@ -276,6 +277,7 @@ function transformDealFromDB(dbDeal: any): Deal {
         dealTypeKey: dbDeal.deal_type_key as any,
         timeType: dbDeal.time_type as any,
         maxRedemptionsTotal: dbDeal.max_redemptions_total,
+        maxRedemptionsUser: dbDeal.max_user_redemptions,
         redemptionsCount: dbDeal.redemptions_count || 0,
         isSoldOut: dbDeal.is_sold_out
     };
@@ -315,6 +317,7 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         deal_type_key: deal.dealTypeKey,
         time_type: deal.timeType,
         max_redemptions_total: deal.maxRedemptionsTotal,
+        max_user_redemptions: deal.maxRedemptionsUser,
         latitude: deal.latitude,
         longitude: deal.longitude,
         store_locations: deal.storeLocations
@@ -366,6 +369,7 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
     if (updates.dealTypeKey) dbUpdates.deal_type_key = updates.dealTypeKey;
     if (updates.timeType) dbUpdates.time_type = updates.timeType;
     if (updates.maxRedemptionsTotal !== undefined) dbUpdates.max_redemptions_total = updates.maxRedemptionsTotal;
+    if (updates.maxRedemptionsUser !== undefined) dbUpdates.max_user_redemptions = updates.maxRedemptionsUser;
     if (updates.latitude !== undefined) dbUpdates.latitude = updates.latitude;
     if (updates.longitude !== undefined) dbUpdates.longitude = updates.longitude;
     if (updates.storeLocations !== undefined) dbUpdates.store_locations = updates.storeLocations;
@@ -557,19 +561,14 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
 
     // Determine limit (Slots)
     let maxSlots = plan.redemptions_per_period;
-    // Note regarding billing period: In a "Slot" model, period matters less for the LIMIT, 
-    // but the 'redemptions_per_period' column seems to be used as the capacity number.
-    // If billing_period is 'yearly', dividing by 12 might have been an attempt to normalize 'value', 
-    // but for capacity, we likely want the raw integer capability.
-    // However, to be safe and consistent with previous logic, if the previous logic was dividing, 
-    // it implies the yearly plan number was massive (e.g. 365 or something). 
-    // If the DB has '3' for Free/Monthly, checking that. 
-    // Assuming 'redemptions_per_period' holds the Slot Count (e.g., 3, 5, 10).
 
-    if (plan.billing_period === 'yearly') {
-        // If the number is large (like 120), we might divide. If it's small (3), we shouldn't.
-        // Let's assume the DB values are "Per Month" or "Slot Capacity" directly.
-        // For safety, let's keep the existing logic BUT if result is < 1, keep original.
+    // Check for Admin Override (wallet_limit)
+    if (user.walletLimit !== undefined && user.walletLimit !== null) {
+        maxSlots = user.walletLimit;
+    }
+
+    if (plan.billing_period === 'yearly' && (!user.walletLimit)) {
+        // Only divide if NO override was present (assuming override is absolute)
         if (maxSlots > 12) {
             maxSlots = Math.floor(maxSlots / 12);
         }
@@ -692,7 +691,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     // Check Global Limit
     const { data: dealData, error: dealError } = await supabase
         .from('deals')
-        .select('max_redemptions_total, redemptions_count, usage_limit')
+        .select('max_redemptions_total, redemptions_count, usage_limit, max_user_redemptions')
         .eq('id', dealId)
         .single();
 
@@ -702,8 +701,31 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         throw new Error('This deal has reached its global usage limit and is sold out.');
     }
 
-    // CHECK "Use Once Per User" LIMIT
-    if (dealData.usage_limit === '1') {
+    // CHECK PER-USER LIMIT (RESETS MONTHLY)
+    // Priority 1: New Integer Column
+    if (dealData.max_user_redemptions !== null && dealData.max_user_redemptions > 0) {
+        // Get start of current month
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const { count: monthlyRedemptions, error: redemptionCheckError } = await supabase
+            .from('deal_redemptions')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', cleanUserId)
+            .eq('deal_id', cleanDealId)
+            .gte('redeemed_at', startOfMonth); // Only count this month
+
+        if (redemptionCheckError) {
+            console.error('Error checking past redemptions:', redemptionCheckError);
+        } else {
+            const userCount = monthlyRedemptions || 0;
+            if (userCount >= dealData.max_user_redemptions) {
+                throw new Error(`You have reached the monthly redemption limit for this deal (${dealData.max_user_redemptions} per month).`);
+            }
+        }
+    }
+    // Priority 2: Legacy String Check (Fallback - Remains Lifetime/One-time)
+    else if (dealData.usage_limit === '1') {
         const { count: pastRedemptions, error: redemptionCheckError } = await supabase
             .from('deal_redemptions')
             .select('id', { count: 'exact', head: true })
@@ -740,9 +762,13 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
         if (error) throw error;
 
-        // Count increment
+        // Count increment using NEW RPC
         const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
-        if (updateError) console.warn('RPC increment failed', updateError);
+        if (updateError) {
+            console.warn('RPC increment_redemptions_count failed', updateError);
+            // Verify if it's 404 - if so, it means function missing.
+            // But we just created it.
+        }
 
         return {
             id: data.id,

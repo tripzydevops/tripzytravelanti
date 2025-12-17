@@ -151,6 +151,36 @@ describe('Wallet Logic', () => {
             expect(result.remaining).toBe(0);
         });
 
+        it('should respect admin walletLimit override', async () => {
+            const mockUser = {
+                id: mockUserId,
+                tier: SubscriptionTier.FREE,
+                extra_redemptions: 0, // snake_case for DB
+                wallet_limit: 20 // snake_case for DB
+            };
+            const mockPlan = {
+                redemptions_per_period: 5,
+                billing_period: 'monthly',
+            };
+            const walletChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                then: (resolve: any) => resolve({ count: 5, error: null }), // Used 5
+            };
+
+            (supabase.from as any).mockImplementation((table: string) => {
+                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
+                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
+                if (table === 'wallet_items') return walletChain;
+                return { select: vi.fn() };
+            });
+
+            const result = await checkMonthlyLimit(mockUserId);
+            expect(result.limit).toBe(20); // Should use override, not plan (5)
+            expect(result.allowed).toBe(true);
+            expect(result.remaining).toBe(15);
+        });
+
         it('should allow unlimited redemptions for VIP users', async () => {
             // Skip implementation detail test for VIP if we trust the main logic handles huge numbers ok
         });
@@ -259,6 +289,59 @@ describe('Wallet Logic', () => {
             });
 
             await expect(redeemDeal(mockUserId, mockDealId)).rejects.toThrow('already been redeemed');
+        });
+
+        it('should strictly enforce max_user_redemptions (per month)', async () => {
+            // Mock atomic update returning EMPTY (not in wallet)
+            const walletChain: any = {
+                update: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                select: vi.fn().mockImplementation((...args) => {
+                    if (args.length > 0) return walletChain;
+                    return { data: [], error: null };
+                }),
+                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
+
+            const dealChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({
+                    data: {
+                        max_redemptions_total: 100,
+                        max_user_redemptions: 1, // 1 Per Month
+                        redemptions_count: 5
+                    },
+                    error: null
+                })
+            };
+
+            // Mock past redemptions count check -> Returns 1 for THIS MONTH
+            const redemptionsQueryChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                gte: vi.fn().mockReturnThis(), // Check for date filter
+                then: (resolve: any) => resolve({ count: 1, error: null })
+            };
+
+            (supabase.from as any).mockImplementation((table: string) => {
+                if (table === 'wallet_items') return walletChain;
+                if (table === 'deals') return dealChain;
+                // We need to differentiate the INSERT into deal_redemptions vs SELECT from it
+                if (table === 'deal_redemptions') {
+                    // Since we can't easily distinguish in this simple mock without more state,
+                    // We will assume the FIRST call is the check.
+                    // But wait, the code does: .select('id', { count: 'exact'... })
+                    // The chain has 'then' which returns count.
+                    return redemptionsQueryChain;
+                }
+                return { select: vi.fn() };
+            });
+
+            await expect(redeemDeal(mockUserId, mockDealId)).rejects.toThrow(/monthly redemption limit/);
+
+            // Verify date filter was applied
+            expect(redemptionsQueryChain.gte).toHaveBeenCalledWith('redeemed_at', expect.any(String));
         });
 
         it('should proceed to unowned redemption checks if deal not in wallet', async () => {

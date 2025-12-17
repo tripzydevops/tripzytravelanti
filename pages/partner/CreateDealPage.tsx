@@ -65,7 +65,8 @@ const CreateDealPage: React.FC = () => {
         countries: [] as string[],
         is_flash_deal: false,
         flash_end_time: '',
-        maxRedemptionsTotal: '' as string | number, // Added global limit field
+        maxRedemptionsTotal: '' as string | number,
+        maxRedemptionsUser: '' as string | number, // Added user limit field
     });
 
     const dealTypeConfig = getDiscountTypeConfig(formData.dealTypeKey);
@@ -106,7 +107,8 @@ const CreateDealPage: React.FC = () => {
                             storeLocations: deal.storeLocations || [],
                             is_flash_deal: deal.is_flash_deal || false,
                             flash_end_time: deal.flash_end_time || '',
-                            maxRedemptionsTotal: deal.maxRedemptionsTotal || '' // Populate from DB
+                            maxRedemptionsTotal: deal.maxRedemptionsTotal || '',
+                            maxRedemptionsUser: deal.maxRedemptionsUser || ''
                         });
 
                         // Check if expires far in the future (approx 100 years)
@@ -305,7 +307,8 @@ const CreateDealPage: React.FC = () => {
                 flash_end_time: formData.flash_end_time ? new Date(formData.flash_end_time).toISOString() : undefined,
                 dealTypeKey: formData.dealTypeKey,
                 timeType: formData.timeType,
-                maxRedemptionsTotal: formData.maxRedemptionsTotal ? parseInt(formData.maxRedemptionsTotal.toString()) : null
+                maxRedemptionsTotal: formData.maxRedemptionsTotal ? parseInt(formData.maxRedemptionsTotal.toString()) : null,
+                maxRedemptionsUser: formData.maxRedemptionsUser ? parseInt(formData.maxRedemptionsUser.toString()) : null
             };
 
             if (isEditing && id) {
@@ -524,6 +527,27 @@ const CreateDealPage: React.FC = () => {
                                     />
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         Limit the total number of times this deal can be redeemed by ALL users combined.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* User Redemption Limit */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Max Redemptions Per User (Monthly)
+                                </label>
+                                <div className="flex flex-col">
+                                    <input
+                                        type="number"
+                                        name="maxRedemptionsUser"
+                                        min="1"
+                                        value={formData.maxRedemptionsUser || ''}
+                                        onChange={handleChange}
+                                        placeholder="e.g. 1 (Default: Unlimited if empty)"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Limit how many times a SINGLE user can redeem this deal PER CALENDAR MONTH.
                                     </p>
                                 </div>
                             </div>

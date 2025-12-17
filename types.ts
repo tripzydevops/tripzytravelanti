@@ -100,6 +100,7 @@ export interface Deal {
   dealTypeKey?: 'percentage_off' | 'fixed_amount_off' | 'fixed_price' | 'bogo' | 'bundle' | 'free_gift' | 'cashback' | 'custom';
   timeType?: 'standard' | 'flash' | 'daily' | 'weekend' | 'seasonal' | 'evergreen';
   maxRedemptionsTotal?: number | null;
+  maxRedemptionsUser?: number | null; // Limit per user (e.g. 1)
   redemptionsCount?: number;
   isSoldOut?: boolean;
 }
