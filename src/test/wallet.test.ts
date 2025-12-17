@@ -133,6 +133,98 @@ describe('Wallet Logic', () => {
             expect(result.remaining).toBe(0);
             expect(result.limit).toBe(3);
         });
+
+        it('should allow unlimited redemptions for VIP users', async () => {
+            // Mock User Profile
+            const mockUser = {
+                id: mockUserId,
+                tier: SubscriptionTier.VIP,
+                extraRedemptions: 0,
+            };
+
+            // Mock Plan Limit (VIP usually has high number or specific logic, checking implementation behavior)
+            // If code relies on plan, we mock it.
+            const mockPlan = {
+                redemptions_per_period: 999999, // VIP usually high
+                billing_period: 'monthly',
+            };
+
+            const mockUsageCount = 1000;
+
+            (supabase.from as any).mockImplementation((table: string) => {
+                if (table === 'profiles') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        single: vi.fn().mockResolvedValue({ data: mockUser, error: null }),
+                    };
+                }
+                if (table === 'subscription_plans') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }),
+                    };
+                }
+                if (table === 'wallet_items') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        gte: vi.fn().mockResolvedValue({ count: mockUsageCount, error: null }),
+                    };
+                }
+                return { select: vi.fn() };
+            });
+
+            const result = await checkMonthlyLimit(mockUserId);
+            expect(result.allowed).toBe(true);
+        });
+
+        it('should correctly calculate yearly billing monthly limit', async () => {
+            // Mock User Profile
+            const mockUser = {
+                id: mockUserId,
+                tier: SubscriptionTier.BASIC,
+                extraRedemptions: 0,
+            };
+
+            // Mock Plan Limit (Yearly)
+            const mockPlan = {
+                redemptions_per_period: 120, // 120 per year = 10 per month
+                billing_period: 'yearly',
+            };
+
+            const mockUsageCount = 5;
+
+            (supabase.from as any).mockImplementation((table: string) => {
+                if (table === 'profiles') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        single: vi.fn().mockResolvedValue({ data: mockUser, error: null }),
+                    };
+                }
+                if (table === 'subscription_plans') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }),
+                    };
+                }
+                if (table === 'wallet_items') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        gte: vi.fn().mockResolvedValue({ count: mockUsageCount, error: null }),
+                    };
+                }
+                return { select: vi.fn() };
+            });
+
+            const result = await checkMonthlyLimit(mockUserId);
+            expect(result.limit).toBe(10); // 120 / 12
+            expect(result.allowed).toBe(true);
+        });
     });
 
     describe('redeemDeal', () => {
@@ -156,6 +248,33 @@ describe('Wallet Logic', () => {
             });
 
             await expect(redeemDeal(mockUserId, mockDealId)).rejects.toThrow('already been redeemed');
+        });
+
+        it('should throw error if global max redemptions reached', async () => {
+            // Mock NOT owned
+            (supabase.from as any).mockImplementation((table: string) => {
+                if (table === 'wallet_items') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                        some: vi.fn().mockReturnValue(false),
+                    };
+                }
+                if (table === 'deals') {
+                    return {
+                        select: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        single: vi.fn().mockResolvedValue({
+                            data: { max_redemptions_total: 100, redemptions_count: 100 },
+                            error: null
+                        }),
+                    };
+                }
+                return { select: vi.fn() };
+            });
+
+            await expect(redeemDeal(mockUserId, mockDealId)).rejects.toThrow('limit and is sold out');
         });
     });
 });
