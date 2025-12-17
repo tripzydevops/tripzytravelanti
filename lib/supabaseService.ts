@@ -106,6 +106,32 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     }
 }
 
+export async function resetUserHistory(userId: string) {
+    // 1. Delete all wallet items for this user
+    const { error: walletError } = await supabase
+        .from('wallet_items')
+        .delete()
+        .eq('user_id', userId);
+
+    if (walletError) {
+        console.error('Error clearing wallet items:', walletError);
+        throw walletError;
+    }
+
+    // 2. Delete all redemption history for this user
+    const { error: redemptionError } = await supabase
+        .from('deal_redemptions')
+        .delete()
+        .eq('user_id', userId);
+
+    if (redemptionError) {
+        console.error('Error clearing redemption history:', redemptionError);
+        throw redemptionError;
+    }
+
+    return { success: true };
+}
+
 export async function deleteUserProfile(userId: string) {
     // 1. Delete associated data (if not handled by cascade)
     // Supabase cascade rules should handle most, but explicit deletion is safer

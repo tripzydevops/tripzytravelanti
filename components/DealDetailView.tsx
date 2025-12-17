@@ -139,7 +139,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             // Fetch active deals count for wallet capacity check
             supabase
-                .from('user_deals')
+                .from('wallet_items')
                 .select('id', { count: 'exact' })
                 .eq('user_id', user.id)
                 .eq('status', 'active')

@@ -6,7 +6,7 @@ import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem, sendTestNotification } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem, sendTestNotification, resetUserHistory } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -88,6 +88,20 @@ const AdminUsersTab: React.FC = () => {
             } catch (error) {
                 console.error('Failed to send push', error);
                 alert('Error sending push notification');
+            }
+        }
+    };
+
+    const handleResetHistory = async (userId: string) => {
+        if (window.confirm('WARNING: This will wipe ALL wallet items and redemption history for this user. This is for testing only. Continue?')) {
+            try {
+                await resetUserHistory(userId);
+                setShowSuccess('User history wiped successfully');
+                setTimeout(() => setShowSuccess(''), 3000);
+                fetchUsersData();
+            } catch (error) {
+                console.error('Failed to reset history', error);
+                alert('Failed to reset history');
             }
         }
     };
@@ -694,6 +708,7 @@ const AdminUsersTab: React.FC = () => {
                                                     <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
                                                     <button onClick={() => handleViewActivityClick(user)} className="font-medium text-purple-500 hover:underline">Activity</button>
                                                     <button onClick={() => handleSendTestPush(user.id)} className="font-medium text-orange-500 hover:underline" title="Send Test Push Notification">Push</button>
+                                                    <button onClick={() => handleResetHistory(user.id)} className="font-medium text-red-600 hover:underline" title="Wipe Wallet & Redemptions">Reset</button>
                                                     <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
                                                     <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editUser')}</button>
                                                     <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteUser')}</button>
