@@ -107,25 +107,41 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
 }
 
 export async function resetUserHistory(userId: string) {
-    // 1. Delete all wallet items for this user
+    console.log('Starting history reset for:', userId);
+
+    // 0. Delete from redemption_logs (Foreign Key to wallet_items)
+    // We try/catch or ignore error if table doesn't exist yet (soft dependency)
+    try {
+        await supabase
+            .from('redemption_logs')
+            .delete()
+            .eq('user_id', userId);
+    } catch (e) {
+        console.warn('Could not delete from redemption_logs (might not exist)', e);
+    }
+
+    // 0.5 Delete from user_deals (Favorites) - Optional but good for clean slate
+    await supabase.from('user_deals').delete().eq('user_id', userId);
+
+    // 1. Delete all wallet items
     const { error: walletError } = await supabase
         .from('wallet_items')
         .delete()
         .eq('user_id', userId);
 
     if (walletError) {
-        console.error('Error clearing wallet items:', walletError);
+        console.error('Error resetting wallet items:', walletError);
         throw walletError;
     }
 
-    // 2. Delete all redemption history for this user
+    // 2. Delete all redemption history
     const { error: redemptionError } = await supabase
         .from('deal_redemptions')
         .delete()
         .eq('user_id', userId);
 
     if (redemptionError) {
-        console.error('Error clearing redemption history:', redemptionError);
+        console.error('Error resetting redemptions:', redemptionError);
         throw redemptionError;
     }
 
