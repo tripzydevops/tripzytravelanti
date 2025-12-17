@@ -110,7 +110,7 @@ interface DealDetailViewProps {
 const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false, onRate, onRedeem }) => {
     const { t, language } = useLanguage();
     const { user } = useAuth();
-    const { saveDeal, unsaveDeal, isDealSaved, claimDeal, isDealOwned } = useUserActivity();
+    const { saveDeal, unsaveDeal, isDealSaved, claimDeal, isDealOwned, hasRedeemed } = useUserActivity();
     const navigate = useNavigate();
 
     const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
@@ -553,14 +553,24 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                         </button>
                                     )}
 
-                                    {/* Redeem Now Button */}
-                                    <button
-                                        onClick={() => isPreview ? null : handleActionClick('redeem')}
-                                        className={`flex-1 ${isDealOwned(deal.id) ? 'w-full' : ''
-                                            } bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
-                                    >
-                                        <span>{t('redeemNow') || 'Redeem Now'}</span>
-                                    </button>
+                                    {/* Redeem Now Button or Redeemed State */}
+                                    {hasRedeemed(deal.id) ? (
+                                        <button
+                                            disabled
+                                            className="flex-1 w-full bg-green-600/20 border border-green-500/30 text-green-400 font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
+                                        >
+                                            <CheckCircle className="w-6 h-6" />
+                                            <span>{t('redeemed') || 'Redeemed'}</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => isPreview ? null : handleActionClick('redeem')}
+                                            className={`flex-1 ${isDealOwned(deal.id) ? 'w-full' : ''
+                                                } bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
+                                        >
+                                            <span>{t('redeemNow') || 'Redeem Now'}</span>
+                                        </button>
+                                    )}
                                 </>
                             )}
                         </div>

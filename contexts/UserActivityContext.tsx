@@ -45,9 +45,8 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
                 .from('wallet_items')
                 .select('deal_id')
                 .eq('user_id', user.id)
-                .neq('status', 'redeemed') // Optional: do we consider redeemed as "owned"? Usually yes, but for button visibility "active" matters. 
-                // Actually, if it's redeemed, we probably don't want to show "Add to Wallet" button again?
-                // Let's keep it simple: if it's in wallet_items (any status), it is "owned".
+                // We want ALL wallet items (active, redeemed, expired) to be considered "owned"
+                // so that we don't show "Add to Wallet" button for something already in history.
                 .then(({ data }) => {
                     if (data) {
                         setOwnedDeals(data.map(d => d.deal_id));
