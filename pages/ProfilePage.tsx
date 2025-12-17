@@ -380,8 +380,10 @@ const ProfilePage: React.FC = () => {
           <form onSubmit={handleSaveChanges} className="p-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('fullNameLabel') || 'Full Name'}</label>
+                <label htmlFor="fullname" className="block text-xs uppercase text-brand-text-muted mb-1">{t('fullNameLabel') || 'Full Name'}</label>
                 <input
+                  id="fullname"
+                  name="fullname"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -390,8 +392,10 @@ const ProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
+                <label htmlFor="mobile" className="block text-xs uppercase text-brand-text-muted mb-1">{t('mobileLabel') || 'Mobile Number'}</label>
                 <input
+                  id="mobile"
+                  name="mobile"
                   type="tel"
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
@@ -400,8 +404,10 @@ const ProfilePage: React.FC = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('emailLabel') || 'Email Address'}</label>
+                <label htmlFor="email" className="block text-xs uppercase text-brand-text-muted mb-1">{t('emailLabel') || 'Email Address'}</label>
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   value={email}
                   disabled
@@ -409,8 +415,10 @@ const ProfilePage: React.FC = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('addressLabel') || 'Address'}</label>
+                <label htmlFor="address" className="block text-xs uppercase text-brand-text-muted mb-1">{t('addressLabel') || 'Address'}</label>
                 <textarea
+                  id="address"
+                  name="address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   rows={2}
@@ -419,8 +427,10 @@ const ProfilePage: React.FC = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs uppercase text-brand-text-muted mb-1">{t('billingAddressLabel') || 'Billing Address'}</label>
+                <label htmlFor="billingAddress" className="block text-xs uppercase text-brand-text-muted mb-1">{t('billingAddressLabel') || 'Billing Address'}</label>
                 <textarea
+                  id="billingAddress"
+                  name="billingAddress"
                   value={billingAddress}
                   onChange={(e) => setBillingAddress(e.target.value)}
                   rows={2}
@@ -465,7 +475,10 @@ const ProfilePage: React.FC = () => {
                   <p className="text-xs text-white/50 mb-3 text-center uppercase tracking-wider">{t('haveReferralCode')}</p>
                   <div className="flex gap-2 max-w-md mx-auto">
                     <input
+                      id="referralCode"
+                      name="referralCode"
                       type="text"
+                      aria-label={t('enterReferralCode') || 'Enter Referral Code'}
                       value={manualReferralCode}
                       onChange={(e) => setManualReferralCode(e.target.value)}
                       placeholder="Enter User ID / Code"
