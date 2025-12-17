@@ -42,6 +42,9 @@ async function checkDeals() {
         console.error('Error fetching all deals:', allError);
     } else {
         console.log(`Found ${allDeals.length} deals in total.`);
+        if (allDeals.length > 0) {
+            console.log('Keys of the first deal (DB Columns):', Object.keys(allDeals[0]));
+        }
         allDeals.forEach(d => {
             console.log(`- [${d.id}] ${d.title}: Status=${d.status}, Expires=${d.expires_at}, Publish=${d.publish_at}`);
         });

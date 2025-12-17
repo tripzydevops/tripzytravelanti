@@ -783,6 +783,9 @@ const AdminDealsTab: React.FC = () => {
                     <div className="flex-grow">
                         <input
                             type="text"
+                            name="search"
+                            id="admin-deals-search"
+                            aria-label="Search deals by title"
                             placeholder="Search by title..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -791,6 +794,9 @@ const AdminDealsTab: React.FC = () => {
                     </div>
                     <div className="w-full md:w-48">
                         <select
+                            name="category"
+                            id="admin-deals-category"
+                            aria-label="Filter deals by category"
                             value={categoryFilter}
                             onChange={(e) => setCategoryFilter(e.target.value)}
                             className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"

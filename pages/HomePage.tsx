@@ -329,6 +329,8 @@ const HomePage: React.FC = () => {
                 </div>
                 <input
                   type="text"
+                  name="search"
+                  id="home-search-input"
                   placeholder={t('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
