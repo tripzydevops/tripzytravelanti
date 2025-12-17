@@ -574,31 +574,31 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         .eq('user_id', userId);
     // Removed .gte('redeemed_at', startOfMonthISO) to count lifetime
 
-    const { data: claims, error: claimError } = await supabase
-        .from('user_deals')
+    // FIX: Use wallet_items instead of user_deals for quota. user_deals is now just "Favorites".
+    const { data: walletItems, error: walletError } = await supabase
+        .from('wallet_items')
         .select('deal_id')
         .eq('user_id', userId);
-    // Removed .gte('acquired_at', startOfMonthISO) to count lifetime
 
-    if (redemptionError || claimError) {
-        console.error('Error calculating usage:', redemptionError, claimError);
+    if (redemptionError || walletError) {
+        console.error('Error calculating usage:', redemptionError, walletError);
         throw new Error('Failed to calculate usage');
     }
 
     // 4. Calculate Total Usage (Lifetime)
-    // Usage = (All Wallet Claims) + (Redemptions of deals NOT in wallet)
+    // Usage = (All Wallet Items [Claims]) + (Redemptions of deals NOT in wallet)
     // - Wallet Claims: Cost 1 credit (granting effective unlimited usage of that deal)
     // - Direct Redemptions: Cost 1 credit per use (if not in wallet)
 
     const claimedDealIds = new Set<string>();
-    claims?.forEach((c: any) => claimedDealIds.add(c.deal_id));
+    walletItems?.forEach((c: any) => claimedDealIds.add(c.deal_id));
 
     // Count redemptions for deals that are NOT currently in wallet
     // (If they are in wallet, the cost is covered by the claim)
     const nonWalletRedemptionCount = redemptions?.filter((r: any) => !claimedDealIds.has(r.deal_id)).length || 0;
 
     // Total Usage = Wallet Count + Direct Redemption Count
-    const totalLifetimeUsage = (claims?.length || 0) + nonWalletRedemptionCount;
+    const totalLifetimeUsage = (walletItems?.length || 0) + nonWalletRedemptionCount;
 
     // 4. Calculate Total Accrued Allowance
     const createdAt = new Date(user.createdAt || new Date());
@@ -816,6 +816,10 @@ export async function getDirectReferrals(userId: string): Promise<string[]> {
 // =====================================================
 
 export async function saveDeal(userId: string, dealId: string) {
+    // FIX: Favorites should NOT consume quota or global limits.
+    // It is just a bookmark.
+    // Logic moved to addDealToWallet()
+
     // 1. Check if already saved
     const { data: existing } = await supabase
         .from('user_deals')
@@ -826,34 +830,14 @@ export async function saveDeal(userId: string, dealId: string) {
 
     if (existing) return; // Already saved
 
-    // 2. CHECK GLOBAL LIMIT (Supply Check)
-    const { data: deal, error: dealError } = await supabase
-        .from('deals')
-        .select('max_redemptions_total, redemptions_count')
-        .eq('id', dealId)
-        .single();
-
-    if (dealError) throw dealError;
-
-    // Treat 'save' as 'claiming a spot'
-    if (deal.max_redemptions_total !== null && (deal.redemptions_count || 0) >= deal.max_redemptions_total) {
-        throw new Error('This deal is Sold Out (Global limit reached).');
-    }
-
-    // 3. Insert into Wallet
+    // 2. Insert into user_deals (Favorites) - NO LIMITS CHECK
     const { error } = await supabase
         .from('user_deals')
         .insert({ user_id: userId, deal_id: dealId });
 
-    if (error) throw error;
-
-    // 4. INCREMENT Global Counter (Reservation)
-    const { error: updateError } = await supabase.rpc('increment_deal_redemption', { deal_id_input: dealId });
-    if (updateError) {
-        // Fallback
-        console.warn('RPC increment_deal_redemption failed, trying manual update', updateError);
-        const nextCount = (deal.redemptions_count || 0) + 1;
-        await supabase.from('deals').update({ redemptions_count: nextCount }).eq('id', dealId);
+    if (error) {
+        console.error('Error saving deal:', error);
+        throw error;
     }
 }
 
@@ -1431,8 +1415,8 @@ export async function getUserActivityLog(userId: string): Promise<ActivityLogIte
             const title = claim.deal?.title || 'Unknown Deal';
             activities.push({
                 id: claim.id,
-                type: 'deal_claimed',
-                description: `Claimed deal: ${title}`,
+                type: 'deal_saved', // Changed from deal_claimed
+                description: `Saved to favorites: ${title}`,
                 timestamp: claim.acquired_at
             });
         });

@@ -412,6 +412,7 @@ export const translations = {
     addToWallet: 'Add to Wallet',
     addToWalletShort: 'Add',
     failedToClaimDeal: 'Failed to add deal to wallet.',
+    dealSoldOutAlert: 'This deal is currently sold out.',
     confirmAddToWallet: 'Add to Wallet',
     // Limit Reached Modal
     limitReachedTitle: 'Limit Reached',
@@ -731,6 +732,7 @@ export const translations = {
     walletCapacityUnlimited: 'Sınırsız',
     walletUpgradePrompt: 'Daha fazla fırsat eklemek için yükseltin',
     walletLimitReached: 'Cüzdan limitinize ulaştınız',
+    dealSoldOutAlert: 'Bu fırsat şu anda tükenmiş durumda.',
     walletLimitReachedDesc: 'Daha fazla eklemek için planınızı yükseltin veya bazı fırsatları kaldırın.',
     // Admin Page
     adminDashboard: 'Yönetici Paneli',
