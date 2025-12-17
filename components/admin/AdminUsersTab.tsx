@@ -6,7 +6,7 @@ import { useDeals } from '../../contexts/DealContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
-import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem, sendTestNotification, resetUserHistory } from '../../lib/supabaseService';
+import { getPendingDeals, getUserTransactions, confirmUserEmail, getAllDeals, getUsersPaginated, getUserActivityLog, ActivityLogItem, sendTestNotification, resetUserHistory, removeWalletItemFromUser } from '../../lib/supabaseService';
 
 const EMPTY_USER: User = {
     id: '',
@@ -97,6 +97,13 @@ const AdminUsersTab: React.FC = () => {
             try {
                 await resetUserHistory(userId);
                 setShowSuccess('User history wiped successfully');
+
+                // Force Update Local State
+                setUserWalletDeals([]);
+                if (editingUser && editingUser.id === userId) {
+                    setEditingUser({ ...editingUser, redemptions: [] });
+                }
+
                 setTimeout(() => setShowSuccess(''), 3000);
                 fetchUsersData();
             } catch (error) {
@@ -253,8 +260,11 @@ const AdminUsersTab: React.FC = () => {
         if (editingUser) {
             if (!window.confirm('Remove this deal from user wallet?')) return;
             try {
-                const { removeDealFromUser } = await import('../../lib/supabaseService');
+                const { removeDealFromUser, removeWalletItemFromUser } = await import('../../lib/supabaseService');
+
+                // Remove from favorites AND wallet items
                 await removeDealFromUser(editingUser.id, dealId);
+                await removeWalletItemFromUser(editingUser.id, dealId);
 
                 // Update local UI
                 setUserFormData(prev => ({

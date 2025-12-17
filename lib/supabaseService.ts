@@ -931,6 +931,29 @@ export async function removeDealFromUser(userId: string, dealId: string) {
     return unsaveDeal(userId, dealId);
 }
 
+export async function removeWalletItemFromUser(userId: string, dealId: string) {
+    // 1. Find the wallet item first (to get ID for logs)
+    const { data: item } = await supabase
+        .from('wallet_items')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('deal_id', dealId)
+        .maybeSingle();
+
+    if (!item) return;
+
+    // 2. Delete logs first (soft fail)
+    await supabase.from('redemption_logs').delete().eq('wallet_item_id', item.id);
+
+    // 3. Delete the item
+    const { error } = await supabase
+        .from('wallet_items')
+        .delete()
+        .eq('id', item.id);
+
+    if (error) throw error;
+}
+
 export async function checkDealSavedStatus(userId: string, dealId: string): Promise<boolean> {
     const { data, error } = await supabase
         .from('user_deals')
