@@ -3,7 +3,7 @@ import { SubscriptionTier } from '../types';
 // Default wallet capacity limits per tier
 export const DEFAULT_WALLET_LIMITS: Record<SubscriptionTier, number> = {
     [SubscriptionTier.NONE]: 0,
-    [SubscriptionTier.FREE]: 3,
+    [SubscriptionTier.FREE]: 5,
     [SubscriptionTier.BASIC]: 10,
     [SubscriptionTier.PREMIUM]: 25,
     [SubscriptionTier.VIP]: 999999, // Effectively unlimited

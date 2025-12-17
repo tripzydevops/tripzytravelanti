@@ -565,23 +565,23 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
     // it implies the yearly plan number was massive (e.g. 365 or something). 
     // If the DB has '3' for Free/Monthly, checking that. 
     // Assuming 'redemptions_per_period' holds the Slot Count (e.g., 3, 5, 10).
-    
+
     if (plan.billing_period === 'yearly') {
         // If the number is large (like 120), we might divide. If it's small (3), we shouldn't.
         // Let's assume the DB values are "Per Month" or "Slot Capacity" directly.
         // For safety, let's keep the existing logic BUT if result is < 1, keep original.
         if (maxSlots > 12) {
-             maxSlots = Math.floor(maxSlots / 12);
+            maxSlots = Math.floor(maxSlots / 12);
         }
     }
-    
+
     // Add extra redemptions (Bonus Slots)
     const limit = maxSlots + (user.extraRedemptions || 0);
 
     // 3. Calculate Usage (Active Wallet Items)
     // CHANGED: We now count 'active' items, not 'created_this_month'.
     // This implements the "Slot" model: Delete a deal -> Get a slot back.
-    
+
     const { count: activeCount, error: walletError } = await supabase
         .from('wallet_items')
         .select('*', { count: 'exact', head: true })
@@ -592,7 +592,7 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         console.error('Error checking wallet usage:', walletError);
         throw new Error('Failed to check usage');
     }
-    
+
     const usage = activeCount || 0;
     const remaining = Math.max(0, limit - usage);
 
@@ -612,7 +612,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     // 1. Attempt Atomic Redemption for OWNED deals first
     // This effectively checks if it's in the wallet AND active, and redeems it in one go.
     // If this succeeds, we are done.
-    
+
     const { data: updatedItems, error: updateError } = await supabase
         .from('wallet_items')
         .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
@@ -645,9 +645,9 @@ export const redeemDeal = async (userId: string, dealId: string) => {
             .single();
 
         if (insertError) {
-             console.error('Error inserting redemption record (post-update):', insertError);
-             // Note: Wallet item is already 'redeemed', so user got their deal, but history might be missing one entry if this fails.
-             // This is acceptable failure mode compared to double redemption.
+            console.error('Error inserting redemption record (post-update):', insertError);
+            // Note: Wallet item is already 'redeemed', so user got their deal, but history might be missing one entry if this fails.
+            // This is acceptable failure mode compared to double redemption.
         }
 
         return {
@@ -662,7 +662,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     //    a) Deal is not in wallet
     //    b) Deal is in wallet but already redeemed
     //    c) Deal is in wallet but expired (if status is 'expired')
-    
+
     // Let's check which case it is to give correct error or proceed to unowned redemption.
     const { data: existingItem } = await supabase
         .from('wallet_items')
@@ -678,21 +678,21 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         } else if (existingItem.status === 'expired') {
             throw new Error('This deal has expired.');
         } else {
-             // Should not happen if logic is correct, but fallback
-             throw new Error(`Deal status is ${existingItem.status}, cannot redeem.`);
+            // Should not happen if logic is correct, but fallback
+            throw new Error(`Deal status is ${existingItem.status}, cannot redeem.`);
         }
     }
 
     // 3. Deal is NOT in wallet (Unowned / Immediate Redemption Flow)
     // Attempting to redeem a deal not in wallet.
     // Check limits and create fresh if allowed. (Same logic as before)
-    
+
     console.log('[redeemDeal] Deal NOT found in wallet. Checking limits for immediate redemption...');
-    
-    // Check GLOBAL Limit
+
+    // Check Global Limit
     const { data: dealData, error: dealError } = await supabase
         .from('deals')
-        .select('max_redemptions_total, redemptions_count')
+        .select('max_redemptions_total, redemptions_count, usage_limit')
         .eq('id', dealId)
         .single();
 
@@ -702,6 +702,23 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         throw new Error('This deal has reached its global usage limit and is sold out.');
     }
 
+    // CHECK "Use Once Per User" LIMIT
+    if (dealData.usage_limit === '1') {
+        const { count: pastRedemptions, error: redemptionCheckError } = await supabase
+            .from('deal_redemptions')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', cleanUserId)
+            .eq('deal_id', cleanDealId);
+
+        if (redemptionCheckError) {
+            console.error('Error checking past redemptions:', redemptionCheckError);
+        }
+
+        if (pastRedemptions && pastRedemptions > 0) {
+            throw new Error('You have already redeemed this deal.');
+        }
+    }
+
     // Check User Limit (Slots/Month)
     // Note: If they don't have it in wallet, adding/redeeming it requires a "Slot".
     const { allowed } = await checkMonthlyLimit(userId);
@@ -709,7 +726,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         throw new Error('Wallet limit reached. Cannot redeem new deal.');
     }
 
-    // Proceed to Redemtion (Insert transaction)
+    // Proceed to Redemption (Insert transaction)
     try {
         const { data, error } = await supabase
             .from('deal_redemptions')
@@ -723,18 +740,6 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
         if (error) throw error;
 
-        // Note: For unowned deals, we do NOT create a wallet item in 'redeemed' state?
-        // Previous logic didn't seem to force it.
-        // BUT `redeemDeal` original logic: "UPDATE wallet_items ... if (updateWalletError) ..."
-        // It implied it *expected* it to be there OR it just tried to update if present.
-        
-        // If we redeem here, we essentially "use up" a slot but don't record a wallet_item?
-        // That effectively gives them a free slot next check (since count is active items).
-        // If we want this redemption to count against "Current Slots", we MUST insert a wallet_item in 'redeemed' state?
-        // No, if it's "redeemed", it frees up the slot anyway!
-        // So immediate redemption = Use -> Done. No slot occupied.
-        // That seems fair. "Pay as you go".
-        
         // Count increment
         const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
         if (updateError) console.warn('RPC increment failed', updateError);
@@ -1374,7 +1379,7 @@ export async function deleteBackgroundImage(id: string, url: string) {
 
 export interface ActivityLogItem {
     id: string;
-    type: 'joined' | 'deal_claimed' | 'deal_redeemed' | 'subscription_payment' | 'deal_unsaved';
+    type: 'joined' | 'deal_claimed' | 'deal_redeemed' | 'subscription_payment' | 'deal_unsaved' | 'deal_saved';
     description: string;
     timestamp: string;
     metadata?: any;
@@ -1414,7 +1419,7 @@ export async function getUserActivityLog(userId: string): Promise<ActivityLogIte
             const title = claim.deal?.title || 'Unknown Deal';
             activities.push({
                 id: claim.id,
-                type: 'deal_saved', // Changed from deal_claimed
+                type: 'deal_saved',
                 description: `Saved to favorites: ${title}`,
                 timestamp: claim.acquired_at
             });
