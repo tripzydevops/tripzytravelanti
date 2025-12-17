@@ -125,6 +125,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [pendingAction, setPendingAction] = useState<'redeem' | 'claim' | null>(null);
     const [activeDealsCount, setActiveDealsCount] = useState(0);
     const [walletItemInfo, setWalletItemInfo] = useState<{ id: string; redemptionCode: string } | null>(null);
+    const [localIsSoldOut, setLocalIsSoldOut] = useState(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal));
+
+    useEffect(() => {
+        setLocalIsSoldOut(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal));
+    }, [deal]);
 
     useEffect(() => {
         if (user) {
@@ -199,11 +204,21 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             }
         } catch (error: any) {
             console.error(`Failed to ${action} deal:`, error);
+            const errorMessage = error.message || '';
+
+            // Check for Sold Out error
+            if (errorMessage.toLowerCase().includes('sold out')) {
+                setLocalIsSoldOut(true);
+                // Show a Sold Out modal (reusing Limit Modal structure for simplicity or a new alert)
+                alert(t('dealSoldOutAlert') || 'Sorry, this deal just sold out!');
+                return;
+            }
+
             // Check for limit error (including the "Could not determine" one as a safe fallback for now)
-            if (error.message?.includes('limit') || error.message?.includes('Could not determine')) {
+            if (errorMessage.includes('limit') || errorMessage.includes('Could not determine')) {
                 setIsLimitModalOpen(true);
             } else {
-                alert(error.message || 'Action failed');
+                alert(errorMessage || 'Action failed');
             }
         } finally {
             setIsWarningModalOpen(false);
@@ -393,7 +408,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     )}
 
                     {/* Stock Status Badges */}
-                    {(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)) ? (
+                    {localIsSoldOut ? (
                         <div className="inline-flex items-center gap-2 bg-red-500/20 border border-red-500/30 px-4 py-2 rounded-full mb-8 ml-3 shadow-inner">
                             <span className="text-red-200 font-bold text-sm tracking-wide uppercase">
                                 {t('soldOut') || 'Sold Out'}
@@ -522,7 +537,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
                         <div className="flex-1 flex gap-3">
                             {/* Sold Out State */}
-                            {(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)) ? (
+                            {localIsSoldOut ? (
                                 <div className="flex-1 bg-gray-600 text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80">
                                     <span>{t('soldOut') || 'Sold Out'}</span>
                                 </div>
