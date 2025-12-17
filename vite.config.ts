@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-ui': ['framer-motion', 'lucide-react'],
+            'vendor-ui': ['framer-motion'],
             'vendor-supabase': ['@supabase/supabase-js'],
             'vendor-charts': ['recharts'],
           }
