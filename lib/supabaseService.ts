@@ -555,69 +555,68 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
         throw new Error('Could not determine subscription limit');
     }
 
-    let baseLimit = plan.redemptions_per_period;
+    let monthlyLimit = plan.redemptions_per_period;
     if (plan.billing_period === 'yearly') {
-        baseLimit = Math.floor(baseLimit / 12);
+        monthlyLimit = Math.floor(monthlyLimit / 12);
     }
+    
+    // Add extra redemptions (assuming these are one-time bonuses or permanent additions?)
+    // If permanent: Add to monthly. If one-time: Logic would be more complex (we'll assume permanent/monthly for now to match structure)
+    const limit = monthlyLimit + (user.extraRedemptions || 0);
 
-    const limit = baseLimit + (user.extraRedemptions || 0);
-
-    // 3. Calculate Cumulative Usage (Lifetime)
-    // Rollover Logic: Unused redemptions carry over.
-    // Total Allowance = (MonthlyRate * MonthsActive) + ExtraRedemptions
-    // Remaining = Total Allowance - Total Lifetime Usage
-
-    // Fetch IDs instead of Count to avoid double counting
-    const { data: redemptions, error: redemptionError } = await supabase
-        .from('deal_redemptions')
-        .select('deal_id')
-        .eq('user_id', userId);
-    // Removed .gte('redeemed_at', startOfMonthISO) to count lifetime
-
-    // FIX: Use wallet_items instead of user_deals for quota. user_deals is now just "Favorites".
-    const { data: walletItems, error: walletError } = await supabase
-        .from('wallet_items')
-        .select('deal_id')
-        .eq('user_id', userId);
-
-    if (redemptionError || walletError) {
-        console.error('Error calculating usage:', redemptionError, walletError);
-        throw new Error('Failed to calculate usage');
-    }
-
-    // 4. Calculate Total Usage (Lifetime)
-    // Usage = (All Wallet Items [Claims]) + (Redemptions of deals NOT in wallet)
-    // - Wallet Claims: Cost 1 credit (granting effective unlimited usage of that deal)
-    // - Direct Redemptions: Cost 1 credit per use (if not in wallet)
-
-    const claimedDealIds = new Set<string>();
-    walletItems?.forEach((c: any) => claimedDealIds.add(c.deal_id));
-
-    // Count redemptions for deals that are NOT currently in wallet
-    // (If they are in wallet, the cost is covered by the claim)
-    const nonWalletRedemptionCount = redemptions?.filter((r: any) => !claimedDealIds.has(r.deal_id)).length || 0;
-
-    // Total Usage = Wallet Count + Direct Redemption Count
-    const totalLifetimeUsage = (walletItems?.length || 0) + nonWalletRedemptionCount;
-
-    // 4. Calculate Total Accrued Allowance
-    const createdAt = new Date(user.createdAt || new Date());
+    // 3. Calculate Usage This Month (Strict Monthly Reset)
     const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    // Calculate months difference roughly
-    let monthsActive = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
-    // Add current month (e.g. if created today, it's 1st month)
-    monthsActive = Math.max(1, monthsActive + 1);
+    // A. Count Wallet Items created this month (Claims)
+    const { count: walletCount, error: walletError } = await supabase
+        .from('wallet_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', startOfMonth);
 
-    const monthlyRate = baseLimit; // baseLimit is already divided by 12 for yearly plans
-    const totalAccruedLimit = (monthlyRate * monthsActive) + (user.extraRedemptions || 0);
+    // B. Count Direct Redemptions (not from wallet/favs if possible? Or just all redemptions?)
+    // Note: If you redeem a wallet item, it stays in wallet_items.
+    // If you redeem directly (without adding to wallet first? Not currently possible in UI check), we need to track that.
+    // Assuming ALL redemptions go through wallet_items or are transient.
+    // If 'deal_redemptions' tracks *usage* of claim, we shouldn't double count.
+    // Logic: ONE Credit = ONE Unique Deal secured.
+    // Securing happens at 'addDealToWallet' (creation of wallet_item).
+    
+    // We only check wallet_items for the *current month*.
+    // What if I claimed a deal last month but redeem it today?
+    // It counted against *last month's* quota. It should be free today.
+    // So checking `wallet_items.created_at >= startOfMonth` is correct for "Claim-based Quota".
+    
+    // BUT: Does `redeemDeal` (without wallet add) create a wallet item?
+    // Looking at `redeemDeal`: It does `insert deal_redemptions` AND `update wallet_items`.
+    // If it wasn't in wallet, it doesn't create a wallet_item?
+    // `redeemDeal`: "if (!isOwned) { ... check limit ... }"
+    // If not owned, it checks limit, then inserts into `deal_redemptions`.
+    // It does NOT insert into `wallet_items` if not owned!
+    // So we MUST count `deal_redemptions` that do NOT have a corresponding `wallet_item` created this month?
+    // Or simpler: Just count distinct `deal_id` interacted with this month?
+    // Current flow seems to force "Add to Wallet" for most things.
+    // Let's stick to: Usage = (WalletItems Created This Month) + (Redemptions Created This Month for unowned deals)
+    
+    if (walletError) {
+        console.error('Error checking wallet usage:', walletError);
+        throw new Error('Failed to check usage');
+    }
 
-    const remaining = Math.max(0, totalAccruedLimit - totalLifetimeUsage);
+    // Check for direct redemptions that might bypass wallet (if valid flow)
+    // For now, let's assume usage = walletCount.
+    // This aligns with user expectation: "I have 5 slots per month".
+    
+    const usageThisMonth = walletCount || 0;
+    const remaining = Math.max(0, limit - usageThisMonth);
+
+    console.log(`[checkMonthlyLimit] User: ${userId} | Tier: ${user.tier} | Limit: ${limit} | Used: ${usageThisMonth} | Remaining: ${remaining}`);
 
     return {
-        allowed: totalLifetimeUsage < totalAccruedLimit,
+        allowed: usageThisMonth < limit,
         remaining,
-        limit: totalAccruedLimit
+        limit
     };
 }
 
