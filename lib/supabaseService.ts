@@ -49,7 +49,7 @@ interface DBDeal {
 export async function getUserProfile(userId: string): Promise<User | null> {
     const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, deal_redemptions(*)')
         .eq('id', userId)
         .single();
 
@@ -76,7 +76,13 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         billingAddress: data.billing_address,
         status: data.status,
         referredBy: data.referred_by,
-        emailConfirmedAt: data.email_confirmed_at
+        emailConfirmedAt: data.email_confirmed_at,
+        redemptions: data.deal_redemptions ? data.deal_redemptions.map((r: any) => ({
+            id: r.id,
+            dealId: r.deal_id,
+            userId: r.user_id,
+            redeemedAt: r.redeemed_at
+        })) : []
     };
 }
 
