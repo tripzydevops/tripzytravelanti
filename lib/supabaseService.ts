@@ -2016,4 +2016,29 @@ export async function sendTestNotification(userId: string): Promise<{ success: b
     }
 }
 
+// =====================================================
+// ENGAGEMENT TRACKING (PHASE 1)
+// =====================================================
 
+export async function logEngagementEvent(userId: string | undefined, eventType: 'view' | 'click' | 'search' | 'favorite', itemId?: string, metadata: any = {}) {
+    // If no user is logged in, we might still want to track anonymous events later, 
+    // but for Phase 1, we focus on authenticated users to build profiles.
+    if (!userId) return;
+
+    try {
+        const { error } = await supabase
+            .from('engagement_logs')
+            .insert({
+                user_id: userId,
+                event_type: eventType,
+                item_id: itemId,
+                metadata: metadata
+            });
+
+        if (error) {
+            console.error('Error logging engagement event:', error);
+        }
+    } catch (err) {
+        console.error('Failed to log engagement event:', err);
+    }
+}

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getHeroImageUrl } from '../lib/imageUtils';
-import { checkMonthlyLimit, getWalletItems } from '../lib/supabaseService';
+import { checkMonthlyLimit, getWalletItems, logEngagementEvent } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 import { triggerConfetti } from '../utils/confetti';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -159,6 +159,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             setWalletItemInfo({ id: data.id, redemptionCode: data.redemption_code });
                         }
                     });
+            }
+
+            // Phase 1: Log 'view' event
+            if (deal?.id) {
+                logEngagementEvent(user.id, 'view', deal.id, { source: 'DealDetailView' });
             }
         }
     }, [user, deal?.id]);

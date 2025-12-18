@@ -3,12 +3,15 @@ import { Deal } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ClockIcon, ArrowRightIcon } from './Icons';
 import { Link } from 'react-router-dom';
+import { logEngagementEvent } from '../lib/supabaseService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface FlashDealCardProps {
     deal: Deal;
 }
 
 const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
+    const { user } = useAuth();
     const { language, t } = useLanguage();
     const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
 
@@ -103,7 +106,8 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
                             </div>
 
                             <Link
-                                to={`/deal/${deal.id}`}
+                                to={`/deals/${deal.id}`}
+                                onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'FlashDealCard' })}
                                 className="group flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-white px-8 py-3 rounded-2xl font-bold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 transform hover:scale-105 active:scale-95"
                             >
                                 {t('viewDeal') || 'View Deal'}

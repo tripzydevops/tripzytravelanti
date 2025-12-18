@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logEngagementEvent } from '../lib/supabaseService';
+import { useAuth } from './AuthContext';
 
 import { CategoryFilter } from '../shared/dealTypes';
 
@@ -23,6 +25,7 @@ interface SearchContextType {
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
 export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All');
   const [ratingFilter, setRatingFilter] = useState(0);
@@ -65,6 +68,13 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (filters.rating !== undefined) {
       setRatingFilter(filters.rating);
     }
+
+    // Phase 1: Log 'search' event
+    const finalQuery = filters.searchQuery !== undefined ? filters.searchQuery : searchQuery;
+    if (finalQuery && finalQuery.length > 2) {
+      logEngagementEvent(user?.id, 'search', undefined, { query: finalQuery, category: filters.category || categoryFilter });
+    }
+
     navigate('/');
   }, [navigate]);
 

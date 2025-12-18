@@ -6,6 +6,7 @@ import { useUserActivity } from '../contexts/UserActivityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Lock, StarIcon, BookmarkIcon } from './Icons';
 import { getThumbnailUrl } from '../lib/imageUtils';
+import { logEngagementEvent } from '../lib/supabaseService';
 
 interface DealCardProps {
   deal: Deal;
@@ -218,11 +219,21 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
       <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
 
       {isLocked ? (
-        <div className="flex flex-col flex-grow cursor-pointer" onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}>
+        <div
+          className="flex flex-col flex-grow cursor-pointer"
+          onClick={() => {
+            logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: 'locked' });
+            !user ? navigate('/login') : navigate('/subscriptions');
+          }}
+        >
           <CardContent />
         </div>
       ) : (
-        <Link to={`/deals/${deal.id}`} className="flex flex-col flex-grow cursor-pointer">
+        <Link
+          to={`/deals/${deal.id}`}
+          className="flex flex-col flex-grow cursor-pointer"
+          onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: 'unlocked' })}
+        >
           <CardContent />
         </Link>
       )}
