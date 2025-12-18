@@ -127,55 +127,61 @@ export async function getAIRecommendations(
     Do not include any markdown formatting or explanation.
   `;
 
-    try {
-        // 3. Call Gemini
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-            console.warn("Gemini API Key is missing. Skipping AI recommendations.");
-            throw new Error("Missing API Key");
-        }
-        const ai = new GoogleGenAI({ apiKey });
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
-            contents: prompt
-        });
+    // 3. Call Gemini
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const isKeyValid = apiKey && apiKey !== 'PLACEHOLDER_API_KEY';
 
-        const text = response.text.trim();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const recommendedIds: string[] = JSON.parse(cleanJson);
+    if (isKeyValid) {
+        try {
+            const ai = new GoogleGenAI({ apiKey });
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.0-flash-exp',
+                contents: prompt
+            });
 
-        const recommendations = allDeals.filter(d => recommendedIds.includes(d.id));
-        return recommendations;
+            const text = response.text.trim();
+            const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const recommendedIds: string[] = JSON.parse(cleanJson);
 
-    } catch (error) {
-        console.error("AI Recommendation failed:", error);
-
-        // Fallback Logic
-        let fallbackDeals = candidateDeals;
-
-        // Filter by travel style if available (simple keyword match on category or description)
-        if (preferences?.travelStyle) {
-            const style = preferences.travelStyle.toLowerCase();
-            const styleMatches = fallbackDeals.filter(d =>
-                d.category.toLowerCase().includes(style) ||
-                d.description.toLowerCase().includes(style) ||
-                (style === 'beach' && (d.title.toLowerCase().includes('beach') || d.title.toLowerCase().includes('resort'))) ||
-                (style === 'mountain' && (d.title.toLowerCase().includes('mountain') || d.title.toLowerCase().includes('ski'))) ||
-                (style === 'city' && (d.title.toLowerCase().includes('city') || d.title.toLowerCase().includes('hotel'))) ||
-                (style === 'adventure' && (d.title.toLowerCase().includes('adventure') || d.title.toLowerCase().includes('tour')))
-            );
-            if (styleMatches.length > 0) {
-                fallbackDeals = styleMatches;
+            const recommendations = allDeals.filter(d => recommendedIds.includes(d.id));
+            if (recommendations.length > 0) {
+                return recommendations;
             }
-        }
 
-        // Then filter by favorites if we still have generic deals
-        if (analysis.favoriteCategories.length > 0 && fallbackDeals.length === candidateDeals.length) {
-            return fallbackDeals
-                .filter(d => analysis.favoriteCategories.includes(d.category))
-                .slice(0, 3);
+        } catch (error) {
+            console.error("AI Recommendation failed:", error);
+            // Fall through to fallback logic below
         }
-
-        return fallbackDeals.slice(0, 3);
+    } else {
+        console.warn("Gemini API Key is missing or invalid. Using fallback recommendations.");
+        // Fall through to fallback logic below
     }
+
+    // Fallback Logic
+    let fallbackDeals = candidateDeals;
+
+    // Filter by travel style if available (simple keyword match on category or description)
+    if (preferences?.travelStyle) {
+        const style = preferences.travelStyle.toLowerCase();
+        const styleMatches = fallbackDeals.filter(d =>
+            d.category.toLowerCase().includes(style) ||
+            d.description.toLowerCase().includes(style) ||
+            (style === 'beach' && (d.title.toLowerCase().includes('beach') || d.title.toLowerCase().includes('resort'))) ||
+            (style === 'mountain' && (d.title.toLowerCase().includes('mountain') || d.title.toLowerCase().includes('ski'))) ||
+            (style === 'city' && (d.title.toLowerCase().includes('city') || d.title.toLowerCase().includes('hotel'))) ||
+            (style === 'adventure' && (d.title.toLowerCase().includes('adventure') || d.title.toLowerCase().includes('tour')))
+        );
+        if (styleMatches.length > 0) {
+            fallbackDeals = styleMatches;
+        }
+    }
+
+    // Then filter by favorites if we still have generic deals
+    if (analysis.favoriteCategories.length > 0 && fallbackDeals.length === candidateDeals.length) {
+        return fallbackDeals
+            .filter(d => analysis.favoriteCategories.includes(d.category))
+            .slice(0, 3);
+    }
+
+    return fallbackDeals.slice(0, 3);
 }
