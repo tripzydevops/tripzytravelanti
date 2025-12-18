@@ -41,14 +41,14 @@ async function verify() {
     console.log('\n1. Checking deals table columns...');
     const { data: deals, error: selectError } = await supabase
         .from('deals')
-        .select('id, redemption_style, partner_id, status')
+        .select('id, redemption_style, partner_id, status, max_user_redemptions')
         .limit(1);
 
     if (selectError) {
         console.error('❌ Error selecting columns:', selectError.message);
         console.log('   Hint: Did you run update_redemption_style_array.sql and add_deal_approval.sql?');
     } else {
-        console.log('✅ Columns exist (redemption_style, partner_id, status).');
+        console.log('✅ Columns exist (redemption_style, partner_id, status, max_user_redemptions).');
         if (deals && deals.length > 0) {
             console.log('   Sample deal:', deals[0]);
             console.log('   redemption_style type:', Array.isArray(deals[0].redemption_style) ? 'Array' : typeof deals[0].redemption_style);

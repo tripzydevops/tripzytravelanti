@@ -203,8 +203,17 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 triggerConfetti('default');
             }
         } catch (error: any) {
+            let errorMessage = 'Action failed';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object' && 'message' in error) {
+                errorMessage = String(error.message);
+            }
+
             console.error(`Failed to ${action} deal:`, error);
-            const errorMessage = error.message || '';
+            console.error(`Error details:`, JSON.stringify(error, null, 2));
 
             // Check for Sold Out error
             if (errorMessage.toLowerCase().includes('sold out')) {
@@ -215,10 +224,10 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             }
 
             // Check for limit error (including the "Could not determine" one as a safe fallback for now)
-            if (errorMessage.includes('limit') || errorMessage.includes('Could not determine')) {
+            if (errorMessage.toLowerCase().includes('limit') || errorMessage.includes('Could not determine')) {
                 setIsLimitModalOpen(true);
             } else {
-                alert(errorMessage || 'Action failed');
+                alert(errorMessage);
             }
         } finally {
             setIsWarningModalOpen(false);
