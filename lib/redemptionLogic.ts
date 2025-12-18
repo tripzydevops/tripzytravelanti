@@ -2,15 +2,13 @@ import { User, SubscriptionTier } from '../types';
 
 import { SUBSCRIPTION_PLANS } from '../constants';
 
-export const TIER_LIMITS: Record<SubscriptionTier, number> = SUBSCRIPTION_PLANS.reduce((acc, plan) => {
-    acc[plan.tier] = plan.redemptionsPerMonth;
+export const TIER_LIMITS: Record<string, number> = SUBSCRIPTION_PLANS.reduce((acc, plan) => {
+    acc[plan.tier.toUpperCase()] = plan.redemptionsPerMonth;
     return acc;
-}, {} as Record<SubscriptionTier, number>);
+}, {} as Record<string, number>);
 
-// Ensure NONE tier is handled if not in plans
-if (!(SubscriptionTier.NONE in TIER_LIMITS)) {
-    (TIER_LIMITS as any)[SubscriptionTier.NONE] = 0;
-}
+// Ensure NONE tier is handled
+TIER_LIMITS[SubscriptionTier.NONE] = 0;
 
 export const calculateRemainingRedemptions = (user: User) => {
     if (!user) return { used: 0, total: 0, remaining: 0 };
@@ -24,10 +22,13 @@ export const calculateRemainingRedemptions = (user: User) => {
         return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     }).length || 0;
 
-    const baseLimit = TIER_LIMITS[user.tier] || 0;
+    const tierKey = (user.tier || 'FREE').toUpperCase();
+    const baseLimit = TIER_LIMITS[tierKey] || TIER_LIMITS['FREE'] || 0;
     const extra = user.extraRedemptions || 0;
     const total = baseLimit === Infinity ? Infinity : baseLimit + extra;
     const remaining = total === Infinity ? Infinity : Math.max(0, total - usedThisMonth);
+
+    // console.log(`[calculateRemainingRedemptions] User: ${user.email} | Tier: ${user.tier} | Base: ${baseLimit} | Used: ${usedThisMonth} | Total: ${total}`);
 
     return { used: usedThisMonth, total, remaining };
 };

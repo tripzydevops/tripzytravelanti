@@ -673,87 +673,8 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     const cleanUserId = userId.trim();
     const cleanDealId = dealId.trim();
 
-    // 1. Attempt Atomic Redemption for OWNED deals first
-    // This effectively checks if it's in the wallet AND active, and redeems it in one go.
-    // If this succeeds, we are done.
-
-    const { data: updatedItems, error: updateError } = await supabase
-        .from('wallet_items')
-        .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
-        .eq('user_id', cleanUserId)
-        .eq('deal_id', cleanDealId)
-        .eq('status', 'active') // CRITICAL: Only redeem if currently active
-        .select();
-
-    if (updateError) {
-        console.error('Error during atomic redemption update:', updateError);
-        throw updateError;
-    }
-
-    // Check if we successfully redeemed an owned item
-    if (updatedItems && updatedItems.length > 0) {
-        // SUCCESS: Deal was in wallet and is now redeemed.
-        const redeemedItem = updatedItems[0];
-        console.log('[redeemDeal] Atomic redemption successful for owned deal:', redeemedItem);
-
-        // Record the redemption in history (deal_redemptions)
-        // We do this AFTER the successful status update to prevent duplicates if this fails (rare, but better than double entry).
-        const { data: redemptionRecord, error: insertError } = await supabase
-            .from('deal_redemptions')
-            .insert({
-                user_id: userId,
-                deal_id: dealId,
-                redeemed_at: new Date().toISOString()
-            })
-            .select()
-            .single();
-
-        if (insertError) {
-            console.error('Error inserting redemption record (post-update):', insertError);
-            // Note: Wallet item is already 'redeemed', so user got their deal, but history might be missing one entry if this fails.
-            // This is acceptable failure mode compared to double redemption.
-        }
-
-        return {
-            id: redemptionRecord?.id || 'unknown',
-            userId: userId,
-            dealId: dealId,
-            redeemedAt: redeemedItem.redeemed_at
-        };
-    }
-
-    // 2. If atomic update affected 0 rows, either:
-    //    a) Deal is not in wallet
-    //    b) Deal is in wallet but already redeemed
-    //    c) Deal is in wallet but expired (if status is 'expired')
-
-    // Let's check which case it is to give correct error or proceed to unowned redemption.
-    const { data: existingItem } = await supabase
-        .from('wallet_items')
-        .select('status')
-        .eq('user_id', cleanUserId)
-        .eq('deal_id', cleanDealId)
-        .maybeSingle();
-
-    if (existingItem) {
-        // It existed but wasn't updated -> It wasn't 'active'.
-        if (existingItem.status === 'redeemed') {
-            throw new Error('This deal has already been redeemed.');
-        } else if (existingItem.status === 'expired') {
-            throw new Error('This deal has expired.');
-        } else {
-            // Should not happen if logic is correct, but fallback
-            throw new Error(`Deal status is ${existingItem.status}, cannot redeem.`);
-        }
-    }
-
-    // 3. Deal is NOT in wallet (Unowned / Immediate Redemption Flow)
-    // Attempting to redeem a deal not in wallet.
-    // Check limits and create fresh if allowed. (Same logic as before)
-
-    console.log('[redeemDeal] Deal NOT found in wallet. Checking limits for immediate redemption...');
-
-    // Check Global Limit
+    // 0. CHECK IF ALREADY REDEEMED (LIFETIME CHECK FOR STRICT LIMITS)
+    // First, get deal rules
     const { data: dealData, error: dealError } = await supabase
         .from('deals')
         .select('max_redemptions_total, redemptions_count, usage_limit, max_user_redemptions')
@@ -762,60 +683,55 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
     if (dealError) throw dealError;
 
+    // Check Global Limit first
     if (dealData.max_redemptions_total !== null && (dealData.redemptions_count || 0) >= dealData.max_redemptions_total) {
         throw new Error('This deal has reached its global usage limit and is sold out.');
     }
 
-    // CHECK PER-USER LIMIT (RESETS MONTHLY)
-    // Priority 1: New Integer Column
-    if (dealData.max_user_redemptions !== null && dealData.max_user_redemptions > 0) {
-        // Get start of current month
+    // Check if user has ALREADY redeemed this deal (Lifetime)
+    const { count: lifetimeCount } = await supabase
+        .from('deal_redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', cleanUserId)
+        .eq('deal_id', cleanDealId);
+
+    const hasRedeemedBefore = (lifetimeCount || 0) > 0;
+
+    // Strictly enforce "1 per user" if usage_limit is '1' OR max_user_redemptions is 1
+    if (hasRedeemedBefore && (dealData.usage_limit === '1' || dealData.max_user_redemptions === 1)) {
+        throw new Error('You have already redeemed this deal. This offer is limited to one per user.');
+    }
+
+    // Check Monthly Limit if max_user_redemptions > 1
+    if (dealData.max_user_redemptions !== null && dealData.max_user_redemptions > 1) {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-        const { count: monthlyRedemptions, error: redemptionCheckError } = await supabase
+        const { count: monthlyCount } = await supabase
             .from('deal_redemptions')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', cleanUserId)
             .eq('deal_id', cleanDealId)
-            .gte('redeemed_at', startOfMonth); // Only count this month
+            .gte('redeemed_at', startOfMonth);
 
-        if (redemptionCheckError) {
-            console.error('Error checking past redemptions:', redemptionCheckError);
-        } else {
-            const userCount = monthlyRedemptions || 0;
-            if (userCount >= dealData.max_user_redemptions) {
-                throw new Error(`You have reached the monthly redemption limit for this deal (${dealData.max_user_redemptions} per month).`);
-            }
-        }
-    }
-    // Priority 2: Legacy String Check (Fallback - Remains Lifetime/One-time)
-    else if (dealData.usage_limit === '1') {
-        const { count: pastRedemptions, error: redemptionCheckError } = await supabase
-            .from('deal_redemptions')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', cleanUserId)
-            .eq('deal_id', cleanDealId);
-
-        if (redemptionCheckError) {
-            console.error('Error checking past redemptions:', redemptionCheckError);
-        }
-
-        if (pastRedemptions && pastRedemptions > 0) {
-            throw new Error('You have already redeemed this deal.');
+        if ((monthlyCount || 0) >= dealData.max_user_redemptions) {
+            throw new Error(`You have reached the monthly redemption limit for this deal (${dealData.max_user_redemptions} per month).`);
         }
     }
 
-    // Check User Limit (Slots/Month)
-    // Note: If they don't have it in wallet, adding/redeeming it requires a "Slot".
-    const { allowed } = await checkMonthlyLimit(userId);
-    if (!allowed) {
-        throw new Error('Wallet limit reached. Cannot redeem new deal.');
-    }
+    // 1. Attempt Atomic Redemption for OWNED deals first
+    const { data: updatedItems, error: updateError } = await supabase
+        .from('wallet_items')
+        .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
+        .eq('user_id', cleanUserId)
+        .eq('deal_id', cleanDealId)
+        .eq('status', 'active')
+        .select();
 
-    // Proceed to Redemption (Insert transaction)
-    try {
-        const { data, error } = await supabase
+    if (updateError) throw updateError;
+
+    if (updatedItems && updatedItems.length > 0) {
+        // Record the redemption in history
+        const { data: redemptionRecord } = await supabase
             .from('deal_redemptions')
             .insert({
                 user_id: userId,
@@ -825,27 +741,62 @@ export const redeemDeal = async (userId: string, dealId: string) => {
             .select()
             .single();
 
-        if (error) throw error;
-
-        // Count increment using NEW RPC
-        const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
-        if (updateError) {
-            console.warn('RPC increment_redemptions_count failed', updateError);
-            // Verify if it's 404 - if so, it means function missing.
-            // But we just created it.
-        }
-
         return {
-            id: data.id,
-            userId: data.user_id,
-            dealId: data.deal_id,
-            redeemedAt: data.redeemed_at
+            id: redemptionRecord?.id || 'unknown',
+            userId: userId,
+            dealId: dealId,
+            redeemedAt: updatedItems[0].redeemed_at
         };
-
-    } catch (error) {
-        console.error('Error redeeming unowned deal:', error);
-        throw error;
     }
+
+    // 2. Immediate Redemption Flow (Not in wallet or already redeemed/expired in wallet)
+    const { data: existingItem } = await supabase
+        .from('wallet_items')
+        .select('status')
+        .eq('user_id', cleanUserId)
+        .eq('deal_id', cleanDealId)
+        .maybeSingle();
+
+    if (existingItem) {
+        if (existingItem.status === 'redeemed') throw new Error('This deal has already been redeemed.');
+        if (existingItem.status === 'expired') throw new Error('This deal has expired.');
+    }
+
+    // Check User Limit (Slots/Month) - only for new redemptions
+    const { allowed } = await checkMonthlyLimit(userId);
+    if (!allowed) {
+        throw new Error('Wallet limit reached. Cannot redeem new deal.');
+    }
+
+    // Record the redemption
+    const { data: redemptionRecord, error: insertError } = await supabase
+        .from('deal_redemptions')
+        .insert({
+            user_id: userId,
+            deal_id: dealId,
+            redeemed_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+    if (insertError) {
+        console.error('Error in immediate redemption insert:', insertError);
+        throw insertError;
+    }
+
+    // Increment global count using RPC
+    try {
+        await supabase.rpc('increment_redemptions_count', { deal_id: dealId });
+    } catch (e) {
+        console.warn('Failed to increment global redemption count:', e);
+    }
+
+    return {
+        id: redemptionRecord.id,
+        userId: userId,
+        dealId: dealId,
+        redeemedAt: redemptionRecord.redeemed_at
+    };
 };
 
 export async function redeemImmediate(userId: string, dealId: string) {
@@ -938,6 +889,21 @@ export async function saveDeal(userId: string, dealId: string) {
 
 export async function assignDealToUser(userId: string, dealId: string) {
     return saveDeal(userId, dealId);
+}
+
+
+export async function bulkUpdateUserStatus(userIds: string[], status: 'active' | 'banned' | 'suspended') {
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ status })
+        .in('id', userIds)
+        .select();
+
+    if (error) {
+        console.error('Error in bulk update user status:', error);
+        throw error;
+    }
+    return data;
 }
 
 export async function unsaveDeal(userId: string, dealId: string) {
@@ -2055,16 +2021,17 @@ export async function logEngagementEvent(userId: string | undefined, eventType: 
 }
 
 export async function getEngagementLogs(userId: string, limit: number = 20) {
+    // We fetch logs first, and we'll handle the deal data separately to avoid join errors if FK is missing
     const { data, error } = await supabase
         .from('engagement_logs')
-        .select('*, deals(*)')
+        .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit);
 
     if (error) {
-        console.error('Error fetching engagement logs:', error);
+        console.error('Error fetching engagement logs:', error.message);
         return [];
     }
-    return data;
+    return data || [];
 }

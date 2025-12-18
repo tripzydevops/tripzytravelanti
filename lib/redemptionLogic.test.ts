@@ -20,6 +20,7 @@ describe('checkMonthlyLimit', () => {
   });
 
   it('should allow redemption if user is under limit', async () => {
+    // Note: SubscriptionTier enum values are already uppercase string constants
     const mockUser = { id: userId, tier: SubscriptionTier.BASIC, extraRedemptions: 0 };
 
     const profileChain = {
@@ -32,7 +33,7 @@ describe('checkMonthlyLimit', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: { redemptions_per_period: 10, billing_period: 'monthly' },
+        data: { redemptions_per_period: 120, billing_period: 'yearly' },
         error: null
       })
     };
@@ -53,6 +54,7 @@ describe('checkMonthlyLimit', () => {
 
     const result = await checkMonthlyLimit(userId);
 
+    // 120 / 12 = 10 monthly limit. 5 used. 5 remaining.
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(5);
     expect(result.limit).toBe(10);
