@@ -553,14 +553,17 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             ) : (
                                 <>
                                     {/* Add to Wallet Button */}
-                                    {!isDealOwned(deal.id) && (
-                                        <button
-                                            onClick={() => handleActionClick('claim')}
-                                            className="flex-1 bg-white/10 border border-white/20 text-white font-bold py-4 px-4 rounded-xl hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
-                                        >
-                                            <span>{t('addToWallet') || 'Add to Wallet'}</span>
-                                        </button>
-                                    )}
+                                    {/* Hide if owned OR if already redeemed (and single use) */}
+                                    {!isDealOwned(deal.id) &&
+                                        !(deal.maxRedemptionsUser === 1 && hasRedeemed(deal.id)) &&
+                                        !(deal.usageLimit === '1' && hasRedeemed(deal.id)) && (
+                                            <button
+                                                onClick={() => handleActionClick('claim')}
+                                                className="flex-1 bg-white/10 border border-white/20 text-white font-bold py-4 px-4 rounded-xl hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                                            >
+                                                <span>{t('addToWallet') || 'Add to Wallet'}</span>
+                                            </button>
+                                        )}
 
                                     {/* Redeem Now Button or Redeemed State */}
                                     {hasRedeemed(deal.id) ? (
