@@ -203,7 +203,7 @@ export async function getAllUsers(): Promise<User[]> {
 export async function getUsersPaginated(page: number, limit: number, filters?: any): Promise<{ users: User[], total: number }> {
     let query = supabase
         .from('profiles')
-        .select('*', { count: 'exact' });
+        .select('*, deal_redemptions(*)', { count: 'exact' });
 
     if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
@@ -243,7 +243,13 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
         billingAddress: d.billing_address,
         status: d.status,
         referredBy: d.referred_by,
-        emailConfirmedAt: d.email_confirmed_at
+        emailConfirmedAt: d.email_confirmed_at,
+        redemptions: d.deal_redemptions ? d.deal_redemptions.map((r: any) => ({
+            id: r.id,
+            dealId: r.deal_id,
+            userId: r.user_id,
+            redeemedAt: r.redeemed_at
+        })) : []
     }));
 
     return { users, total: count || 0 };

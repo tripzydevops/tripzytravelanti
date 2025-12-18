@@ -250,18 +250,6 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
     const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
 
-    // DEBUG LOGGING
-    console.log('--- Warning: Debugging active ---');
-    console.log('Deal ID:', deal?.id);
-    console.log('isDealOwned:', isDealOwned(deal.id));
-    console.log('hasRedeemed:', hasRedeemed(deal.id));
-    console.log('maxUser:', deal.maxRedemptionsUser);
-    console.log('usageLimit:', deal.usageLimit);
-    console.log('Condition 1 (!Owned):', !isDealOwned(deal.id));
-    console.log('Condition 2 (Redeemed & Max1):', (deal.maxRedemptionsUser === 1 && hasRedeemed(deal.id)));
-    console.log('Condition 3 (Redeemed & Usage1):', (deal.usageLimit === '1' && hasRedeemed(deal.id)));
-
-
     if (!isPreview && userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] p-4 text-center">
