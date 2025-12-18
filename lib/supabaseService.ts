@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import { User, Deal, SubscriptionTier, PaymentTransaction, UserNotificationPreferences } from '../types';
 import { PostgrestError } from '@supabase/supabase-js';
+import { upsertDealVector } from './vectorService';
 
 // Internal interface for raw DB deal response
 interface DBDeal {
@@ -388,7 +389,12 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         throw error;
     }
 
-    return transformDealFromDB(data);
+    const createdDeal = transformDealFromDB(data);
+
+    // Index in vector database (async)
+    upsertDealVector(createdDeal).catch(err => console.error('Failed to index new deal:', err));
+
+    return createdDeal;
 }
 
 export async function updateDeal(dealId: string, updates: Partial<Deal>) {
@@ -440,7 +446,12 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
         throw error;
     }
 
-    return transformDealFromDB(data);
+    const updatedDeal = transformDealFromDB(data);
+
+    // Update index in vector database (async)
+    upsertDealVector(updatedDeal).catch(err => console.error('Failed to update deal index:', err));
+
+    return updatedDeal;
 }
 
 export async function getDealsByPartner(partnerId: string): Promise<Deal[]> {
@@ -2041,4 +2052,19 @@ export async function logEngagementEvent(userId: string | undefined, eventType: 
     } catch (err) {
         console.error('Failed to log engagement event:', err);
     }
+}
+
+export async function getEngagementLogs(userId: string, limit: number = 20) {
+    const { data, error } = await supabase
+        .from('engagement_logs')
+        .select('*, deals(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching engagement logs:', error);
+        return [];
+    }
+    return data;
 }

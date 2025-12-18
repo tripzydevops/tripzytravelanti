@@ -1,5 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { User, Deal } from '../types';
+import { querySimilarDeals } from './vectorService';
+import { getEngagementLogs } from './supabaseService';
 
 // Initialize Gemini lazily inside the function
 
@@ -84,12 +86,33 @@ export async function getAIRecommendations(
         ...(user.redemptions?.map(r => r.dealId) || [])
     ]);
 
-    const candidateDeals = allDeals.filter(d => !redeemedOrSavedIds.has(d.id));
+    // 2. RETRIEVE: Use Vector Search to find relevant candidates
+    let candidateDeals = allDeals.filter(d => !redeemedOrSavedIds.has(d.id));
+
+    // Attempt to get similar deals from Pinecone based on engagement
+    try {
+        const logs = await getEngagementLogs(user.id, 5);
+        if (logs && logs.length > 0) {
+            const context = logs.map((l: any) =>
+                `${l.event_type} on ${l.deals?.title || 'item'} in category ${l.deals?.category || 'unknown'}`
+            ).join(', ');
+
+            const similarIds = await querySimilarDeals(context, 20);
+            if (similarIds.length > 0) {
+                const vectorCandidates = candidateDeals.filter(d => similarIds.includes(d.id));
+                if (vectorCandidates.length > 5) {
+                    candidateDeals = vectorCandidates;
+                }
+            }
+        }
+    } catch (err) {
+        console.warn("Vector search failed, falling back to basic filtering:", err);
+    }
 
     if (candidateDeals.length === 0) return [];
 
-    // 2. Construct Prompt
-    const dealsJson = candidateDeals.map(d => ({
+    // 3. RANK: Construct Prompt for Gemini with a smaller, more relevant set
+    const dealsJson = candidateDeals.slice(0, 20).map(d => ({
         id: d.id,
         title: d.title,
         category: d.category,
@@ -102,32 +125,29 @@ export async function getAIRecommendations(
         favorites: analysis.favoriteCategories,
         avgSpend: analysis.averageSpending,
         topVendors: analysis.preferredVendors,
-        explicitPreferences: preferences // Add explicit preferences to profile
+        explicitPreferences: preferences
     };
 
     const prompt = `
     You are a smart recommendation engine for a travel and lifestyle deals app.
     
-    User Profile:
+    User Profile (Past behavior and preferences):
     ${JSON.stringify(userProfile, null, 2)}
 
-    Available Deals:
+    Candidates (Pre-filtered by vector similarity):
     ${JSON.stringify(dealsJson, null, 2)}
 
     Task:
     Select the top 3 deals that this user would be most interested in.
     
-    Prioritize deals that match the user's explicit preferences:
+    Prioritize matches for:
     - Travel Style: ${preferences?.travelStyle || 'Any'}
     - Budget: ${preferences?.budget || 'Any'}
 
-    If the profile is empty, select 3 diverse and popular-sounding deals.
-    
     Return ONLY a JSON array of the 3 matching deal IDs. Example: ["123", "456", "789"]
-    Do not include any markdown formatting or explanation.
   `;
 
-    // 3. Call Gemini
+    // 4. Call Gemini
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const isKeyValid = apiKey && apiKey !== 'PLACEHOLDER_API_KEY';
 

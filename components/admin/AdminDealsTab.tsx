@@ -10,7 +10,8 @@ import { Save } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
 import StoreLocationFields from '../StoreLocationFields';
 import CountrySelector from '../CountrySelector';
-import { getDealsPaginated, createDeal } from '../../lib/supabaseService';
+import { getDealsPaginated, createDeal, getAllDeals } from '../../lib/supabaseService';
+import { upsertDealVector } from '../../lib/vectorService';
 import DealDetailView from '../DealDetailView';
 import Modal from '../Modal';
 import {
@@ -100,6 +101,8 @@ const AdminDealsTab: React.FC = () => {
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewDeal, setPreviewDeal] = useState<Deal | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
 
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -158,6 +161,29 @@ const AdminDealsTab: React.FC = () => {
     const sortedDeals = useMemo(() => {
         return [...adminDeals].sort((a, b) => Number(b.id) - Number(a.id));
     }, [adminDeals]);
+
+    const handleSyncAllDeals = async () => {
+        if (!window.confirm("This will re-index ALL deals in Pinecone. This might take a while depending on the number of deals. Continue?")) return;
+
+        setIsSyncing(true);
+        try {
+            const allDeals = await getAllDeals(true); // Get all deals including expired
+            setSyncProgress({ current: 0, total: allDeals.length });
+
+            for (let i = 0; i < allDeals.length; i++) {
+                await upsertDealVector(allDeals[i]);
+                setSyncProgress(prev => ({ ...prev, current: i + 1 }));
+            }
+
+            alert("Sync complete!");
+        } catch (error) {
+            console.error("Sync failed:", error);
+            alert("Sync failed. Check console for details.");
+        } finally {
+            setIsSyncing(false);
+            setSyncProgress({ current: 0, total: 0 });
+        }
+    };
 
     // Translation Logic
     const debouncedTitle = useDebounce(dealFormData.title, 800);
@@ -528,6 +554,17 @@ const AdminDealsTab: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">{t('manageDeals')}</h2>
                     <div className="flex gap-2">
+                        <button
+                            onClick={handleSyncAllDeals}
+                            disabled={isSyncing}
+                            className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                        >
+                            {isSyncing ? (
+                                <><SpinnerIcon className="w-4 h-4" /> Syncing ({syncProgress.current}/{syncProgress.total})...</>
+                            ) : (
+                                "Sync to Pinecone"
+                            )}
+                        </button>
                         <label className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors cursor-pointer flex items-center">
                             Import CSV
                             <input type="file" accept=".csv" onChange={handleImportDeals} className="hidden" />
