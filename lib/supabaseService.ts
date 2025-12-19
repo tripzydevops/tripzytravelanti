@@ -1125,6 +1125,17 @@ export async function getAnalyticsData() {
             return { name: month, users: count };
         });
 
+        // --- Turkey Launch Specific Metrics (City Distribution) ---
+        const cityCounts: Record<string, number> = {};
+        deals.forEach((d: any) => {
+            // Extract city from vendor or metadata if available, otherwise use defaults
+            const city = (d.vendor?.includes('Istanbul') || d.vendor?.includes('İstanbul')) ? 'Istanbul' :
+                (d.vendor?.includes('Ankara')) ? 'Ankara' :
+                    (d.vendor?.includes('Izmir') || d.vendor?.includes('İzmir')) ? 'Izmir' : 'Other';
+            cityCounts[city] = (cityCounts[city] || 0) + 1;
+        });
+        const cityData = Object.entries(cityCounts).map(([name, value]) => ({ name, value }));
+
 
         // Charts: Categories
         const categoryCounts: Record<string, number> = {};
@@ -1160,9 +1171,17 @@ export async function getAnalyticsData() {
         });
         const tierData = Object.entries(tierCounts).map(([name, value]) => ({ name, value }));
 
+        // Top Merchants (by redemptions)
+        const vendorRedemptions: Record<string, number> = {};
+        Object.entries(redemptionCounts).forEach(([dealId, count]) => {
+            const deal = deals.find((d: any) => d.id === dealId);
+            const vendor = deal ? (deal.vendor || 'Unknown Merchant') : 'Unknown Merchant';
+            vendorRedemptions[vendor] = (vendorRedemptions[vendor] || 0) + count;
+        });
+
         const merchantData = Object.entries(vendorRedemptions)
             .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value)
+            .sort((a, b) => (b.value as number) - (a.value as number))
             .slice(0, 5);
 
         // 7. NEW: Scaling Metrics (Turkey Launch)
@@ -1192,7 +1211,8 @@ export async function getAnalyticsData() {
                 categoryData,
                 topDeals,
                 tierData,
-                merchantData
+                merchantData,
+                cityData
             }
         };
 
@@ -1890,6 +1910,19 @@ export async function getSimilarDeals(dealId: string, limit: number = 3): Promis
  */
 export async function searchDealsSemantic(text: string, limit: number = 20): Promise<Deal[]> {
     try {
+        // If query is 'trending' or empty, return most recent active deals
+        if (!text || text.toLowerCase() === 'trending') {
+            const { data, error } = await supabase
+                .from('deals')
+                .select('*')
+                .eq('status', 'approved')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) throw error;
+            return data.map(transformDealFromDB);
+        }
+
         const { data, error } = await supabase.functions.invoke('vector-sync', {
             body: {
                 action: 'query',

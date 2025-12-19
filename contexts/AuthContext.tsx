@@ -297,7 +297,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user) return;
 
     try {
-      await updateUserProfile(user.id, { avatar_url: avatarUrl });
+      await updateUserProfile(user.id, { avatarUrl: avatarUrl });
       setUser((currentUser) => (currentUser ? { ...currentUser, avatarUrl } : null));
     } catch (error) {
       console.error('Error updating avatar:', error);
@@ -318,7 +318,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...prefs,
       };
 
-      await updateUserProfile(user.id, { notification_preferences: updatedPrefs });
+      await updateUserProfile(user.id, { notificationPreferences: updatedPrefs });
 
       setUser((currentUser) =>
         currentUser ? { ...currentUser, notificationPreferences: updatedPrefs } : null

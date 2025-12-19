@@ -9,7 +9,7 @@ const TravelPage: React.FC = () => {
     const { t } = useLanguage();
 
     useEffect(() => {
-        setCategoryFilter('Travel');
+        setCategoryFilter('Travel & Tours');
         return () => {
             setCategoryFilter('All'); // Reset on unmount
         };

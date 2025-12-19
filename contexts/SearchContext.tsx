@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { logEngagementEvent } from '../lib/supabaseService';
 import { useAuth } from './AuthContext';
 
-import { CategoryFilter } from '../shared/dealTypes';
+export type { CategoryFilter } from '../shared/dealTypes';
 
 interface SearchContextType {
   searchQuery: string;

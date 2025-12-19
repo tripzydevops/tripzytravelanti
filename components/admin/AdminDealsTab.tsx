@@ -306,6 +306,7 @@ const AdminDealsTab: React.FC = () => {
                 const selectedCat = categories.find(c => c.name === value);
                 if (selectedCat) {
                     updated.category_tr = selectedCat.name_tr || value;
+                    updated.category_id = selectedCat.id;
                 }
             }
 
@@ -683,9 +684,10 @@ const AdminDealsTab: React.FC = () => {
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')} <span className="text-red-500">*</span></label>
                                                 <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+                                                    <option value="">Select a Category</option>
                                                     {categories.map(cat => (
                                                         <option key={cat.id} value={cat.name}>
-                                                            {cat.icon} {language === 'tr' ? cat.name_tr : cat.name}
+                                                            {language === 'tr' ? cat.name_tr : cat.name}
                                                         </option>
                                                     ))}
                                                 </select>

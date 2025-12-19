@@ -17,6 +17,7 @@ import { getBackgroundImages, getFlashDeals } from '../lib/supabaseService';
 import { Deal } from '../types';
 import MetaHead from '../components/MetaHead';
 import FlashDealCard from '../components/FlashDealCard';
+import SimilarDeals from '../components/SimilarDeals';
 
 // Helper function to get time-based greeting
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
@@ -674,6 +675,10 @@ const HomePage: React.FC = () => {
               </>
             )}
           </section>
+          {/* AI-Powered Trending Deals Section */}
+          <div className="mt-16 pb-12">
+            <SimilarDeals dealId="" limit={3} />
+          </div>
 
         </div>
       </div>

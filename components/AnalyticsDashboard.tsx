@@ -331,8 +331,35 @@ const AnalyticsDashboard: React.FC = () => {
                     </div>
                 </ChartCard>
 
-                {/* Placeholder for future growth projections or market share */}
-                <div className="hidden lg:block"></div>
+                <ChartCard title="City Distribution">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                            <Pie
+                                data={charts.cityData || []}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                fill="#82ca9d"
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {(charts.cityData || []).map((entry: any, index: number) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex justify-center gap-4 flex-wrap mt-4">
+                        {(charts.cityData || []).map((entry: any, index: number) => (
+                            <div key={index} className="flex items-center text-xs text-gray-600 dark:text-brand-text-muted">
+                                <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[(index + 2) % COLORS.length] }}></span>
+                                {entry.name}: {entry.value}
+                            </div>
+                        ))}
+                    </div>
+                </ChartCard>
             </div>
         </div>
     );

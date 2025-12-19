@@ -17,10 +17,16 @@ const SimilarDeals: React.FC<SimilarDealsProps> = ({ dealId, limit = 3 }) => {
 
     useEffect(() => {
         const fetchSimilar = async () => {
-            if (!dealId) return;
             setLoading(true);
             try {
-                const results = await getSimilarDeals(dealId, limit);
+                let results: Deal[];
+                if (dealId) {
+                    results = await getSimilarDeals(dealId, limit);
+                } else {
+                    // Fetch trending/popular deals for home page
+                    const { searchDealsSemantic } = await import('../lib/supabaseService');
+                    results = await searchDealsSemantic('trending', limit);
+                }
                 setDeals(results);
             } catch (error) {
                 console.error('Failed to fetch similar deals:', error);
@@ -50,8 +56,12 @@ const SimilarDeals: React.FC<SimilarDealsProps> = ({ dealId, limit = 3 }) => {
                     <SparklesIcon className="w-5 h-5 text-gold-400" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-heading font-bold text-white uppercase tracking-wider">{t('youMightAlsoLike') || 'You Might Also Like'}</h3>
-                    <p className="text-white/40 text-xs mt-1 uppercase tracking-widest">{t('aiRecommended') || 'AI Powered Recommendations'}</p>
+                    <h3 className="text-xl font-heading font-bold text-white uppercase tracking-wider">
+                        {dealId ? (t('youMightAlsoLike') || 'You Might Also Like') : (t('trendingDeals') || 'Trending Now')}
+                    </h3>
+                    <p className="text-white/40 text-xs mt-1 uppercase tracking-widest">
+                        {dealId ? (t('aiRecommended') || 'AI Powered Recommendations') : (t('aiTrending') || 'Top Picks for You')}
+                    </p>
                 </div>
             </div>
 
