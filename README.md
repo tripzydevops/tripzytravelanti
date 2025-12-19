@@ -1,20 +1,21 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🌍 Tripzy - AI Powered Recommendation Engine
 
-# Run and deploy your AI Studio app
+> **Project Status:** Active Development (TÜBİTAK 1507 R&D Candidate)
+> **Live Demo:** [Click Here](https://tripzytravelanti.vercel.app)
 
-This contains everything you need to run your app locally.
+## 🚀 Project Overview
+Tripzy is a next-generation recommendation engine that solves the **"Cold Start"** problem in the travel industry using **Autonomous Agents**.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1yhJts-YldzjZCI0GU9DECPzuMfZFBn0l
+## 🏗️ Technical Architecture
+* **AI Core:** Google Gemini 3 & Antigravity IDE (Agent Orchestration)
+* **Memory:** Pinecone Vector Database (Long-term semantic memory)
+* **Backend:** Python FastAPI (Asynchronous Microservices)
+* **Frontend:** HTML5 / React 19 (Context-Aware Interface)
 
-## Run Locally
+## 📂 Repository Structure
+* `/src`: Frontend source codes.
+* `/api`: (Planned) Python backend agents.
+* `/docs`: Architecture diagrams.
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+*© 2025 Tripzy DevOps Team*
