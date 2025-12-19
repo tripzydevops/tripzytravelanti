@@ -56,7 +56,14 @@ CREATE TABLE IF NOT EXISTS referrals (
   referrer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   referred_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(referrer_id, referred_id) section_key TEXT NOT NULL,
+  UNIQUE(referrer_id, referred_id)
+);
+
+-- Page Content Table
+CREATE TABLE IF NOT EXISTS page_content (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  page_key TEXT NOT NULL,
+  section_key TEXT NOT NULL,
   content_key TEXT NOT NULL,
   content_value TEXT NOT NULL,
   content_value_tr TEXT,
