@@ -31,10 +31,8 @@ export const getOptimizedImageUrl = (url: string | undefined | null, options: Im
     // Optimized URL: https://[project].supabase.co/storage/v1/render/image/public/[bucket]/[path]?width=...
 
     // Replace /object/ with /render/image/
-    // NOTE: Disabled by default to ensure compatibility with Supabase Free Tier and standard CDN caching.
-    // Uncomment the line below if you have Supabase Pro or want to use Supabase Image Transformations.
-    // let optimizedUrl = url.replace('/object/public/', '/render/image/public/');
-    let optimizedUrl = url;
+    // Requirement for Turkey launch performance with high user volume
+    let optimizedUrl = url.replace('/object/public/', '/render/image/public/');
 
     const params = new URLSearchParams();
 

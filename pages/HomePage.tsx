@@ -403,20 +403,33 @@ const HomePage: React.FC = () => {
         {/* Main Content */}
         <div className="container mx-auto px-4 py-12 relative z-10">
 
-          {/* Flash Deals Section - Moved up for priority */}
+          {/* Flash Deals Section - Horizontal Scroll Carousel */}
           {flashDeals.length > 0 && (
             <div className="mb-16 animate-fade-in-up">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 backdrop-blur-md">
-                  <FireIcon className="w-6 h-6 text-red-500 animate-pulse" />
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 backdrop-blur-md">
+                    <FireIcon className="w-6 h-6 text-red-500 animate-pulse" />
+                  </div>
+                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
+                    {t('flashDeals') || 'Flash Deals'}
+                  </h2>
                 </div>
-                <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
-                  {t('flashDeals') || 'Flash Deals'}
-                </h2>
+                {/* Visual Indicator for more deals on mobile */}
+                <div className="flex gap-1.5 md:hidden">
+                  {flashDeals.map((_, i) => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                  ))}
+                </div>
               </div>
-              {flashDeals.map(deal => (
-                <FlashDealCard key={deal.id} deal={deal} />
-              ))}
+
+              <div className="flex gap-6 overflow-x-auto pb-8 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
+                {flashDeals.map(deal => (
+                  <div key={deal.id} className="shrink-0 w-[88vw] md:w-full max-w-4xl snap-center">
+                    <FlashDealCard deal={deal} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -431,9 +444,9 @@ const HomePage: React.FC = () => {
                   <button
                     key={cat.key}
                     onClick={() => setCategoryFilter(cat.key as any)}
-                    className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 whitespace-nowrap border flex items-center gap-2 ${categoryFilter === cat.key
-                      ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white border-gold-400 shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105'
-                      : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all duration-500 whitespace-nowrap border-2 ${categoryFilter === cat.key
+                      ? 'bg-gradient-to-br from-gold-500 to-gold-600 text-white border-gold-400 shadow-[0_8px_20px_rgba(212,175,55,0.3)] scale-105 active:scale-95'
+                      : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
                       }`}
                   >
                     {/* Optional icons for categories could go here */}
@@ -448,7 +461,7 @@ const HomePage: React.FC = () => {
           {user && (
             <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20 backdrop-blur-md">
+                <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20 backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.15)]">
                   <SparklesIcon className="w-6 h-6 text-gold-400" />
                 </div>
                 <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">

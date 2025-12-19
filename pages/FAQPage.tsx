@@ -36,7 +36,10 @@ const FAQPage: React.FC = () => {
 
     return (
         <div className="min-h-screen pt-24 pb-12 px-4 container mx-auto text-white">
-            <MetaHead title="Help Center & FAQ - Tripzy" description="Frequently asked questions about Tripzy travel deals and subscriptions." />
+            <MetaHead
+                title={t('faqTitle') || "Help Center & FAQ - Tripzy"}
+                description={t('faqDescription') || "Frequently asked questions about Tripzy travel deals and subscriptions."}
+            />
 
             <div className="max-w-3xl mx-auto">
                 <h1 className="text-4xl font-heading font-bold text-gold-500 mb-8 text-center">{t('helpCenter') || 'Help Center'}</h1>

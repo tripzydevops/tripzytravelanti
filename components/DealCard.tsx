@@ -132,7 +132,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {user && !isLocked && (
           <button
             onClick={handleSaveToggle}
-            className="absolute top-3 right-3 bg-white/10 hover:bg-gold-500/20 backdrop-blur-md p-2 rounded-full text-white hover:text-gold-400 border border-white/20 transition-all z-20 group/btn"
+            className="absolute top-3 right-3 bg-white/10 hover:bg-gold-500/20 backdrop-blur-md p-3 rounded-full text-white hover:text-gold-400 border border-white/20 transition-all z-20 group/btn shadow-lg"
             aria-label={isSaved ? t('unsaveDealAction') : t('saveDealAction')}
           >
             <BookmarkIcon className={`w-5 h-5 transition-colors ${isSaved ? 'text-gold-500 fill-current' : 'text-white group-hover/btn:text-gold-400'}`} />
@@ -183,8 +183,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           </div>
         </div>
 
-        <h3 className="text-lg font-heading font-bold text-white mb-2 leading-tight group-hover:text-gold-400 transition-colors">{title}</h3>
-        <p className="text-white/60 text-sm mb-4 flex-grow line-clamp-2">{description}</p>
+        <h3 className="text-lg md:text-xl font-heading font-bold text-white mb-2 leading-tight group-hover:text-gold-400 transition-colors line-clamp-2 min-h-[3.5rem]">{title}</h3>
+        <p className="text-white/60 text-xs md:text-sm mb-4 flex-grow line-clamp-2">{description}</p>
 
         <div className="mt-auto pt-4 border-t border-white/20">
           <div className="flex justify-between items-center mb-2">

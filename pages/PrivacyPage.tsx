@@ -7,18 +7,18 @@ const PrivacyPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text-primary pt-20 pb-12">
-      <MetaHead 
-        title="Privacy Policy" 
-        description="Privacy Policy for Tripzy - How we handle your data."
+      <MetaHead
+        title={t('privacyPolicy') || "Privacy Policy"}
+        description={t('privacyDescription') || "Privacy Policy for Tripzy - How we handle your data."}
         url="https://tripzy.app/privacy"
       />
-      
+
       <div className="container mx-auto px-6 max-w-4xl bg-white dark:bg-brand-surface p-8 rounded-xl shadow-sm">
         <h1 className="text-3xl font-bold mb-6 text-brand-primary">Privacy Policy</h1>
-        
+
         <div className="prose dark:prose-invert max-w-none space-y-4">
           <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>
-          
+
           <h2 className="text-xl font-semibold mt-4">1. Introduction</h2>
           <p>
             Welcome to Tripzy ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy.
@@ -28,8 +28,8 @@ const PrivacyPage: React.FC = () => {
 
           <h2 className="text-xl font-semibold mt-4">2. Information We Collect</h2>
           <p>
-            We collect personal information that you voluntarily provide to us when you register on the website, 
-            express an interest in obtaining information about us or our products and services, when you participate in activities 
+            We collect personal information that you voluntarily provide to us when you register on the website,
+            express an interest in obtaining information about us or our products and services, when you participate in activities
             on the website, or otherwise when you contact us.
           </p>
 

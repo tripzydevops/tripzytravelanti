@@ -8,8 +8,8 @@ const TermsPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-brand-bg text-brand-text-primary pt-20 pb-12">
             <MetaHead
-                title="Terms of Service"
-                description="Terms of Service for Tripzy."
+                title={t('termsOfService') || "Terms of Service"}
+                description={t('termsDescription') || "Terms of Service for Tripzy."}
                 url="https://tripzy.app/terms"
             />
 

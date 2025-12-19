@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
 import { SubscriptionTier } from '../types';
+import MetaHead from '../components/MetaHead';
 
 const SubscriptionsPage: React.FC = () => {
   const { user } = useAuth();
@@ -30,6 +31,11 @@ const SubscriptionsPage: React.FC = () => {
 
   return (
     <div className="py-12">
+      <MetaHead
+        title={displayTitle || t('subscriptionsTitle')}
+        description={displaySubtitle || t('subscriptionsSubtitle')}
+        url="https://tripzy.app/subscriptions"
+      />
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-brand-text-light mb-2">{displayTitle || t('subscriptionsTitle')}</h1>
