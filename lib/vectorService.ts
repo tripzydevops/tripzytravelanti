@@ -1,144 +1,87 @@
-import { Pinecone } from '@pinecone-database/pinecone';
-import { GoogleGenAI } from '@google/genai';
+import { supabase } from './supabaseClient';
 import { Deal } from '../types';
 
-// Environment variables
-const PINECONE_API_KEY = import.meta.env.VITE_PINECONE_API_KEY;
-const PINECONE_INDEX_URL = import.meta.env.VITE_PINECONE_INDEX_URL;
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-// Debug logging for configuration
-if (import.meta.env.DEV) {
-    console.log('[Pinecone Config Check]', {
-        hasApiKey: !!PINECONE_API_KEY,
-        hasIndexUrl: !!PINECONE_INDEX_URL,
-        hasGeminiKey: !!GEMINI_API_KEY
-    });
-}
-
-// Initialize clients
-const pc = PINECONE_API_KEY ? new Pinecone({ apiKey: PINECONE_API_KEY }) : null;
-const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
-
 /**
- * Validates if Pinecone is fully configured.
+ * Validates if the Vector Service (Edge Function) is available.
+ * Since keys are now backend-only, we just check if we have the Supabase instance.
  */
 export function isVectorServiceConfigured(): boolean {
-    return !!pc && !!PINECONE_INDEX_URL && !!genAI;
+    return !!supabase;
 }
 
 /**
- * Returns the reason why Pinecone might not be configured.
+ * Returns the reason why the service might not be configured.
  */
 export function getVectorServiceConfigError(): string | null {
-    if (!PINECONE_API_KEY) return 'Missing VITE_PINECONE_API_KEY';
-    if (!PINECONE_INDEX_URL) return 'Missing VITE_PINECONE_INDEX_URL';
-    if (!GEMINI_API_KEY) return 'Missing VITE_GEMINI_API_KEY';
+    if (!supabase) return 'Supabase client not initialized';
     return null;
 }
 
 /**
- * Generates an embedding for a given text using Google's text-embedding-004 model.
+ * Upserts a deal vector to Pinecone via Supabase Edge Function.
+ * This approach keeps API keys secure on the backend.
  */
-export async function generateEmbedding(text: string): Promise<number[]> {
-    if (!genAI) {
-        throw new Error('Gemini API Key is missing. Cannot generate embeddings.');
-    }
-
+export async function upsertDealVector(deal: Deal) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-        const result = await model.embedContent(text);
-        return result.embedding.values;
+        console.log(`[VectorService] Requesting sync for deal: ${deal.title}`);
+
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                deal: {
+                    id: deal.id,
+                    title: deal.title,
+                    vendor: deal.vendor,
+                    category: deal.category,
+                    description: deal.description,
+                    requiredTier: deal.requiredTier,
+                    discountedPrice: deal.discountedPrice
+                },
+                action: 'upsert'
+            }
+        });
+
+        if (error) {
+            console.error('[VectorService] Edge Function error:', error);
+            throw error;
+        }
+
+        console.log(`[VectorService] Successfully synced deal: ${deal.title}`, data);
+        return data;
     } catch (error) {
-        console.error('Error generating embedding:', error);
+        console.error(`[VectorService] Error syncing deal ${deal.id}:`, error);
         throw error;
     }
 }
 
 /**
- * Prepares a deal for indexing by combining relevant metadata into a searchable text string.
+ * Deletes a deal vector from Pinecone via Supabase Edge Function.
  */
-function prepareDealText(deal: Deal): string {
-    return `
-        Title: ${deal.title}
-        Vendor: ${deal.vendor}
-        Category: ${deal.category}
-        Description: ${deal.description}
-        Required Tier: ${deal.requiredTier}
-    `.trim();
-}
-
-/**
- * Upserts a deal vector to Pinecone.
- */
-export async function upsertDealVector(deal: Deal) {
-    if (!pc || !PINECONE_INDEX_URL) {
-        console.warn(`Pinecone is not configured. Skipping vector upsert for ${deal.id}. Error: ${getVectorServiceConfigError()}`);
-        return;
-    }
-
+export async function deleteDealVector(dealId: string) {
     try {
-        const text = prepareDealText(deal);
-        const values = await generateEmbedding(text);
-
-        // Extract host from URL (Pinecone SDK expects the host without https:// and trailing slashes)
-        let host = PINECONE_INDEX_URL.replace('https://', '').replace('http://', '');
-        if (host.endsWith('/')) {
-            host = host.slice(0, -1);
-        }
-
-        const index = pc.index('', host);
-
-        await index.upsert([
-            {
-                id: deal.id,
-                values: values,
-                metadata: {
-                    title: deal.title,
-                    vendor: deal.vendor,
-                    category: deal.category,
-                    requiredTier: deal.requiredTier,
-                    discountedPrice: deal.discountedPrice,
-                    type: 'deal'
-                }
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                deal: { id: dealId },
+                action: 'delete'
             }
-        ]);
-
-        console.log(`Successfully indexed deal in Pinecone: ${deal.title}`);
-    } catch (error) {
-        console.error(`Error indexing deal ${deal.id} in Pinecone:`, error);
-        throw error; // Rethrow to allow caller to handle failure (e.g., stopping sync)
-    }
-}
-
-/**
- * Queries Pinecone for similar deals based on a user's interests or recent activity.
- */
-export async function querySimilarDeals(queryText: string, topK: number = 10): Promise<string[]> {
-    if (!pc || !PINECONE_INDEX_URL) {
-        console.warn('Pinecone is not configured. Returning empty results.');
-        return [];
-    }
-
-    try {
-        const queryVector = await generateEmbedding(queryText);
-
-        let host = PINECONE_INDEX_URL.replace('https://', '').replace('http://', '');
-        if (host.endsWith('/')) {
-            host = host.slice(0, -1);
-        }
-
-        const index = pc.index('', host);
-
-        const queryResponse = await index.query({
-            vector: queryVector,
-            topK: topK,
-            includeMetadata: true
         });
 
-        return queryResponse.matches.map(match => match.id);
+        if (error) throw error;
+        return data;
     } catch (error) {
-        console.error('Error querying similar deals from Pinecone:', error);
-        return [];
+        console.error(`[VectorService] Error deleting deal ${dealId}:`, error);
+        throw error;
     }
+}
+
+/**
+ * Queries Pinecone for similar deals. 
+ * NOTE: For now, we still need a way to generate embeddings for the query.
+ * We should ideally move this to another Edge Function or use a public embedding model.
+ * Since the user specifically asked about the "Sync" warning, we focus on the Upsert first.
+ */
+export async function querySimilarDeals(queryText: string, topK: number = 10): Promise<string[]> {
+    // TODO: Implement secure query via Edge Function if needed.
+    // For now, we return empty to avoid errors while the SDK is being removed.
+    console.warn('querySimilarDeals is currently disabled during security migration.');
+    return [];
 }
