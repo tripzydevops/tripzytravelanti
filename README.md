@@ -9,7 +9,7 @@ Tripzy is a next-generation recommendation engine that solves the **"Cold Start"
 ## 🏗️ System Architecture
 The system is built on a 3-layer Agentic Workflow managed by **Google Antigravity**.
 
-![System Architecture](Ek-1_Teknik_Mimari_Diyagrami.pdf.jpg)
+![System Architecture](Ek-1_Teknik_Mimari_Diyagrami.pdf.png)
 
 ## 🛠️ Tech Stack
 * **AI Core:** Google Gemini 3 & Antigravity IDE (Agent Orchestration)
