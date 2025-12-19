@@ -10,6 +10,7 @@ import {
   ChevronUp,
   ChevronDown,
   X,
+  Check,
   Share2,
   Pencil,
   LogOut,
@@ -72,6 +73,9 @@ export const XCircle: React.FC<IconProps> = ({ className }) => <X className={cla
 export const ShareIcon: React.FC<IconProps> = ({ className }) => <Share2 className={className} />;
 export const PencilIcon: React.FC<IconProps> = ({ className }) => <Pencil className={className} />;
 export const LogoutIcon: React.FC<IconProps> = ({ className }) => <LogOut className={className} />;
+export const CheckIcon: React.FC<IconProps> = ({ className }) => <Check className={className} />;
+export const XIcon: React.FC<IconProps> = ({ className }) => <X className={className} />;
+export const EditIcon: React.FC<IconProps> = ({ className }) => <Pencil className={className} />;
 export const ChatBubbleOvalLeftIcon: React.FC<IconProps> = ({ className }) => <MessageCircle className={className} />;
 export const CreditCardIcon: React.FC<IconProps> = ({ className }) => <CreditCard className={className} />;
 export const BellIcon: React.FC<IconProps> = ({ className }) => <Bell className={className} />;
