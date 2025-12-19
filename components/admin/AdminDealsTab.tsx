@@ -82,7 +82,7 @@ const isFarFuture = (dateString: string): boolean => {
 
 const AdminDealsTab: React.FC = () => {
     const { t, language } = useLanguage();
-    const { addDeal, updateDeal, deleteDeal } = useDeals();
+    const { addDeal, updateDeal, deleteDeal, categories, categoriesLoading } = useDeals();
 
     // Local State
     const [adminDeals, setAdminDeals] = useState<Deal[]>([]);
@@ -303,14 +303,9 @@ const AdminDealsTab: React.FC = () => {
 
             // Handle Category Change
             if (name === 'category') {
-                const catOptions = getCategoryOptions('en');
-                const selectedCat = catOptions.find(c => c.value === value);
+                const selectedCat = categories.find(c => c.name === value);
                 if (selectedCat) {
-                    const catOptionsTr = getCategoryOptions('tr');
-                    const trCat = catOptionsTr.find(c => c.key === selectedCat.key);
-                    if (trCat) {
-                        updated.category_tr = trCat.value;
-                    }
+                    updated.category_tr = selectedCat.name_tr || value;
                 }
             }
 
@@ -536,7 +531,11 @@ const AdminDealsTab: React.FC = () => {
 
 
         try {
-            const dealData = { ...dealFormData, imageUrl: finalImageUrl, expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7), category_tr: dealFormData.category === 'Dining' ? 'Yemek' : dealFormData.category === 'Wellness' ? 'Sağlık' : 'Seyahat' };
+            const dealData = {
+                ...dealFormData,
+                imageUrl: finalImageUrl,
+                expiresAt: neverExpires ? getFarFutureDate() : getExpiryDate(typeof expiresInDays === 'number' ? expiresInDays : parseInt(expiresInDays as string) || 7)
+            };
             if (editingDeal) {
                 await updateDeal(dealData);
             } else {
@@ -684,7 +683,11 @@ const AdminDealsTab: React.FC = () => {
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')} <span className="text-red-500">*</span></label>
                                                 <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
-                                                    {getCategoryOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.name}>
+                                                            {cat.icon} {language === 'tr' ? cat.name_tr : cat.name}
+                                                        </option>
+                                                    ))}
                                                 </select>
                                             </div>
                                         </div>
@@ -845,8 +848,10 @@ const AdminDealsTab: React.FC = () => {
                             className="w-full bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                         >
                             <option value="All">{t('categoryAll')}</option>
-                            {getCategoryOptions(language).map(cat => (
-                                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.name}>
+                                    {cat.icon} {language === 'tr' ? cat.name_tr : cat.name}
+                                </option>
                             ))}
                         </select>
                     </div>

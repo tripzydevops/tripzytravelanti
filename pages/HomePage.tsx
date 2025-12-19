@@ -30,7 +30,7 @@ const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
 const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { deals, loading, loadDealsPaginated, total } = useDeals();
+  const { deals, loading, loadDealsPaginated, total, categories: dynamicCategories } = useDeals();
   const { user } = useAuth();
   const {
     searchQuery,
@@ -40,7 +40,9 @@ const HomePage: React.FC = () => {
     ratingFilter,
     setRatingFilter,
     userLocation,
-    isLocationEnabled
+    isLocationEnabled,
+    isSmartSearch,
+    setIsSmartSearch
   } = useSearch();
 
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
@@ -91,6 +93,7 @@ const HomePage: React.FC = () => {
   const heroImage = getContent('home', 'hero', 'image_url');
   const categoriesTitle = getContent('home', 'categories', 'title');
   const featuredDealsTitle = getContent('home', 'featured_deals', 'title');
+  const smartPicksTitle = language === 'tr' ? 'Zeki Seçimler' : 'Smart Picks';
   const flightsTitle = getContent('home', 'flights', 'title');
 
   const displayTitle = language === 'tr' ? (heroTitle?.content_value_tr || heroTitle?.content_value) : heroTitle?.content_value;
@@ -144,7 +147,8 @@ const HomePage: React.FC = () => {
       await loadDealsPaginated(1, DEALS_PER_PAGE, {
         category: categoryFilter,
         search: searchQuery,
-        rating: ratingFilter
+        rating: ratingFilter,
+        isSmartSearch: isSmartSearch
       }, false); // false = reset list
     };
 
@@ -154,7 +158,7 @@ const HomePage: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [categoryFilter, searchQuery, ratingFilter, loadDealsPaginated]);
+  }, [categoryFilter, searchQuery, ratingFilter, isSmartSearch, loadDealsPaginated]);
 
   const handleLoadMore = async () => {
     const nextPage = page + 1;
@@ -162,7 +166,8 @@ const HomePage: React.FC = () => {
     await loadDealsPaginated(nextPage, DEALS_PER_PAGE, {
       category: categoryFilter,
       search: searchQuery,
-      rating: ratingFilter
+      rating: ratingFilter,
+      isSmartSearch: isSmartSearch
     }, true); // true = append
   };
 
@@ -197,13 +202,15 @@ const HomePage: React.FC = () => {
     localStorage.removeItem('wanderwise_recent_searches');
   };
 
-  const categories = [
-    { key: 'All', name: t('categoryAll') },
-    { key: 'Flights', name: t('categoryFlights') || 'Flights' },
-    { key: 'Food & Dining', name: t('categoryDining') },
-    { key: 'Services', name: t('categoryWellness') },
-    { key: 'Travel', name: t('categoryTravel') },
-  ];
+  const categories = React.useMemo(() => {
+    return [
+      { key: 'All', name: t('categoryAll') },
+      ...(dynamicCategories || []).map(cat => ({
+        key: cat.name,
+        name: language === 'tr' ? cat.name_tr : cat.name
+      }))
+    ];
+  }, [dynamicCategories, language, t]);
 
   const ratingFilters = [
     { value: 0, label: t('allRatings') },
@@ -340,6 +347,22 @@ const HomePage: React.FC = () => {
                   className="w-full bg-transparent border-none text-white text-lg placeholder-white/60 focus:ring-0 px-2 py-3"
                   aria-label={t('searchPlaceholder')}
                 />
+
+                {/* AI Toggle Button */}
+                <button
+                  onClick={() => setIsSmartSearch(!isSmartSearch)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 mr-2 ${isSmartSearch
+                    ? 'bg-gold-500 text-white shadow-[0_0_15px_rgba(212,175,55,0.4)]'
+                    : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60'
+                    }`}
+                  title={isSmartSearch ? "Smart Search ON" : "Standard Search"}
+                >
+                  <SparklesIcon className={`w-4 h-4 ${isSmartSearch ? 'animate-pulse' : ''}`} />
+                  <span className="text-xs font-bold hidden sm:inline uppercase tracking-widest">
+                    {isSmartSearch ? 'AI Smart' : 'Smart'}
+                  </span>
+                </button>
+
                 {/* Search Button (Optional visual cue) */}
                 <button className="hidden md:block px-6 py-2 bg-gold-500 hover:bg-gold-600 text-white font-bold rounded-full transition-colors shadow-lg">
                   Search
@@ -428,8 +451,8 @@ const HomePage: React.FC = () => {
                 <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20 backdrop-blur-md">
                   <SparklesIcon className="w-6 h-6 text-gold-400" />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-heading font-bold text-white tracking-tight">
-                  {t('recommendedForYou') || 'Recommended for You'}
+                <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
+                  {smartPicksTitle}
                 </h2>
               </div>
 

@@ -10,6 +10,7 @@ import ImageUpload from '../../components/ImageUpload';
 import StoreLocationFields from '../../components/StoreLocationFields';
 import CountrySelector from '../../components/CountrySelector';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useDeals } from '../../contexts/DealContext';
 import {
     getCategoryOptions,
     getDiscountTypeOptions,
@@ -24,6 +25,7 @@ import { generateRedemptionCode } from '../../lib/codeGenerator';
 
 const CreateDealPage: React.FC = () => {
     const { t, language } = useLanguage();
+    const { categories, categoriesLoading } = useDeals();
     const { user } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -208,14 +210,9 @@ const CreateDealPage: React.FC = () => {
 
                 // Handle Category Change (Update Turkish equivalent automatically if possible)
                 if (name === 'category') {
-                    const catOptions = getCategoryOptions('en');
-                    const selectedCat = catOptions.find(c => c.value === value);
+                    const selectedCat = categories.find(c => c.name === value);
                     if (selectedCat) {
-                        const catOptionsTr = getCategoryOptions('tr');
-                        const trCat = catOptionsTr.find(c => c.key === selectedCat.key);
-                        if (trCat) {
-                            updated.category_tr = trCat.value;
-                        }
+                        updated.category_tr = selectedCat.name_tr || value;
                     }
                 }
 
@@ -438,7 +435,11 @@ const CreateDealPage: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('categoryLabel')}</label>
                                         <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                            {getCategoryOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                                            {categories.map(cat => (
+                                                <option key={cat.id} value={cat.name}>
+                                                    {cat.icon} {language === 'tr' ? cat.name_tr : cat.name}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>

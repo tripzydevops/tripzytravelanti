@@ -18,6 +18,7 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { UsersIcon, TagIcon, TrendingUpIcon, CreditCardIcon, SpinnerIcon } from './Icons';
 import { getAnalyticsData } from '../lib/supabaseService';
+import AdminActivityLog from './admin/AdminActivityLog';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
@@ -124,7 +125,7 @@ const AnalyticsDashboard: React.FC = () => {
                 />
                 <MetricCard
                     title="Total Revenue"
-                    value={`$${metrics.totalRevenue.toLocaleString()}`}
+                    value={`₺${metrics.totalRevenue.toLocaleString()}`}
                     // change="+8%"
                     icon={<CreditCardIcon className="w-6 h-6 text-green-500" />}
                     color="bg-green-50 dark:bg-green-900/20"
@@ -145,9 +146,52 @@ const AnalyticsDashboard: React.FC = () => {
                 />
             </div>
 
-            {/* Charts Section 1: Revenue & User Growth */}
+            {/* Scaling & Growth Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ChartCard title="Revenue Overview (Last 6 Months)">
+                <div className="bg-white dark:bg-brand-surface p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/5">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-brand-text-light mb-4 flex items-center gap-2">
+                        <TrendingUpIcon className="w-5 h-5 text-brand-primary" />
+                        Scaling to 100k Users
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center text-sm font-medium">
+                            <span className="text-gray-500 dark:text-brand-text-muted">Progress</span>
+                            <span className="text-brand-primary">{metrics.scalingProgress?.toFixed(2)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden">
+                            <div
+                                className="bg-brand-primary h-full transition-all duration-1000 ease-out"
+                                style={{ width: `${Math.min(100, metrics.scalingProgress || 0)}%` }}
+                            ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400">
+                            <span>{metrics.totalUsers.toLocaleString()} Users</span>
+                            <span>Target: 100,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <MetricCard
+                        title="Growth Velocity"
+                        value={`${metrics.growthVelocity?.toFixed(1)}`}
+                        change="avg users/day (last 7d)"
+                        icon={<UsersIcon className="w-6 h-6 text-blue-500" />}
+                        color="bg-blue-50 dark:bg-blue-900/20"
+                    />
+                    <MetricCard
+                        title="Conversion Rate"
+                        value={`${metrics.conversionRate?.toFixed(1)}%`}
+                        change="Redemptions per user"
+                        icon={<TagIcon className="w-6 h-6 text-green-500" />}
+                        color="bg-green-50 dark:bg-green-900/20"
+                    />
+                </div>
+            </div>
+
+            {/* Charts Section 1: Revenue & Activity Log */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <ChartCard title="Revenue Overview (Last 6 Months)" className="lg:col-span-2">
                     <ResponsiveContainer width="100%" height={300}>
                         <AreaChart data={charts.revenueData}>
                             <defs>
@@ -161,13 +205,20 @@ const AnalyticsDashboard: React.FC = () => {
                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                formatter={(value: number) => [`$${value}`, 'Revenue']}
+                                formatter={(value: number) => [`₺${value}`, 'Revenue']}
                             />
                             <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </ChartCard>
 
+                <div className="lg:col-span-1">
+                    <AdminActivityLog />
+                </div>
+            </div>
+
+            {/* Charts Section 2: User Growth & Categories */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ChartCard title="User Growth (Cumulative)">
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={charts.userGrowthData}>
@@ -181,11 +232,8 @@ const AnalyticsDashboard: React.FC = () => {
                         </LineChart>
                     </ResponsiveContainer>
                 </ChartCard>
-            </div>
 
-            {/* Charts Section 2: Categories & Top Deals */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <ChartCard title="Deal Categories" className="lg:col-span-1">
+                <ChartCard title="Deal Categories">
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -209,13 +257,16 @@ const AnalyticsDashboard: React.FC = () => {
                         {charts.categoryData.map((entry: any, index: number) => (
                             <div key={index} className="flex items-center text-xs text-gray-600 dark:text-brand-text-muted">
                                 <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                                {entry.name} ({entry.value})
+                                {entry.name}: {entry.value}
                             </div>
                         ))}
                     </div>
                 </ChartCard>
+            </div>
 
-                <ChartCard title="Top Performing Deals" className="lg:col-span-2">
+            {/* Charts Section 3: Performance Rankings */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ChartCard title="Top Performing Deals">
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart
                             data={charts.topDeals}
@@ -230,6 +281,58 @@ const AnalyticsDashboard: React.FC = () => {
                         </BarChart>
                     </ResponsiveContainer>
                 </ChartCard>
+
+                <ChartCard title="Top Merchants">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                            data={charts.merchantData}
+                            layout="vertical"
+                            margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={120} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                            <Tooltip cursor={{ fill: 'transparent' }} />
+                            <Bar dataKey="value" fill="#6366F1" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+            </div>
+
+            {/* Charts Section 4: Subscription Tiers */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+                <ChartCard title="Tier Distribution">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                            <Pie
+                                data={charts.tierData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {charts.tierData.map((entry: any, index: number) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex justify-center gap-4 flex-wrap mt-4">
+                        {charts.tierData.map((entry: any, index: number) => (
+                            <div key={index} className="flex items-center text-xs text-gray-600 dark:text-brand-text-muted">
+                                <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                                {entry.name}: {entry.value}
+                            </div>
+                        ))}
+                    </div>
+                </ChartCard>
+
+                {/* Placeholder for future growth projections or market share */}
+                <div className="hidden lg:block"></div>
             </div>
         </div>
     );
@@ -242,8 +345,8 @@ const MetricCard = ({ title, value, change, icon, color }: any) => (
             <p className="text-sm font-medium text-gray-500 dark:text-brand-text-muted mb-1">{title}</p>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-brand-text-light">{value}</h3>
             {change && (
-                <span className={`text-xs font-medium ${change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-                    {change} from last month
+                <span className={`text-xs font-medium ${change.startsWith('+') || change.includes('avg') || change.includes('Redemptions') ? 'text-green-500' : 'text-red-500'}`}>
+                    {change}
                 </span>
             )}
         </div>

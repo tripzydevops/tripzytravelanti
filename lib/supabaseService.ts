@@ -1,7 +1,14 @@
 import { supabase } from './supabaseClient';
-import { User, Deal, SubscriptionTier, PaymentTransaction, UserNotificationPreferences } from '../types';
+import { User, Deal, SubscriptionTier, PaymentTransaction, UserNotificationPreferences, PageContent } from '../types';
 import { PostgrestError } from '@supabase/supabase-js';
 import { upsertDealVector } from './vectorService';
+
+export interface Category {
+    id: string;
+    name: string;
+    name_tr: string;
+    icon?: string;
+}
 
 // Internal interface for raw DB deal response
 interface DBDeal {
@@ -1041,7 +1048,7 @@ export async function getAnalyticsData() {
         // 1. Fetch Total Users and Growth
         const { data: users, error: usersError } = await supabase
             .from('profiles')
-            .select('created_at');
+            .select('created_at, tier');
 
         if (usersError) throw usersError;
 
@@ -1056,14 +1063,14 @@ export async function getAnalyticsData() {
         // 3. Fetch Active Deals and Categories
         const { data: deals, error: dealsError } = await supabase
             .from('deals')
-            .select('id, title, category, status, created_at');
+            .select('id, title, category, status, created_at, vendor');
 
         if (dealsError) throw dealsError;
 
         // 4. Fetch Redemptions and Top Deals
         const { data: redemptions, error: redemptionsError } = await supabase
             .from('deal_redemptions')
-            .select('deal_id, redeemed_at');
+            .select('deal_id, redeemed_at, status');
 
         if (redemptionsError) throw redemptionsError;
 
@@ -1145,18 +1152,47 @@ export async function getAnalyticsData() {
             .sort((a, b) => b.redemptions - a.redemptions)
             .slice(0, 5);
 
+        // 5. Tier Distribution
+        const tierCounts: Record<string, number> = {};
+        users.forEach((u: any) => {
+            const tier = u.tier || 'NONE';
+            tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+        });
+        const tierData = Object.entries(tierCounts).map(([name, value]) => ({ name, value }));
+
+        const merchantData = Object.entries(vendorRedemptions)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+
+        // 7. NEW: Scaling Metrics (Turkey Launch)
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const usersToday = users.length;
+        const usersLastWeek = users.filter((u: any) => new Date(u.created_at) <= sevenDaysAgo).length;
+        const growthVelocity = (usersToday - usersLastWeek) / 7; // Average new users per day this week
+
+        const conversionRate = totalUsers > 0 ? (totalRedemptions / totalUsers) * 100 : 0;
+        const scalingGoal = 100000;
+        const scalingProgress = (totalUsers / scalingGoal) * 100;
+
         return {
             metrics: {
                 totalUsers,
                 totalRevenue,
                 activeDeals,
-                totalRedemptions
+                totalRedemptions,
+                growthVelocity,
+                conversionRate,
+                scalingProgress
             },
             charts: {
                 revenueData,
                 userGrowthData: userGrowthCumulative,
                 categoryData,
-                topDeals
+                topDeals,
+                tierData,
+                merchantData
             }
         };
 
@@ -1550,6 +1586,90 @@ export async function getUserActivityLog(userId: string): Promise<ActivityLogIte
     return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
+export async function getGlobalActivityLog(limit: number = 20): Promise<ActivityLogItem[]> {
+    const activities: ActivityLogItem[] = [];
+
+    // 1. Get New Registrations
+    const { data: newUsers } = await supabase
+        .from('profiles')
+        .select('id, name, created_at')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (newUsers) {
+        newUsers.forEach(u => {
+            activities.push({
+                id: 'join-' + u.id,
+                type: 'joined',
+                description: `${u.name || 'A new user'} joined the platform`,
+                timestamp: u.created_at,
+                metadata: { userId: u.id, userName: u.name }
+            });
+        });
+    }
+
+    // 2. Get Deal Redemptions
+    const { data: redemptions } = await supabase
+        .from('deal_redemptions')
+        .select(`
+            id,
+            redeemed_at,
+            user_id,
+            profiles(name),
+            deal:deals(title)
+        `)
+        .order('redeemed_at', { ascending: false })
+        .limit(limit);
+
+    if (redemptions) {
+        redemptions.forEach((r: any) => {
+            const userName = r.profiles?.name || 'A user';
+            const dealTitle = r.deal?.title || 'a deal';
+            activities.push({
+                id: 'redeem-' + r.id,
+                type: 'deal_redeemed',
+                description: `${userName} redeemed: ${dealTitle}`,
+                timestamp: r.redeemed_at,
+                metadata: { userId: r.user_id, userName, dealTitle }
+            });
+        });
+    }
+
+    // 3. Get Recent Payments
+    const { data: payments } = await supabase
+        .from('payment_transactions')
+        .select(`
+            id,
+            amount,
+            currency,
+            status,
+            created_at,
+            user_id,
+            profiles(name)
+        `)
+        .eq('status', 'succeeded')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (payments) {
+        payments.forEach((p: any) => {
+            const userName = p.profiles?.name || 'A user';
+            activities.push({
+                id: 'pay-' + p.id,
+                type: 'subscription_payment',
+                description: `${userName} paid ${p.amount} ${p.currency}`,
+                timestamp: p.created_at,
+                metadata: { userId: p.user_id, userName, amount: p.amount }
+            });
+        });
+    }
+
+    // Sort combined by timestamp DESC and slice to the requested limit
+    return activities
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, limit);
+}
+
 // =====================================================
 // PROMO CODE OPERATIONS
 // =====================================================
@@ -1662,6 +1782,151 @@ export async function applyPromoCode(code: string, txnId?: string): Promise<bool
     }
 
     return data;
+}
+
+// =====================================================
+// CATEGORY OPERATIONS
+// =====================================================
+
+export async function getCategories(): Promise<Category[]> {
+    const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+    if (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+
+    return data;
+}
+
+export async function createCategory(category: Omit<Category, 'id'>) {
+    const { data, error } = await supabase
+        .from('categories')
+        .insert(category)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function updateCategory(id: string, updates: Partial<Category>) {
+    const { data, error } = await supabase
+        .from('categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function deleteCategory(id: string) {
+    const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+}
+
+// =====================================================
+// VECTOR / AI OPERATIONS
+// =====================================================
+
+/**
+ * Fetch deals similar to a given deal using vector similarity search
+ */
+export async function getSimilarDeals(dealId: string, limit: number = 3): Promise<Deal[]> {
+    try {
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'query',
+                query: { dealId, topK: limit }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('Vector query error:', error || data?.error);
+            return [];
+        }
+
+        // The vector-sync function returns Pinecone matches. 
+        // We need to fetch the actual deal data from Supabase for these IDs.
+        const matches = data.results || [];
+        const dealIds = matches.map((m: any) => m.id);
+
+        if (dealIds.length === 0) return [];
+
+        const { data: deals, error: dealsError } = await supabase
+            .from('deals')
+            .select('*')
+            .in('id', dealIds);
+
+        if (dealsError) {
+            console.error('Error fetching deals for matches:', dealsError);
+            return [];
+        }
+
+        // Return transformed deals, keeping the order from Pinecone (relevance)
+        return dealIds.map((id: string) => {
+            const deal = deals.find((d: any) => d.id === id);
+            return deal ? transformDealFromDB(deal) : null;
+        }).filter(Boolean) as Deal[];
+
+    } catch (err) {
+        console.error('getSimilarDeals failed:', err);
+        return [];
+    }
+}
+
+/**
+ * Perform semantic search on deals using vector embeddings
+ */
+export async function searchDealsSemantic(text: string, limit: number = 20): Promise<Deal[]> {
+    try {
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'query',
+                query: { text, topK: limit }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('Semantic search error:', error || data?.error);
+            return [];
+        }
+
+        const matches = data.results || [];
+        const dealIds = matches.map((m: any) => m.id);
+
+        if (dealIds.length === 0) return [];
+
+        const { data: deals, error: dealsError } = await supabase
+            .from('deals')
+            .select('*')
+            .in('id', dealIds);
+
+        if (dealsError) {
+            console.error('Error fetching deals for matches:', dealsError);
+            return [];
+        }
+
+        // Return transformed deals, keeping the order from Pinecone (relevance score)
+        return dealIds.map((id: string) => {
+            const deal = deals.find((d: any) => d.id === id);
+            return deal ? transformDealFromDB(deal) : null;
+        }).filter(Boolean) as Deal[];
+
+    } catch (err) {
+        console.error('searchDealsSemantic failed:', err);
+        return [];
+    }
 }
 
 // =====================================================

@@ -8,6 +8,7 @@ import AdminUsersTab from '../components/admin/AdminUsersTab';
 import AdminVendorStats from '../components/admin/AdminVendorStats';
 import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminPendingApprovalsTab from '../components/admin/AdminPendingApprovalsTab';
+import AdminCategoryTab from '../components/admin/AdminCategoryTab';
 import AdminContentTab from '../components/admin/AdminContentTab';
 import AdminFlightRoutesTab from '../components/admin/AdminFlightRoutesTab';
 import AdminBackgroundsTab from '../components/admin/AdminBackgroundsTab';
@@ -40,7 +41,7 @@ const AdminPage: React.FC = () => {
   const { t } = useLanguage();
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'categories' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes'>('analytics');
   const [pendingCount, setPendingCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile toggle
   const [isCollapsed, setIsCollapsed] = useState(false); // Desktop toggle
@@ -65,6 +66,7 @@ const AdminPage: React.FC = () => {
       title: 'Management',
       items: [
         { id: 'deals', label: t('manageDeals'), icon: <TagIcon className="w-5 h-5" /> },
+        { id: 'categories', label: 'Categories', icon: <MegaphoneIcon className="w-5 h-5" /> }, // Borrowing Megaphone for now or using Tag
         { id: 'users', label: t('manageUsers'), icon: <UsersIcon className="w-5 h-5" /> },
         { id: 'subscriptions', label: t('adminSubscriptions'), icon: <TicketIcon className="w-5 h-5" /> },
         {
@@ -232,6 +234,7 @@ const AdminPage: React.FC = () => {
             {activeTab === 'analytics' && <AnalyticsDashboard />}
             {activeTab === 'vendor_stats' && <AdminVendorStats />}
             {activeTab === 'deals' && <AdminDealsTab />}
+            {activeTab === 'categories' && <AdminCategoryTab />}
             {activeTab === 'users' && <AdminUsersTab />}
             {activeTab === 'subscriptions' && <AdminSubscriptionsTab />}
             {activeTab === 'content' && <AdminContentTab />}

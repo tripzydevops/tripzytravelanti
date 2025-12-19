@@ -20,6 +20,8 @@ interface SearchContextType {
   userLocation: { lat: number; lng: number } | null;
   isLocationEnabled: boolean;
   enableLocation: () => Promise<void>;
+  isSmartSearch: boolean;
+  setIsSmartSearch: (isSmart: boolean) => void;
 }
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -31,6 +33,7 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [ratingFilter, setRatingFilter] = useState(0);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
+  const [isSmartSearch, setIsSmartSearch] = useState(false);
   const navigate = useNavigate();
 
   const enableLocation = useCallback(async () => {
@@ -89,7 +92,9 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       applyFiltersAndNavigate,
       userLocation,
       isLocationEnabled,
-      enableLocation
+      enableLocation,
+      isSmartSearch,
+      setIsSmartSearch
     }}>
       {children}
     </SearchContext.Provider>

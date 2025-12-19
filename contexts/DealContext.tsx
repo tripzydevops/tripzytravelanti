@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { Deal } from '../types';
-import { getAllDeals, getDealById as getSupabaseDealById, getDealsPaginated, createDeal as apiCreateDeal, updateDeal as apiUpdateDeal } from '../lib/supabaseService';
+import { getAllDeals, getDealById as getSupabaseDealById, getDealsPaginated, createDeal as apiCreateDeal, updateDeal as apiUpdateDeal, searchDealsSemantic } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 
 interface DealContextType {
@@ -14,6 +14,8 @@ interface DealContextType {
   deleteDeal: (dealId: string) => Promise<void>;
   refreshDeals: () => Promise<void>;
   loadDealsPaginated: (page: number, limit: number, filters?: any, append?: boolean) => Promise<void>;
+  categories: any[];
+  categoriesLoading: boolean;
 }
 
 const DealContext = createContext<DealContextType | undefined>(undefined);
@@ -22,6 +24,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   // Load deals from Supabase (Legacy/Initial - can be replaced or kept for non-paginated needs if any)
   const loadDeals = useCallback(async () => {
@@ -37,11 +41,35 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Load categories
+  const loadCategories = useCallback(async () => {
+    try {
+      setCategoriesLoading(true);
+      const { getCategories } = await import('../lib/supabaseService');
+      const fetchedCategories = await getCategories();
+      setCategories(fetchedCategories);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
   // Paginated Load
   const loadDealsPaginated = useCallback(async (page: number, limit: number, filters?: any, append: boolean = false) => {
     try {
       setLoading(true);
-      const { deals: newDeals, total: totalCount } = await getDealsPaginated(page, limit, filters);
+      let newDeals: Deal[];
+      let totalCount: number;
+
+      if (filters?.isSmartSearch && filters?.search) {
+        newDeals = await searchDealsSemantic(filters.search, limit);
+        totalCount = newDeals.length; // Pinecone doesn't always return total count, we take what we get
+      } else {
+        const result = await getDealsPaginated(page, limit, filters);
+        newDeals = result.deals;
+        totalCount = result.total;
+      }
 
       setTotal(totalCount);
 
@@ -64,10 +92,11 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initial load
   useEffect(() => {
+    loadCategories();
     // Optimization: Do not automatically load all deals on mount.
     // Pages (HomePage, AdminPage) should trigger their own data fetching
     // using loadDealsPaginated or refreshDeals as needed.
-  }, []);
+  }, [loadCategories]);
 
   // Refresh deals manually
   const refreshDeals = useCallback(async () => {
@@ -177,6 +206,8 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteDeal,
         refreshDeals,
         loadDealsPaginated,
+        categories,
+        categoriesLoading
       }}
     >
       {children}

@@ -7,8 +7,9 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface SyncRequest {
-    deal: {
+interface VectorRequest {
+    action: 'upsert' | 'delete' | 'query';
+    deal?: {
         id: string;
         title: string;
         vendor: string;
@@ -17,7 +18,11 @@ interface SyncRequest {
         requiredTier: string;
         discountedPrice: number;
     };
-    action: 'upsert' | 'delete';
+    query?: {
+        text?: string;
+        dealId?: string;
+        topK?: number;
+    };
 }
 
 serve(async (req) => {
@@ -32,7 +37,7 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        // Verify authentication
+        // 1. Verify Authentication (Required for all actions)
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) {
             return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -43,36 +48,67 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
-        // Verify Admin status
-        const { data: profile, error: profileError } = await supabaseClient
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
+        const body = await req.json() as VectorRequest
+        const { action } = body;
 
-        if (profileError || profile?.role !== 'admin') {
-            return new Response(JSON.stringify({ error: 'Unauthorized: Admin access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        // 2. Authorization Check
+        if (action === 'upsert' || action === 'delete') {
+            // Admin only for write operations
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('role, is_admin')
+                .eq('id', user.id)
+                .single()
+
+            if (profile?.role !== 'admin' && profile?.is_admin !== true) {
+                return new Response(JSON.stringify({ error: 'Unauthorized: Admin access required for this action' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
         }
 
-        const { deal, action } = await req.json() as SyncRequest
-
+        // 3. Action Logic
         if (action === 'delete') {
-            return await deleteFromPinecone(deal.id);
+            if (!body.deal?.id) throw new Error('Missing deal id for delete');
+            return await deleteFromPinecone(body.deal.id);
         }
 
-        // Upsert logic
-        const text = `
-        Title: ${deal.title}
-        Vendor: ${deal.vendor}
-        Category: ${deal.category}
-        Description: ${deal.description}
-        Required Tier: ${deal.requiredTier}
-    `.trim();
+        if (action === 'upsert') {
+            if (!body.deal) throw new Error('Missing deal data for upsert');
+            const deal = body.deal;
+            const text = `
+            Title: ${deal.title}
+            Vendor: ${deal.vendor}
+            Category: ${deal.category}
+            Description: ${deal.description}
+            Required Tier: ${deal.requiredTier}
+        `.trim();
 
-        const embedding = await generateEmbedding(text);
-        const result = await upsertToPinecone(deal, embedding);
+            const embedding = await generateEmbedding(text);
+            const result = await upsertToPinecone(deal, embedding);
+            return new Response(JSON.stringify({ success: true, result }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
 
-        return new Response(JSON.stringify({ success: true, result }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        if (action === 'query') {
+            const topK = body.query?.topK || 5;
+            let embedding: number[] = [];
+
+            if (body.query?.text) {
+                embedding = await generateEmbedding(body.query.text);
+            } else if (body.query?.dealId) {
+                // Fetch deal to generate embedding
+                const { data: deal } = await supabaseClient.from('deals').select('*').eq('id', body.query.dealId).single();
+                if (!deal) throw new Error('Deal not found for similarity query');
+
+                const text = `Title: ${deal.title} Vendor: ${deal.vendor} Category: ${deal.category} Description: ${deal.description}`.trim();
+                embedding = await generateEmbedding(text);
+            } else {
+                throw new Error('Missing query text or dealId');
+            }
+
+            const results = await queryPinecone(embedding, topK, body.query?.dealId);
+            return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
+        return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
     } catch (error) {
         console.error('Error:', error)
@@ -140,6 +176,42 @@ async function upsertToPinecone(deal: any, values: number[]) {
     }
 
     return data;
+}
+
+async function queryPinecone(values: number[], topK: number, excludeId?: string) {
+    const apiKey = Deno.env.get('PINECONE_API_KEY');
+    const indexUrl = Deno.env.get('PINECONE_INDEX_URL');
+    if (!apiKey || !indexUrl) throw new Error('Missing Pinecone secrets');
+
+    const host = indexUrl.replace('https://', '').replace(/\/$/, '');
+    const url = `https://${host}/query`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Api-Key': apiKey,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            vector: values,
+            topK: excludeId ? topK + 1 : topK,
+            includeMetadata: true
+        })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        console.error('Pinecone Query Error:', data);
+        throw new Error(`Pinecone Query Error: ${JSON.stringify(data)}`);
+    }
+
+    // Filter out the source deal if we're looking for "similar to X"
+    let matches = data.matches || [];
+    if (excludeId) {
+        matches = matches.filter((m: any) => m.id !== excludeId).slice(0, topK);
+    }
+
+    return matches;
 }
 
 async function deleteFromPinecone(id: string) {

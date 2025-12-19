@@ -80,8 +80,23 @@ export async function deleteDealVector(dealId: string) {
  * Since the user specifically asked about the "Sync" warning, we focus on the Upsert first.
  */
 export async function querySimilarDeals(queryText: string, topK: number = 10): Promise<string[]> {
-    // TODO: Implement secure query via Edge Function if needed.
-    // For now, we return empty to avoid errors while the SDK is being removed.
-    console.warn('querySimilarDeals is currently disabled during security migration.');
-    return [];
+    try {
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'query',
+                query: { text: queryText, topK }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('[VectorService] Query error:', error || data?.error);
+            return [];
+        }
+
+        const matches = data.results || [];
+        return matches.map((m: any) => m.id);
+    } catch (error) {
+        console.error('[VectorService] querySimilarDeals failed:', error);
+        return [];
+    }
 }

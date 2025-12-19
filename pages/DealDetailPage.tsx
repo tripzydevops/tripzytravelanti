@@ -7,6 +7,7 @@ import { useLayout } from '../contexts/LayoutContext';
 import MetaHead from '../components/MetaHead';
 import { Deal } from '../types';
 import DealDetailView from '../components/DealDetailView';
+import SimilarDeals from '../components/SimilarDeals';
 import { SpinnerIcon } from '../components/Icons';
 
 const DealDetailPage: React.FC = () => {
@@ -91,6 +92,9 @@ const DealDetailPage: React.FC = () => {
         onRate={rateDeal}
         onRedeem={redeemDeal}
       />
+      <div className="bg-[#0f172a] pb-24">
+        <SimilarDeals dealId={fetchedDeal.id} limit={3} />
+      </div>
     </>
   );
 };
