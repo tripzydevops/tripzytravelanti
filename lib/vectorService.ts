@@ -7,9 +7,35 @@ const PINECONE_API_KEY = import.meta.env.VITE_PINECONE_API_KEY;
 const PINECONE_INDEX_URL = import.meta.env.VITE_PINECONE_INDEX_URL;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+// Debug logging for configuration
+if (import.meta.env.DEV) {
+    console.log('[Pinecone Config Check]', {
+        hasApiKey: !!PINECONE_API_KEY,
+        hasIndexUrl: !!PINECONE_INDEX_URL,
+        hasGeminiKey: !!GEMINI_API_KEY
+    });
+}
+
 // Initialize clients
 const pc = PINECONE_API_KEY ? new Pinecone({ apiKey: PINECONE_API_KEY }) : null;
 const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
+
+/**
+ * Validates if Pinecone is fully configured.
+ */
+export function isVectorServiceConfigured(): boolean {
+    return !!pc && !!PINECONE_INDEX_URL && !!genAI;
+}
+
+/**
+ * Returns the reason why Pinecone might not be configured.
+ */
+export function getVectorServiceConfigError(): string | null {
+    if (!PINECONE_API_KEY) return 'Missing VITE_PINECONE_API_KEY';
+    if (!PINECONE_INDEX_URL) return 'Missing VITE_PINECONE_INDEX_URL';
+    if (!GEMINI_API_KEY) return 'Missing VITE_GEMINI_API_KEY';
+    return null;
+}
 
 /**
  * Generates an embedding for a given text using Google's text-embedding-004 model.
@@ -47,7 +73,7 @@ function prepareDealText(deal: Deal): string {
  */
 export async function upsertDealVector(deal: Deal) {
     if (!pc || !PINECONE_INDEX_URL) {
-        console.warn('Pinecone is not configured. Skipping vector upsert.');
+        console.warn(`Pinecone is not configured. Skipping vector upsert for ${deal.id}. Error: ${getVectorServiceConfigError()}`);
         return;
     }
 
@@ -55,8 +81,12 @@ export async function upsertDealVector(deal: Deal) {
         const text = prepareDealText(deal);
         const values = await generateEmbedding(text);
 
-        // Extract host from URL (Pinecone SDK expects the host without https://)
-        const host = PINECONE_INDEX_URL.replace('https://', '');
+        // Extract host from URL (Pinecone SDK expects the host without https:// and trailing slashes)
+        let host = PINECONE_INDEX_URL.replace('https://', '').replace('http://', '');
+        if (host.endsWith('/')) {
+            host = host.slice(0, -1);
+        }
+
         const index = pc.index('', host);
 
         await index.upsert([
@@ -74,9 +104,10 @@ export async function upsertDealVector(deal: Deal) {
             }
         ]);
 
-        console.log(`Successfully indexed deal: ${deal.title}`);
+        console.log(`Successfully indexed deal in Pinecone: ${deal.title}`);
     } catch (error) {
-        console.error(`Error indexing deal ${deal.id}:`, error);
+        console.error(`Error indexing deal ${deal.id} in Pinecone:`, error);
+        throw error; // Rethrow to allow caller to handle failure (e.g., stopping sync)
     }
 }
 
@@ -92,7 +123,11 @@ export async function querySimilarDeals(queryText: string, topK: number = 10): P
     try {
         const queryVector = await generateEmbedding(queryText);
 
-        const host = PINECONE_INDEX_URL.replace('https://', '');
+        let host = PINECONE_INDEX_URL.replace('https://', '').replace('http://', '');
+        if (host.endsWith('/')) {
+            host = host.slice(0, -1);
+        }
+
         const index = pc.index('', host);
 
         const queryResponse = await index.query({
@@ -103,7 +138,7 @@ export async function querySimilarDeals(queryText: string, topK: number = 10): P
 
         return queryResponse.matches.map(match => match.id);
     } catch (error) {
-        console.error('Error querying similar deals:', error);
+        console.error('Error querying similar deals from Pinecone:', error);
         return [];
     }
 }

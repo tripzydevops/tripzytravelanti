@@ -11,7 +11,7 @@ import ImageUpload from '../ImageUpload';
 import StoreLocationFields from '../StoreLocationFields';
 import CountrySelector from '../CountrySelector';
 import { getDealsPaginated, createDeal, getAllDeals } from '../../lib/supabaseService';
-import { upsertDealVector } from '../../lib/vectorService';
+import { upsertDealVector, isVectorServiceConfigured, getVectorServiceConfigError } from '../../lib/vectorService';
 import DealDetailView from '../DealDetailView';
 import Modal from '../Modal';
 import {
@@ -163,6 +163,12 @@ const AdminDealsTab: React.FC = () => {
     }, [adminDeals]);
 
     const handleSyncAllDeals = async () => {
+        if (!isVectorServiceConfigured()) {
+            const error = getVectorServiceConfigError();
+            alert(`Pinecone is not configured: ${error}. Please add your API keys to the environment variables.`);
+            return;
+        }
+
         if (!window.confirm("This will re-index ALL deals in Pinecone. This might take a while depending on the number of deals. Continue?")) return;
 
         setIsSyncing(true);
