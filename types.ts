@@ -28,10 +28,13 @@ export interface User {
   savedDeals?: string[];
   ownedDeals?: string[];
   avatarUrl?: string;
-  referredBy?: string; // ID of the user who referred this user
+  referralCode?: string;
+  referredBy?: string;
   referrals?: string[]; // Array of user IDs this user has directly referred
   referralChain?: string[]; // Ancestors: [referrer's referrer, referrer]
   referralNetwork?: string[]; // Descendants: [referred user, their referred user, ...]
+  points?: number;
+  totalReferrals?: number;
   extraRedemptions?: number;
   notificationPreferences?: UserNotificationPreferences;
   redemptions?: Redemption[];

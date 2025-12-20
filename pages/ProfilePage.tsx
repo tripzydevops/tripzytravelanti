@@ -17,7 +17,7 @@ import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemp
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useSearch } from '../contexts/SearchContext';
 import InvoiceModal from '../components/InvoiceModal';
-import { getUserTransactions, uploadUserAvatar } from '../lib/supabaseService';
+import { getUserTransactions, uploadUserAvatar, handleReferralCode } from '../lib/supabaseService';
 import { PaymentTransaction } from '../types';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -97,6 +97,27 @@ const ProfilePage: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | null>(null);
   const [isInvoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [isBillingExpanded, setBillingExpanded] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult: any) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+        setDeferredPrompt(null);
+      }
+    });
+  };
 
   useEffect(() => {
     if (user) {
@@ -206,17 +227,24 @@ const ProfilePage: React.FC = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const getLoyaltyTier = (points: number = 0) => {
+    if (points >= 5000) return { label: 'GOLD', color: 'from-amber-300 to-amber-600', icon: '🏆' };
+    if (points >= 1000) return { label: 'SILVER', color: 'from-slate-300 to-slate-500', icon: '🥈' };
+    return { label: 'BRONZE', color: 'from-orange-400 to-orange-700', icon: '🥉' };
+  };
+
+  const loyalty = getLoyaltyTier(user.points);
+
   const handleRedeemReferral = async () => {
     if (!manualReferralCode.trim()) return;
     try {
-      await updateUserDetails({
-        name: user?.name || '',
-        email: user?.email || '',
-        referredBy: manualReferralCode
-      });
-      setShowSuccess(t('profileUpdatedSuccess') || 'Referral code redeemed!');
-      setTimeout(() => setShowSuccess(''), 3000);
-      setManualReferralCode('');
+      const result = await handleReferralCode(manualReferralCode, user.id);
+      if (result.success) {
+        setShowSuccess(t('referralSuccess') || 'Referral applied: 100 points added!');
+        setManualReferralCode('');
+      } else {
+        alert(result.message || 'Error redeeming code');
+      }
     } catch (error) {
       console.error('Error redeeming code:', error);
       alert('Invalid referral code or error redeeming.');
@@ -237,7 +265,13 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  const referralCode = `${window.location.origin}/signup?ref=${user.id}`;
+  const friendlyCode = user.referralCode || user.id.substring(0, 6).toUpperCase();
+  const shareLink = `${window.location.origin}/signup?ref=${friendlyCode}`;
+
+  const handleWhatsAppShare = () => {
+    const text = `Join me on Tripzy and get exclusive travel discounts! Use my code: ${friendlyCode}\n\n${shareLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   // Merge user with fresh redemptions from context
   const userWithFreshRedemptions = { ...user, redemptions: redemptions || user.redemptions };
@@ -278,7 +312,22 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <h2 className="text-3xl font-bold font-heading text-transparent bg-clip-text bg-gradient-to-r from-white via-gold-200 to-white">{user.name}</h2>
-          <p className="text-brand-text-muted text-sm mt-1">{user.email}</p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-brand-text-muted text-sm">{user.email}</p>
+            <div className="flex items-center gap-1.5">
+              <span className="bg-gold-500/20 border border-gold-500/30 text-gold-500 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                {user.points || 0} PTS
+              </span>
+              <span className={`bg-gradient-to-r ${loyalty.color} text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm flex items-center gap-1`}>
+                <span>{loyalty.icon}</span> {loyalty.label}
+              </span>
+            </div>
+          </div>
+          {user.totalReferrals !== undefined && user.totalReferrals > 0 && (
+            <p className="text-[10px] text-brand-text-muted mt-2 uppercase tracking-widest font-bold">
+              {user.totalReferrals} {language === 'tr' ? 'DAVET' : 'REFERRALS'}
+            </p>
+          )}
 
           {user.role === 'partner' && (
             <button
@@ -460,13 +509,24 @@ const ProfilePage: React.FC = () => {
           <SettingsSection title={t('referFriendTitle')}>
             <div className="p-6 text-center">
               <p className="text-sm text-white/70 mb-4">{t('referFriendSubtitle')}</p>
-              <div className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-xl gap-2 mb-4">
-                <span className="text-sm font-mono text-gold-400 truncate flex-grow pl-2">{referralCode}</span>
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-xl gap-2">
+                  <span className="text-sm font-mono text-gold-400 truncate flex-grow pl-2">{friendlyCode}</span>
+                  <button
+                    onClick={() => handleCopyCode(friendlyCode)}
+                    className="bg-brand-surface border border-gold-500/50 text-gold-500 hover:text-white hover:bg-gold-500 font-semibold py-2 px-4 rounded-lg transition-all flex-shrink-0"
+                  >
+                    {copied ? t('copied') : t('copyCode')}
+                  </button>
+                </div>
                 <button
-                  onClick={() => handleCopyCode(referralCode)}
-                  className="bg-brand-surface border border-gold-500/50 text-gold-500 hover:text-white hover:bg-gold-500 font-semibold py-2 px-4 rounded-lg transition-all flex-shrink-0"
+                  onClick={handleWhatsAppShare}
+                  className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg"
                 >
-                  {copied ? t('copied') : t('copyCode')}
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  Share on WhatsApp
                 </button>
               </div>
 
@@ -538,6 +598,21 @@ const ProfilePage: React.FC = () => {
                   />
                 </div>
               </>
+            )}
+
+            {/* Install App Button for PWA */}
+            {deferredPrompt && (
+              <div className="p-4 border-t border-white/5">
+                <button
+                  onClick={handleInstallClick}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg hover:shadow-blue-500/20 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Install App
+                </button>
+              </div>
             )}
           </SettingsSection>
         </div>

@@ -1,8 +1,11 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { Announcement, Notification as AppNotification } from '../types';
-import { getActiveAnnouncements, getUserNotifications, markNotificationAsRead } from '../lib/supabaseService';
+import { getActiveAnnouncements, getUserNotifications, markNotificationAsRead, savePushSubscription } from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
+
+// VAPID Public Key - Ideally this should be in env vars
+const VAPID_PUBLIC_KEY = 'BCXk_YVj_qEw_qEw_qEw_qEw_qEw_qEw_qEw_qEw_qEw_qEw'; // Placeholder
 
 type PermissionStatus = 'granted' | 'denied' | 'default';
 
@@ -146,7 +149,49 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     const permission = await Notification.requestPermission();
     setPermissionStatus(permission as PermissionStatus);
-  }, []);
+
+    if (permission === 'granted' && user) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+
+        // Helper to convert VAPID key
+        const urlBase64ToUint8Array = (base64String: string) => {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        };
+
+        // Check if already subscribed
+        let subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+          // Subscribe if not existing
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+          });
+        }
+
+        // Save to backend
+        if (subscription) {
+          await savePushSubscription(user.id, subscription.toJSON());
+          console.log("Push subscription saved!");
+        }
+
+      } catch (error) {
+        console.error('Error subscribing to push notifications:', error);
+      }
+    }
+  }, [user]);
 
   const markAsRead = useCallback(async (id: string) => {
     // Check if it's an announcement (by checking if it exists in announcements array)

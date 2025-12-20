@@ -12,6 +12,7 @@ import {
   updatePassword,
   deleteUserProfile,
   redeemDeal as redeemDealService,
+  handleReferralCode,
 } from '../lib/supabaseService';
 
 interface AuthContextType {
@@ -77,6 +78,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       if (profile) {
+        // If there's a referral code in metadata, process it (idempotent RPC)
+        if (authUser.user_metadata?.referred_by) {
+          try {
+            await handleReferralCode(authUser.user_metadata.referred_by, authUser.id);
+            // Refresh profile to get updated points/referred_by
+            profile = await getUserProfile(authUser.id) || profile;
+          } catch (e) {
+            console.warn('Silent referral error (likely already set):', e);
+          }
+        }
+
         // Fetch referral data
         const [referrals, referralChain, referralNetwork] = await Promise.all([
           getDirectReferrals(authUser.id),

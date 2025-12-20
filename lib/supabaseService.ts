@@ -84,6 +84,9 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         billingAddress: data.billing_address,
         status: data.status,
         referredBy: data.referred_by,
+        referralCode: data.referral_code,
+        points: data.points || 0,
+        totalReferrals: data.total_referrals || 0,
         emailConfirmedAt: data.email_confirmed_at,
         redemptions: data.deal_redemptions ? data.deal_redemptions.map((r: any) => ({
             id: r.id,
@@ -116,6 +119,25 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
 
     if (error) {
         console.error('Error updating profile:', error);
+        throw error;
+    }
+}
+
+export async function savePushSubscription(userId: string, subscription: any) {
+    const { endpoint, keys } = subscription;
+    const { p256dh, auth } = keys;
+
+    const { error } = await supabase
+        .from('push_subscriptions')
+        .upsert({
+            user_id: userId,
+            endpoint,
+            p256dh,
+            auth
+        }, { onConflict: 'endpoint' });
+
+    if (error) {
+        console.error('Error saving push subscription:', error);
         throw error;
     }
 }
@@ -748,6 +770,13 @@ export const redeemDeal = async (userId: string, dealId: string) => {
             .select()
             .single();
 
+        // Award Points (100 pts)
+        try {
+            await addUserPoints(userId, 100);
+        } catch (e) {
+            console.warn('Failed to award loyalty points:', e);
+        }
+
         return {
             id: redemptionRecord?.id || 'unknown',
             userId: userId,
@@ -798,6 +827,13 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         console.warn('Failed to increment global redemption count:', e);
     }
 
+    // Award Points (100 pts)
+    try {
+        await addUserPoints(userId, 100);
+    } catch (e) {
+        console.warn('Failed to award loyalty points:', e);
+    }
+
     return {
         id: redemptionRecord.id,
         userId: userId,
@@ -814,6 +850,34 @@ export async function redeemImmediate(userId: string, dealId: string) {
 // =====================================================
 // REFERRAL OPERATIONS
 // =====================================================
+
+export async function handleReferralCode(referrerCode: string, userId: string) {
+    const { data, error } = await supabase.rpc('handle_referral', {
+        referrer_code: referrerCode,
+        referee_id: userId
+    });
+
+    if (error) {
+        console.error('Error handling referral code:', error);
+        throw error;
+    }
+
+    return data;
+}
+
+export async function addUserPoints(userId: string, pointsToAdd: number) {
+    const { data, error } = await supabase.rpc('add_user_points', {
+        user_uuid: userId,
+        points_to_add: pointsToAdd
+    });
+
+    if (error) {
+        console.error('Error adding points:', error);
+        throw error;
+    }
+
+    return data;
+}
 
 export async function createReferral(referrerId: string, referredId: string) {
     const { error } = await supabase
