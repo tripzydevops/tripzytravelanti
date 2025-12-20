@@ -253,7 +253,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 text-center animate-fade-in delay-100">
+          <div className="mt-8 text-center animate-fade-in delay-100 flex flex-col gap-3">
             <p className="text-white/60 text-sm">
               {isSignup ? (t('alreadyHaveAccount') || "Already have an account?") : (t('dontHaveAccount') || "Don't have an account?")}{' '}
               <button
@@ -263,6 +263,21 @@ const LoginPage: React.FC = () => {
                 {isSignup ? (t('loginButton') || 'Log In') : (t('signupButton') || 'Sign Up')}
               </button>
             </p>
+
+            <div className="pt-2 border-t border-white/5">
+              <p className="text-white/40 text-xs tracking-wider uppercase">
+                {t('businessPartners') || 'Business Partners'}
+              </p>
+              <button
+                onClick={() => {
+                  setIsSignup(false);
+                  showSuccess("Please login with your partner account to access the dashboard.");
+                }}
+                className="mt-1 text-gold-500/80 hover:text-gold-400 font-medium text-sm transition-colors"
+              >
+                {t('partnerPortalEntrance') || 'Access Partner Portal'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
