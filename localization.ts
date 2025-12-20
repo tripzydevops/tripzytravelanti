@@ -98,6 +98,11 @@ export const translations = {
     forgotPassword: 'Forgot password?',
     signupSuccess: 'Successfully signed up!',
     loginSuccess: 'Successfully logged in!',
+    businessPartners: 'Business Partners',
+    partnerPortalEntrance: 'Access Partner Portal',
+    becomePartner: 'Become a Partner',
+    partnerPortalHint: 'Please login with your partner account to access the dashboard.',
+    becomePartnerHint: 'Want to grow your business with Tripzy?',
 
     termsAgreement: "By continuing, you agree to our",
     termsAgreementEnd: '.',
@@ -533,6 +538,11 @@ export const translations = {
     forgotPassword: 'Şifremi unuttum?',
     signupSuccess: 'Başarıyla kayıt olundu!',
     loginSuccess: 'Başarıyla giriş yapıldı!',
+    businessPartners: 'İş Ortakları',
+    partnerPortalEntrance: 'Partner Paneline Giriş',
+    becomePartner: 'Partnerimiz Olun',
+    partnerPortalHint: 'Lütfen kullanıcı bilgilerinizle giriş yapın; sistem sizi otomatik olarak iş ortağı paneline yönlendirecektir.',
+    becomePartnerHint: 'İşletmenizi Tripzy ile büyütmek ister misiniz?',
 
     termsAgreement: "Devam ederek,",
     termsAgreementEnd: ' kabul etmiş olursunuz.',

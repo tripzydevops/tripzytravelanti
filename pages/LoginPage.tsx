@@ -264,19 +264,30 @@ const LoginPage: React.FC = () => {
               </button>
             </p>
 
-            <div className="pt-2 border-t border-white/5">
-              <p className="text-white/40 text-xs tracking-wider uppercase">
-                {t('businessPartners') || 'Business Partners'}
+            <div className="pt-6 border-t border-white/10 mt-2">
+              <p className="text-gold-500/60 text-[10px] tracking-[0.2em] uppercase font-bold mb-3">
+                {t('businessPartners')}
               </p>
-              <button
-                onClick={() => {
-                  setIsSignup(false);
-                  showSuccess("Please login with your partner account to access the dashboard.");
-                }}
-                className="mt-1 text-gold-500/80 hover:text-gold-400 font-medium text-sm transition-colors"
-              >
-                {t('partnerPortalEntrance') || 'Access Partner Portal'}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    setIsSignup(false);
+                    showSuccess(t('partnerPortalHint') || "Please login with your partner account to access the dashboard.");
+                  }}
+                  className="w-full py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-gold-500/20 hover:border-gold-500/40 text-gold-400 font-semibold text-sm transition-all duration-300 backdrop-blur-sm"
+                >
+                  {t('partnerPortalEntrance')}
+                </button>
+                <p className="text-white/40 text-[11px] italic">
+                  {t('becomePartnerHint') || "Want to grow your business with Tripzy?"}{' '}
+                  <button
+                    onClick={() => showSuccess("Partner application system is coming soon! Please contact support@tripzy.com")}
+                    className="text-gold-500/80 hover:text-gold-400 font-bold underline decoration-gold-500/30 underline-offset-2 transition-colors ml-1"
+                  >
+                    {t('becomePartner')}
+                  </button>
+                </p>
+              </div>
             </div>
           </div>
         </div>
