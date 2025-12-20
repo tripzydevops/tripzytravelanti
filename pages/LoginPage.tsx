@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useContent } from '../contexts/ContentContext';
 import { CustomMailIcon, CustomLockIcon, CustomUserIcon, CustomTicketIcon, AppleLogo, FacebookLogo, GoogleLogo } from '../components/Icons';
 import { useToast } from '../contexts/ToastContext';
-import { getBackgroundImages } from '../lib/supabaseService';
+import { getBackgroundImages, submitPartnerLead } from '../lib/supabaseService';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -20,6 +20,34 @@ const LoginPage: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { error: showError, success: showSuccess } = useToast();
+
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [partnerLoading, setPartnerLoading] = useState(false);
+  const [partnerForm, setPartnerForm] = useState({
+    businessName: '',
+    contactName: '',
+    email: '',
+    phone: '',
+    industry: '',
+    message: ''
+  });
+
+  const emailInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handlePartnerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPartnerLoading(true);
+    try {
+      await submitPartnerLead(partnerForm);
+      showSuccess(t('partnerAppSuccess'));
+      setShowPartnerModal(false);
+      setPartnerForm({ businessName: '', contactName: '', email: '', phone: '', industry: '', message: '' });
+    } catch (err: any) {
+      showError(err.message || "Failed to submit application");
+    } finally {
+      setPartnerLoading(false);
+    }
+  };
 
   const handleEmailLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,17 +84,14 @@ const LoginPage: React.FC = () => {
     try {
       setError('');
       await signInWithGoogle();
-      showSuccess(t('loginSuccess') || 'Successfully logged in with Google!');
     } catch (err: any) {
       console.error('Google login error:', err);
-      const errorMessage = 'Failed to sign in with Google.';
-      setError(errorMessage);
-      showError(errorMessage);
+      showError('Failed to sign in with Google.');
     }
   };
 
   const handleSocialLogin = () => {
-    setError('This social login method is coming soon!');
+    showError('This social login method is coming soon!');
   };
 
   const { getContent } = useContent();
@@ -99,9 +124,6 @@ const LoginPage: React.FC = () => {
     };
     fetchBackgrounds();
   }, []);
-
-  // Removed auto-rotation interval. Use static random image per session.
-
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-body">
@@ -181,6 +203,7 @@ const LoginPage: React.FC = () => {
                 <CustomMailIcon className="h-5 w-5 text-gold-500" />
               </div>
               <input
+                ref={emailInputRef}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -272,6 +295,7 @@ const LoginPage: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsSignup(false);
+                    emailInputRef.current?.focus();
                     showSuccess(t('partnerPortalHint') || "Please login with your partner account to access the dashboard.");
                   }}
                   className="w-full py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-gold-500/20 hover:border-gold-500/40 text-gold-400 font-semibold text-sm transition-all duration-300 backdrop-blur-sm"
@@ -279,9 +303,9 @@ const LoginPage: React.FC = () => {
                   {t('partnerPortalEntrance')}
                 </button>
                 <p className="text-white/40 text-[11px] italic">
-                  {t('becomePartnerHint') || "Want to grow your business with Tripzy?"}{' '}
+                  {t('becomePartnerHint')}{' '}
                   <button
-                    onClick={() => showSuccess("Partner application system is coming soon! Please contact support@tripzy.com")}
+                    onClick={() => setShowPartnerModal(true)}
                     className="text-gold-500/80 hover:text-gold-400 font-bold underline decoration-gold-500/30 underline-offset-2 transition-colors ml-1"
                   >
                     {t('becomePartner')}
@@ -292,6 +316,103 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Partner Application Modal */}
+      {showPartnerModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-gray-900 border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-in">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-serif text-gold-400">{t('partnerAppTitle')}</h2>
+                  <p className="text-white/60 text-sm mt-1">{t('partnerAppSubtitle')}</p>
+                </div>
+                <button onClick={() => setShowPartnerModal(false)} className="text-white/40 hover:text-white transition-colors p-2">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handlePartnerSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-white/50 ml-1">{t('businessNameLabel')}</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                      value={partnerForm.businessName}
+                      onChange={e => setPartnerForm({ ...partnerForm, businessName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-white/50 ml-1">{t('contactNameLabel')}</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                      value={partnerForm.contactName}
+                      onChange={e => setPartnerForm({ ...partnerForm, contactName: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-white/50 ml-1">{t('emailLabel')}</label>
+                    <input
+                      required
+                      type="email"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                      value={partnerForm.email}
+                      onChange={e => setPartnerForm({ ...partnerForm, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-white/50 ml-1">{t('mobileLabel') || 'Phone'}</label>
+                    <input
+                      type="tel"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                      value={partnerForm.phone}
+                      onChange={e => setPartnerForm({ ...partnerForm, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-white/50 ml-1">{t('industryLabel')}</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Travel, Hospitality, E-commerce"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50"
+                    value={partnerForm.industry}
+                    onChange={e => setPartnerForm({ ...partnerForm, industry: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-white/50 ml-1">{t('messageLabel')}</label>
+                  <textarea
+                    rows={3}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-gold-500/50 resize-none"
+                    value={partnerForm.message}
+                    onChange={e => setPartnerForm({ ...partnerForm, message: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={partnerLoading}
+                  className="w-full py-4 mt-2 rounded-xl bg-gold-500 text-black font-bold uppercase tracking-widest hover:bg-gold-400 transition-colors disabled:opacity-50"
+                >
+                  {partnerLoading ? <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin mx-auto" /> : t('submitApplication')}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Decorative background flare */}
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-brand-primary/10 rounded-full blur-3xl translate-y-1/2 translate-x-1/2 pointer-events-none"></div>

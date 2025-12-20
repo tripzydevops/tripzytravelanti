@@ -188,6 +188,33 @@ export async function resetUserHistory(userId: string) {
     return { success: true };
 }
 
+export async function submitPartnerLead(lead: {
+    businessName: string;
+    contactName: string;
+    email: string;
+    phone?: string;
+    industry?: string;
+    message?: string;
+}) {
+    const { error } = await supabase
+        .from('partner_leads')
+        .insert({
+            business_name: lead.businessName,
+            contact_name: lead.contactName,
+            email: lead.email,
+            phone: lead.phone,
+            industry: lead.industry,
+            message: lead.message
+        });
+
+    if (error) {
+        console.error('Error submitting partner lead:', error);
+        throw error;
+    }
+
+    return { success: true };
+}
+
 export async function deleteUserProfile(userId: string) {
     // 1. Delete associated data (if not handled by cascade)
     // Supabase cascade rules should handle most, but explicit deletion is safer
