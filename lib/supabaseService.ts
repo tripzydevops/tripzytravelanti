@@ -1631,13 +1631,7 @@ export async function getGlobalActivityLog(limit: number = 20): Promise<Activity
     // 2. Get Deal Redemptions
     const { data: redemptions } = await supabase
         .from('deal_redemptions')
-        .select(`
-            id,
-            redeemed_at,
-            user_id,
-            profiles:user_id(name),
-            deal:deals(title)
-        `)
+        .select('id, redeemed_at, user_id, profiles:user_id(name), deal:deals(title)')
         .order('redeemed_at', { ascending: false })
         .limit(limit);
 
@@ -1658,15 +1652,7 @@ export async function getGlobalActivityLog(limit: number = 20): Promise<Activity
     // 3. Get Recent Payments
     const { data: payments } = await supabase
         .from('payment_transactions')
-        .select(`
-            id,
-            amount,
-            currency,
-            status,
-            created_at,
-            user_id,
-            profiles:user_id(name)
-        `)
+        .select('id, amount, currency, status, created_at, user_id, profiles:user_id(name)')
         .eq('status', 'success')
         .order('created_at', { ascending: false })
         .limit(limit);
