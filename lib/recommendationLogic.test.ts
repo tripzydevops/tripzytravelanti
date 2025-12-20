@@ -2,21 +2,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getAIRecommendations } from './recommendationLogic';
 import { User, Deal, SubscriptionTier } from '../types';
 
-// Mock GoogleGenAI to ensure we don't actually call it (though we expect it not to be called)
-vi.mock('@google/genai', () => ({
-    GoogleGenAI: vi.fn(),
+// Mock vectorService
+vi.mock('./vectorService', () => ({
+    querySimilarDeals: vi.fn().mockResolvedValue([]),
+    rankDeals: vi.fn(),
+    generateText: vi.fn().mockResolvedValue('')
 }));
+
+import { rankDeals } from './vectorService';
 
 describe('getAIRecommendations', () => {
     const mockUser: User = {
         id: 'u1',
         name: 'Test User',
         email: 'test@example.com',
-        subscriptionTier: SubscriptionTier.FREE,
+        tier: SubscriptionTier.FREE,
         walletLimit: 3,
         savedDeals: [],
         redemptions: [],
-        preferences: { travelStyle: 'Any', budget: 'Any' }
+        preferences: { travelStyle: 'Any', budget: 'Any' } as any
     };
 
     const mockDeals: Deal[] = [
@@ -33,30 +37,40 @@ describe('getAIRecommendations', () => {
         vi.unstubAllEnvs();
     });
 
-    it('should gracefully handle missing API key and return fallback deals', async () => {
-        // Mock environment variable to be empty
-        vi.stubEnv('VITE_GEMINI_API_KEY', '');
-
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    it('should use fallback deals when rankDeals returns no results', async () => {
+        // Mock rankDeals to return empty array
+        vi.mocked(rankDeals).mockResolvedValue([]);
 
         const recommendations = await getAIRecommendations(mockUser, mockDeals);
 
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Gemini API Key is missing or invalid'));
+        expect(rankDeals).toHaveBeenCalled();
         expect(recommendations).toBeDefined();
         expect(recommendations.length).toBeGreaterThan(0);
-        // Ensure it didn't crash
+        expect(recommendations.length).toBeLessThanOrEqual(3);
     });
 
-    it('should gracefully handle PLACEHOLDER_API_KEY and return fallback deals', async () => {
-        // Mock environment variable to be placeholder
-        vi.stubEnv('VITE_GEMINI_API_KEY', 'PLACEHOLDER_API_KEY');
+    it('should use fallback deals when rankDeals fails', async () => {
+        // Mock rankDeals to throw error
+        vi.mocked(rankDeals).mockRejectedValue(new Error('Edge Function Error'));
 
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
         const recommendations = await getAIRecommendations(mockUser, mockDeals);
 
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Gemini API Key is missing or invalid'));
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('AI Recommendation failed'), expect.any(Error));
         expect(recommendations).toBeDefined();
         expect(recommendations.length).toBeGreaterThan(0);
+    });
+
+    it('should return AI-ranked deals when rankDeals succeeds', async () => {
+        // Mock rankDeals to return specific IDs
+        vi.mocked(rankDeals).mockResolvedValue(['2', '1']);
+
+        const recommendations = await getAIRecommendations(mockUser, mockDeals);
+
+        expect(recommendations).toHaveLength(2);
+        expect(recommendations[0].id).toBe('2');
+        expect(recommendations[1].id).toBe('1');
     });
 });
+

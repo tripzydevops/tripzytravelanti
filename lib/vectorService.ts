@@ -100,3 +100,76 @@ export async function querySimilarDeals(queryText: string, topK: number = 10): P
         return [];
     }
 }
+/**
+ * Ranks a list of candidate deals using Gemini via Supabase Edge Function.
+ */
+export async function rankDeals(prompt: string): Promise<string[]> {
+    try {
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'rank',
+                ranking: { prompt }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('[VectorService] Rank error:', error || data?.error);
+            return [];
+        }
+
+        return data.results || [];
+    } catch (error) {
+        console.error('[VectorService] rankDeals failed:', error);
+        return [];
+    }
+}
+
+/**
+ * Generates text (e.g. travel itineraries) using Gemini via Supabase Edge Function.
+ */
+export async function generateText(prompt: string): Promise<string> {
+    try {
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'generate',
+                generation: { prompt }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('[VectorService] Generation error:', error || data?.error);
+            return '';
+        }
+
+        return data.text || '';
+    } catch (error) {
+        console.error('[VectorService] generateText failed:', error);
+        return '';
+    }
+}
+
+/**
+ * Sends a message to the AI chatbot via Supabase Edge Function.
+ */
+export async function chatWithAI(message: string, history: any[], systemInstruction?: string) {
+    try {
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'chat',
+                chat: { message, history, systemInstruction }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('[VectorService] Chat error:', error || data?.error);
+            return null;
+        }
+
+        return data.response;
+    } catch (error) {
+        console.error('[VectorService] chatWithAI failed:', error);
+        return null;
+    }
+}
+
+

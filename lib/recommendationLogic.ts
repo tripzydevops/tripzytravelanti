@@ -1,6 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
 import { User, Deal } from '../types';
-import { querySimilarDeals } from './vectorService';
+import { querySimilarDeals, rankDeals } from './vectorService';
 import { getEngagementLogs } from './supabaseService';
 
 // Initialize Gemini lazily inside the function
@@ -147,33 +146,18 @@ export async function getAIRecommendations(
     Return ONLY a JSON array of the 3 matching deal IDs. Example: ["123", "456", "789"]
   `;
 
-    // 4. Call Gemini
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const isKeyValid = apiKey && apiKey !== 'PLACEHOLDER_API_KEY';
+    // 4. Call Gemini via Secure Edge Function
+    try {
+        const recommendedIds = await rankDeals(prompt);
 
-    if (isKeyValid) {
-        try {
-            const ai = new GoogleGenAI({ apiKey });
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash-exp',
-                contents: prompt
-            });
-
-            const text = response.text.trim();
-            const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const recommendedIds: string[] = JSON.parse(cleanJson);
-
+        if (recommendedIds && recommendedIds.length > 0) {
             const recommendations = allDeals.filter(d => recommendedIds.includes(d.id));
             if (recommendations.length > 0) {
                 return recommendations;
             }
-
-        } catch (error) {
-            console.error("AI Recommendation failed:", error);
-            // Fall through to fallback logic below
         }
-    } else {
-        console.warn("Gemini API Key is missing or invalid. Using fallback recommendations.");
+    } catch (error) {
+        console.error("AI Recommendation failed:", error);
         // Fall through to fallback logic below
     }
 

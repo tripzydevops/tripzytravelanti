@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { SparklesIcon } from '../components/Icons';
 import { useToast } from '../contexts/ToastContext';
+import { generateText } from '../lib/vectorService';
 
 const TripPlannerPage: React.FC = () => {
   const { t, language } = useLanguage();
@@ -39,21 +39,16 @@ const TripPlannerPage: React.FC = () => {
     setItinerary('');
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error("API Key missing");
-      const ai = new GoogleGenAI({ apiKey });
-
       const interestsList = Array.from(interests).join(', ');
       const prompt = `Create a detailed travel itinerary for a trip to ${destination} for ${duration} days. The traveler is interested in ${interestsList}. 
       Please provide a day-by-day plan. For each day, suggest specific activities, sights, and food recommendations (including specific restaurant names if possible). 
       Format the output in clear, well-structured markdown. Use headings for each day (e.g., "Day 1: Arrival and Exploration"). Use bullet points for activities.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
+      const text = await generateText(prompt);
 
-      setItinerary(response.text);
+      if (!text) throw new Error("Failed to generate itinerary");
+
+      setItinerary(text);
       showSuccess(t('itineraryGenerated') || 'Itinerary generated successfully!');
 
     } catch (err) {

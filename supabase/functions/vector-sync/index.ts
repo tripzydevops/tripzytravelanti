@@ -8,7 +8,7 @@ const corsHeaders = {
 }
 
 interface VectorRequest {
-    action: 'upsert' | 'delete' | 'query';
+    action: 'upsert' | 'delete' | 'query' | 'rank' | 'generate' | 'chat';
     deal?: {
         id: string;
         title: string;
@@ -22,6 +22,17 @@ interface VectorRequest {
         text?: string;
         dealId?: string;
         topK?: number;
+    };
+    ranking?: {
+        prompt: string;
+    };
+    generation?: {
+        prompt: string;
+    };
+    chat?: {
+        message: string;
+        history: any[];
+        systemInstruction?: string;
     };
 }
 
@@ -108,6 +119,24 @@ serve(async (req) => {
             return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
+        if (action === 'rank') {
+            if (!body.ranking?.prompt) throw new Error('Missing ranking prompt');
+            const results = await rankDealsWithGemini(body.ranking.prompt);
+            return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
+        if (action === 'generate') {
+            if (!body.generation?.prompt) throw new Error('Missing generation prompt');
+            const text = await generateTextWithGemini(body.generation.prompt);
+            return new Response(JSON.stringify({ success: true, text }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
+        if (action === 'chat') {
+            if (!body.chat?.message) throw new Error('Missing chat message');
+            const response = await chatWithGemini(body.chat.message, body.chat.history || [], body.chat.systemInstruction);
+            return new Response(JSON.stringify({ success: true, response }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
         return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
     } catch (error) {
@@ -115,6 +144,105 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 })
+
+async function chatWithGemini(message: string, history: any[], systemInstruction?: string): Promise<any> {
+    const apiKey = Deno.env.get('GOOGLE_AI_KEY');
+    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+
+    const contents = [...history, { role: 'user', parts: [{ text: message }] }];
+
+    const tools = [{
+        function_declarations: [{
+            name: 'findDeals',
+            description: 'Applies filters to find travel and lifestyle deals based on user criteria.',
+            parameters: {
+                type: 'OBJECT',
+                properties: {
+                    searchQuery: { type: 'STRING', description: 'A search term to filter deals by.' },
+                    category: { type: 'STRING', description: 'The category to filter deals by.' },
+                    minRating: { type: 'NUMBER', description: 'The minimum user rating.' }
+                }
+            }
+        }]
+    }];
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents,
+            system_instruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+            tools
+        })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        console.error('Gemini Chat Error:', data);
+        throw new Error(`Gemini Chat Error: ${data.error?.message || 'Unknown error'}`);
+    }
+
+    const candidate = data.candidates[0];
+    return {
+        text: candidate.content.parts.find((p: any) => p.text)?.text || '',
+        functionCalls: candidate.content.parts.filter((p: any) => p.functionCall).map((p: any) => p.functionCall)
+    };
+}
+
+async function generateTextWithGemini(prompt: string): Promise<string> {
+    const apiKey = Deno.env.get('GOOGLE_AI_KEY');
+    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+        })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        console.error('Gemini Generation Error:', data);
+        throw new Error(`Gemini Generation Error: ${data.error?.message || 'Unknown error'}`);
+    }
+
+    return data.candidates[0].content.parts[0].text;
+}
+
+async function rankDealsWithGemini(prompt: string): Promise<string[]> {
+    const apiKey = Deno.env.get('GOOGLE_AI_KEY');
+    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+        })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        console.error('Gemini Ranking Error:', data);
+        throw new Error(`Gemini Ranking Error: ${data.error?.message || 'Unknown error'}`);
+    }
+
+    try {
+        const text = data.candidates[0].content.parts[0].text;
+        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanJson);
+    } catch (e) {
+        console.error('Failed to parse Gemini ranking response:', e);
+        return [];
+    }
+}
 
 async function generateEmbedding(text: string): Promise<number[]> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');

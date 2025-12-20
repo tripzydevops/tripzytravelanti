@@ -1,99 +1,65 @@
-import { useState, useMemo } from 'react';
-import { GoogleGenAI, FunctionDeclaration, Type, Chat } from "@google/genai";
+import { useState } from 'react';
 import { useSearch, CategoryFilter } from '../contexts/SearchContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { chatWithAI } from '../lib/vectorService';
 
 export interface Message {
   role: 'user' | 'model';
   text: string;
 }
 
-const findDealsFunctionDeclaration: FunctionDeclaration = {
-  name: 'findDeals',
-  parameters: {
-    type: Type.OBJECT,
-    description: 'Applies filters to find travel and lifestyle deals based on user criteria.',
-    properties: {
-      searchQuery: {
-        type: Type.STRING,
-        description: 'A search term to filter deals by. For example, "dinner", "spa", "Cappadocia".',
-      },
-      category: {
-        type: Type.STRING,
-        description: 'The category to filter deals by. Must be one of: "Dining", "Wellness", "Travel".',
-      },
-      minRating: {
-        type: Type.NUMBER,
-        description: 'The minimum user rating for the deals, from 1 to 5. For example, a value of 4 means "4 stars or higher".',
-      },
-    },
-  },
-};
-
 export const useChatbot = () => {
   const { t } = useLanguage();
   const { applyFiltersAndNavigate } = useSearch();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const ai = useMemo(() => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) return null;
-    return new GoogleGenAI({ apiKey });
-  }, []);
-
-  const chat = useMemo(() => {
-    if (!ai) return null;
-    return ai.chats.create({
-      model: 'gemini-2.5-flash',
-      config: {
-        tools: [{ functionDeclarations: [findDealsFunctionDeclaration] }],
-      },
-      systemInstruction: "You are a helpful and friendly assistant for the TRİPZY deals app. Your goal is to help users find the best travel and lifestyle deals by using the `findDeals` function. Be conversational and proactive. Don't mention the function's name to the user; just say you are applying filters. If a parameter is missing, ask a clarifying question. For instance, if they ask for 'top-rated deals', ask what category they're interested in."
-    });
-  }, [ai]);
 
   const sendMessage = async (text: string) => {
     setIsLoading(true);
     const userMessage: Message = { role: 'user', text };
     setMessages(prev => [...prev, userMessage]);
 
-    if (!chat) {
-      setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, I'm currently offline (API Key missing). Please try again later." }]);
-      setIsLoading(false);
-      return;
-    }
+    const systemInstruction = "You are a helpful and friendly assistant for the TRİPZY deals app. Your goal is to help users find the best travel and lifestyle deals by using the `findDeals` function. Be conversational and proactive. Don't mention the function's name to the user; just say you are applying filters. If a parameter is missing, ask a clarifying question. For instance, if they ask for 'top-rated deals', ask what category they're interested in.";
 
     try {
-      const response = await chat.sendMessage({ message: text });
+      // 1. Send message to AI via Edge Function
+      const data = await chatWithAI(text, history, systemInstruction);
 
-      if (response.functionCalls && response.functionCalls.length > 0) {
-        const functionCall = response.functionCalls[0];
+      if (!data) {
+        throw new Error("Failed to get response from AI");
+      }
+
+      const { text: aiText, functionCalls } = data;
+
+      // Update local history
+      const newHistory = [
+        ...history,
+        { role: 'user', parts: [{ text }] },
+        { role: 'model', parts: [{ text: aiText || '' }] }
+      ];
+      setHistory(newHistory);
+
+      // 2. Handle Function Calls if any
+      if (functionCalls && functionCalls.length > 0) {
+        const functionCall = functionCalls[0];
 
         if (functionCall.name === 'findDeals') {
           const { searchQuery, category, minRating } = functionCall.args;
 
-          // Execute the function
+          // Execute the filter logic in frontend
           applyFiltersAndNavigate({
             searchQuery: searchQuery as string,
             category: category as CategoryFilter,
             rating: minRating as number,
           });
 
-          // Send response back to the model
-          const functionResponse = await chat.sendMessage({
-            message: '', // The message can be empty when sending a function response.
-            functionResponses: {
-              id: functionCall.id,
-              name: functionCall.name,
-              response: { result: "Successfully applied the filters. The user can now see the results." }
-            }
-          });
-
-          setMessages(prev => [...prev, { role: 'model', text: functionResponse.text }]);
+          // Optional: Send success feedback back to AI to get a natural confirmation message
+          // For now, we'll just show the AI's initial text or a default confirmation
+          setMessages(prev => [...prev, { role: 'model', text: aiText || "I've applied those filters for you. Take a look at the results!" }]);
         }
       } else {
-        setMessages(prev => [...prev, { role: 'model', text: response.text }]);
+        setMessages(prev => [...prev, { role: 'model', text: aiText }]);
       }
 
     } catch (error) {
@@ -106,6 +72,7 @@ export const useChatbot = () => {
 
   const startChat = () => {
     setMessages([{ role: 'model', text: t('aiGreeting') }]);
+    setHistory([]);
   };
 
   return { messages, isLoading, sendMessage, startChat };

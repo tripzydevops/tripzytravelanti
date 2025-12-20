@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
-import { GoogleGenAI } from "@google/genai";
 import { useDeals } from '../../contexts/DealContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Deal, SubscriptionTier } from '../../types';
@@ -11,7 +10,7 @@ import ImageUpload from '../ImageUpload';
 import StoreLocationFields from '../StoreLocationFields';
 import CountrySelector from '../CountrySelector';
 import { getDealsPaginated, createDeal, getAllDeals } from '../../lib/supabaseService';
-import { upsertDealVector, isVectorServiceConfigured, getVectorServiceConfigError } from '../../lib/vectorService';
+import { upsertDealVector, isVectorServiceConfigured, getVectorServiceConfigError, generateText } from '../../lib/vectorService';
 import DealDetailView from '../DealDetailView';
 import Modal from '../Modal';
 import {
@@ -200,17 +199,11 @@ const AdminDealsTab: React.FC = () => {
     const translateText = useCallback(async (text: string, targetLanguage: 'English' | 'Turkish'): Promise<string> => {
         if (!text.trim()) return '';
 
-        // 1. Try Google Gemini API
+        // 1. Try Google Gemini API via Secure Edge Function
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (apiKey) {
-                const ai = new GoogleGenAI({ apiKey });
-                const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
-                const result = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
-                // Handle different SDK versions/response structures safely
-                const generatedText = typeof (result as any).text === 'function' ? (result as any).text() : (result as any).text;
-                if (generatedText) return generatedText.trim();
-            }
+            const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any introductory phrases:\n\n"${text}"`;
+            const generatedText = await generateText(prompt);
+            if (generatedText) return generatedText.trim();
         } catch (error) {
             console.warn('Gemini translation failed, falling back to free API:', error);
         }
