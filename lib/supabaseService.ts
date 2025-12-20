@@ -1070,7 +1070,7 @@ export async function getAnalyticsData() {
         // 4. Fetch Redemptions and Top Deals
         const { data: redemptions, error: redemptionsError } = await supabase
             .from('deal_redemptions')
-            .select('deal_id, redeemed_at, status');
+            .select('deal_id, redeemed_at');
 
         if (redemptionsError) throw redemptionsError;
 
