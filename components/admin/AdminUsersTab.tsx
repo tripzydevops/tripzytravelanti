@@ -46,6 +46,9 @@ const AdminUsersTab: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<SubscriptionTier | 'All'>('All');
 
+    const [isBroadcastVisible, setIsBroadcastVisible] = useState(false);
+    const [broadcastData, setBroadcastData] = useState({ title: '', message: '' });
+
     // Fetch users AND all deals when admin tab mounts
     useEffect(() => {
         refreshUsers();
@@ -330,7 +333,7 @@ const AdminUsersTab: React.FC = () => {
 
             const newStatus = statusMap[action as keyof typeof statusMap];
             if (newStatus) {
-                await bulkUpdateUserStatus(userIds, newStatus);
+                await bulkUpdateUserStatus(userIds as string[], newStatus);
                 setShowSuccess(`Bulk ${action} successful for ${selectedUsers.size} users`);
             }
 
@@ -340,6 +343,39 @@ const AdminUsersTab: React.FC = () => {
         } catch (error) {
             console.error('Bulk action failed', error);
             alert('Bulk action failed');
+        }
+    };
+
+
+    const handleSendBroadcast = async () => {
+        if (!broadcastData.title || !broadcastData.message) {
+            alert('Please enter title and message');
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to send this broadcast to ALL users?`)) return;
+
+        try {
+            // Using the Supabase invoke to hit our new Edge Function
+            const { supabase } = await import('../../lib/supabaseClient');
+            const { data, error } = await supabase.functions.invoke('trigger-push-notification', {
+                body: {
+                    title: broadcastData.title,
+                    message: broadcastData.message
+                }
+            });
+
+            if (error) throw error;
+
+            console.log('Broadcast result:', data);
+            setShowSuccess(`Broadcast sent! Processed: ${data?.processed || 0}`);
+            setTimeout(() => setShowSuccess(''), 3000);
+            setIsBroadcastVisible(false);
+            setBroadcastData({ title: '', message: '' });
+
+        } catch (error: any) {
+            console.error('Broadcast failed', error);
+            alert(`Broadcast failed: ${error.message || 'Unknown error'}`);
         }
     };
 
@@ -613,6 +649,19 @@ const AdminUsersTab: React.FC = () => {
                             </button>
                         </div>
                     </div>
+
+                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 flex justify-between items-center">
+                        <div>
+                            <h3 className="font-semibold text-blue-900 dark:text-blue-100">Broadcast Message</h3>
+                            <p className="text-sm text-blue-700 dark:text-blue-300">Send a push notification to all subscribed users immediately.</p>
+                        </div>
+                        <button
+                            onClick={() => setIsBroadcastVisible(true)}
+                            className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            Send Broadcast
+                        </button>
+                    </div>
                 </section>
 
                 <section>
@@ -798,6 +847,52 @@ const AdminUsersTab: React.FC = () => {
             </Modal>
 
             {/* User Payments Modal */}
+
+            {/* Broadcast Modal */}
+            <Modal
+                isOpen={isBroadcastVisible}
+                onClose={() => setIsBroadcastVisible(false)}
+                title="Send Broadcast Notification"
+            >
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alert Title</label>
+                        <input
+                            type="text"
+                            value={broadcastData.title}
+                            onChange={e => setBroadcastData(d => ({ ...d, title: e.target.value }))}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="e.g. Flash Sale Alert! ⚡"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message Body</label>
+                        <textarea
+                            value={broadcastData.message}
+                            onChange={e => setBroadcastData(d => ({ ...d, message: e.target.value }))}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-24"
+                            placeholder="e.g. Get 50% off on all flights to Turkey this weekend only!"
+                        />
+                    </div>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                        ⚠️ This will result in real push notifications being sent to all users who have subscribed on their devices.
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            onClick={() => setIsBroadcastVisible(false)}
+                            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSendBroadcast}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm font-medium"
+                        >
+                            Send Blast 🚀
+                        </button>
+                    </div>
+                </div>
+            </Modal>
             <Modal
                 isOpen={!!viewingPaymentsForUser}
                 onClose={() => setViewingPaymentsForUser(null)}

@@ -32,7 +32,8 @@
     "react-helmet-async": "^2.0.5",
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.9.4",
-    "recharts": "^3.5.0"
+    "recharts": "^3.5.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

@@ -5,7 +5,7 @@ import { getActiveAnnouncements, getUserNotifications, markNotificationAsRead, s
 import { supabase } from '../lib/supabaseClient';
 
 // VAPID Public Key - Ideally this should be in env vars
-const VAPID_PUBLIC_KEY = 'BCXk_YVj_qEw_qEw_qEw_qEw_qEw_qEw_qEw_qEw_qEw_qEw'; // Placeholder
+const VAPID_PUBLIC_KEY = 'BPQ7dir01mFGK6hdpRkvAhs0f5z6veowMY-5bRtC71hPo0yvbdLnq8axljGvtHwyKLuA6fi-jelze5MFvrpT2iE';
 
 type PermissionStatus = 'granted' | 'denied' | 'default';
 
