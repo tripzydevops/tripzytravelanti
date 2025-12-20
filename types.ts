@@ -71,6 +71,7 @@ export interface Deal {
   discountedPrice: number;
   discountPercentage?: number;
   requiredTier: SubscriptionTier;
+  isTeasable: boolean;
   isExternal: boolean;
   vendor: string;
   expiresAt: string;

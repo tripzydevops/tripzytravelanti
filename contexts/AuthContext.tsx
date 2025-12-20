@@ -18,7 +18,7 @@ import {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User | null>;
   signup: (email: string, password: string, name: string, referredBy?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateTier: (tier: SubscriptionTier) => Promise<void>;
@@ -222,7 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [loadUserProfile]);
 
   // Login user
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<User | null> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -232,8 +232,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       if (data.user) {
+        const profile = await getUserProfile(data.user.id);
+        // We still load it into state, but also return it
         await loadUserProfile(data.user);
+        return profile;
       }
+      return null;
     } catch (error) {
       console.error('Error logging in:', error);
       throw error;

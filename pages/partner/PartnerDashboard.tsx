@@ -1,50 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { PartnerStats, Deal } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
-import { getDealsByPartner } from '../../lib/supabaseService';
-import { BarChart3, Users, QrCode, TrendingUp, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { getDealsByPartnerPaginated } from '../../lib/supabaseService';
+import { BarChart3, Users, QrCode, TrendingUp, Plus, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+
+const ITEMS_PER_PAGE = 10;
 
 const PartnerDashboard: React.FC = () => {
     const { user } = useAuth();
-    const [stats, setStats] = useState<PartnerStats | null>(null);
-    const [deals, setDeals] = useState<Deal[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
 
-    useEffect(() => {
-        const fetchPartnerData = async () => {
-            if (!user) return;
+    // Query for Partner Stats
+    const { data: stats } = useQuery({
+        queryKey: ['partnerStats', user?.id],
+        queryFn: async () => {
+            if (!user) return null;
+            const { data, error } = await supabase
+                .from('partner_stats')
+                .select('*')
+                .eq('partner_id', user.id)
+                .single();
 
-            try {
-                // Fetch stats
-                const { data: statsData, error: statsError } = await supabase
-                    .from('partner_stats')
-                    .select('*')
-                    .eq('partner_id', user.id)
-                    .single();
+            if (error && error.code !== 'PGRST116') throw error;
+            return data as PartnerStats;
+        },
+        enabled: !!user
+    });
 
-                if (statsError && statsError.code !== 'PGRST116') {
-                    console.error('Error fetching partner stats:', statsError);
-                } else {
-                    setStats(statsData);
-                }
+    // Query for Partner Deals (Paginated)
+    const {
+        data: dealsData,
+        isLoading: isDealsLoading,
+        isPlaceholderData
+    } = useQuery({
+        queryKey: ['partnerDeals', user?.id, page],
+        queryFn: async () => {
+            if (!user) return { deals: [], total: 0 };
+            return getDealsByPartnerPaginated(user.id, page, ITEMS_PER_PAGE);
+        },
+        placeholderData: keepPreviousData,
+        enabled: !!user
+    });
 
-                // Fetch deals
-                const partnerDeals = await getDealsByPartner(user.id);
-                setDeals(partnerDeals);
+    const deals = dealsData?.deals || [];
+    const totalDeals = dealsData?.total || 0;
+    const totalPages = Math.ceil(totalDeals / ITEMS_PER_PAGE);
 
-            } catch (error) {
-                console.error('Error loading partner data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+    };
 
-        fetchPartnerData();
-    }, [user]);
-
-    if (loading) {
+    if (isDealsLoading && !isPlaceholderData && !dealsData) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-primary"></div>
@@ -105,16 +114,20 @@ const PartnerDashboard: React.FC = () => {
                         </div>
                     </div>
                     <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">Active Deals</h3>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{deals.filter(d => d.status === 'approved').length}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalDeals}</p>
                 </div>
             </div>
 
             {/* Deals List */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your Deals</h2>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                        Your Deals
+                        {isDealsLoading && <span className="ml-2 text-sm font-normal text-gray-400">(Loading...)</span>}
+                    </h2>
                 </div>
-                <div className="overflow-x-auto">
+
+                <div className={`overflow-x-auto transition-opacity duration-200 ${isPlaceholderData ? 'opacity-50' : 'opacity-100'}`}>
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-900/50">
                             <tr>
@@ -170,6 +183,33 @@ const PartnerDashboard: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <button
+                            onClick={() => handlePageChange(Math.max(1, page - 1))}
+                            disabled={page === 1}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        </button>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                            Page {page} of {totalPages}
+                        </span>
+                        <button
+                            onClick={() => {
+                                if (!isPlaceholderData && page < totalPages) {
+                                    handlePageChange(page + 1);
+                                }
+                            }}
+                            disabled={isPlaceholderData || page >= totalPages}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

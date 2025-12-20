@@ -56,7 +56,8 @@ const EMPTY_DEAL: Omit<Deal, 'expiresAt'> = {
     countries: [],
     is_flash_deal: false,
     flash_end_time: undefined,
-    maxRedemptionsTotal: null
+    maxRedemptionsTotal: null,
+    isTeasable: true
 };
 
 const getExpiryDate = (days: number): string => {
@@ -280,6 +281,7 @@ const AdminDealsTab: React.FC = () => {
         if (['title', 'title_tr', 'description', 'description_tr'].includes(name)) setLastEditedField(name);
 
         let newValue: any = type === 'checkbox' ? (e.target as HTMLInputElement).checked : type === 'number' ? parseFloat(value) : value;
+        if (name === 'isTeasable') newValue = (e.target as HTMLInputElement).checked;
 
         setDealFormData(prev => {
             const updated = { ...prev, [name]: newValue };
@@ -468,6 +470,7 @@ const AdminDealsTab: React.FC = () => {
                         termsUrl: dealData.termsUrl || '',
                         redemptionCode: dealData.redemptionCode || 'CODE',
                         status: 'pending',
+                        isTeasable: dealData.isTeasable !== 'false', // Default to true
                     };
 
                     await createDeal(newDeal);
@@ -736,7 +739,15 @@ const AdminDealsTab: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('requiredTierLabel')}</label><select name="requiredTier" value={dealFormData.requiredTier} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}</select></div>
+                                        <div className="flex items-center gap-2 pt-6">
+                                            <input type="checkbox" id="isTeasable" name="isTeasable" checked={dealFormData.isTeasable} onChange={handleDealInputChange} className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" />
+                                            <label htmlFor="isTeasable" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Teasable (Visible but locked for lower tiers)
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

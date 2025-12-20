@@ -218,25 +218,13 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
       {/* Glow Effect on Hover */}
       <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/0 via-gold-500/0 to-gold-500/0 group-hover:from-gold-500/5 group-hover:to-purple-500/5 transition-all duration-500 pointer-events-none"></div>
 
-      {isLocked ? (
-        <div
-          className="flex flex-col flex-grow cursor-pointer"
-          onClick={() => {
-            logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: 'locked' });
-            !user ? navigate('/login') : navigate('/subscriptions');
-          }}
-        >
-          <CardContent />
-        </div>
-      ) : (
-        <Link
-          to={`/deals/${deal.id}`}
-          className="flex flex-col flex-grow cursor-pointer"
-          onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: 'unlocked' })}
-        >
-          <CardContent />
-        </Link>
-      )}
+      <Link
+        to={`/deals/${deal.id}`}
+        className="flex flex-col flex-grow cursor-pointer"
+        onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: isLocked ? 'locked' : 'unlocked' })}
+      >
+        <CardContent />
+      </Link>
     </div>
   );
 };

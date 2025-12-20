@@ -13,6 +13,8 @@ import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import WalletQRCode from './WalletQRCode';
 import { getWalletLimit, isWalletFull } from '../lib/walletUtils';
+import { canUserClaimDeal } from '../lib/redemptionLogic';
+import { Lock } from './Icons';
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
     [SubscriptionTier.NONE]: 0,
@@ -252,27 +254,10 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
         return `${window.location.origin}${cleanPathname}#/deals/${deal.id}`;
     }, [deal?.id]);
 
-    const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
-    const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
-
-    if (!isPreview && userTierLevel < requiredTierLevel && deal.requiredTier !== SubscriptionTier.FREE) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] p-4 text-center">
-                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 max-w-md w-full backdrop-blur-md shadow-2xl">
-                    <h2 className="text-2xl font-serif text-gold-400 mb-4">{t('upgradeToAccess') || 'Upgrade to Access'}</h2>
-                    <p className="text-white/60 mb-6">
-                        This deal requires <span className="text-gold-300 font-bold">{deal.requiredTier}</span> membership.
-                    </p>
-                    <button
-                        onClick={() => navigate('/profile')}
-                        className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-6 py-3 rounded-xl font-bold hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all"
-                    >
-                        {t('upgradeMembership') || 'Upgrade Membership'}
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    const canClaim = canUserClaimDeal(user, deal);
+    const requiresLogin = !user && deal.requiredTier !== SubscriptionTier.FREE;
+    // Special case: guests can see FREE deals but can't claim until login
+    const isLocked = !canClaim && !isPreview;
 
     const title = language === 'tr' ? deal.title_tr : deal.title;
     const description = language === 'tr' ? deal.description_tr : deal.description;
@@ -500,22 +485,31 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64">
-                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
-                                        <LocationMarkerIcon className="w-8 h-8 text-gold-400" />
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64 relative overflow-hidden">
+                                    <div className={`flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
+                                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                                            <LocationMarkerIcon className="w-8 h-8 text-gold-400" />
+                                        </div>
+                                        <p className="text-white/70 font-light text-lg">
+                                            {deal.latitude && deal.longitude
+                                                ? "View location on map"
+                                                : (t('validAtAllLocations') || "Valid at all branch locations.")}
+                                        </p>
+                                        {deal.latitude && deal.longitude && (
+                                            <button
+                                                onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
+                                                className="mt-6 px-6 py-2 rounded-full border border-gold-500/30 text-gold-400 text-sm font-bold hover:bg-gold-500/10 transition-colors"
+                                            >
+                                                Open in Maps
+                                            </button>
+                                        )}
                                     </div>
-                                    <p className="text-white/70 font-light text-lg">
-                                        {deal.latitude && deal.longitude
-                                            ? "View location on map"
-                                            : (t('validAtAllLocations') || "Valid at all branch locations.")}
-                                    </p>
-                                    {deal.latitude && deal.longitude && (
-                                        <button
-                                            onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
-                                            className="mt-6 px-6 py-2 rounded-full border border-gold-500/30 text-gold-400 text-sm font-bold hover:bg-gold-500/10 transition-colors"
-                                        >
-                                            Open in Maps
-                                        </button>
+                                    {isLocked && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                            <Lock className="w-12 h-12 text-gold-500 mb-2" />
+                                            <p className="text-gold-200 font-bold uppercase tracking-widest text-sm">Location Hidden</p>
+                                            <p className="text-white/40 text-xs mt-1">Upgrade to see branches</p>
+                                        </div>
                                     )}
                                 </div>
 
@@ -571,7 +565,18 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                         )}
 
                                     {/* Redeem Now Button or Redeemed State */}
-                                    {hasRedeemed(deal.id) ? (
+                                    {/* Action Buttons with Tier Lock */}
+                                    {isLocked ? (
+                                        <button
+                                            onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}
+                                            className="flex-1 bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg"
+                                        >
+                                            <Lock className="w-5 h-5" />
+                                            <span>
+                                                {!user ? t('loginToUnlock') : `${t('upgradeToUnlock') || 'Upgrade to Unlock'} (${deal.requiredTier})`}
+                                            </span>
+                                        </button>
+                                    ) : hasRedeemed(deal.id) ? (
                                         <button
                                             disabled
                                             className="flex-1 w-full bg-green-600/20 border border-green-500/30 text-green-400 font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80"

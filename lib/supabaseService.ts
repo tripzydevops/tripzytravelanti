@@ -24,6 +24,7 @@ interface DBDeal {
     discounted_price: number;
     discount_percentage?: number;
     required_tier: string;
+    is_teasable: boolean;
     is_external: boolean;
     vendor: string;
     expires_at: string;
@@ -340,6 +341,7 @@ function transformDealFromDB(dbDeal: any): Deal {
         discountedPrice: dbDeal.discounted_price,
         discountPercentage: dbDeal.discount_percentage,
         requiredTier: dbDeal.required_tier as SubscriptionTier,
+        isTeasable: dbDeal.is_teasable ?? true,
         isExternal: dbDeal.is_external,
         vendor: dbDeal.vendor,
         expiresAt: dbDeal.expires_at,
@@ -380,6 +382,7 @@ export async function createDeal(deal: Omit<Deal, 'id' | 'rating' | 'ratingCount
         discounted_price: deal.discountedPrice,
         discount_percentage: deal.discountPercentage,
         required_tier: deal.requiredTier,
+        is_teasable: deal.isTeasable ?? true,
         is_external: deal.isExternal,
         vendor: deal.vendor,
         expires_at: deal.expiresAt,
@@ -440,6 +443,7 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
     if (updates.discountedPrice !== undefined) dbUpdates.discounted_price = updates.discountedPrice;
     if (updates.discountPercentage !== undefined) dbUpdates.discount_percentage = updates.discountPercentage;
     if (updates.requiredTier) dbUpdates.required_tier = updates.requiredTier;
+    if (updates.isTeasable !== undefined) dbUpdates.is_teasable = updates.isTeasable;
     if (updates.isExternal !== undefined) dbUpdates.is_external = updates.isExternal;
     if (updates.vendor) dbUpdates.vendor = updates.vendor;
     if (updates.expiresAt) dbUpdates.expires_at = updates.expiresAt;
@@ -496,6 +500,28 @@ export async function getDealsByPartner(partnerId: string): Promise<Deal[]> {
     }
 
     return data.map(transformDealFromDB);
+}
+
+export async function getDealsByPartnerPaginated(partnerId: string, page: number, limit: number): Promise<{ deals: Deal[], total: number }> {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, count, error } = await supabase
+        .from('deals')
+        .select('*', { count: 'exact' })
+        .eq('partner_id', partnerId)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    if (error) {
+        console.error('Error fetching paginated partner deals:', error);
+        return { deals: [], total: 0 };
+    }
+
+    return {
+        deals: (data || []).map(transformDealFromDB),
+        total: count || 0
+    };
 }
 
 export async function updateDealStatus(dealId: string, status: 'approved' | 'rejected') {
@@ -706,7 +732,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     // First, get deal rules
     const { data: dealData, error: dealError } = await supabase
         .from('deals')
-        .select('max_redemptions_total, redemptions_count, usage_limit, max_user_redemptions')
+        .select('max_redemptions_total, redemptions_count, usage_limit, max_user_redemptions, required_tier')
         .eq('id', dealId)
         .single();
 
@@ -796,6 +822,24 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     if (existingItem) {
         if (existingItem.status === 'redeemed') throw new Error('This deal has already been redeemed.');
         if (existingItem.status === 'expired') throw new Error('This deal has expired.');
+    }
+
+    // Tier validation for NEW redemptions
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('tier')
+        .eq('id', cleanUserId)
+        .single();
+
+    const userTier = userProfile?.tier || 'FREE';
+    const requiredTier = dealData.required_tier || 'FREE';
+
+    const TIER_STRENGTH: Record<string, number> = {
+        'NONE': 0, 'FREE': 1, 'BASIC': 2, 'PREMIUM': 3, 'VIP': 4
+    };
+
+    if (TIER_STRENGTH[userTier] < TIER_STRENGTH[requiredTier]) {
+        throw new Error(`This deal requires ${requiredTier} membership. Please upgrade to redeem.`);
     }
 
     // Check User Limit (Slots/Month) - only for new redemptions
@@ -1955,7 +1999,7 @@ export function generateRedemptionCode(): string {
 /**
  * Add a deal to user's wallet with a unique redemption code
  */
-export async function addDealToWallet(userId: string, dealId: string): Promise<{ walletItemId: string; redemptionCode: string }> {
+export async function addDealToWallet(userId: string, dealId: string, bypassChecks: boolean = false): Promise<{ walletItemId: string; redemptionCode: string }> {
     // Check if already in wallet
     const { data: existing } = await supabase
         .from('wallet_items')
@@ -1969,21 +2013,43 @@ export async function addDealToWallet(userId: string, dealId: string): Promise<{
     }
 
     // Check user's monthly limit
-    const limitCheck = await checkMonthlyLimit(userId);
-    if (!limitCheck.allowed) {
-        throw new Error('Monthly redemption limit reached. Please upgrade your plan.');
+    if (!bypassChecks) {
+        const limitCheck = await checkMonthlyLimit(userId);
+        if (!limitCheck.allowed) {
+            throw new Error('Monthly redemption limit reached. Please upgrade your plan.');
+        }
     }
 
-    // Check global deal limit
+    // Check global deal limit and tier requirement
     const { data: deal, error: dealError } = await supabase
         .from('deals')
-        .select('max_redemptions_total, redemptions_count, is_sold_out')
+        .select('max_redemptions_total, redemptions_count, is_sold_out, required_tier')
         .eq('id', dealId)
         .single();
 
     if (dealError || !deal) throw new Error('Deal not found');
     if (deal.is_sold_out || (deal.max_redemptions_total && (deal.redemptions_count || 0) >= deal.max_redemptions_total)) {
         throw new Error('This deal is sold out.');
+    }
+
+    // Tier validation
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('tier')
+        .eq('id', userId)
+        .single();
+
+    const userTier = userProfile?.tier || 'FREE';
+    const requiredTier = deal.required_tier || 'FREE';
+
+    // Import hierachy logic locally to avoid circular deps if any, 
+    // but better to just use the value mapping here since it's a critical service
+    const TIER_STRENGTH: Record<string, number> = {
+        'NONE': 0, 'FREE': 1, 'BASIC': 2, 'PREMIUM': 3, 'VIP': 4
+    };
+
+    if (!bypassChecks && TIER_STRENGTH[userTier] < TIER_STRENGTH[requiredTier]) {
+        throw new Error(`This deal requires ${requiredTier} membership. Please upgrade to unlock.`);
     }
 
     // Generate unique code and insert

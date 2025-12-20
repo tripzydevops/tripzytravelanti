@@ -56,3 +56,18 @@ export const getNextRenewalDate = (user?: User): Date => {
 
     return nextRenewal;
 };
+
+export const TIER_HIERARCHY: Record<string, number> = {
+    [SubscriptionTier.NONE]: 0,
+    [SubscriptionTier.FREE]: 1,
+    [SubscriptionTier.BASIC]: 2,
+    [SubscriptionTier.PREMIUM]: 3,
+    [SubscriptionTier.VIP]: 4,
+};
+
+export const canUserClaimDeal = (user: User | null, deal: { requiredTier: SubscriptionTier }) => {
+    if (!user) return false;
+    const userTierValue = TIER_HIERARCHY[user.tier] || 0;
+    const requiredTierValue = TIER_HIERARCHY[deal.requiredTier] || 0;
+    return userTierValue >= requiredTierValue;
+};

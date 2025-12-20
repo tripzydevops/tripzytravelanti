@@ -223,10 +223,9 @@ const AdminUsersTab: React.FC = () => {
     const handleAddDealToUser = async () => {
         if (dealToAdd && editingUser) {
             try {
-                // Determine if we should use saveDeal (user_deals) or assignDealToUser
-                // Use the service directly
-                const { saveDeal } = await import('../../lib/supabaseService');
-                await saveDeal(editingUser.id, dealToAdd);
+                // Use the service directly - using addDealToWallet for secure assignment with bypass
+                const { addDealToWallet } = await import('../../lib/supabaseService');
+                await addDealToWallet(editingUser.id, dealToAdd, true); // true = bypass tier/limit checks
 
                 // Update local UI
                 setUserFormData(prev => ({

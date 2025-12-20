@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -220,35 +221,39 @@ function AppContent() {
   );
 }
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <AuthProvider>
-          <UserActivityProvider>
-            <AdminProvider>
-              <DealProvider>
-                <SubscriptionProvider>
-                  <ContentProvider>
-                    <ThemeProvider>
-                      <LayoutProvider>
-                        <NotificationProvider>
-                          <ToastProvider>
-                            <BrowserRouter>
-                              <ScrollToTop />
-                              <AppContent />
-                            </BrowserRouter>
-                          </ToastProvider>
-                        </NotificationProvider>
-                      </LayoutProvider>
-                    </ThemeProvider>
-                  </ContentProvider>
-                </SubscriptionProvider>
-              </DealProvider>
-            </AdminProvider>
-          </UserActivityProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <AuthProvider>
+            <UserActivityProvider>
+              <AdminProvider>
+                <DealProvider>
+                  <SubscriptionProvider>
+                    <ContentProvider>
+                      <ThemeProvider>
+                        <LayoutProvider>
+                          <NotificationProvider>
+                            <ToastProvider>
+                              <BrowserRouter>
+                                <ScrollToTop />
+                                <AppContent />
+                              </BrowserRouter>
+                            </ToastProvider>
+                          </NotificationProvider>
+                        </LayoutProvider>
+                      </ThemeProvider>
+                    </ContentProvider>
+                  </SubscriptionProvider>
+                </DealProvider>
+              </AdminProvider>
+            </UserActivityProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

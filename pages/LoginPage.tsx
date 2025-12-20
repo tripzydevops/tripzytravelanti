@@ -31,10 +31,17 @@ const LoginPage: React.FC = () => {
         await signup(email, password, name, referralCode);
         showSuccess(t('signupSuccess') || 'Successfully signed up!');
       } else {
-        await login(email, password);
+        const user = await login(email, password);
         showSuccess(t('loginSuccess') || 'Successfully logged in!');
+
+        if (user?.role === 'partner') {
+          navigate('/partner/dashboard');
+        } else if (user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       }
-      navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
       const errorMessage = err.message || 'Failed to login. Please check your credentials.';
