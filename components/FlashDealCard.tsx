@@ -5,6 +5,7 @@ import { ClockIcon, ArrowRightIcon } from './Icons';
 import { Link } from 'react-router-dom';
 import { logEngagementEvent } from '../lib/supabaseService';
 import { useAuth } from '../contexts/AuthContext';
+import { getThumbnailUrl } from '../lib/imageUtils';
 
 interface FlashDealCardProps {
     deal: Deal;
@@ -58,7 +59,7 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
                             FLASH DEAL ⚡
                         </div>
                         <img
-                            src={deal.imageUrl}
+                            src={getThumbnailUrl(deal.imageUrl)}
                             alt={title}
                             className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
                         />

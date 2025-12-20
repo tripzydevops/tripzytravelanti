@@ -236,4 +236,36 @@ export async function chatWithAI(message: string, history: any[], systemInstruct
     }
 }
 
+/**
+ * Gets search suggestions (Did you mean?) for a query.
+ */
+export async function getSearchSuggestions(queryText: string): Promise<string[]> {
+    try {
+        const promptHash = await hashPrompt(`suggest:${queryText}`);
+        const cached = await checkCache(promptHash);
+        if (cached && Array.isArray(cached.suggestions)) return cached.suggestions;
+
+        const { data, error } = await supabase.functions.invoke('vector-sync', {
+            body: {
+                action: 'suggest',
+                query: { text: queryText }
+            }
+        });
+
+        if (error || !data?.success) {
+            console.error('[VectorService] Suggestion error:', error || data?.error);
+            return [];
+        }
+
+        if (data && data.success) {
+            await saveToCache(promptHash, 'suggest', data);
+        }
+
+        return data.suggestions || [];
+    } catch (error) {
+        console.error('[VectorService] getSearchSuggestions failed:', error);
+        return [];
+    }
+}
+
 

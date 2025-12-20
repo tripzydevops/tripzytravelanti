@@ -14,10 +14,19 @@ CREATE INDEX IF NOT EXISTS idx_generations_cache_expires_at ON public.generation
 ALTER TABLE public.generations_cache ENABLE ROW LEVEL SECURITY;
 
 -- Allow authenticated users to read (since they benefit from the cache)
-CREATE POLICY "Anyone can read generations cache" 
-ON public.generations_cache FOR SELECT 
-TO authenticated 
-USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'generations_cache' 
+        AND policyname = 'Anyone can read generations cache'
+    ) THEN
+        CREATE POLICY "Anyone can read generations cache" 
+        ON public.generations_cache FOR SELECT 
+        TO authenticated 
+        USING (true);
+    END IF;
+END $$;
 
 -- Only service role (Edge Functions) can write - standard for cache
 -- No specialized policy needed if Edge Function uses service role, 

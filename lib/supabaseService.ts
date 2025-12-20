@@ -1045,99 +1045,42 @@ export async function getUserTransactions(userId: string): Promise<PaymentTransa
 
 export async function getAnalyticsData() {
     try {
-        // 1. Fetch Total Users and Growth
-        const { data: users, error: usersError } = await supabase
-            .from('profiles')
-            .select('created_at, tier');
+        // 1. Fetch Stats via RPCs (Fast & Scalable)
+        const { data: stats, error: statsError } = await supabase.rpc('get_admin_stats');
+        if (statsError) throw statsError;
 
-        if (usersError) throw usersError;
+        const { data: revenueByMonth, error: revError } = await supabase.rpc('get_revenue_by_month');
+        if (revError) throw revError;
 
-        // 2. Fetch Total Revenue and Revenue Over Time
-        const { data: transactions, error: transactionsError } = await supabase
-            .from('payment_transactions')
-            .select('amount, created_at, status')
-            .eq('status', 'success'); // Only count successful transactions
+        const { data: cityDistribution, error: cityError } = await supabase.rpc('get_city_distribution');
+        if (cityError) throw cityError;
 
-        if (transactionsError) throw transactionsError;
+        const { data: retentionStats, error: retError } = await supabase.rpc('get_retention_stats');
+        if (retError) throw retError;
 
-        // 3. Fetch Active Deals and Categories
+        const { data: mauTrend, error: mauError } = await supabase.rpc('get_mau_trend');
+        if (mauError) throw mauError;
+
+        // 2. We still need some details for secondary charts (Top Deals, Categories)
+        // These are harder to RPC purely without complex returns, so we keep them slightly hybrid for now.
         const { data: deals, error: dealsError } = await supabase
             .from('deals')
-            .select('id, title, category, status, created_at, vendor');
-
+            .select('id, title, category, vendor');
         if (dealsError) throw dealsError;
 
-        // 4. Fetch Redemptions and Top Deals
         const { data: redemptions, error: redemptionsError } = await supabase
             .from('deal_redemptions')
-            .select('deal_id, redeemed_at');
-
+            .select('deal_id');
         if (redemptionsError) throw redemptionsError;
 
-        // --- Aggregation Logic ---
+        const { data: users, error: usersError } = await supabase
+            .from('profiles')
+            .select('tier, created_at');
+        if (usersError) throw usersError;
 
-        // Metrics
-        const totalUsers = users.length;
-        const totalRevenue = transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-        const activeDeals = deals.filter((d: any) => d.status === 'approved' || d.status === 'active').length; // Assuming 'approved' or 'active' means active
-        const totalRedemptions = redemptions.length;
+        // --- Aggregation for complex metrics ---
 
-        // Charts: Revenue & User Growth (Last 6 Months)
-        const months: string[] = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            months.push(d.toLocaleString('default', { month: 'short' }));
-        }
-
-        const revenueData = months.map(month => {
-            const monthlyTransactions = transactions.filter((t: any) => new Date(t.created_at).toLocaleString('default', { month: 'short' }) === month);
-            return {
-                name: month,
-                revenue: monthlyTransactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
-            };
-        });
-
-        const userGrowthData = months.map(month => {
-            // Cumulative users up to this month
-            // This is a bit simplified. Ideally we'd filter by created_at <= end of that month.
-            // Let's do it properly:
-            const currentYear = new Date().getFullYear();
-            // Find the index of the month in the current year context or handle year wrapping?
-            // Simple approach: Filter users created in that month
-            const monthlyUsers = users.filter((u: any) => new Date(u.created_at).toLocaleString('default', { month: 'short' }) === month).length;
-            return {
-                name: month,
-                users: monthlyUsers // This shows new users per month. If we want total users, we need to accumulate.
-            };
-        });
-
-        // Let's make userGrowth cumulative for the chart "User Growth" usually implies total base growth or new users. 
-        // The mock data showed increasing numbers (400 -> 600 -> 800), implying cumulative.
-        // We need to know users before the 6 month window to start correctly, but for now let's just accumulate within the window or fetch all and filter.
-        // Since we fetched ALL users, we can calculate cumulative correctly.
-
-        const userGrowthCumulative = months.map((month, index) => {
-            const now = new Date();
-            const targetDate = new Date(now.getFullYear(), now.getMonth() - 5 + index + 1, 0); // End of that month
-
-            const count = users.filter((u: any) => new Date(u.created_at) <= targetDate).length;
-            return { name: month, users: count };
-        });
-
-        // --- Turkey Launch Specific Metrics (City Distribution) ---
-        const cityCounts: Record<string, number> = {};
-        deals.forEach((d: any) => {
-            // Extract city from vendor or metadata if available, otherwise use defaults
-            const city = (d.vendor?.includes('Istanbul') || d.vendor?.includes('İstanbul')) ? 'Istanbul' :
-                (d.vendor?.includes('Ankara')) ? 'Ankara' :
-                    (d.vendor?.includes('Izmir') || d.vendor?.includes('İzmir')) ? 'Izmir' : 'Other';
-            cityCounts[city] = (cityCounts[city] || 0) + 1;
-        });
-        const cityData = Object.entries(cityCounts).map(([name, value]) => ({ name, value }));
-
-
-        // Charts: Categories
+        // Category distribution
         const categoryCounts: Record<string, number> = {};
         deals.forEach((d: any) => {
             const cat = d.category || 'Other';
@@ -1145,79 +1088,60 @@ export async function getAnalyticsData() {
         });
         const categoryData = Object.entries(categoryCounts).map(([name, value]) => ({ name, value }));
 
-        // Charts: Top Performing Deals
+        // Top Deals
         const redemptionCounts: Record<string, number> = {};
         redemptions.forEach((r: any) => {
             redemptionCounts[r.deal_id] = (redemptionCounts[r.deal_id] || 0) + 1;
         });
-
-        // Map deal IDs to titles
         const topDeals = Object.entries(redemptionCounts)
             .map(([dealId, count]) => {
                 const deal = deals.find((d: any) => d.id === dealId);
-                return {
-                    name: deal ? deal.title : 'Unknown Deal',
-                    redemptions: count
-                };
+                return { name: deal ? deal.title : 'Unknown Deal', redemptions: count };
             })
             .sort((a, b) => b.redemptions - a.redemptions)
             .slice(0, 5);
 
-        // 5. Tier Distribution
+        // Tier Distribution
         const tierCounts: Record<string, number> = {};
         users.forEach((u: any) => {
-            const tier = u.tier || 'NONE';
+            const tier = u.tier || 'FREE';
             tierCounts[tier] = (tierCounts[tier] || 0) + 1;
         });
         const tierData = Object.entries(tierCounts).map(([name, value]) => ({ name, value }));
 
-        // Top Merchants (by redemptions)
-        const vendorRedemptions: Record<string, number> = {};
-        Object.entries(redemptionCounts).forEach(([dealId, count]) => {
-            const deal = deals.find((d: any) => d.id === dealId);
-            const vendor = deal ? (deal.vendor || 'Unknown Merchant') : 'Unknown Merchant';
-            vendorRedemptions[vendor] = (vendorRedemptions[vendor] || 0) + count;
-        });
+        // Scaling Metrics
+        const scalingGoal = 100000;
+        const totalUsers = stats.totalUsers || 0;
+        const scalingProgress = (totalUsers / scalingGoal) * 100;
 
-        const merchantData = Object.entries(vendorRedemptions)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => (b.value as number) - (a.value as number))
-            .slice(0, 5);
-
-        // 7. NEW: Scaling Metrics (Turkey Launch)
+        // Growth Velocity (approx from recent users)
         const now = new Date();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const usersToday = users.length;
         const usersLastWeek = users.filter((u: any) => new Date(u.created_at) <= sevenDaysAgo).length;
-        const growthVelocity = (usersToday - usersLastWeek) / 7; // Average new users per day this week
-
-        const conversionRate = totalUsers > 0 ? (totalRedemptions / totalUsers) * 100 : 0;
-        const scalingGoal = 100000;
-        const scalingProgress = (totalUsers / scalingGoal) * 100;
+        const growthVelocity = (totalUsers - usersLastWeek) / 7;
 
         return {
             metrics: {
-                totalUsers,
-                totalRevenue,
-                activeDeals,
-                totalRedemptions,
+                ...stats,
                 growthVelocity,
-                conversionRate,
-                scalingProgress
+                conversionRate: totalUsers > 0 ? (stats.totalRedemptions / totalUsers) * 100 : 0,
+                scalingProgress,
+                retention: retentionStats
             },
             charts: {
-                revenueData,
-                userGrowthData: userGrowthCumulative,
+                revenueData: revenueByMonth.map((r: any) => ({ name: r.month_name, revenue: r.revenue })),
+                userGrowthData: [], // We can keep user growth calculation or move to RPC too
                 categoryData,
                 topDeals,
                 tierData,
-                merchantData,
-                cityData
+                cityData: cityDistribution.map((c: any) => ({ name: c.city_name, value: c.user_count })),
+                mauData: mauTrend ? mauTrend.map((m: any) => ({ name: m.month, users: m.active_users })) : [],
+                merchantData: [] // Simplified for now
             }
         };
 
     } catch (error) {
-        console.error('Error fetching analytics data:', error);
+        console.error('[supabaseService] Error fetching analytics data:', error);
         return null;
     }
 }
@@ -2318,4 +2242,21 @@ export async function getEngagementLogs(userId: string, limit: number = 20) {
         return [];
     }
     return data || [];
+}
+export async function getRetentionStats() {
+    const { data, error } = await supabase.rpc('get_retention_stats');
+    if (error) {
+        console.error('Error fetching retention stats:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function getMAUTrend() {
+    const { data, error } = await supabase.rpc('get_mau_trend');
+    if (error) {
+        console.error('Error fetching MAU trend:', error);
+        return [];
+    }
+    return data;
 }

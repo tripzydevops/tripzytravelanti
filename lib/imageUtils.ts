@@ -21,7 +21,22 @@ interface ImageOptimizationOptions {
 export const getOptimizedImageUrl = (url: string | undefined | null, options: ImageOptimizationOptions = {}): string => {
     if (!url) return '';
 
-    // If it's not a Supabase URL, return as is
+    // 1. Handle Unsplash URLs
+    if (url.includes('unsplash.com')) {
+        try {
+            const urlObj = new URL(url);
+            if (options.width) urlObj.searchParams.set('w', options.width.toString());
+            if (options.height) urlObj.searchParams.set('h', options.height.toString());
+            urlObj.searchParams.set('q', (options.quality || 80).toString());
+            urlObj.searchParams.set('fit', options.resize === 'cover' ? 'crop' : 'contain');
+            urlObj.searchParams.set('auto', 'format');
+            return urlObj.toString();
+        } catch (e) {
+            return url;
+        }
+    }
+
+    // 2. Handle Supabase Storage URLs (Only if it's not already transformed)
     if (!url.includes('supabase.co/storage/v1/object/public')) {
         return url;
     }

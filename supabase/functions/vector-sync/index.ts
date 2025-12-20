@@ -8,7 +8,7 @@ const corsHeaders = {
 }
 
 interface VectorRequest {
-    action: 'upsert' | 'delete' | 'query' | 'rank' | 'generate' | 'chat';
+    action: 'upsert' | 'delete' | 'query' | 'rank' | 'generate' | 'chat' | 'suggest';
     deal?: {
         id: string;
         title: string;
@@ -137,6 +137,12 @@ serve(async (req) => {
             return new Response(JSON.stringify({ success: true, response }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
+        if (action === 'suggest') {
+            if (!body.query?.text) throw new Error('Missing query text for suggestions');
+            const suggestions = await suggestWithGemini(body.query.text);
+            return new Response(JSON.stringify({ success: true, suggestions }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+
         return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
     } catch (error) {
@@ -144,6 +150,39 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 })
+
+async function suggestWithGemini(query: string): Promise<string[]> {
+    const apiKey = Deno.env.get('GOOGLE_AI_KEY');
+    if (!apiKey) throw new Error('Missing AI Configuration');
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+
+    const prompt = `You are a helpful travel deal search assistant for "Tripzy". 
+    The user is searching for: "${query}".
+    If there are typos or if there are related travel/discount categories, suggest up to 3 alternative search terms in a JSON array of strings. 
+    If the search is perfect and needs no suggestions, return an empty array [].
+    Example input: "Istanbu" -> ["Istanbul", "İstanbul", "Istanbul Hotels"]
+    Example input: "uçak" -> ["uçak bileti", "thy indirim", "pegasus kampanya"]
+    Return ONLY the JSON array.`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+        })
+    });
+
+    const data = await response.json();
+    try {
+        const text = data.candidates[0].content.parts[0].text;
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        return JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch (e) {
+        console.error('Failed to parse suggestions:', e);
+        return [];
+    }
+}
 
 async function chatWithGemini(message: string, history: any[], systemInstruction?: string): Promise<any> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');

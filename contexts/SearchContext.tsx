@@ -1,9 +1,11 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logEngagementEvent } from '../lib/supabaseService';
+import { getSearchSuggestions } from '../lib/vectorService';
 import { useAuth } from './AuthContext';
 
-export type { CategoryFilter } from '../shared/dealTypes';
+import { CategoryFilter } from '../shared/dealTypes';
+export type { CategoryFilter };
 
 interface SearchContextType {
   searchQuery: string;
@@ -22,6 +24,9 @@ interface SearchContextType {
   enableLocation: () => Promise<void>;
   isSmartSearch: boolean;
   setIsSmartSearch: (isSmart: boolean) => void;
+  suggestions: string[];
+  fetchSuggestions: (query: string) => Promise<void>;
+  clearSuggestions: () => void;
 }
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -34,6 +39,7 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [isSmartSearch, setIsSmartSearch] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const enableLocation = useCallback(async () => {
@@ -81,6 +87,19 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     navigate('/');
   }, [navigate]);
 
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (!query || query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const results = await getSearchSuggestions(query);
+    setSuggestions(results || []);
+  }, []);
+
+  const clearSuggestions = useCallback(() => {
+    setSuggestions([]);
+  }, []);
+
   return (
     <SearchContext.Provider value={{
       searchQuery,
@@ -94,7 +113,10 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       isLocationEnabled,
       enableLocation,
       isSmartSearch,
-      setIsSmartSearch
+      setIsSmartSearch,
+      suggestions,
+      fetchSuggestions,
+      clearSuggestions
     }}>
       {children}
     </SearchContext.Provider>

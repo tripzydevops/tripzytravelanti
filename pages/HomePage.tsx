@@ -43,7 +43,10 @@ const HomePage: React.FC = () => {
     userLocation,
     isLocationEnabled,
     isSmartSearch,
-    setIsSmartSearch
+    setIsSmartSearch,
+    suggestions,
+    fetchSuggestions,
+    clearSuggestions
   } = useSearch();
 
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
@@ -153,13 +156,24 @@ const HomePage: React.FC = () => {
       }, false); // false = reset list
     };
 
-    // Debounce search
     const timeoutId = setTimeout(() => {
       fetchDeals();
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [categoryFilter, searchQuery, ratingFilter, isSmartSearch, loadDealsPaginated]);
+
+  // Handle suggestions
+  React.useEffect(() => {
+    if (searchQuery.length >= 2) {
+      const timeoutId = setTimeout(() => {
+        fetchSuggestions(searchQuery);
+      }, 800);
+      return () => clearTimeout(timeoutId);
+    } else {
+      clearSuggestions();
+    }
+  }, [searchQuery, fetchSuggestions, clearSuggestions]);
 
   const handleLoadMore = async () => {
     const nextPage = page + 1;
@@ -396,7 +410,35 @@ const HomePage: React.FC = () => {
                 </div>
               )}
 
-              {/* Empty State Dropdown for Search suggestions if needed, currently omitted for cleanliness */}
+              {/* AI Search Suggestions (Did you mean?) */}
+              {isSearchFocused && suggestions.length > 0 && (
+                <div className="absolute top-full mt-4 w-full bg-[#0f172a]/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] z-30 overflow-hidden border border-gold-500/20 animate-slide-up">
+                  <div className="px-6 py-4 border-b border-white/5 bg-gold-500/5 flex items-center gap-2">
+                    <SparklesIcon className="w-4 h-4 text-gold-400" />
+                    <h4 className="text-xs font-bold text-gold-500 uppercase tracking-widest">{t('didYouMean') || 'Did you mean?'}</h4>
+                  </div>
+                  <div className="p-3 grid grid-cols-1 gap-1">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSearchQuery(suggestion);
+                          saveSearch(suggestion);
+                          setIsSearchFocused(false);
+                          clearSuggestions();
+                        }}
+                        className="w-full text-left px-4 py-3 rounded-xl flex items-center text-white/90 hover:bg-gold-500/10 hover:text-gold-400 transition-all duration-200 group"
+                      >
+                        <Search className="w-4 h-4 mr-3 text-white/20 group-hover:text-gold-400/50" />
+                        <span className="font-medium">{suggestion}</span>
+                        <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[10px] bg-gold-500/20 text-gold-400 px-2 py-0.5 rounded-full uppercase tracking-tighter font-bold">Try this</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -665,7 +707,25 @@ const HomePage: React.FC = () => {
                           <Search className="w-8 h-8 text-white/30" />
                         </div>
                         <p className="text-xl text-white/60 font-medium">{t('noResults')}</p>
-                        <button onClick={() => { setCategoryFilter('All'); setSearchQuery(''); }} className="mt-4 text-gold-500 hover:text-gold-400 underline">
+
+                        {suggestions.length > 0 && (
+                          <div className="mt-8">
+                            <p className="text-sm text-white/40 mb-3 uppercase tracking-widest font-bold">Suggested Searches:</p>
+                            <div className="flex flex-wrap justify-center gap-3">
+                              {suggestions.map((s, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => setSearchQuery(s)}
+                                  className="px-4 py-2 bg-white/5 hover:bg-gold-500/20 border border-white/10 hover:border-gold-500/40 rounded-full text-gold-400 text-sm font-medium transition-all"
+                                >
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <button onClick={() => { setCategoryFilter('All'); setSearchQuery(''); clearSuggestions(); }} className="mt-8 text-gold-500 hover:text-gold-400 underline font-medium">
                           Reset Filters
                         </button>
                       </div>
