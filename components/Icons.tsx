@@ -48,7 +48,8 @@ import {
   Save,
   Megaphone,
   AlertCircle,
-  Calendar
+  Calendar,
+  Terminal as LucideTerminal
 } from 'lucide-react';
 
 type IconProps = {
@@ -112,6 +113,7 @@ export const SaveIcon: React.FC<IconProps> = ({ className }) => <Save className=
 export const MegaphoneIcon: React.FC<IconProps> = ({ className }) => <Megaphone className={className} strokeWidth={1.5} />;
 export const AlertCircleIcon: React.FC<IconProps> = ({ className }) => <AlertCircle className={className} strokeWidth={1.5} />;
 export const CalendarIcon: React.FC<IconProps> = ({ className }) => <Calendar className={className} strokeWidth={1.5} />;
+export const Terminal: React.FC<IconProps> = ({ className }) => <LucideTerminal className={className} strokeWidth={1.5} />;
 
 export { Compass };
 
