@@ -147,7 +147,10 @@ serve(async (req) => {
 
 async function chatWithGemini(message: string, history: any[], systemInstruction?: string): Promise<any> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');
-    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+    if (!apiKey) {
+        console.error('[vector-sync] Missing GOOGLE_AI_KEY secret');
+        throw new Error('Missing AI Configuration');
+    }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
@@ -193,7 +196,10 @@ async function chatWithGemini(message: string, history: any[], systemInstruction
 
 async function generateTextWithGemini(prompt: string): Promise<string> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');
-    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+    if (!apiKey) {
+        console.error('[vector-sync] Missing GOOGLE_AI_KEY secret');
+        throw new Error('Missing AI Configuration');
+    }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
@@ -216,7 +222,10 @@ async function generateTextWithGemini(prompt: string): Promise<string> {
 
 async function rankDealsWithGemini(prompt: string): Promise<string[]> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');
-    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+    if (!apiKey) {
+        console.error('[vector-sync] Missing GOOGLE_AI_KEY secret');
+        throw new Error('Missing AI Configuration');
+    }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
@@ -230,23 +239,31 @@ async function rankDealsWithGemini(prompt: string): Promise<string[]> {
 
     const data = await response.json();
     if (!response.ok) {
-        console.error('Gemini Ranking Error:', data);
+        console.error('[vector-sync] Gemini Ranking Error:', data);
         throw new Error(`Gemini Ranking Error: ${data.error?.message || 'Unknown error'}`);
     }
 
     try {
         const text = data.candidates[0].content.parts[0].text;
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(cleanJson);
+        // More robust JSON extraction
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        const cleanJson = jsonMatch ? jsonMatch[0] : text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const results = JSON.parse(cleanJson);
+        if (!Array.isArray(results)) throw new Error('Response is not an array');
+        return results;
     } catch (e) {
-        console.error('Failed to parse Gemini ranking response:', e);
+        console.error('[vector-sync] Failed to parse Gemini ranking response:', e, data.candidates[0].content.parts[0].text);
         return [];
     }
 }
 
+
 async function generateEmbedding(text: string): Promise<number[]> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');
-    if (!apiKey) throw new Error('Missing GOOGLE_AI_KEY secret');
+    if (!apiKey) {
+        console.error('[vector-sync] Missing GOOGLE_AI_KEY secret');
+        throw new Error('Missing AI Configuration');
+    }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
 

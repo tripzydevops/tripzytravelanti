@@ -51,7 +51,12 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     redemptionsPerMonth: Infinity,
     billingPeriod: 'yearly',
     features: ['All Premium features', 'AI-powered trip planning', 'Concierge service', 'Partner event invitations'],
-    features_tr: ['Tüm Premium özellikler', 'Yapay zeka destekli gezi planlama', 'Konsiyerj hizmeti', 'Partner etkinlik davetiyeleri'],
+    features_tr: [
+      'Tüm Premium özellikler',
+      'Yapay zeka destekli gezi planlama',
+      'Konsiyerj hizmeti',
+      'Partner etkinlik davetiyeleri'
+    ],
   },
 ];
 
@@ -67,7 +72,7 @@ export const MOCK_DEALS: Deal[] = [
     title: 'Exclusive Dining Experience',
     title_tr: 'Özel Akşam Yemeği Deneyimi',
     description: 'Enjoy a curated dining experience at a top-rated restaurant in Istanbul, offering a special menu for our subscribers.',
-    description_tr: 'İstanbul\'un en iyi restoranlarından birinde, abonelerimize özel bir menü sunan, özenle hazırlanmış bir akşam yemeği deneyiminin keyfini çıkarın.',
+    description_tr: 'Abonelerimize özel bir menü sunan, İstanbul\'un en prestijli restoranlarından birinde özenle hazırlanmış bir akşam yemeği deneyiminin keyfini çıkarın.',
     imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
     category: 'Dining',
     category_tr: 'Yemek',

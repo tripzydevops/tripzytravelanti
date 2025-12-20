@@ -101,10 +101,62 @@ export async function querySimilarDeals(queryText: string, topK: number = 10): P
     }
 }
 /**
+ * Hashes a string using SHA-256 for cache keys
+ */
+async function hashPrompt(prompt: string): Promise<string> {
+    const msgUint8 = new TextEncoder().encode(prompt);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Checks if a cached response exists for the given prompt hash
+ */
+async function checkCache(promptHash: string): Promise<any | null> {
+    const { data, error } = await supabase
+        .from('generations_cache')
+        .select('response_data')
+        .eq('prompt_hash', promptHash)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[vectorService] Cache check error:', error);
+        return null;
+    }
+    return data?.response_data;
+}
+
+/**
+ * Saves a response to the cache
+ */
+async function saveToCache(promptHash: string, actionType: string, responseData: any) {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Cache for 7 days
+
+    const { error } = await supabase
+        .from('generations_cache')
+        .upsert({
+            prompt_hash: promptHash,
+            action_type: actionType,
+            response_data: responseData,
+            expires_at: expiresAt.toISOString()
+        });
+
+    if (error) {
+        console.error('[vectorService] Cache save error:', error);
+    }
+}
+
+/**
  * Ranks a list of candidate deals using Gemini via Supabase Edge Function.
  */
 export async function rankDeals(prompt: string): Promise<string[]> {
     try {
+        const promptHash = await hashPrompt(`rank:${prompt}`);
+        const cached = await checkCache(promptHash);
+        if (cached && Array.isArray(cached.results)) return cached.results;
+
         const { data, error } = await supabase.functions.invoke('vector-sync', {
             body: {
                 action: 'rank',
@@ -115,6 +167,10 @@ export async function rankDeals(prompt: string): Promise<string[]> {
         if (error || !data?.success) {
             console.error('[VectorService] Rank error:', error || data?.error);
             return [];
+        }
+
+        if (data && data.success) {
+            await saveToCache(promptHash, 'rank', data);
         }
 
         return data.results || [];
@@ -129,6 +185,10 @@ export async function rankDeals(prompt: string): Promise<string[]> {
  */
 export async function generateText(prompt: string): Promise<string> {
     try {
+        const promptHash = await hashPrompt(`gen:${prompt}`);
+        const cached = await checkCache(promptHash);
+        if (cached && cached.text) return cached.text;
+
         const { data, error } = await supabase.functions.invoke('vector-sync', {
             body: {
                 action: 'generate',
@@ -139,6 +199,10 @@ export async function generateText(prompt: string): Promise<string> {
         if (error || !data?.success) {
             console.error('[VectorService] Generation error:', error || data?.error);
             return '';
+        }
+
+        if (data && data.success) {
+            await saveToCache(promptHash, 'generate', data);
         }
 
         return data.text || '';

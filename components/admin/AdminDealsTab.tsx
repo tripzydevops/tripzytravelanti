@@ -110,6 +110,9 @@ const AdminDealsTab: React.FC = () => {
     const [formTab, setFormTab] = useState('Deal Details');
     const [showTranslations, setShowTranslations] = useState(false);
 
+    // Selection State
+    const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
+
 
     const dealTypeConfig = getDiscountTypeConfig(dealFormData.dealTypeKey || 'percentage_off');
     const timeTypeConfig = getTimeTypeConfig(dealFormData.timeType || 'standard');
@@ -136,6 +139,10 @@ const AdminDealsTab: React.FC = () => {
         }, 500); // Debounce
         return () => clearTimeout(timeoutId);
     }, [loadAdminDeals]);
+
+    useEffect(() => {
+        setSelectedDealIds([]); // Clear selection when filters change
+    }, [searchQuery, categoryFilter, activeTab]);
 
     const filteredDeals = useMemo(() => {
         const now = new Date();
@@ -346,6 +353,36 @@ const AdminDealsTab: React.FC = () => {
         if (window.confirm(t('deleteConfirmation'))) {
             await deleteDeal(dealId);
             loadAdminDeals(adminPage);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedDealIds.length === 0) return;
+        if (window.confirm(`Are you sure you want to delete ${selectedDealIds.length} deals?`)) {
+            setIsSaving(true);
+            for (const id of selectedDealIds) {
+                await deleteDeal(id);
+            }
+            setSelectedDealIds([]);
+            loadAdminDeals(adminPage);
+            setIsSaving(false);
+        }
+    };
+
+    const handleBulkExpire = async () => {
+        if (selectedDealIds.length === 0) return;
+        if (window.confirm(`Set ${selectedDealIds.length} deals to expired?`)) {
+            setIsSaving(true);
+            const now = new Date().toISOString();
+            for (const id of selectedDealIds) {
+                const deal = adminDeals.find(d => d.id === id);
+                if (deal) {
+                    await updateDeal({ ...deal, expiresAt: now });
+                }
+            }
+            setSelectedDealIds([]);
+            loadAdminDeals(adminPage);
+            setIsSaving(false);
         }
     };
 
@@ -852,11 +889,54 @@ const AdminDealsTab: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Bulk Actions Toolbar */}
+                {selectedDealIds.length > 0 && (
+                    <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-lg p-3 mb-4 flex items-center justify-between animate-slide-up">
+                        <span className="text-sm font-medium text-brand-primary">
+                            {selectedDealIds.length} deals selected
+                        </span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleBulkExpire}
+                                className="px-3 py-1.5 transition-all duration-200 bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white rounded-lg text-xs font-semibold shadow-sm hover:shadow-md active:scale-95 flex items-center gap-1"
+                            >
+                                Expire All
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                className="px-3 py-1.5 transition-all duration-200 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-sm hover:shadow-md active:scale-95 flex items-center gap-1"
+                            >
+                                Delete All
+                            </button>
+                            <button
+                                onClick={() => setSelectedDealIds([])}
+                                className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 dark:text-white rounded-lg text-xs font-semibold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
                             <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                                 <tr>
+                                    <th scope="col" className="px-6 py-3">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-gray-300 dark:border-gray-600 text-brand-primary focus:ring-brand-primary"
+                                            checked={filteredDeals.length > 0 && selectedDealIds.length === filteredDeals.length}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedDealIds(filteredDeals.map(d => d.id));
+                                                } else {
+                                                    setSelectedDealIds([]);
+                                                }
+                                            }}
+                                        />
+                                    </th>
                                     <th scope="col" className="px-6 py-3">Title</th>
                                     <th scope="col" className="px-6 py-3">Category</th>
                                     <th scope="col" className="px-6 py-3">Price</th>
@@ -869,7 +949,21 @@ const AdminDealsTab: React.FC = () => {
                             </thead>
                             <tbody>
                                 {filteredDeals.map(deal => (
-                                    <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <tr key={deal.id} className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedDealIds.includes(deal.id) ? 'bg-brand-primary/5' : ''}`}>
+                                        <td className="px-6 py-4">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 dark:border-gray-600 text-brand-primary focus:ring-brand-primary"
+                                                checked={selectedDealIds.includes(deal.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedDealIds(prev => [...prev, deal.id]);
+                                                    } else {
+                                                        setSelectedDealIds(prev => prev.filter(id => id !== deal.id));
+                                                    }
+                                                }}
+                                            />
+                                        </td>
                                         <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">{deal.title}</th>
                                         <td className="px-6 py-4">{deal.category}</td>
                                         <td className="px-6 py-4">${deal.discountedPrice}</td>

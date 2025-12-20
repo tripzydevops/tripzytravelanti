@@ -26,6 +26,13 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
     onChange,
     language = 'en'
 }) => {
+    // Automatically select Turkey if nothing is selected
+    useEffect(() => {
+        if (selectedCountries.length === 0) {
+            onChange(['TR']);
+        }
+    }, []);
+
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 

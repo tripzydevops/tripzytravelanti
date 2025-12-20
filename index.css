@@ -11,12 +11,21 @@
 
   /* Card styles */
   .card {
-    @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-300 hover:shadow-2xl hover:border-white/10;
+    @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-400 hover:shadow-2xl hover:border-white/10;
   }
 
   /* Input styles */
   .input {
     @apply bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-text-light placeholder:text-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all;
+  }
+
+  /* Entry Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
 
@@ -29,8 +38,20 @@
     @apply bg-gradient-to-br from-brand-primary to-brand-secondary;
   }
 
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
+  }
+
+  .bg-gradient-silver {
+    background: linear-gradient(135deg, #E5E4E2 0%, #C0C0C0 50%, #A9A9A9 100%);
+  }
+
   .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31, 38, 135, 0.37)];
+  }
+
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-xl border border-white/5;
   }
 
   .icon-glow {
@@ -49,10 +70,35 @@
 }
 
 @keyframes pulse-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 0.3;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

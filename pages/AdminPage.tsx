@@ -14,6 +14,7 @@ import AdminFlightRoutesTab from '../components/admin/AdminFlightRoutesTab';
 import AdminBackgroundsTab from '../components/admin/AdminBackgroundsTab';
 import { AdminAnnouncementsTab } from '../components/admin/AdminAnnouncementsTab';
 import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
+import AdminAuditLogsTab from '../components/admin/AdminAuditLogsTab';
 import {
   BarChartIcon,
   TagIcon,
@@ -27,6 +28,7 @@ import {
   MountainIcon,
   QrCodeIcon,
   BriefcaseIcon,
+  Terminal,
   XMarkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -41,7 +43,7 @@ const AdminPage: React.FC = () => {
   const { t } = useLanguage();
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'categories' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'categories' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes' | 'audit_logs'>('analytics');
   const [pendingCount, setPendingCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile toggle
   const [isCollapsed, setIsCollapsed] = useState(false); // Desktop toggle
@@ -85,6 +87,7 @@ const AdminPage: React.FC = () => {
         { id: 'backgrounds', label: 'Backgrounds', icon: <MountainIcon className="w-5 h-5" /> },
         { id: 'announcements', label: t('adminAnnouncements'), icon: <MegaphoneIcon className="w-5 h-5" /> },
         { id: 'promo_codes', label: 'Promo Codes', icon: <QrCodeIcon className="w-5 h-5" /> },
+        { id: 'audit_logs', label: 'Audit Logs', icon: <Terminal className="w-5 h-5" /> },
       ]
     },
     {
@@ -244,6 +247,7 @@ const AdminPage: React.FC = () => {
             {activeTab === 'announcements' && <AdminAnnouncementsTab />}
             {activeTab === 'backgrounds' && <AdminBackgroundsTab />}
             {activeTab === 'promo_codes' && <AdminPromoCodesTab />}
+            {activeTab === 'audit_logs' && <AdminAuditLogsTab />}
           </div>
         </main>
       </div>
