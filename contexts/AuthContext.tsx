@@ -52,25 +52,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (!profile) {
-          console.warn('Profile not found after retries. Attempting client-side creation...');
+          console.warn('Profile not found after retries. Attempting client-side upsert...');
           try {
-            // Fallback: Create profile client-side if trigger failed
-            const { error: insertError } = await supabase.from('profiles').insert({
+            // Fallback: Upsert profile client-side if trigger/fetch failed
+            // Use upsert to avoid "duplicate key" errors if profile exists but fetch failed
+            const { error: upsertError } = await supabase.from('profiles').upsert({
               id: authUser.id,
               email: authUser.email,
               name: authUser.user_metadata?.full_name || authUser.email,
               avatar_url: authUser.user_metadata?.avatar_url,
               tier: 'FREE',
               referred_by: authUser.user_metadata?.referred_by
-            });
+            }, { onConflict: 'id' });
 
-            if (!insertError) {
+            if (!upsertError) {
               profile = await getUserProfile(authUser.id);
             } else {
-              console.error('Failed to create profile client-side:', insertError);
+              console.error('Failed to upsert profile client-side:', upsertError);
             }
           } catch (e) {
-            console.error('Error in client-side profile creation:', e);
+            console.error('Error in client-side profile upsert:', e);
           }
         }
       }
