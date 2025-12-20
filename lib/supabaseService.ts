@@ -87,6 +87,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         referredBy: data.referred_by,
         referralCode: data.referral_code,
         points: data.points || 0,
+        rank: data.rank,
         totalReferrals: data.total_referrals || 0,
         emailConfirmedAt: data.email_confirmed_at,
         redemptions: data.deal_redemptions ? data.deal_redemptions.map((r: any) => ({
@@ -112,6 +113,8 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     if (updates.address) dbUpdates.address = updates.address;
     if (updates.billingAddress) dbUpdates.billing_address = updates.billingAddress;
     if (updates.status) dbUpdates.status = updates.status;
+    if (updates.points !== undefined) dbUpdates.points = updates.points;
+    if (updates.rank !== undefined) dbUpdates.rank = updates.rank;
 
     const { error } = await supabase
         .from('profiles')

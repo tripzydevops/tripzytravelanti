@@ -227,13 +227,21 @@ const ProfilePage: React.FC = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const getLoyaltyTier = (points: number = 0) => {
+  const getLoyaltyTier = (points: number = 0, manualRank?: string) => {
+    if (manualRank) {
+      // If manual rank is one of the standards, use those colors, else use a generic high-tier color
+      const upperRank = manualRank.toUpperCase();
+      if (upperRank === 'GOLD') return { label: 'GOLD', color: 'from-amber-300 to-amber-600', icon: '🏆' };
+      if (upperRank === 'SILVER') return { label: 'SILVER', color: 'from-slate-300 to-slate-500', icon: '🥈' };
+      if (upperRank === 'BRONZE') return { label: 'BRONZE', color: 'from-orange-400 to-orange-700', icon: '🥉' };
+      return { label: upperRank, color: 'from-purple-500 to-indigo-600', icon: '✨' };
+    }
     if (points >= 5000) return { label: 'GOLD', color: 'from-amber-300 to-amber-600', icon: '🏆' };
     if (points >= 1000) return { label: 'SILVER', color: 'from-slate-300 to-slate-500', icon: '🥈' };
     return { label: 'BRONZE', color: 'from-orange-400 to-orange-700', icon: '🥉' };
   };
 
-  const loyalty = getLoyaltyTier(user.points);
+  const loyalty = getLoyaltyTier(user.points, user.rank);
 
   const handleRedeemReferral = async () => {
     if (!manualReferralCode.trim()) return;

@@ -19,6 +19,8 @@ const EMPTY_USER: User = {
     referralNetwork: [],
     extraRedemptions: 0,
     status: 'active',
+    points: 0,
+    rank: '',
 };
 
 const AdminUsersTab: React.FC = () => {
@@ -185,6 +187,8 @@ const AdminUsersTab: React.FC = () => {
             address: user.address || '',
             billingAddress: user.billingAddress || '',
             referredBy: user.referredBy || '',
+            points: user.points || 0,
+            rank: user.rank || '',
         });
         setDealToAdd('');
         setRedemptionsToAdd(0);
@@ -480,6 +484,27 @@ const AdminUsersTab: React.FC = () => {
                                             Add
                                         </button>
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User Points</label>
+                                    <input
+                                        type="number"
+                                        name="points"
+                                        value={userFormData.points || 0}
+                                        onChange={handleUserFormChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User Rank / Medal</label>
+                                    <input
+                                        type="text"
+                                        name="rank"
+                                        value={userFormData.rank || ''}
+                                        onChange={handleUserFormChange}
+                                        placeholder="e.g. BRONZE, SILVER, GOLD or custom"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
                                 </div>
                             </div>
 

@@ -44,6 +44,7 @@ export interface User {
   subscriptionStartDate?: string; // For yearly renewal tracking
   role?: 'user' | 'admin' | 'partner' | 'vendor';
   status?: 'active' | 'banned' | 'suspended';
+  rank?: string;
   emailConfirmedAt?: string | null;
   lastSignInAt?: string | null;
   walletLimit?: number | null; // Admin override for wallet capacity (null = use tier default)
