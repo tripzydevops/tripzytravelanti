@@ -42,7 +42,7 @@ export interface User {
   address?: string;
   billingAddress?: string;
   subscriptionStartDate?: string; // For yearly renewal tracking
-  role?: 'user' | 'admin' | 'partner';
+  role?: 'user' | 'admin' | 'partner' | 'vendor';
   status?: 'active' | 'banned' | 'suspended';
   emailConfirmedAt?: string | null;
   lastSignInAt?: string | null;

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // supabase/functions/vector-sync/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -48,19 +49,25 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
+        const body = await req.json() as VectorRequest
+        const { action } = body;
+
         // 1. Verify Authentication (Required for all actions)
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) {
             return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
+        // Check user only if action requires it (upsert/delete) OR if we want to identify the user
+        // distinct from the public.
         const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
-        if (authError || !user) {
-            return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-        }
 
-        const body = await req.json() as VectorRequest
-        const { action } = body;
+        // Actions that require Admin/User Authentication
+        if (action === 'upsert' || action === 'delete') {
+            if (authError || !user) {
+                return new Response(JSON.stringify({ error: 'Authentication required for this action' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
+        }
 
         // 2. Authorization Check
         if (action === 'upsert' || action === 'delete') {

@@ -2055,115 +2055,36 @@ export async function getWalletItems(userId: string): Promise<any[]> {
  * Redeem a wallet item (called by vendor)
  * Returns { success, requiresConfirmation, confirmationToken } for high-value deals
  */
+/**
+ * Redeem a wallet item (called by vendor)
+ * Use secure RPC to bypass RLS
+ */
 export async function redeemWalletItem(
     walletItemId: string,
     redemptionCode: string,
     vendorId?: string
 ): Promise<{ success: boolean; message: string; requiresConfirmation?: boolean; confirmationToken?: string; dealInfo?: any }> {
-    // 1. Find wallet item
-    const { data: walletItem, error: findError } = await supabase
-        .from('wallet_items')
-        .select(`
-            id,
-            user_id,
-            deal_id,
-            status,
-            redemption_code,
-            deals (id, title, requires_confirmation)
-        `)
-        .eq('id', walletItemId)
-        .single();
+    try {
+        const { data, error } = await supabase.rpc('validate_redemption', {
+            p_wallet_item_id: walletItemId,
+            p_redemption_code: redemptionCode,
+            p_vendor_id: vendorId
+        });
 
-    if (findError || !walletItem) {
-        return { success: false, message: 'Invalid wallet item' };
-    }
-
-    // 2. Verify code
-    if (walletItem.redemption_code !== redemptionCode) {
-        return { success: false, message: 'Invalid redemption code' };
-    }
-
-    // 3. Check status
-    if (walletItem.status === 'redeemed') {
-        return { success: false, message: 'This deal has already been redeemed' };
-    }
-    if (walletItem.status === 'expired') {
-        return { success: false, message: 'This deal has expired' };
-    }
-
-    // 4. Check if requires confirmation (high-value deal)
-    const deal = (walletItem as any).deals;
-    if (deal?.requires_confirmation) {
-        // Generate confirmation token
-        const confirmationToken = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 60000).toISOString(); // 60 seconds
-
-        await supabase
-            .from('wallet_items')
-            .update({
-                confirmation_token: confirmationToken,
-                confirmation_expires_at: expiresAt
-            })
-            .eq('id', walletItemId);
-
-        // Send push notification to user
-        try {
-            await supabase.functions.invoke('send-push-notification', {
-                body: {
-                    userId: walletItem.user_id,
-                    title: 'Confirm Redemption',
-                    body: `A vendor wants to redeem "${deal.title}". Tap to confirm.`,
-                    data: {
-                        type: 'redemption_confirmation',
-                        walletItemId,
-                        confirmationToken,
-                        dealTitle: deal.title
-                    }
-                }
-            });
-        } catch (pushError) {
-            console.error('Push notification failed:', pushError);
-            // Continue anyway - vendor can still wait for manual confirmation
+        if (error) {
+            console.error('Redemption RPC error:', error);
+            // Fallback for legacy/dev environment handling if RPC doesn't exist yet
+            if (error.code === 'PGRST202') { // Function not found
+                return { success: false, message: 'Redemption system updating. Please contact admin.' };
+            }
+            return { success: false, message: error.message };
         }
 
-        return {
-            success: false,
-            message: 'User confirmation required',
-            requiresConfirmation: true,
-            confirmationToken,
-            dealInfo: { title: deal.title }
-        };
+        return data as any;
+    } catch (err: any) {
+        console.error('Redemption Exception:', err);
+        return { success: false, message: err.message };
     }
-
-    // 5. Complete redemption
-    const { error: updateError } = await supabase
-        .from('wallet_items')
-        .update({
-            status: 'redeemed',
-            redeemed_at: new Date().toISOString()
-        })
-        .eq('id', walletItemId);
-
-    if (updateError) {
-        return { success: false, message: 'Failed to redeem' };
-    }
-
-    // 6. Log redemption
-    await supabase.from('redemption_logs').insert({
-        wallet_item_id: walletItemId,
-        user_id: walletItem.user_id,
-        deal_id: walletItem.deal_id,
-        vendor_id: vendorId
-    });
-
-    // 7. Increment global redemption count
-    await supabase.rpc('increment_deal_redemption', { deal_id_input: walletItem.deal_id });
-
-    return {
-        success: true,
-        message: 'Deal redeemed successfully!',
-        dealInfo: { title: deal?.title }
-    };
 }
 
 /**
