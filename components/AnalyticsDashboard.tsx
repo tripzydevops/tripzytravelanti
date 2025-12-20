@@ -25,6 +25,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 const AnalyticsDashboard: React.FC = () => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [data, setData] = useState<any>(null);
 
     useEffect(() => {
@@ -39,10 +40,10 @@ const AnalyticsDashboard: React.FC = () => {
     }, []);
 
     const handleRefresh = async () => {
-        setLoading(true);
+        setRefreshing(true);
         const analyticsData = await getAnalyticsData();
         setData(analyticsData);
-        setLoading(false);
+        setRefreshing(false);
     };
 
     const exportToCSV = () => {
@@ -107,10 +108,10 @@ const AnalyticsDashboard: React.FC = () => {
                 <div className="flex gap-2">
                     <button
                         onClick={handleRefresh}
-                        disabled={loading}
+                        disabled={refreshing}
                         className="bg-white dark:bg-brand-surface border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
                     >
-                        <SpinnerIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> {t('refresh')}
+                        <SpinnerIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> {t('refresh')}
                     </button>
                     <button onClick={exportToCSV} className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm">
                         <TrendingUpIcon className="w-4 h-4" /> {t('exportCsv')}
