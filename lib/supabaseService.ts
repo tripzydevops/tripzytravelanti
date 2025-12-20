@@ -1056,7 +1056,7 @@ export async function getAnalyticsData() {
         const { data: transactions, error: transactionsError } = await supabase
             .from('payment_transactions')
             .select('amount, created_at, status')
-            .eq('status', 'succeeded'); // Only count successful transactions
+            .eq('status', 'success'); // Only count successful transactions
 
         if (transactionsError) throw transactionsError;
 
@@ -1635,7 +1635,7 @@ export async function getGlobalActivityLog(limit: number = 20): Promise<Activity
             id,
             redeemed_at,
             user_id,
-            profiles(name),
+            profiles:user_id(name),
             deal:deals(title)
         `)
         .order('redeemed_at', { ascending: false })
@@ -1665,9 +1665,9 @@ export async function getGlobalActivityLog(limit: number = 20): Promise<Activity
             status,
             created_at,
             user_id,
-            profiles(name)
+            profiles:user_id(name)
         `)
-        .eq('status', 'succeeded')
+        .eq('status', 'success')
         .order('created_at', { ascending: false })
         .limit(limit);
 

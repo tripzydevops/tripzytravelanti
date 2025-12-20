@@ -148,15 +148,7 @@ export async function getPaymentTransactionsWithUserInfo(
 ): Promise<{ data: PaymentTransaction[] | null; error: PostgrestError | null }> {
     let query = supabase
         .from('payment_transactions')
-        .select(`
-      *,
-      profiles:user_id (
-        name,
-        email,
-        address,
-        billing_address
-      )
-    `)
+        .select('*, profiles:user_id(name, email, address, billing_address)')
         .order('created_at', { ascending: false });
 
     if (filters?.status) {
