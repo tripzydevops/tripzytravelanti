@@ -8,6 +8,7 @@ import { SpinnerIcon, EyeIcon } from '../Icons';
 import { Save } from 'lucide-react';
 import ImageUpload from '../ImageUpload';
 import StoreLocationFields from '../StoreLocationFields';
+import { useToast } from '../../contexts/ToastContext';
 import CountrySelector from '../CountrySelector';
 import { getDealsPaginated, createDeal, getAllDeals } from '../../lib/supabaseService';
 import { upsertDealVector, isVectorServiceConfigured, getVectorServiceConfigError, generateText } from '../../lib/vectorService';
@@ -83,6 +84,7 @@ const isFarFuture = (dateString: string): boolean => {
 const AdminDealsTab: React.FC = () => {
     const { t, language } = useLanguage();
     const { addDeal, updateDeal, deleteDeal, categories, categoriesLoading } = useDeals();
+    const { success: showSuccessToast, error: showErrorToast } = useToast();
 
     // Local State
     const [adminDeals, setAdminDeals] = useState<Deal[]>([]);
@@ -172,15 +174,15 @@ const AdminDealsTab: React.FC = () => {
     const handleSyncAllDeals = async () => {
         if (!isVectorServiceConfigured()) {
             const error = getVectorServiceConfigError();
-            alert(`Pinecone is not configured: ${error}. Please add your API keys to the environment variables.`);
+            showErrorToast(t('pineconeNotConfigured') || `Pinecone is not configured: ${error}`);
             return;
         }
 
-        if (!window.confirm("This will re-index ALL deals in Pinecone. This might take a while depending on the number of deals. Continue?")) return;
+        if (!window.confirm(t('confirmSyncPinecone') || "This will re-index ALL deals in Pinecone. Continue?")) return;
 
         setIsSyncing(true);
         try {
-            const allDeals = await getAllDeals(true); // Get all deals including expired
+            const allDeals = await getAllDeals(true);
             setSyncProgress({ current: 0, total: allDeals.length });
 
             for (let i = 0; i < allDeals.length; i++) {
@@ -188,10 +190,9 @@ const AdminDealsTab: React.FC = () => {
                 setSyncProgress(prev => ({ ...prev, current: i + 1 }));
             }
 
-            alert("Sync complete!");
+            showSuccessToast(t('syncComplete') || "Sync complete!");
         } catch (error) {
-            console.error("Sync failed:", error);
-            alert("Sync failed. Check console for details.");
+            showErrorToast(t('syncFailed') || "Sync failed. Check console for details.");
         } finally {
             setIsSyncing(false);
             setSyncProgress({ current: 0, total: 0 });
@@ -354,26 +355,28 @@ const AdminDealsTab: React.FC = () => {
     const handleDeleteDealClick = async (dealId: string) => {
         if (window.confirm(t('deleteConfirmation'))) {
             await deleteDeal(dealId);
+            showSuccessToast(t('dealDeletedSuccess'));
             loadAdminDeals(adminPage);
         }
     };
 
     const handleBulkDelete = async () => {
         if (selectedDealIds.length === 0) return;
-        if (window.confirm(`Are you sure you want to delete ${selectedDealIds.length} deals?`)) {
+        if (window.confirm(t('bulkDeleteConfirm').replace('{count}', selectedDealIds.length.toString()) || `Are you sure you want to delete ${selectedDealIds.length} deals?`)) {
             setIsSaving(true);
             for (const id of selectedDealIds) {
                 await deleteDeal(id);
             }
             setSelectedDealIds([]);
             loadAdminDeals(adminPage);
+            showSuccessToast(t('adminSuccessTitle'));
             setIsSaving(false);
         }
     };
 
     const handleBulkExpire = async () => {
         if (selectedDealIds.length === 0) return;
-        if (window.confirm(`Set ${selectedDealIds.length} deals to expired?`)) {
+        if (window.confirm(t('bulkExpireConfirm').replace('{count}', selectedDealIds.length.toString()) || `Set ${selectedDealIds.length} deals to expired?`)) {
             setIsSaving(true);
             const now = new Date().toISOString();
             for (const id of selectedDealIds) {
@@ -384,6 +387,7 @@ const AdminDealsTab: React.FC = () => {
             }
             setSelectedDealIds([]);
             loadAdminDeals(adminPage);
+            showSuccessToast(t('adminSuccessTitle'));
             setIsSaving(false);
         }
     };
@@ -482,7 +486,7 @@ const AdminDealsTab: React.FC = () => {
             }
 
             setIsSaving(false);
-            alert(`Import complete. Success: ${successCount}, Failed: ${errorCount}`);
+            showSuccessToast(t('importComplete').replace('{success}', successCount.toString()).replace('{errorCount}', errorCount.toString()) || `Import complete. Success: ${successCount}, Failed: ${errorCount}`);
             loadAdminDeals(1);
         };
         reader.readAsText(file);
@@ -501,40 +505,40 @@ const AdminDealsTab: React.FC = () => {
         const hasTurkish = dealFormData.title_tr?.trim() && dealFormData.description_tr?.trim();
 
         if (!hasEnglish && !hasTurkish) {
-            alert('Please provide a Title and Description in at least one language (English or Turkish).');
+            showErrorToast(t('provideTitleDesc') || 'Please provide a Title and Description in at least one language.');
             setIsSaving(false);
             return;
         }
 
         // Price Validation: Allow 0 for generic discounts (e.g. 20% off bill), but strictly disallow negative numbers.
         if (dealFormData.originalPrice < 0) {
-            alert('Original Price cannot be negative.');
+            showErrorToast(t('negativePriceError') || 'Original Price cannot be negative.');
             setIsSaving(false);
             return;
         }
 
         // Only enforce logic if both prices are positive (standard product discount)
         if (dealFormData.originalPrice > 0 && dealFormData.discountedPrice >= dealFormData.originalPrice) {
-            alert('Discounted Price must be lower than the Original Price.');
+            showErrorToast(t('discountPriceError') || 'Discounted Price must be lower than the Original Price.');
             setIsSaving(false);
             return;
         }
 
         if (!dealFormData.category) {
-            alert('Please select a Category.');
+            showErrorToast(t('selectCategoryError') || 'Please select a Category.');
             setIsSaving(false);
             return;
         }
 
         // Strict Validation for Usage Limit & Validity
         if (!dealFormData.usageLimit?.trim() || !dealFormData.usageLimit_tr?.trim()) {
-            alert('Please provide Usage Limit in both English and Turkish.');
+            showErrorToast(t('usageLimitError') || 'Please provide Usage Limit in both English and Turkish.');
             setIsSaving(false);
             return;
         }
 
         if (!dealFormData.validity?.trim() || !dealFormData.validity_tr?.trim()) {
-            alert('Please provide Validity in both English and Turkish.');
+            showErrorToast(t('validityError') || 'Please provide Validity in both English and Turkish.');
             setIsSaving(false);
             return;
         }
@@ -576,10 +580,10 @@ const AdminDealsTab: React.FC = () => {
                 await addDeal({ ...dealData, id: Date.now().toString() });
             }
             await loadAdminDeals(adminPage);
+            showSuccessToast(t('adminSuccessTitle'));
             resetDealForm();
         } catch (error) {
-            console.error('Error saving deal:', error);
-            alert('Failed to save deal. Please try again.');
+            showErrorToast(t('saveDealError') || 'Failed to save deal. Please try again.');
         } finally {
             setIsSaving(false);
         }

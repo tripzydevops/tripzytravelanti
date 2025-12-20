@@ -27,6 +27,8 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<void>;
   updateUserNotificationPreferences: (prefs: Partial<UserNotificationPreferences>) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   redeemDeal: (dealId: string) => Promise<void>;
 }
@@ -137,7 +139,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             filter: `id=eq.${userId}`,
           },
           async (payload) => {
-            console.log('Profile updated via Realtime:', payload.new);
             // Reload full profile to get joined data (referrals etc) or just patch local state
             // For safety, reloading full profile ensures all transforms run
             const currentUser = (await supabase.auth.getUser()).data.user;
@@ -363,6 +364,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Sign in with Facebook
+  const signInWithFacebook = useCallback(async () => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing in with Facebook:', error);
+      throw error;
+    }
+  }, []);
+
+  // Sign in with Apple
+  const signInWithApple = useCallback(async () => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing in with Apple:', error);
+      throw error;
+    }
+  }, []);
+
   // Redeem a deal
   const redeemDeal = useCallback(async (dealId: string) => {
     if (!user) return;
@@ -396,6 +431,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateUserDetails,
         updateUserAvatar,
         signInWithGoogle,
+        signInWithFacebook,
+        signInWithApple,
         updatePassword: handleUpdatePassword,
         updateUserNotificationPreferences,
         redeemDeal,

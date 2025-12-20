@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getCategories, createCategory, updateCategory, deleteCategory, Category } from '../../lib/supabaseService';
 import { SpinnerIcon, PlusIcon, TrashIcon, EditIcon, CheckIcon, XIcon } from '../Icons';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useToast } from '../../contexts/ToastContext';
 
 const AdminCategoryTab: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -9,6 +11,8 @@ const AdminCategoryTab: React.FC = () => {
     const [editForm, setEditForm] = useState<Omit<Category, 'id'>>({ name: '', name_tr: '', icon: '' });
     const [isAdding, setIsAdding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const { t } = useLanguage();
+    const { success: showSuccess, error: showError } = useToast();
 
     useEffect(() => {
         loadCategories();
@@ -33,7 +37,7 @@ const AdminCategoryTab: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!editForm.name) return alert('Category name is required');
+        if (!editForm.name) return showError(t('categoryNameRequired') || 'Category name is required');
 
         setIsSaving(true);
         try {
@@ -44,21 +48,23 @@ const AdminCategoryTab: React.FC = () => {
             }
             await loadCategories();
             handleCancelEdit();
+            showSuccess(t('adminSuccessTitle'));
         } catch (error: any) {
-            alert('Error saving category: ' + error.message);
+            showError(t('categorySaveError'));
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`Are you sure you want to delete category "${name}"? This might cause issues if deals are still assigned to it.`)) return;
+        if (!window.confirm(t('confirmDeleteCategory', { name }))) return;
 
         try {
             await deleteCategory(id);
             await loadCategories();
+            showSuccess(t('categoryDeletedSuccess'));
         } catch (error: any) {
-            alert('Error deleting category: ' + error.message);
+            showError(t('adminErrorTitle'));
         }
     };
 

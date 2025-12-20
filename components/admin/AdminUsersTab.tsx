@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useDeals } from '../../contexts/DealContext';
+import { useToast } from '../../contexts/ToastContext';
 import { User, SubscriptionTier, Deal, PaymentTransaction } from '../../types';
 import Modal from '../Modal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../../lib/redemptionLogic';
@@ -27,6 +28,7 @@ const AdminUsersTab: React.FC = () => {
     const { t, language } = useLanguage();
     const { user: loggedInUser } = useAuth();
     const { users, refreshUsers, updateUser, deleteUser, addExtraRedemptions, updateAllUsersNotificationPreferences } = useAdmin();
+    const { success: showSuccessToast, error: showErrorToast } = useToast();
     // Removed useDeals since we fetch all deals manually for admin purposes
     // const { deals, refreshDeals } = useDeals(); 
 
@@ -43,7 +45,6 @@ const AdminUsersTab: React.FC = () => {
     const [userActivityLog, setUserActivityLog] = useState<ActivityLogItem[]>([]);
     const [userPayments, setUserPayments] = useState<PaymentTransaction[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-    const [showSuccess, setShowSuccess] = useState('');
 
     const [searchQuery, setSearchQuery] = useState('');
     const [tierFilter, setTierFilter] = useState<SubscriptionTier | 'All'>('All');
@@ -67,32 +68,28 @@ const AdminUsersTab: React.FC = () => {
     };
 
     const handleVerifyUser = async (userId: string) => {
-        if (window.confirm('Are you sure you want to manually verify this user\'s email?')) {
+        if (window.confirm(t('confirmVerifyEmail') || 'Are you sure you want to manually verify this user\'s email?')) {
             try {
                 await confirmUserEmail(userId);
-                setShowSuccess('User email verified successfully');
-                setTimeout(() => setShowSuccess(''), 3000);
+                showSuccessToast(t('userUpdateSuccess'));
                 fetchUsersData();
             } catch (error) {
-                console.error('Failed to verify user', error);
-                alert('Failed to verify user. Check console for details.');
+                showErrorToast(t('adminErrorTitle'));
             }
         }
     };
 
     const handleSendTestPush = async (userId: string) => {
-        if (window.confirm('Send a test push notification to this user?')) {
+        if (window.confirm(t('confirmSendPush') || 'Send a test push notification to this user?')) {
             try {
                 const result = await sendTestNotification(userId);
                 if (result.success) {
-                    setShowSuccess(result.message);
+                    showSuccessToast(result.message);
                 } else {
-                    alert('Failed: ' + result.message);
+                    showErrorToast(result.message);
                 }
-                setTimeout(() => setShowSuccess(''), 3000);
             } catch (error) {
-                console.error('Failed to send push', error);
-                alert('Error sending push notification');
+                showErrorToast(t('adminErrorTitle'));
             }
         }
     };
@@ -101,7 +98,7 @@ const AdminUsersTab: React.FC = () => {
         if (window.confirm('WARNING: This will wipe ALL wallet items and redemption history for this user. This is for testing only. Continue?')) {
             try {
                 await resetUserHistory(userId);
-                setShowSuccess('User history wiped successfully');
+                showSuccessToast(t('userUpdateSuccess'));
 
                 // Force Update Local State
                 setUserWalletDeals([]);
@@ -109,11 +106,9 @@ const AdminUsersTab: React.FC = () => {
                     setEditingUser({ ...editingUser, redemptions: [] });
                 }
 
-                setTimeout(() => setShowSuccess(''), 3000);
                 fetchUsersData();
             } catch (error) {
-                console.error('Failed to reset history', error);
-                alert('Failed to reset history');
+                showErrorToast(t('adminErrorTitle'));
             }
         }
     };
@@ -197,8 +192,9 @@ const AdminUsersTab: React.FC = () => {
     };
 
     const handleDeleteUserClick = async (userId: string) => {
-        if (window.confirm(t('deleteUserConfirmation'))) {
+        if (window.confirm(t('deleteUserConfirm'))) {
             await deleteUser(userId);
+            showSuccessToast(t('userDeletedSuccess'));
             fetchUsersData();
         }
     };
@@ -253,11 +249,9 @@ const AdminUsersTab: React.FC = () => {
                 }
 
                 setDealToAdd('');
-                setShowSuccess('Deal added to user wallet');
-                setTimeout(() => setShowSuccess(''), 2000);
+                showSuccessToast(t('adminSuccessTitle'));
             } catch (error) {
-                console.error('Failed to add deal to user', error);
-                alert('Failed to add deal');
+                showErrorToast(t('adminErrorTitle'));
             }
         }
     };
@@ -278,9 +272,9 @@ const AdminUsersTab: React.FC = () => {
                     ownedDeals: prev.ownedDeals?.filter(id => id !== dealId) || []
                 }));
                 setUserWalletDeals(prev => prev.filter(d => d.id !== dealId));
+                showSuccessToast(t('adminSuccessTitle'));
             } catch (error) {
-                console.error('Failed to remove deal', error);
-                alert('Failed to remove deal');
+                showErrorToast(t('adminErrorTitle'));
             }
         }
     };
@@ -292,8 +286,7 @@ const AdminUsersTab: React.FC = () => {
                 ...prev,
                 extraRedemptions: (prev.extraRedemptions || 0) + redemptionsToAdd
             }));
-            setShowSuccess(t('redemptionsAddedSuccess'));
-            setTimeout(() => setShowSuccess(''), 2000);
+            showSuccessToast(t('redemptionsAddedSuccess'));
             setRedemptionsToAdd(0);
             fetchUsersData(); // Refresh list
         }
@@ -337,15 +330,13 @@ const AdminUsersTab: React.FC = () => {
             const newStatus = statusMap[action as keyof typeof statusMap];
             if (newStatus) {
                 await bulkUpdateUserStatus(userIds as string[], newStatus);
-                setShowSuccess(`Bulk ${action} successful for ${selectedUsers.size} users`);
+                showSuccessToast(`Bulk ${action} successful for ${selectedUsers.size} users`);
             }
 
-            setTimeout(() => setShowSuccess(''), 2000);
             setSelectedUsers(new Set());
             fetchUsersData(); // Refresh the list
         } catch (error) {
-            console.error('Bulk action failed', error);
-            alert('Bulk action failed');
+            showErrorToast('Bulk action failed');
         }
     };
 
@@ -371,14 +362,12 @@ const AdminUsersTab: React.FC = () => {
             if (error) throw error;
 
             console.log('Broadcast result:', data);
-            setShowSuccess(`Broadcast sent! Processed: ${data?.processed || 0}`);
-            setTimeout(() => setShowSuccess(''), 3000);
+            showSuccessToast(`Broadcast sent! Processed: ${data?.processed || 0}`);
             setIsBroadcastVisible(false);
             setBroadcastData({ title: '', message: '' });
 
         } catch (error: any) {
-            console.error('Broadcast failed', error);
-            alert(`Broadcast failed: ${error.message || 'Unknown error'}`);
+            showErrorToast(`Broadcast failed: ${error.message || 'Unknown error'}`);
         }
     };
 
@@ -1004,13 +993,7 @@ const AdminUsersTab: React.FC = () => {
                 </div>
             </Modal>
 
-            {
-                showSuccess && (
-                    <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
-                        {showSuccess}
-                    </div>
-                )
-            }
+
         </>
     );
 };

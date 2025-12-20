@@ -147,7 +147,6 @@ export async function savePushSubscription(userId: string, subscription: any) {
 }
 
 export async function resetUserHistory(userId: string) {
-    console.log('Starting history reset for:', userId);
 
     // 0. Delete from redemption_logs (Foreign Key to wallet_items)
     // We try/catch or ignore error if table doesn't exist yet (soft dependency)
@@ -744,8 +743,6 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
 
     const usage = activeCount || 0;
     const remaining = Math.max(0, limit - usage);
-
-    console.log(`[checkMonthlyLimit] User: ${userId} | Tier: ${user.tier} | Slots: ${limit} | Active: ${usage} | Remaining: ${remaining}`);
 
     return {
         allowed: usage < limit,

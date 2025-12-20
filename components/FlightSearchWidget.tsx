@@ -10,7 +10,7 @@ interface FlightSearchWidgetProps {
 
 const FlightSearchWidget: React.FC<FlightSearchWidgetProps> = memo(({ origin, destination, departDate }) => {
     const scriptContainerRef = useRef<HTMLDivElement>(null);
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const [isVisible, setIsVisible] = useState(false);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ const FlightSearchWidget: React.FC<FlightSearchWidgetProps> = memo(({ origin, de
                     <div className="w-16 h-16 mb-4 text-gold-500">
                         <SpinnerIcon className="w-full h-full animate-spin" />
                     </div>
-                    <div className="text-white/70 font-medium">Loading Flight Search...</div>
+                    <div className="text-white/70 font-medium">{t('loadingFlightSearch') || "Loading Flight Search..."}</div>
                     {/* Visual Skeleton placeholders */}
                     <div className="w-3/4 h-12 bg-white/10 rounded-lg mt-8 mb-4"></div>
                     <div className="w-full px-8 flex gap-4">

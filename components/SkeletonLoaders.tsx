@@ -46,3 +46,26 @@ export const TableRowSkeleton: React.FC<{ cols?: number }> = ({ cols = 4 }) => (
         ))}
     </div>
 );
+
+export const DealCardSkeleton: React.FC = () => (
+    <div className="bg-white/5 rounded-3xl overflow-hidden border border-white/10 animate-pulse">
+        <div className="aspect-[4/3] bg-white/10" />
+        <div className="p-5 space-y-3">
+            <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                    <SkeletonBase className="w-32 h-6" />
+                    <SkeletonBase className="w-24 h-4" />
+                </div>
+                <SkeletonBase className="w-16 h-8 rounded-full" />
+            </div>
+            <div className="space-y-1">
+                <SkeletonBase className="w-full h-3" />
+                <SkeletonBase className="w-5/6 h-3" />
+            </div>
+            <div className="pt-4 flex justify-between items-center">
+                <SkeletonBase className="w-20 h-5" />
+                <SkeletonBase className="w-24 h-10 rounded-xl" />
+            </div>
+        </div>
+    </div>
+);

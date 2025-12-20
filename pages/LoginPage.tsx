@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
   const [name, setName] = useState('');
   const [searchParams] = useSearchParams();
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
-  const { login, signup, signInWithGoogle } = useAuth();
+  const { login, signup, signInWithGoogle, signInWithFacebook, signInWithApple } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { error: showError, success: showSuccess } = useToast();
@@ -86,12 +86,28 @@ const LoginPage: React.FC = () => {
       await signInWithGoogle();
     } catch (err: any) {
       console.error('Google login error:', err);
-      showError('Failed to sign in with Google.');
+      showError(t('googleLoginError') || 'Failed to sign in with Google.');
     }
   };
 
-  const handleSocialLogin = () => {
-    showError('This social login method is coming soon!');
+  const handleFacebookLogin = async () => {
+    try {
+      setError('');
+      await signInWithFacebook();
+    } catch (err: any) {
+      console.error('Facebook login error:', err);
+      showError(t('facebookLoginError') || 'Failed to sign in with Facebook.');
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      setError('');
+      await signInWithApple();
+    } catch (err: any) {
+      console.error('Apple login error:', err);
+      showError(t('appleLoginError') || 'Failed to sign in with Apple.');
+    }
   };
 
   const { getContent } = useContent();
@@ -262,14 +278,21 @@ const LoginPage: React.FC = () => {
             <button
               onClick={handleGoogleLogin}
               className="flex-1 flex items-center justify-center py-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all duration-300 group backdrop-blur-md"
-              aria-label="Sign in with Google"
+              aria-label={t('signInWithGoogle') || "Sign in with Google"}
             >
               <GoogleLogo className="h-6 w-6 group-hover:scale-110 transition-transform" />
             </button>
             <button
-              onClick={handleSocialLogin}
+              onClick={handleFacebookLogin}
               className="flex-1 flex items-center justify-center py-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all duration-300 group backdrop-blur-md"
-              aria-label="Sign in with Apple"
+              aria-label={t('signInWithFacebook') || "Sign in with Facebook"}
+            >
+              <FacebookLogo className="h-6 w-6 group-hover:scale-110 transition-transform" />
+            </button>
+            <button
+              onClick={handleAppleLogin}
+              className="flex-1 flex items-center justify-center py-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all duration-300 group backdrop-blur-md"
+              aria-label={t('signInWithApple') || "Sign in with Apple"}
             >
               <AppleLogo className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
             </button>
