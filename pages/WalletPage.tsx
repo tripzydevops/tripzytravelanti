@@ -2,7 +2,9 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { CustomBriefcaseIcon, SparklesIcon, ClockIcon, CheckCircle, XCircle, ArrowRightIcon } from '../components/Icons';
+import { useUserActivity } from '../contexts/UserActivityContext';
+import { useDeals } from '../contexts/DealContext';
+import { CustomBriefcaseIcon, SparklesIcon, ClockIcon, CheckCircle, XCircle, ArrowRightIcon, CustomHeartIcon } from '../components/Icons';
 import { supabase } from '../lib/supabaseClient';
 import DealCard from '../components/DealCard';
 import DealCardSkeleton from '../components/DealCardSkeleton';
@@ -15,6 +17,7 @@ interface WalletDeal extends Deal {
     acquiredAt: string;
 }
 
+type MainTabType = 'active' | 'wishlist' | 'history';
 type FilterType = 'all' | 'active' | 'redeemed' | 'expired';
 type SortType = 'recent' | 'expiring' | 'value';
 
@@ -22,17 +25,19 @@ const WalletPage: React.FC = () => {
     const { t, language } = useLanguage();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { savedDeals: savedDealIds } = useUserActivity();
+    const { deals: allDeals } = useDeals();
+
     const [walletDeals, setWalletDeals] = useState<WalletDeal[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState<FilterType>('active');
+    const [activeMainTab, setActiveMainTab] = useState<MainTabType>('active');
+    const [activeFilter, setActiveFilter] = useState<FilterType>('all');
     const [sortBy, setSortBy] = useState<SortType>('recent');
 
     const fetchWalletDeals = useCallback(async () => {
         if (!user) return;
         try {
             setLoading(true);
-            // Fetch user's owned deals with status
-            // Fetch user's owned deals (wallet items)
             const { data: userDeals, error } = await supabase
                 .from('wallet_items')
                 .select('deal_id, status, created_at, redemption_code')
@@ -50,7 +55,6 @@ const WalletPage: React.FC = () => {
 
                 if (dealsError) throw dealsError;
 
-                // Create status map from user_deals
                 const statusMap = new Map(
                     userDeals.map(ud => [ud.deal_id, {
                         status: ud.status,
@@ -59,10 +63,10 @@ const WalletPage: React.FC = () => {
                     }])
                 );
 
-                // Map and merge
                 const mappedDeals: WalletDeal[] = dealsData?.map((dbDeal: any) => {
                     const userDealInfo = statusMap.get(dbDeal.id);
                     return {
+                        ...dbDeal,
                         id: dbDeal.id,
                         title: dbDeal.title,
                         title_tr: dbDeal.title_tr,
@@ -81,10 +85,9 @@ const WalletPage: React.FC = () => {
                         ratingCount: dbDeal.rating_count || 0,
                         companyLogoUrl: dbDeal.company_logo_url,
                         createdAt: dbDeal.created_at,
-                        ...dbDeal,
                         walletStatus: userDealInfo?.status || 'active',
                         acquiredAt: userDealInfo?.acquiredAt || '',
-                        redemptionCode: userDealInfo?.redemptionCode || dbDeal.redemption_code, // Use unique code if available
+                        redemptionCode: userDealInfo?.redemptionCode || dbDeal.redemption_code,
                     };
                 }) || [];
 
@@ -103,6 +106,11 @@ const WalletPage: React.FC = () => {
         fetchWalletDeals();
     }, [fetchWalletDeals]);
 
+    // Wishlist deals from context
+    const wishlistDeals = useMemo(() => {
+        return allDeals.filter(deal => savedDealIds.includes(deal.id));
+    }, [allDeals, savedDealIds]);
+
     // Calculate total savings
     const totalSavings = useMemo(() => {
         return walletDeals.reduce((sum, deal) => {
@@ -113,13 +121,15 @@ const WalletPage: React.FC = () => {
         }, 0);
     }, [walletDeals]);
 
-    // Filter and sort deals
-    const filteredDeals = useMemo(() => {
-        let filtered = [...walletDeals];
+    // Main logic for current display
+    const currentDisplayDeals = useMemo(() => {
+        if (activeMainTab === 'wishlist') return wishlistDeals;
 
-        // Apply filter
-        if (activeFilter !== 'all') {
-            filtered = filtered.filter(d => d.walletStatus === activeFilter);
+        let filtered = [...walletDeals];
+        if (activeMainTab === 'active') {
+            filtered = filtered.filter(d => d.walletStatus === 'active');
+        } else if (activeMainTab === 'history') {
+            filtered = filtered.filter(d => d.walletStatus === 'redeemed' || d.walletStatus === 'expired');
         }
 
         // Apply sort
@@ -136,20 +146,19 @@ const WalletPage: React.FC = () => {
                 break;
             case 'recent':
             default:
-                filtered.sort((a, b) => new Date(b.acquiredAt).getTime() - new Date(a.acquiredAt).getTime());
+                filtered.sort((a, b) => new Date(b.acquiredAt || b.createdAt).getTime() - new Date(a.acquiredAt || a.createdAt).getTime());
                 break;
         }
 
         return filtered;
-    }, [walletDeals, activeFilter, sortBy]);
+    }, [walletDeals, wishlistDeals, activeMainTab, sortBy]);
 
     // Count by status
     const counts = useMemo(() => ({
-        all: walletDeals.length,
         active: walletDeals.filter(d => d.walletStatus === 'active').length,
-        redeemed: walletDeals.filter(d => d.walletStatus === 'redeemed').length,
-        expired: walletDeals.filter(d => d.walletStatus === 'expired').length,
-    }), [walletDeals]);
+        wishlist: wishlistDeals.length,
+        history: walletDeals.filter(d => d.walletStatus === 'redeemed' || d.walletStatus === 'expired').length,
+    }), [walletDeals, wishlistDeals]);
 
     // Check if deal expires soon (within 48 hours)
     const getExpiryWarning = (expiresAt: string): 'today' | 'soon' | null => {
@@ -180,12 +189,11 @@ const WalletPage: React.FC = () => {
         );
     };
 
-    // Filter tabs
-    const filters: { key: FilterType; labelKey: string }[] = [
-        { key: 'all', labelKey: 'walletFilterAll' },
-        { key: 'active', labelKey: 'walletFilterActive' },
-        { key: 'redeemed', labelKey: 'walletFilterRedeemed' },
-        { key: 'expired', labelKey: 'walletFilterExpired' },
+    // Main tabs config
+    const mainTabs: { key: MainTabType; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
+        { key: 'active', labelKey: 'walletTabActive', icon: CustomBriefcaseIcon },
+        { key: 'wishlist', labelKey: 'bottomNavWishlist', icon: CustomHeartIcon }, // Reuse wishlist key
+        { key: 'history', labelKey: 'walletTabHistory', icon: ClockIcon },
     ];
 
     return (
@@ -194,15 +202,38 @@ const WalletPage: React.FC = () => {
                 {/* Header */}
                 <header className="text-center mb-8">
                     <h1 className="text-4xl font-extrabold text-white mb-2">
-                        {t('myWalletTitle') || 'My Wallet'}
+                        {t('collectionHubTitle') || 'Collection'}
                     </h1>
                     <p className="text-lg text-white/60">
-                        {t('myWalletSubtitle') || 'Deals you have purchased or won'}
+                        {t('collectionHubSubtitle') || 'Your personal hub for active deals and wishlist'}
                     </p>
                 </header>
 
-                {/* Savings Summary Card */}
-                {walletDeals.length > 0 && totalSavings > 0 && (
+                {/* Main Collection Tabs */}
+                <div className="flex p-1.5 bg-white/5 border border-white/10 rounded-2xl mb-8 max-w-2xl mx-auto shadow-inner">
+                    {mainTabs.map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveMainTab(tab.key)}
+                            className={`flex flex-1 items-center justify-center gap-2 py-3 rounded-xl transition-all duration-300 ${activeMainTab === tab.key
+                                ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white shadow-lg'
+                                : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                                }`}
+                        >
+                            <tab.icon className={`w-5 h-5 ${activeMainTab === tab.key ? 'text-white' : 'text-current'}`} />
+                            <span className="font-bold text-sm">
+                                {t(tab.labelKey)}
+                                <span className={`ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] ${activeMainTab === tab.key ? 'bg-white/20' : 'bg-white/10'
+                                    }`}>
+                                    {counts[tab.key]}
+                                </span>
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {/* Savings Summary (Only for Active/History) */}
+                {activeMainTab !== 'wishlist' && walletDeals.length > 0 && totalSavings > 0 && (
                     <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-gold-500/20 via-gold-400/10 to-gold-500/20 border border-gold-500/30 backdrop-blur-xl">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -315,24 +346,9 @@ const WalletPage: React.FC = () => {
                     })()
                 )}
 
-                {/* Filter Tabs */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                    {filters.map(filter => (
-                        <button
-                            key={filter.key}
-                            onClick={() => setActiveFilter(filter.key)}
-                            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${activeFilter === filter.key
-                                ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-white border-gold-400 shadow-[0_0_15px_rgba(212,175,55,0.3)]'
-                                : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
-                                }`}
-                        >
-                            {t(filter.labelKey)} ({counts[filter.key]})
-                        </button>
-                    ))}
-                </div>
 
                 {/* Sort Options */}
-                {walletDeals.length > 1 && (
+                {currentDisplayDeals.length > 1 && (
                     <div className="flex items-center gap-2 mb-6">
                         <span className="text-sm text-white/40">{language === 'tr' ? 'Sırala:' : 'Sort:'}</span>
                         <select
@@ -352,15 +368,18 @@ const WalletPage: React.FC = () => {
                     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                         <DealCardSkeleton count={6} />
                     </div>
-                ) : filteredDeals.length > 0 ? (
+                ) : currentDisplayDeals.length > 0 ? (
                     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 items-stretch">
-                        {filteredDeals.map(deal => {
-                            const expiryWarning = deal.walletStatus === 'active' ? getExpiryWarning(deal.expiresAt) : null;
+                        {currentDisplayDeals.map(deal => {
+                            // Check if deal is from wallet (has walletStatus) or from wishlist
+                            const isWalletDeal = 'walletStatus' in deal;
+                            const walletStatus = isWalletDeal ? (deal as WalletDeal).walletStatus : null;
+                            const expiryWarning = walletStatus === 'active' ? getExpiryWarning(deal.expiresAt) : null;
 
                             return (
                                 <div key={deal.id} className="relative group h-full">
                                     {/* Status Badge */}
-                                    <StatusBadge status={deal.walletStatus} />
+                                    {isWalletDeal && <StatusBadge status={walletStatus as WalletDeal['walletStatus']} />}
 
                                     {/* Expiry Warning Overlay */}
                                     {expiryWarning && (
@@ -376,7 +395,7 @@ const WalletPage: React.FC = () => {
                                     <DealCard deal={deal} />
 
                                     {/* Quick Use Button for Active Deals */}
-                                    {deal.walletStatus === 'active' && (
+                                    {walletStatus === 'active' && (
                                         <button
                                             onClick={(e) => {
                                                 e.preventDefault();

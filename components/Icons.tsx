@@ -123,16 +123,20 @@ export const CustomHomeIcon: React.FC<IconProps> = ({ className }) => (
   <Home className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
 );
 
+export const CustomGlobeIcon: React.FC<IconProps> = ({ className }) => (
+  <LucideGlobe className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
+export const CustomBriefcaseIcon: React.FC<IconProps> = ({ className }) => (
+  <Briefcase className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+);
+
 export const CustomSearchIcon: React.FC<IconProps> = ({ className }) => (
   <LucideSearch className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
 );
 
 export const CustomTicketIcon: React.FC<IconProps> = ({ className }) => (
   <Ticket className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
-);
-
-export const CustomBriefcaseIcon: React.FC<IconProps> = ({ className }) => (
-  <Briefcase className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
 );
 
 export const CustomUserIcon: React.FC<IconProps> = ({ className }) => (

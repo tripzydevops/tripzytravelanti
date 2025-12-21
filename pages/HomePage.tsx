@@ -7,7 +7,23 @@ import DealCard from '../components/DealCard';
 import DealCardSkeleton from '../components/DealCardSkeleton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSearch } from '../contexts/SearchContext';
-import { Search, CogIcon, ClockIcon, TrashIcon, LocationMarkerIcon, SpinnerIcon, StarIcon, SparklesIcon, FireIcon } from '../components/Icons';
+import {
+  Search,
+  CogIcon,
+  ClockIcon,
+  TrashIcon,
+  LocationMarkerIcon,
+  SpinnerIcon,
+  StarIcon,
+  SparklesIcon,
+  FireIcon,
+  GlobeIcon,
+  TicketIcon,
+  CompassIcon,
+  TagIcon,
+  CustomBriefcaseIcon,
+  CustomHeartIcon as HeartIcon
+} from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import PullToRefresh from '../components/PullToRefresh';
 
@@ -18,6 +34,7 @@ import { Deal } from '../types';
 import MetaHead from '../components/MetaHead';
 import FlashDealCard from '../components/FlashDealCard';
 import SimilarDeals from '../components/SimilarDeals';
+import CategoryBar from '../components/CategoryBar';
 
 // Helper function to get time-based greeting
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
@@ -226,6 +243,29 @@ const HomePage: React.FC = () => {
       }))
     ];
   }, [dynamicCategories, language, t]);
+
+  // Icon mapping for categories
+  const categoryIconMap: Record<string, React.FC<{ className?: string }>> = {
+    'All': SparklesIcon,
+    'Food & Drink': FireIcon, // Or a food icon if available
+    'Travel & Tours': GlobeIcon,
+    'Shopping': TagIcon,
+    'Entertainment': TicketIcon,
+    'Services': CustomBriefcaseIcon,
+    'Flights': GlobeIcon, // Should be redirected to Travel hub ideally
+    'Beauty & Wellness': SparklesIcon,
+    'Fashion': TagIcon,
+    'Electronics': CogIcon,
+    'Health': HeartIcon,
+  };
+
+  const categoryBarData = React.useMemo(() => {
+    return categories.map(cat => ({
+      id: cat.key,
+      label: cat.name,
+      icon: categoryIconMap[cat.key] || CompassIcon
+    }));
+  }, [categories, categoryIconMap]);
 
   const ratingFilters = [
     { value: 0, label: t('allRatings') },
@@ -476,28 +516,13 @@ const HomePage: React.FC = () => {
             </div>
           )}
 
-          {/* Category Filters - Horizontal Scroll */}
-          <div className="mb-12 py-4 -mx-4 px-4 transition-all duration-300">
-            <div className="container mx-auto">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-gold-500 uppercase tracking-widest px-1">{displayCategoriesTitle || t('categories') || 'Categories'}</h3>
-              </div>
-              <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide mask-gradient-right">
-                {categories.map(cat => (
-                  <button
-                    key={cat.key}
-                    onClick={() => setCategoryFilter(cat.key as any)}
-                    className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all duration-500 whitespace-nowrap border-2 ${categoryFilter === cat.key
-                      ? 'bg-gradient-to-br from-gold-500 to-gold-600 text-white border-gold-400 shadow-[0_8px_20px_rgba(212,175,55,0.3)] scale-105 active:scale-95'
-                      : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
-                      }`}
-                  >
-                    {/* Optional icons for categories could go here */}
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Category Filters - Airbnb Style Category Bar */}
+          <div className="mb-12 transition-all duration-300">
+            <CategoryBar
+              categories={categoryBarData}
+              selectedCategoryId={categoryFilter}
+              onSelectCategory={(id) => setCategoryFilter(id as any)}
+            />
           </div>
 
           {/* Recommendations Section */}
@@ -595,61 +620,25 @@ const HomePage: React.FC = () => {
             </div>
           )}
 
-          {/* Deals Section or Flight Widget */}
+          {/* Deals Section */}
           <section>
             {categoryFilter === 'Flights' ? (
-              <div className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20 backdrop-blur-md">
-                    <span className="text-blue-400 text-2xl">✈️</span>
-                  </div>
-                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight">
-                    {displayFlightsTitle || t('findFlightsTitle') || 'Find the Best Flight Deals'}
-                  </h2>
+              <div className="animate-fade-in text-center py-16 bg-white/5 rounded-3xl border border-white/10">
+                <div className="inline-flex p-4 bg-blue-500/10 rounded-full mb-6">
+                  <span className="text-4xl text-blue-400">✈️</span>
                 </div>
-
-                <div ref={flightWidgetRef} className="bg-[#0f172a]/60 backdrop-blur-xl rounded-3xl border border-white/10 p-1 shadow-2xl">
-                  <FlightSearchWidget {...flightWidgetParams} />
-                </div>
-
-                {flightRoutes.length > 0 && (
-                  <div className="mt-16">
-                    <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-                      <span className="text-gold-500">★</span> {t('popularRoutes')}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                      {flightRoutes.map(route => (
-                        <button
-                          key={route.id}
-                          onClick={() => handleRouteClick(route)}
-                          className="group relative h-64 rounded-2xl overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] transition-all duration-500 text-left w-full border border-white/10"
-                        >
-                          <img
-                            src={getThumbnailUrl(route.imageUrl)}
-                            alt={language === 'tr' ? route.title_tr : route.title}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/40 to-transparent opacity-90"></div>
-                          <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                            <h4 className="text-white font-bold text-2xl mb-1 drop-shadow-md">{route.title}</h4>
-                            <div className="flex justify-between items-end">
-                              <span className="text-white/70 text-sm font-medium bg-white/10 px-2 py-1 rounded-md backdrop-blur-md">
-                                {new Date(route.expiresAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                              </span>
-                              <div className="flex flex-col items-end">
-                                <span className="text-xs text-white/50 uppercase tracking-widest mb-1">From</span>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-500 font-extrabold text-2xl drop-shadow-sm">
-                                  {t('fromPrice').replace('{{price}}', route.discountedPrice.toString())}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <h2 className="text-3xl font-heading font-bold text-white mb-4">
+                  {t('flightsMovedTitle') || 'Flights are now in Travel Hub'}
+                </h2>
+                <p className="text-brand-text-muted text-lg mb-8 max-w-lg mx-auto">
+                  {t('flightsMovedSubtitle') || 'We have moved all travel-related features to our new dedicated section.'}
+                </p>
+                <button
+                  onClick={() => navigate('/travel')}
+                  className="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-3 px-8 rounded-2xl transition-all shadow-lg"
+                >
+                  {t('goToTravelHub') || 'Visit Travel Hub'}
+                </button>
               </div>
             ) : (
               <>

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { CustomHomeIcon, CustomUserIcon, CustomShieldCheckIcon, CustomHeartIcon, CustomCreditCardIcon } from './Icons';
+import { CustomHomeIcon, CustomUserIcon, CustomShieldCheckIcon, CustomGlobeIcon, CustomCreditCardIcon } from './Icons';
 
 const BottomNav: React.FC = () => {
   const { t } = useLanguage();
@@ -10,7 +10,7 @@ const BottomNav: React.FC = () => {
 
   const navItems = [
     { path: '/', label: t('bottomNavHome') || 'Home', icon: CustomHomeIcon, admin: false },
-    { path: '/saved', label: t('bottomNavFavorites') || 'Favorites', icon: CustomHeartIcon, admin: false },
+    { path: '/travel', label: t('bottomNavTravel') || 'Travel', icon: CustomGlobeIcon, admin: false },
     { path: '/wallet', label: t('bottomNavWallet') || 'Wallet', icon: CustomCreditCardIcon, admin: false },
     { path: '/profile', label: t('bottomNavProfile') || 'Profile', icon: CustomUserIcon, admin: false },
     { path: '/admin', label: t('bottomNavAdmin') || 'Admin', icon: CustomShieldCheckIcon, admin: true },
@@ -52,16 +52,16 @@ const BottomNav: React.FC = () => {
 
                     {/* Active pill background */}
                     <div className={`absolute inset-x-2 top-0 bottom-1 rounded-xl transition-all duration-300 ${isActive
-                        ? 'bg-brand-primary/10 scale-100 opacity-100'
-                        : 'bg-transparent scale-95 opacity-0'
+                      ? 'bg-brand-primary/10 scale-100 opacity-100'
+                      : 'bg-transparent scale-95 opacity-0'
                       }`} />
 
                     {/* Icon container */}
                     <div className={`relative z-10 transition-all duration-300 ${isActive ? 'scale-110 -translate-y-0.5' : 'scale-100'
                       }`}>
                       <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${isActive
-                          ? 'drop-shadow-[0_0_8px_rgba(var(--color-brand-primary-rgb),0.5)]'
-                          : ''
+                        ? 'drop-shadow-[0_0_8px_rgba(var(--color-brand-primary-rgb),0.5)]'
+                        : ''
                         }`} />
                     </div>
 
