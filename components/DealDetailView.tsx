@@ -343,23 +343,30 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             }
                         }}
                         className={`w-12 h-12 flex items-center justify-center rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-all duration-300 ${isDealSaved(deal.id)
-                            ? 'bg-gradient-to-br from-red-600 to-red-500 border-red-400 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
+                            ? 'bg-gradient-to-br from-gold-600 to-gold-500 border-gold-400 text-white shadow-[0_0_15px_rgba(212,175,55,0.5)]'
                             : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                             }`}
                     >
-                        <HeartIcon className={`h-6 w-6 ${isDealSaved(deal.id) ? 'fill-current' : ''}`} />
+                        <HeartIcon className={`h-6 w-6 ${isDealSaved(deal.id) ? 'fill-current text-gold-200' : ''}`} />
                     </button>
                 </div>
             </div>
 
-            {/* Hero Image */}
-            <div className="relative h-[45vh] w-full overflow-hidden">
+            {/* Immersive Hero Section */}
+            <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/20 to-transparent z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <img
                     src={getHeroImageUrl(deal.imageUrl)}
                     alt={title}
-                    className="w-full h-full object-cover transform scale-105"
+                    className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-[10s] ease-out"
                 />
+
+                {/* Floating Gallery Badge (Placeholder for multiple images) */}
+                <div className="absolute bottom-24 right-6 z-20 px-4 py-2 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
+                    <SparklesIcon className="w-3.5 h-3.5 text-gold-400" />
+                    <span>Exclusive Preview</span>
+                </div>
             </div>
 
             {/* Floating Content Card */}
@@ -368,30 +375,38 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     {/* Top Glow */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-gold-500/50 blur-lg rounded-full"></div>
 
-                    {/* Brand & Title Header */}
-                    <div className="flex items-start gap-5 mb-8">
-                        <div className="flex-shrink-0 w-20 h-20 rounded-2xl bg-[#0f172a] shadow-lg p-1 border border-gold-500/30 overflow-hidden relative group">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            {deal.companyLogoUrl ? (
-                                <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover rounded-xl" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gold-400 font-bold text-3xl font-heading">
-                                    {deal.vendor.charAt(0)}
-                                </div>
-                            )}
+                    {/* Partner spotlight / Vendor profile header */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10">
+                        <div className="relative shrink-0">
+                            <div className="w-24 h-24 rounded-3xl bg-[#0f172a] shadow-2xl p-1.5 border border-gold-500/30 overflow-hidden relative group/logo">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/20 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
+                                {deal.companyLogoUrl ? (
+                                    <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover rounded-2xl" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gold-400 font-bold text-4xl font-heading">
+                                        {deal.vendor.charAt(0)}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Verified Badge */}
+                            <div className="absolute -bottom-2 -right-2 bg-gold-500 text-brand-bg p-1.5 rounded-full shadow-lg border-2 border-brand-bg">
+                                <CheckCircle className="w-4 h-4" />
+                            </div>
                         </div>
-                        <div className="flex-1 pt-1">
-                            <h2 className="text-3xl font-heading font-bold text-white leading-tight mb-2 drop-shadow-lg">{title}</h2>
-                            <p className="text-lg text-gold-200/80 font-medium tracking-wide">{deal.vendor}</p>
-
-                            {/* Rating */}
-                            <div className="flex items-center mt-2 gap-2">
-                                <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <StarIcon key={star} className={`w-4 h-4 ${star <= deal.rating ? 'text-gold-400 fill-current' : 'text-gray-600'}`} />
-                                    ))}
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-xs font-black uppercase tracking-[0.2em] text-gold-400/80">Premium Partner</span>
+                                <div className="h-px flex-1 bg-gradient-to-r from-gold-500/30 to-transparent"></div>
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-heading font-black text-white leading-[1.1] mb-2 tracking-tight">{title}</h2>
+                            <div className="flex items-center gap-3">
+                                <p className="text-xl text-white/60 font-medium">{deal.vendor}</p>
+                                <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+                                <div className="flex items-center gap-1.5 text-gold-400/90 text-sm font-bold">
+                                    <StarIcon className="w-4 h-4 fill-current" />
+                                    <span>{deal.rating}</span>
+                                    <span className="text-white/30 font-normal">({deal.ratingCount})</span>
                                 </div>
-                                <span className="text-white/40 text-sm">({deal.ratingCount} {t('ratings')})</span>
                             </div>
                         </div>
                     </div>
@@ -532,65 +547,69 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 </div>
             </div>
 
-            {/* Action Bar - Static (In Flow) */}
-            <div className="relative z-30 mt-8 px-4 max-w-4xl mx-auto mb-8">
-                <div className="bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="hidden md:flex flex-col">
-                            <span className="text-white/40 text-xs line-through">{originalPriceFormatted}</span>
-                            <div className="text-2xl font-bold bg-gradient-to-r from-gold-300 via-gold-500 to-gold-400 bg-clip-text text-transparent">
-                                {discountedPriceFormatted}
+            {/* Sticky Action Footer - Market Standard */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
+                <div className="max-w-4xl mx-auto">
+                    <div className="glass-premium rounded-[2rem] p-4 md:p-5 flex items-center justify-between gap-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
+                        {/* Price Display */}
+                        <div className="flex flex-col min-w-fit">
+                            <div className="flex items-center gap-2 mb-0.5">
+                                {deal.originalPrice > 0 && (
+                                    <span className="text-white/40 text-sm line-through decoration-white/30">₺{deal.originalPrice}</span>
+                                )}
+                                <span className="bg-brand-primary/10 text-brand-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-brand-primary/20">
+                                    {deal.discountPercentage}% OFF
+                                </span>
+                            </div>
+                            <div className="text-3xl font-black text-white tracking-tighter flex items-baseline gap-1">
+                                <span className="text-lg font-bold text-gold-500/60">₺</span>
+                                <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">{deal.discountedPrice}</span>
+                                <span className="text-xs font-medium text-white/30 ml-1 uppercase tracking-widest">{t('total') || 'per person'}</span>
                             </div>
                         </div>
 
-                        <div className="flex-1 flex gap-3">
-                            {/* Sold Out State */}
+                        {/* Final Actions */}
+                        <div className="flex-1 flex gap-3 max-w-md">
                             {localIsSoldOut ? (
-                                <div className="flex-1 bg-gray-600 text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80">
-                                    <span>{t('soldOut') || 'Sold Out'}</span>
+                                <div className="flex-1 bg-white/5 border border-white/10 text-white/40 font-black py-4 rounded-[1.25rem] flex items-center justify-center gap-2 grayscale cursor-not-allowed">
+                                    <span className="uppercase tracking-[0.2em]">{t('soldOut') || 'Offer Ended'}</span>
                                 </div>
                             ) : (
                                 <>
-                                    {/* Add to Wallet Button */}
-                                    {/* Hide if owned OR if already redeemed (and single use) */}
                                     {!isDealOwned(deal.id) &&
                                         !(deal.maxRedemptionsUser === 1 && hasRedeemed(deal.id)) &&
                                         !(deal.usageLimit === '1' && hasRedeemed(deal.id)) && (
                                             <button
                                                 onClick={() => handleActionClick('claim')}
-                                                className="flex-1 bg-white/10 border border-white/20 text-white font-bold py-4 px-4 rounded-xl hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                                                className="hidden sm:flex flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-4 rounded-[1.25rem] transition-all duration-300 items-center justify-center gap-2 group"
                                             >
-                                                <span>{t('addToWallet') || 'Add to Wallet'}</span>
+                                                <CustomBriefcaseIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                                <span>{t('addToWallet') || 'Save'}</span>
                                             </button>
                                         )}
 
-                                    {/* Redeem Now Button or Redeemed State */}
-                                    {/* Action Buttons with Tier Lock */}
                                     {isLocked ? (
                                         <button
                                             onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}
-                                            className="flex-1 bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg"
+                                            className="flex-[2] bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-brand-bg font-black py-4 px-6 rounded-[1.25rem] shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-3 uppercase tracking-wider overflow-hidden relative group"
                                         >
+                                            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-[30deg]"></div>
                                             <Lock className="w-5 h-5" />
-                                            <span>
-                                                {!user ? t('loginToUnlock') : `${t('upgradeToUnlock') || 'Upgrade to Unlock'} (${deal.requiredTier})`}
+                                            <span className="truncate">
+                                                {!user ? t('loginToUnlock') : `${t('upgradeToUnlock') || 'Unlock Now'} (${deal.requiredTier})`}
                                             </span>
                                         </button>
                                     ) : hasRedeemed(deal.id) ? (
-                                        <button
-                                            disabled
-                                            className="flex-1 w-full bg-green-600/20 border border-green-500/30 text-green-400 font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
-                                        >
-                                            <CheckCircle className="w-6 h-6" />
-                                            <span>{t('redeemed') || 'Redeemed'}</span>
-                                        </button>
+                                        <div className="flex-1 bg-green-500/10 border border-green-500/30 text-green-400 font-bold py-4 rounded-[1.25rem] flex items-center justify-center gap-2">
+                                            <CheckCircle className="w-5 h-5" />
+                                            <span>{t('redeemed') || 'Used'}</span>
+                                        </div>
                                     ) : (
                                         <button
                                             onClick={() => isPreview ? null : handleActionClick('redeem')}
-                                            className={`flex-1 ${isDealOwned(deal.id) ? 'w-full' : ''
-                                                } bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white font-bold py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-lg cursor-pointer`}
+                                            className="flex-[2] bg-gradient-to-r from-white to-gray-200 hover:from-white hover:to-white text-brand-bg font-black py-4 px-6 rounded-[1.25rem] shadow-[0_10px_40px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-lg"
                                         >
-                                            <span>{t('redeemNow') || 'Redeem Now'}</span>
+                                            <span>{t('redeemNow') || 'Claim Offer'}</span>
                                         </button>
                                     )}
                                 </>

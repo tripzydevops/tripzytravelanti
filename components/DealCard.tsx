@@ -130,8 +130,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           >
             <HeartIcon
               className={`w-5 h-5 transition-all duration-300 ${isSaved
-                ? 'text-red-500 fill-red-500 scale-110'
-                : 'text-white group-hover/heart:scale-110 group-hover/heart:text-red-400'
+                ? 'text-gold-500 fill-gold-500 scale-110'
+                : 'text-white group-hover/heart:scale-110 group-hover/heart:text-gold-400'
                 }`}
             />
           </button>
