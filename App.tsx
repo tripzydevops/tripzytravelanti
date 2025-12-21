@@ -195,7 +195,7 @@ function AppContent() {
   /* Check if we are on an admin route */
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const isDealDetailRoute = location.pathname.includes('/deals/') && location.pathname.split('/').length > 2;
+  const isDealDetailRoute = /^\/deals\/[^/]+/.test(location.pathname);
 
   return (
     <SearchProvider>

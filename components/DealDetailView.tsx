@@ -499,23 +499,43 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                         {deal.latitude && deal.longitude ? (
                                             <div className="w-full relative group">
                                                 {/* Map Placeholder with realistic aesthetic */}
-                                                <div className="w-full h-48 bg-[#1e293b] rounded-xl overflow-hidden mb-4 border border-white/10 flex items-center justify-center relative">
+                                                <div className="w-full h-40 bg-[#1e293b] rounded-xl overflow-hidden mb-4 border border-white/10 flex items-center justify-center relative">
                                                     <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent"></div>
-                                                    <LocationMarkerIcon className="w-12 h-12 text-gold-500/30 absolute" />
+                                                    <LocationMarkerIcon className="w-10 h-10 text-gold-500/30 absolute" />
                                                     <div className="z-10 text-center px-6">
-                                                        <p className="text-white font-bold mb-2">Detailed Map Location</p>
+                                                        <p className="text-white font-bold mb-1">Detailed Map Location</p>
                                                         <p className="text-white/40 text-xs italic">Tap to open in Google Maps</p>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
-                                                    className="w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-gold-500 hover:text-brand-bg transition-all duration-500"
+                                                    className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-gold-500 hover:text-brand-bg transition-all duration-500"
                                                 >
                                                     Open Navigation
                                                 </button>
                                             </div>
+                                        ) : deal.storeLocations && deal.storeLocations.length > 0 ? (
+                                            <div className="w-full space-y-3">
+                                                {deal.storeLocations.map((loc, idx) => (
+                                                    <div key={idx} className="flex items-start gap-4 bg-white/5 border border-white/10 p-4 rounded-xl text-left group hover:bg-white/10 transition-all">
+                                                        <div className="mt-1 w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center border border-gold-500/20 group-hover:bg-gold-500/20 transition-colors">
+                                                            <LocationMarkerIcon className="w-4 h-4 text-gold-400" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-white font-bold text-sm">{loc.name}</p>
+                                                            <p className="text-white/40 text-xs mt-0.5">{loc.address}{loc.city ? `, ${loc.city}` : ''}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(loc.address + ' ' + (loc.city || ''))}`, '_blank')}
+                                                            className="p-2 rounded-lg text-gold-400/50 hover:text-gold-400 hover:bg-white/5 transition-all"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         ) : (
-                                            <div className="flex flex-col items-center">
+                                            <div className="flex flex-col items-center py-10">
                                                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
                                                     <GlobeIcon className="w-8 h-8 text-gold-400" />
                                                 </div>
@@ -554,11 +574,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Sticky Action Footer - Market Standard */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
+            <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-4 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
                 <div className="max-w-4xl mx-auto">
-                    <div className="glass-premium rounded-[2rem] p-4 md:p-5 flex items-center justify-between gap-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
+                    <div className="glass-premium rounded-[1.5rem] p-3 md:p-4 flex items-center justify-between gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
                         {/* Price Display */}
-                        <div className="flex flex-col min-w-fit">
+                        <div className="flex flex-col min-w-fit pl-2">
                             <div className="flex items-center gap-2 mb-0.5">
                                 {deal.originalPrice > 0 && (
                                     <span className="text-white/40 text-sm line-through decoration-white/30">₺{deal.originalPrice}</span>
@@ -567,18 +587,18 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                     {deal.discountPercentage}% OFF
                                 </span>
                             </div>
-                            <div className="text-3xl font-black text-white tracking-tighter flex items-baseline gap-1">
-                                <span className="text-lg font-bold text-gold-500/60">₺</span>
+                            <div className="text-2xl font-black text-white tracking-tighter flex items-baseline gap-1">
+                                <span className="text-base font-bold text-gold-500/60">₺</span>
                                 <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">{deal.discountedPrice}</span>
-                                <span className="text-xs font-medium text-white/30 ml-1 uppercase tracking-widest">{t('total') || 'per person'}</span>
+                                <span className="text-[10px] font-medium text-white/30 ml-1 uppercase tracking-widest">{t('total') || 'per person'}</span>
                             </div>
                         </div>
 
                         {/* Final Actions */}
                         <div className="flex-1 flex gap-3 max-w-md">
                             {localIsSoldOut ? (
-                                <div className="flex-1 bg-white/5 border border-white/10 text-white/40 font-black py-4 rounded-[1.25rem] flex items-center justify-center gap-2 grayscale cursor-not-allowed">
-                                    <span className="uppercase tracking-[0.2em]">{t('soldOut') || 'Offer Ended'}</span>
+                                <div className="flex-1 bg-white/5 border border-white/10 text-white/40 font-black py-3 rounded-xl flex items-center justify-center gap-2 grayscale cursor-not-allowed">
+                                    <span className="uppercase tracking-[0.2em] text-sm">{t('soldOut') || 'Offer Ended'}</span>
                                 </div>
                             ) : (
                                 <>
@@ -587,33 +607,33 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                         !(deal.usageLimit === '1' && hasRedeemed(deal.id)) && (
                                             <button
                                                 onClick={() => handleActionClick('claim')}
-                                                className="hidden sm:flex flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-4 rounded-[1.25rem] transition-all duration-300 items-center justify-center gap-2 group"
+                                                className="hidden sm:flex flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all duration-300 items-center justify-center gap-2 group"
                                             >
                                                 <CustomBriefcaseIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                                <span>{t('addToWallet') || 'Save'}</span>
+                                                <span className="text-sm">{t('addToWallet') || 'Save'}</span>
                                             </button>
                                         )}
 
                                     {isLocked ? (
                                         <button
                                             onClick={() => !user ? navigate('/login') : navigate('/subscriptions')}
-                                            className="flex-[2] bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-brand-bg font-black py-4 px-6 rounded-[1.25rem] shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-3 uppercase tracking-wider overflow-hidden relative group"
+                                            className="flex-[2] bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-brand-bg font-black py-3 px-6 rounded-xl shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 uppercase tracking-wider overflow-hidden relative group text-sm"
                                         >
                                             <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-[30deg]"></div>
-                                            <Lock className="w-5 h-5" />
+                                            <Lock className="w-4 h-4" />
                                             <span className="truncate">
                                                 {!user ? t('loginToUnlock') : `${t('upgradeToUnlock') || 'Unlock Now'} (${deal.requiredTier})`}
                                             </span>
                                         </button>
                                     ) : hasRedeemed(deal.id) ? (
-                                        <div className="flex-1 bg-green-500/10 border border-green-500/30 text-green-400 font-bold py-4 rounded-[1.25rem] flex items-center justify-center gap-2">
+                                        <div className="flex-1 bg-green-500/10 border border-green-500/30 text-green-400 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
                                             <CheckCircle className="w-5 h-5" />
-                                            <span>{t('redeemed') || 'Used'}</span>
+                                            <span className="text-sm">{t('redeemed') || 'Used'}</span>
                                         </div>
                                     ) : (
                                         <button
                                             onClick={() => isPreview ? null : handleActionClick('redeem')}
-                                            className="flex-[2] bg-gradient-to-r from-white to-gray-200 hover:from-white hover:to-white text-brand-bg font-black py-4 px-6 rounded-[1.25rem] shadow-[0_10px_40px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-lg"
+                                            className="flex-[2] bg-gradient-to-r from-gold-400 to-gold-600 hover:from-gold-300 hover:to-gold-500 text-brand-bg font-black py-3 px-6 rounded-xl shadow-[0_5px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_25px_rgba(212,175,55,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-base"
                                         >
                                             <span>{t('redeemNow') || 'Claim Offer'}</span>
                                         </button>

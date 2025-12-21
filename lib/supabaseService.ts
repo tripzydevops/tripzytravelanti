@@ -394,7 +394,10 @@ function transformDealFromDB(dbDeal: any): Deal {
         maxRedemptionsTotal: dbDeal.max_redemptions_total,
         maxRedemptionsUser: dbDeal.max_user_redemptions,
         redemptionsCount: dbDeal.redemptions_count || 0,
-        isSoldOut: dbDeal.is_sold_out
+        isSoldOut: dbDeal.is_sold_out,
+        latitude: dbDeal.latitude,
+        longitude: dbDeal.longitude,
+        storeLocations: dbDeal.store_locations
     };
 }
 
