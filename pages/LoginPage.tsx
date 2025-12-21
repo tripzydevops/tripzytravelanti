@@ -168,8 +168,7 @@ const LoginPage: React.FC = () => {
           <div className="text-center mb-12">
             <div className="flex flex-col items-center mb-8 group cursor-pointer" onClick={() => navigate('/')}>
               <div className="relative mb-4">
-                <img src="/logo-premium.png" alt="Tripzy" className="w-24 h-24 object-contain drop-shadow-[0_0_20px_rgba(212,175,55,0.5)] transition-all duration-700 group-hover:drop-shadow-[0_0_30px_rgba(212,175,55,0.7)] group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gold-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                <img src="/logo-premium.png" alt="Tripzy" className="w-24 h-24 object-contain transition-all duration-700 group-hover:scale-110" />
               </div>
               <div className="text-center">
                 <span className="text-4xl font-black tracking-[0.1em] text-white uppercase italic drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">Tripzy</span>
