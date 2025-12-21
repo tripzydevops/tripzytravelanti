@@ -574,11 +574,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Sticky Action Footer - Market Standard */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-4 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
+            <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-3 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
                 <div className="max-w-4xl mx-auto">
-                    <div className="glass-premium rounded-[1.5rem] p-3 md:p-4 flex items-center justify-between gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
+                    <div className="glass-premium rounded-[1.25rem] p-2 md:p-3 flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
                         {/* Price Display */}
-                        <div className="flex flex-col min-w-fit pl-2">
+                        <div className="flex flex-col min-w-fit pl-1">
                             <div className="flex items-center gap-2 mb-0.5">
                                 {deal.originalPrice > 0 && (
                                     <span className="text-white/40 text-sm line-through decoration-white/30">₺{deal.originalPrice}</span>
@@ -633,7 +633,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                     ) : (
                                         <button
                                             onClick={() => isPreview ? null : handleActionClick('redeem')}
-                                            className="flex-[2] bg-gradient-to-r from-gold-400 to-gold-600 hover:from-gold-300 hover:to-gold-500 text-brand-bg font-black py-3 px-6 rounded-xl shadow-[0_5px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_25px_rgba(212,175,55,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-base"
+                                            className="flex-[2] bg-gradient-to-r from-gold-400 to-gold-600 hover:from-gold-300 hover:to-gold-500 text-brand-bg font-black py-2.5 px-6 rounded-xl shadow-[0_5px_20px_rgba(212,175,55,0.4)] hover:shadow-[0_8px_25px_rgba(212,175,55,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-sm animate-pulse-subtle"
                                         >
                                             <span>{t('redeemNow') || 'Claim Offer'}</span>
                                         </button>
