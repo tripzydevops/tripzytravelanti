@@ -164,19 +164,19 @@ const LoginPage: React.FC = () => {
           {/* Subtle gold glow at top */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gold-400/50 blur-lg rounded-full"></div>
 
-          {/* Integrated Premium Branding & Header */}
+          {/* Refined Premium Branding & Header */}
           <div className="text-center mb-12">
-            <div className="flex flex-col items-center mb-6 group cursor-pointer" onClick={() => navigate('/')}>
-              <div className="relative mb-3">
-                <img src="/favicon.png" alt="Tripzy" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-all duration-700 group-hover:drop-shadow-[0_0_20px_rgba(212,175,55,0.6)]" />
-                <div className="absolute inset-0 bg-gold-500/30 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+            <div className="flex flex-col items-center mb-8 group cursor-pointer" onClick={() => navigate('/')}>
+              <div className="relative mb-4">
+                <img src="/logo-premium.png" alt="Tripzy" className="w-24 h-24 object-contain drop-shadow-[0_0_20px_rgba(212,175,55,0.5)] transition-all duration-700 group-hover:drop-shadow-[0_0_30px_rgba(212,175,55,0.7)] group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gold-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
               </div>
               <div className="text-center">
-                <span className="text-3xl font-black tracking-[0.1em] text-white uppercase italic drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Tripzy</span>
-                <div className="mt-1.5 flex items-center justify-center gap-3">
-                  <div className="h-[1px] w-6 bg-gradient-to-r from-transparent to-gold-500/50"></div>
-                  <span className="text-[10px] text-gold-400 font-bold tracking-[0.4em] uppercase opacity-90">Travel Exclusive</span>
-                  <div className="h-[1px] w-6 bg-gradient-to-l from-transparent to-gold-500/50"></div>
+                <span className="text-4xl font-black tracking-[0.1em] text-white uppercase italic drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">Tripzy</span>
+                <div className="mt-2 flex items-center justify-center gap-4">
+                  <div className="h-[1px] w-8 bg-gradient-to-r from-transparent via-gold-500/50 to-transparent"></div>
+                  <span className="text-[11px] text-gold-400 font-bold tracking-[0.5em] uppercase opacity-90">Travel Exclusive</span>
+                  <div className="h-[1px] w-8 bg-gradient-to-l from-transparent via-gold-500/50 to-transparent"></div>
                 </div>
               </div>
             </div>
