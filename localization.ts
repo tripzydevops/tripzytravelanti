@@ -474,6 +474,17 @@ export const translations = {
     upgradePrompt: 'You have used all your redemptions for this month. Upgrade your plan to unlock more amazing deals!',
     upgradePlanButton: 'Upgrade Plan',
     maybeLater: 'Maybe Later',
+    // Admin Sidebar
+    adminSidebarOverview: 'Overview',
+    adminSidebarManagement: 'Management',
+    adminSidebarSystem: 'System',
+    adminSidebarFinance: 'Finance',
+    adminCategories: 'Categories',
+    adminVendorReports: 'Vendor Reports',
+    adminBackgrounds: 'Backgrounds',
+    adminPromoCodes: 'Promo Codes',
+    adminAuditLogs: 'Audit Logs',
+    adminBackToApp: 'Back to App',
     // Footer
     footerText: '© 2024 Tripzy. All rights reserved.',
   },
@@ -927,7 +938,18 @@ export const translations = {
     termsPoint2: 'Fırsat diğer teklifler veya promosyonlarla birleştirilemez.',
     termsPoint3: 'Satıcı, şartların ihlal edilmesi durumunda hizmeti reddetme hakkını saklı tutar.',
     termsPoint4: 'Kullanım kodları tek kullanımlıktır ve devredilemez.',
-    // Redemption Warning
+    // Admin Sidebar
+    adminSidebarOverview: 'Genel Bakış',
+    adminSidebarManagement: 'Yönetim',
+    adminSidebarSystem: 'Sistem',
+    adminSidebarFinance: 'Finans',
+    adminCategories: 'Kategoriler',
+    adminVendorReports: 'Partner Raporları',
+    adminBackgrounds: 'Arka Planlar',
+    adminPromoCodes: 'Promosyon Kodları',
+    adminAuditLogs: 'Denetim Günlükleri',
+    adminBackToApp: 'Uygulamaya Dön',
+    // Redemption Modal
     redemptionWarningTitle: 'Kullanımı Onayla',
     redemptionWarningBody: 'Bu işlem aylık kullanım haklarınızdan birini düşecektir. Devam etmek istiyor musunuz?',
     dontShowAgain: "Bunu tekrar gösterme",

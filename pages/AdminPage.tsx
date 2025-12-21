@@ -58,17 +58,17 @@ const AdminPage: React.FC = () => {
 
   const menuGroups = [
     {
-      title: 'Overview',
+      title: t('adminSidebarOverview'),
       items: [
         { id: 'analytics', label: t('adminAnalytics'), icon: <BarChartIcon className="w-5 h-5" /> },
-        { id: 'vendor_stats', label: 'Vendor Reports', icon: <BriefcaseIcon className="w-5 h-5" /> },
+        { id: 'vendor_stats', label: t('adminVendorReports'), icon: <BriefcaseIcon className="w-5 h-5" /> },
       ]
     },
     {
-      title: 'Management',
+      title: t('adminSidebarManagement'),
       items: [
         { id: 'deals', label: t('manageDeals'), icon: <TagIcon className="w-5 h-5" /> },
-        { id: 'categories', label: 'Categories', icon: <MegaphoneIcon className="w-5 h-5" /> }, // Borrowing Megaphone for now or using Tag
+        { id: 'categories', label: t('adminCategories'), icon: <TagIcon className="w-5 h-5" /> },
         { id: 'users', label: t('manageUsers'), icon: <UsersIcon className="w-5 h-5" /> },
         { id: 'subscriptions', label: t('adminSubscriptions'), icon: <TicketIcon className="w-5 h-5" /> },
         {
@@ -80,18 +80,18 @@ const AdminPage: React.FC = () => {
       ]
     },
     {
-      title: 'System',
+      title: t('adminSidebarSystem'),
       items: [
         { id: 'content', label: t('adminContent'), icon: <DocumentTextIcon className="w-5 h-5" /> },
         { id: 'flight_routes', label: t('adminFlightRoutes'), icon: <GlobeIcon className="w-5 h-5" /> },
-        { id: 'backgrounds', label: 'Backgrounds', icon: <MountainIcon className="w-5 h-5" /> },
+        { id: 'backgrounds', label: t('adminBackgrounds'), icon: <MountainIcon className="w-5 h-5" /> },
         { id: 'announcements', label: t('adminAnnouncements'), icon: <MegaphoneIcon className="w-5 h-5" /> },
-        { id: 'promo_codes', label: 'Promo Codes', icon: <QrCodeIcon className="w-5 h-5" /> },
-        { id: 'audit_logs', label: 'Audit Logs', icon: <Terminal className="w-5 h-5" /> },
+        { id: 'promo_codes', label: t('adminPromoCodes'), icon: <QrCodeIcon className="w-5 h-5" /> },
+        { id: 'audit_logs', label: t('adminAuditLogs'), icon: <Terminal className="w-5 h-5" /> },
       ]
     },
     {
-      title: 'Finance',
+      title: t('adminSidebarFinance'),
       items: [
         { id: 'payments', label: t('adminPaymentTransactions'), icon: <CreditCardIcon className="w-5 h-5" /> },
       ]
@@ -205,7 +205,7 @@ const AdminPage: React.FC = () => {
             title="Back to App"
           >
             <HomeIcon className="w-5 h-5 flex-shrink-0" />
-            {!isCollapsed && <span>Back to App</span>}
+            {!isCollapsed && <span>{t('adminBackToApp')}</span>}
           </button>
 
           <button

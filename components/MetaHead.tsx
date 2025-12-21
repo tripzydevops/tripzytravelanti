@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface MetaHeadProps {
     title: string;
@@ -16,10 +17,11 @@ const MetaHead: React.FC<MetaHeadProps> = ({
     url = "https://tripzy.app",
     type = "website"
 }) => {
+    const { language } = useLanguage();
     const fullTitle = `${title} | Tripzy`;
 
     return (
-        <Helmet>
+        <Helmet htmlAttributes={{ lang: language }}>
             {/* Standard Metrics */}
             <title>{fullTitle}</title>
             <meta name="description" content={description} />
