@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { UserActivityProvider } from './contexts/UserActivityContext';
@@ -234,6 +235,7 @@ function App() {
                               <BrowserRouter>
                                 <ScrollToTop />
                                 <AppContent />
+                                <SpeedInsights />
                               </BrowserRouter>
                             </ToastProvider>
                           </NotificationProvider>
