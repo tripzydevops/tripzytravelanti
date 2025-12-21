@@ -50,7 +50,6 @@ const lazyLoadRetry = (importFn: () => Promise<any>) => {
 
 // Lazy load pages with retry
 const HomePage = lazyLoadRetry(() => import('./pages/HomePage'));
-const FlightsPage = lazyLoadRetry(() => import('./pages/FlightsPage'));
 const SubscriptionsPage = lazyLoadRetry(() => import('./pages/SubscriptionsPage'));
 const LoginPage = lazyLoadRetry(() => import('./pages/LoginPage'));
 const ProfilePage = lazyLoadRetry(() => import('./pages/ProfilePage'));
