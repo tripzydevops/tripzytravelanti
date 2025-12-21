@@ -511,12 +511,12 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64 relative overflow-hidden">
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
                                     <div className={`w-full flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
                                         {deal.latitude && deal.longitude ? (
                                             <div className="w-full space-y-6">
                                                 {/* Professional Map Interface or Premium Fallback */}
-                                                <div className="w-full h-56 rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative group shadow-2xl">
+                                                <div className="w-full aspect-video rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative group shadow-2xl">
                                                     {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
                                                         <iframe
                                                             width="100%"
