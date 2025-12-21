@@ -33,8 +33,8 @@ const Header: React.FC = () => {
     <header className="bg-white shadow-md sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center gap-4">
         <NavLink to="/" className="flex items-center space-x-2 text-2xl font-bold text-brand-dark flex-shrink-0">
-          <Compass className="h-8 w-8 text-brand-primary" />
-          <span>WanderWise AI</span>
+          <img src="/favicon.png" alt="Tripzy" className="h-8 w-8 object-contain" />
+          <span>Tripzy</span>
         </NavLink>
         <div className="hidden md:flex items-center space-x-8 text-lg">
           <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="text-gray-600 hover:text-brand-primary transition-colors duration-300">{t('navHome')}</NavLink>
