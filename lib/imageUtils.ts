@@ -18,70 +18,72 @@ interface ImageOptimizationOptions {
  * @param options Optimization options (width, height, quality, format)
  * @returns The optimized URL
  */
-export const getOptimizedImageUrl = (url: string | undefined | null, options: ImageOptimizationOptions = {}): string => {
-    if (!url) return '';
+if (!url || url === 'burger' || url === 'default' || !url.startsWith('http')) {
+    // Return a premium premium placeholder if URL is invalid or generic
+    return 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80';
+}
 
-    // 1. Handle Unsplash URLs
-    if (url.includes('unsplash.com')) {
-        try {
-            const urlObj = new URL(url);
-            if (options.width) urlObj.searchParams.set('w', options.width.toString());
-            if (options.height) urlObj.searchParams.set('h', options.height.toString());
-            urlObj.searchParams.set('q', (options.quality || 80).toString());
-            urlObj.searchParams.set('fit', options.resize === 'cover' ? 'crop' : 'contain');
-            urlObj.searchParams.set('auto', 'format');
-            return urlObj.toString();
-        } catch (e) {
-            return url;
-        }
-    }
-
-    // 2. Handle Supabase Storage URLs (Only if it's not already transformed)
-    if (!url.includes('supabase.co/storage/v1/object/public')) {
+// 1. Handle Unsplash URLs
+if (url.includes('unsplash.com')) {
+    try {
+        const urlObj = new URL(url);
+        if (options.width) urlObj.searchParams.set('w', options.width.toString());
+        if (options.height) urlObj.searchParams.set('h', options.height.toString());
+        urlObj.searchParams.set('q', (options.quality || 80).toString());
+        urlObj.searchParams.set('fit', options.resize === 'cover' ? 'crop' : 'contain');
+        urlObj.searchParams.set('auto', 'format');
+        return urlObj.toString();
+    } catch (e) {
         return url;
     }
+}
 
-    // Supabase Image Transformations are done via the /render/image/ endpoint
-    // Standard URL: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
-    // Optimized URL: https://[project].supabase.co/storage/v1/render/image/public/[bucket]/[path]?width=...
+// 2. Handle Supabase Storage URLs (Only if it's not already transformed)
+if (!url.includes('supabase.co/storage/v1/object/public')) {
+    return url;
+}
 
-    // Replace /object/ with /render/image/
-    // Requirement for Turkey launch performance with high user volume
-    let optimizedUrl = url.replace('/object/public/', '/render/image/public/');
+// Supabase Image Transformations are done via the /render/image/ endpoint
+// Standard URL: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
+// Optimized URL: https://[project].supabase.co/storage/v1/render/image/public/[bucket]/[path]?width=...
 
-    const params = new URLSearchParams();
+// Replace /object/ with /render/image/
+// Requirement for Turkey launch performance with high user volume
+let optimizedUrl = url.replace('/object/public/', '/render/image/public/');
 
-    if (options.width) params.append('width', options.width.toString());
-    if (options.height) params.append('height', options.height.toString());
-    if (options.quality) params.append('quality', options.quality.toString());
-    if (options.format) params.append('format', options.format);
-    if (options.resize) params.append('resize', options.resize);
+const params = new URLSearchParams();
 
-    // Default to webp if not specified, as it's smaller and widely supported
-    if (!options.format) params.append('format', 'origin');
+if (options.width) params.append('width', options.width.toString());
+if (options.height) params.append('height', options.height.toString());
+if (options.quality) params.append('quality', options.quality.toString());
+if (options.format) params.append('format', options.format);
+if (options.resize) params.append('resize', options.resize);
 
-    const queryString = params.toString();
-    let finalUrl = queryString ? `${optimizedUrl}?${queryString}` : optimizedUrl;
+// Default to webp if not specified, as it's smaller and widely supported
+if (!options.format) params.append('format', 'origin');
 
-    // CDN Domain Replacement (The "Pro" Trick)
-    // If VITE_CDN_URL is set (e.g., "https://cdn.tripzy.com"), replace the Supabase origin.
-    // This allows Cloudflare to cache the images, saving Supabase bandwidth.
-    const cdnUrl = import.meta.env.VITE_CDN_URL;
-    if (cdnUrl && finalUrl.includes('supabase.co')) {
-        try {
-            const urlObj = new URL(finalUrl);
-            // Replace protocol and host, keep pathname and search
-            // Remove trailing slash from cdnUrl if present
-            const cleanCdnUrl = cdnUrl.replace(/\/$/, '');
-            // We construct the new URL using the CDN domain but keeping the path and query params
-            // Note: The CDN must be configured to proxy requests to the Supabase domain
-            finalUrl = `${cleanCdnUrl}${urlObj.pathname}${urlObj.search}`;
-        } catch (e) {
-            console.warn('Failed to construct CDN URL:', e);
-        }
+const queryString = params.toString();
+let finalUrl = queryString ? `${optimizedUrl}?${queryString}` : optimizedUrl;
+
+// CDN Domain Replacement (The "Pro" Trick)
+// If VITE_CDN_URL is set (e.g., "https://cdn.tripzy.com"), replace the Supabase origin.
+// This allows Cloudflare to cache the images, saving Supabase bandwidth.
+const cdnUrl = import.meta.env.VITE_CDN_URL;
+if (cdnUrl && finalUrl.includes('supabase.co')) {
+    try {
+        const urlObj = new URL(finalUrl);
+        // Replace protocol and host, keep pathname and search
+        // Remove trailing slash from cdnUrl if present
+        const cleanCdnUrl = cdnUrl.replace(/\/$/, '');
+        // We construct the new URL using the CDN domain but keeping the path and query params
+        // Note: The CDN must be configured to proxy requests to the Supabase domain
+        finalUrl = `${cleanCdnUrl}${urlObj.pathname}${urlObj.search}`;
+    } catch (e) {
+        console.warn('Failed to construct CDN URL:', e);
     }
+}
 
-    return finalUrl;
+return finalUrl;
 };
 
 /**

@@ -436,32 +436,26 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         </div>
                     )}
 
-                    {/* Tabs */}
-                    <div className="flex border-b border-white/10 mb-8 relative">
-                        {/* Active Tab Indicator Background (Optional Animation could be added here) */}
+                    {/* Polished Tabs - Pill Style */}
+                    <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl mb-10 relative">
+                        {/* Animated background pill could be added with Framer Motion, but using Tailwind classes for now */}
                         <button
                             onClick={() => setActiveTab('conditions')}
-                            className={`flex-1 pb-4 text-sm font-bold tracking-wider uppercase transition-all relative ${activeTab === 'conditions'
-                                ? 'text-gold-400'
-                                : 'text-white/40 hover:text-white/70'
+                            className={`flex-1 py-3.5 text-xs font-black tracking-[0.2em] uppercase transition-all duration-500 rounded-xl relative z-10 ${activeTab === 'conditions'
+                                ? 'text-brand-bg bg-gold-500 shadow-xl'
+                                : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                                 }`}
                         >
                             {t('campaignConditions')}
-                            {activeTab === 'conditions' && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent shadow-[0_0_10px_rgba(212,175,55,0.7)]"></div>
-                            )}
                         </button>
                         <button
                             onClick={() => setActiveTab('locations')}
-                            className={`flex-1 pb-4 text-sm font-bold tracking-wider uppercase transition-all relative ${activeTab === 'locations'
-                                ? 'text-gold-400'
-                                : 'text-white/40 hover:text-white/70'
+                            className={`flex-1 py-3.5 text-xs font-black tracking-[0.2em] uppercase transition-all duration-500 rounded-xl relative z-10 ${activeTab === 'locations'
+                                ? 'text-brand-bg bg-gold-500 shadow-xl'
+                                : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                                 }`}
                         >
                             {t('validLocations')}
-                            {activeTab === 'locations' && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent shadow-[0_0_10px_rgba(212,175,55,0.7)]"></div>
-                            )}
                         </button>
                     </div>
 
@@ -501,22 +495,34 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                         ) : (
                             <div className="space-y-6">
                                 <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64 relative overflow-hidden">
-                                    <div className={`flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
-                                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
-                                            <LocationMarkerIcon className="w-8 h-8 text-gold-400" />
-                                        </div>
-                                        <p className="text-white/70 font-light text-lg">
-                                            {deal.latitude && deal.longitude
-                                                ? "View location on map"
-                                                : (t('validAtAllLocations') || "Valid at all branch locations.")}
-                                        </p>
-                                        {deal.latitude && deal.longitude && (
-                                            <button
-                                                onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
-                                                className="mt-6 px-6 py-2 rounded-full border border-gold-500/30 text-gold-400 text-sm font-bold hover:bg-gold-500/10 transition-colors"
-                                            >
-                                                Open in Maps
-                                            </button>
+                                    <div className={`w-full flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
+                                        {deal.latitude && deal.longitude ? (
+                                            <div className="w-full relative group">
+                                                {/* Map Placeholder with realistic aesthetic */}
+                                                <div className="w-full h-48 bg-[#1e293b] rounded-xl overflow-hidden mb-4 border border-white/10 flex items-center justify-center relative">
+                                                    <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent"></div>
+                                                    <LocationMarkerIcon className="w-12 h-12 text-gold-500/30 absolute" />
+                                                    <div className="z-10 text-center px-6">
+                                                        <p className="text-white font-bold mb-2">Detailed Map Location</p>
+                                                        <p className="text-white/40 text-xs italic">Tap to open in Google Maps</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
+                                                    className="w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-gold-500 hover:text-brand-bg transition-all duration-500"
+                                                >
+                                                    Open Navigation
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                                                    <GlobeIcon className="w-8 h-8 text-gold-400" />
+                                                </div>
+                                                <p className="text-white/70 font-light text-lg">
+                                                    {t('validAtAllLocations') || "Valid at all branch locations."}
+                                                </p>
+                                            </div>
                                         )}
                                     </div>
                                     {isLocked && (
