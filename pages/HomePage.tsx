@@ -22,7 +22,11 @@ import {
   CompassIcon,
   TagIcon,
   CustomBriefcaseIcon,
-  CustomHeartIcon as HeartIcon
+  CustomHeartIcon as HeartIcon,
+  CustomUtensilsIcon,
+  CustomPlaneIcon,
+  CustomShoppingBagIcon,
+  CustomSparklesIcon
 } from '../components/Icons';
 import FlightSearchWidget from '../components/FlightSearchWidget';
 import PullToRefresh from '../components/PullToRefresh';
@@ -244,27 +248,27 @@ const HomePage: React.FC = () => {
     ];
   }, [dynamicCategories, language, t]);
 
-  // Icon mapping for categories
+  // Icon mapping for categories - Keys must match database 'name' exactly
   const categoryIconMap: Record<string, React.FC<{ className?: string }>> = {
-    'All': SparklesIcon,
-    'Food & Drink': FireIcon, // Or a food icon if available
-    'Travel & Tours': GlobeIcon,
-    'Shopping': TagIcon,
-    'Entertainment': TicketIcon,
-    'Services': CustomBriefcaseIcon,
-    'Flights': GlobeIcon, // Should be redirected to Travel hub ideally
-    'Beauty & Wellness': SparklesIcon,
-    'Fashion': TagIcon,
-    'Electronics': CogIcon,
-    'Health': HeartIcon,
+    'All': CustomSparklesIcon,
+    'Dining': CustomUtensilsIcon,
+    'Travel': CustomPlaneIcon,
+    'Shopping': CustomShoppingBagIcon,
+    'Wellness': CustomSparklesIcon, // Or a wellness specific one if added
+    'Health': CustomSparklesIcon,
+    'Food & Drink': CustomUtensilsIcon,
+    'Travel & Tours': CustomPlaneIcon,
+    'Beauty & Wellness': CustomSparklesIcon,
   };
 
   const categoryBarData = React.useMemo(() => {
-    return categories.map(cat => ({
-      id: cat.key,
-      label: cat.name,
-      icon: categoryIconMap[cat.key] || CompassIcon
-    }));
+    return categories
+      .filter(cat => cat.key !== 'FlightWidget') // Hide internal widget category from UI
+      .map(cat => ({
+        id: cat.key,
+        label: cat.name,
+        icon: categoryIconMap[cat.key] || CompassIcon
+      }));
   }, [categories, categoryIconMap]);
 
   const ratingFilters = [

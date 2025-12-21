@@ -23,15 +23,15 @@ interface CategoryBarProps {
 
 const CategoryBar: React.FC<CategoryBarProps> = ({ categories, selectedCategoryId, onSelectCategory }) => {
     return (
-        <div className="sticky top-0 z-30 bg-white/80 dark:bg-brand-bg/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10 overflow-x-auto no-scrollbar">
-            <div className="flex items-center space-x-8 px-4 py-4 min-w-max mx-auto max-w-7xl">
+        <div className="sticky top-0 z-30 bg-transparent overflow-x-auto no-scrollbar py-2">
+            <div className="flex items-center space-x-10 px-4 min-w-max mx-auto max-w-7xl justify-center">
                 {categories.map((category) => (
                     <button
                         key={category.id}
                         onClick={() => onSelectCategory(category.id)}
                         className={`flex flex-col items-center space-y-2 group transition-all duration-300 ${selectedCategoryId === category.id
-                                ? 'text-brand-primary'
-                                : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-900 dark:hover:text-brand-text-light'
+                            ? 'text-brand-primary'
+                            : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-900 dark:hover:text-brand-text-light'
                             }`}
                     >
                         <div className={`relative p-2 rounded-xl transition-all duration-300 ${selectedCategoryId === category.id ? 'bg-brand-primary/10 scale-110' : 'group-hover:bg-white/5'
