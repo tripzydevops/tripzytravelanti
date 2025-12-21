@@ -554,7 +554,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Sticky Action Footer - Market Standard */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
+            <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
                 <div className="max-w-4xl mx-auto">
                     <div className="glass-premium rounded-[2rem] p-4 md:p-5 flex items-center justify-between gap-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
                         {/* Price Display */}
