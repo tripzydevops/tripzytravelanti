@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-    GlobeIcon,
-    CustomBriefcaseIcon,
-    ClockIcon,
-    FireIcon,
-    SparklesIcon,
-    TicketIcon,
-    LocationMarkerIcon
-} from './Icons';
+import { CompassIcon } from './Icons';
 
 interface Category {
     id: string;
@@ -34,9 +26,11 @@ const CategoryBar: React.FC<CategoryBarProps> = ({ categories, selectedCategoryI
                             : 'text-gray-500 dark:text-brand-text-muted hover:text-gray-900 dark:hover:text-brand-text-light'
                             }`}
                     >
-                        <div className={`relative p-2 rounded-xl transition-all duration-300 ${selectedCategoryId === category.id ? 'bg-brand-primary/10 scale-110' : 'group-hover:bg-white/5'
+                        <div className={`relative p-3 rounded-full border transition-all duration-300 ${selectedCategoryId === category.id
+                            ? 'bg-brand-primary/20 border-brand-primary/50 scale-110 shadow-[0_0_15px_rgba(var(--color-brand-primary-rgb),0.3)]'
+                            : 'bg-white/5 border-white/10 group-hover:bg-white/10 group-hover:border-white/20'
                             }`}>
-                            <category.icon className={`w-6 h-6 ${selectedCategoryId === category.id ? 'drop-shadow-[0_0_8px_rgba(var(--color-brand-primary-rgb),0.5)]' : ''
+                            <category.icon className={`w-6 h-6 ${selectedCategoryId === category.id ? 'drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]' : ''
                                 }`} />
                         </div>
                         <span className={`text-xs font-medium whitespace-nowrap ${selectedCategoryId === category.id ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'
