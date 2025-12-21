@@ -310,19 +310,25 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Header Actions (Absolute) */}
             <div className="absolute top-0 left-0 right-0 z-30 p-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => isPreview ? null : navigate(-1)}
-                        className="w-12 h-12 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 group"
+                        className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl hover:bg-white/20 transition-all duration-500 hover:scale-105 active:scale-95 group"
                         aria-label="Go back"
                         disabled={isPreview}
                     >
-                        <ChevronLeftIcon className="h-6 w-6 text-white group-hover:-translate-x-1 transition-transform" />
+                        <ChevronLeftIcon className="h-5 w-5 text-white group-hover:-translate-x-0.5 transition-transform" />
                     </button>
-                    {/* Brand Logo in Header */}
-                    <div className="flex items-center px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
-                        <img src="/favicon.png" alt="Tripzy" className="w-6 h-6 object-contain mr-2" />
-                        <span className="text-white font-black tracking-tighter text-lg leading-none">Tripzy</span>
+                    {/* Integrated Premium Branding */}
+                    <div className="flex items-center group cursor-pointer" onClick={() => navigate('/')}>
+                        <div className="relative">
+                            <img src="/favicon.png" alt="Tripzy" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] group-hover:drop-shadow-[0_0_12px_rgba(212,175,55,0.5)] transition-all duration-500" />
+                            <div className="absolute inset-0 bg-gold-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                        </div>
+                        <div className="ml-2.5 flex flex-col">
+                            <span className="text-white font-black tracking-tighter text-xl leading-none uppercase italic">Tripzy</span>
+                            <span className="text-[8px] text-gold-400 font-bold tracking-[0.3em] uppercase opacity-80 leading-none mt-1">Travel Exclusive</span>
+                        </div>
                     </div>
                 </div>
                 <div className="flex gap-4">
@@ -508,44 +514,58 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64 relative overflow-hidden">
                                     <div className={`w-full flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
                                         {deal.latitude && deal.longitude ? (
-                                            <div className="w-full space-y-4">
-                                                {/* Professional Map Interface */}
-                                                <div className="w-full h-48 bg-[#1e293b] rounded-2xl overflow-hidden border border-white/10 relative group">
-                                                    {/* Embed real Google Maps iframe if we have coordinates */}
-                                                    <iframe
-                                                        width="100%"
-                                                        height="100%"
-                                                        frameBorder="0"
-                                                        style={{ border: 0, opacity: 0.7 }}
-                                                        src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY_HERE&q=${deal.latitude},${deal.longitude}&zoom=15`}
-                                                        allowFullScreen
-                                                        loading="lazy"
-                                                        className="blur-[2px] group-hover:blur-0 transition-all duration-500"
-                                                        onError={(e) => {
-                                                            (e.target as HTMLIFrameElement).style.display = 'none';
-                                                        }}
-                                                    ></iframe>
+                                            <div className="w-full space-y-6">
+                                                {/* Professional Map Interface or Premium Fallback */}
+                                                <div className="w-full h-56 rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative group shadow-2xl">
+                                                    {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
+                                                        <iframe
+                                                            width="100%"
+                                                            height="100%"
+                                                            frameBorder="0"
+                                                            style={{ border: 0, opacity: 0.8 }}
+                                                            src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${deal.latitude},${deal.longitude}&zoom=15`}
+                                                            allowFullScreen
+                                                            loading="lazy"
+                                                            className="group-hover:opacity-100 transition-opacity duration-700"
+                                                        ></iframe>
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                                                            {/* Premium Abstract Map Pattern BG */}
+                                                            <div className="absolute inset-0 opacity-10 pointer-events-none">
+                                                                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                                                                    <defs>
+                                                                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                                                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
+                                                                        </pattern>
+                                                                    </defs>
+                                                                    <rect width="100%" height="100%" fill="url(#grid)" />
+                                                                </svg>
+                                                            </div>
 
-                                                    {/* Pure Styling Overlay for that Premium Look */}
-                                                    <div className="absolute inset-0 bg-gradient-to-tr from-brand-bg/80 via-transparent to-brand-bg/20 pointer-events-none"></div>
+                                                            <div className="relative mb-4">
+                                                                <div className="absolute inset-0 bg-gold-500/30 blur-2xl rounded-full scale-150 animate-pulse"></div>
+                                                                <div className="relative w-16 h-16 bg-gradient-to-tr from-gold-600 to-gold-400 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.4)] transform rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                                                                    <LocationMarkerIcon className="w-8 h-8 text-brand-bg" />
+                                                                </div>
+                                                            </div>
 
-                                                    {/* Centered Marker & Action */}
-                                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                        <div className="w-12 h-12 bg-gold-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)] animate-bounce">
-                                                            <LocationMarkerIcon className="w-6 h-6 text-brand-bg" />
+                                                            <h4 className="text-white font-black text-lg tracking-tight mb-2 uppercase italic">{deal.vendor || 'Premium Location'}</h4>
+                                                            <p className="text-white/50 text-xs font-medium max-w-[240px] leading-relaxed">
+                                                                Precision location detected. Tap below to navigate directly using Google Maps.
+                                                            </p>
                                                         </div>
-                                                        <p className="mt-4 text-white font-bold text-sm tracking-widest uppercase drop-shadow-md">
-                                                            {deal.vendor}
-                                                        </p>
-                                                    </div>
+                                                    )}
+
+                                                    {/* Premium Glass Overlay */}
+                                                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
                                                 </div>
 
                                                 <button
                                                     onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${deal.latitude},${deal.longitude}`, '_blank')}
-                                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-brand-bg font-black uppercase tracking-[0.2em] text-xs hover:from-gold-400 hover:to-gold-500 shadow-lg transform active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                                                    className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-gold-500 via-gold-400 to-gold-600 text-brand-bg font-black uppercase tracking-[0.25em] text-xs hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] active:scale-95 transition-all duration-500 flex items-center justify-center gap-3 shadow-xl group"
                                                 >
-                                                    <GlobeIcon className="w-4 h-4" />
-                                                    {t('openInGoogleMaps') || 'Open Navigation'}
+                                                    <GlobeIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                                                    {t('openInGoogleMaps') || 'Launch Navigation'}
                                                 </button>
                                             </div>
                                         ) : deal.storeLocations && deal.storeLocations.length > 0 ? (
