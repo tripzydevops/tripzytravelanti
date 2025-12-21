@@ -195,11 +195,12 @@ function AppContent() {
   /* Check if we are on an admin route */
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isDealDetailRoute = location.pathname.includes('/deals/') && location.pathname.split('/').length > 2;
 
   return (
     <SearchProvider>
       <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
-        <main className={`flex-grow ${user && !isAdminRoute ? 'pb-24' : ''}`}>
+        <main className={`flex-grow ${user && !isAdminRoute && !isDealDetailRoute ? 'pb-24' : ''}`}>
           <AnimatedRoutes />
         </main>
         {isChatbotVisible && user && !isAdminRoute && (
@@ -207,7 +208,7 @@ function AppContent() {
             <Chatbot />
           </Suspense>
         )}
-        {user && !isAdminRoute && <BottomNav />}
+        {user && !isAdminRoute && !isDealDetailRoute && <BottomNav />}
         {!isAdminRoute && !user && <Footer />}
       </div>
     </SearchProvider>
