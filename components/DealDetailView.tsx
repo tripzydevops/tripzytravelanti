@@ -310,14 +310,21 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Header Actions (Absolute) */}
             <div className="absolute top-0 left-0 right-0 z-30 p-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
-                <button
-                    onClick={() => isPreview ? null : navigate(-1)}
-                    className="w-12 h-12 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 group"
-                    aria-label="Go back"
-                    disabled={isPreview}
-                >
-                    <ChevronLeftIcon className="h-6 w-6 text-white group-hover:-translate-x-1 transition-transform" />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => isPreview ? null : navigate(-1)}
+                        className="w-12 h-12 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg hover:bg-white/20 transition-all duration-300 group"
+                        aria-label="Go back"
+                        disabled={isPreview}
+                    >
+                        <ChevronLeftIcon className="h-6 w-6 text-white group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                    {/* Brand Logo in Header */}
+                    <div className="flex items-center px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
+                        <img src="/favicon.png" alt="Tripzy" className="w-6 h-6 object-contain mr-2" />
+                        <span className="text-white font-black tracking-tighter text-lg leading-none">Tripzy</span>
+                    </div>
+                </div>
                 <div className="flex gap-4">
                     <button
                         onClick={handleShare}
@@ -358,8 +365,12 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <img
                     src={getHeroImageUrl(deal.imageUrl)}
-                    alt={title}
+                    alt="" // Empty alt to prevent broken text cluttering if image fails
                     className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-[10s] ease-out"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80';
+                        (e.target as HTMLImageElement).style.opacity = '0.5';
+                    }}
                 />
 
                 {/* Floating Gallery Badge (Placeholder for multiple images) */}
@@ -497,21 +508,44 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-64 relative overflow-hidden">
                                     <div className={`w-full flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
                                         {deal.latitude && deal.longitude ? (
-                                            <div className="w-full relative group">
-                                                {/* Map Placeholder with realistic aesthetic */}
-                                                <div className="w-full h-40 bg-[#1e293b] rounded-xl overflow-hidden mb-4 border border-white/10 flex items-center justify-center relative">
-                                                    <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent"></div>
-                                                    <LocationMarkerIcon className="w-10 h-10 text-gold-500/30 absolute" />
-                                                    <div className="z-10 text-center px-6">
-                                                        <p className="text-white font-bold mb-1">Detailed Map Location</p>
-                                                        <p className="text-white/40 text-xs italic">Tap to open in Google Maps</p>
+                                            <div className="w-full space-y-4">
+                                                {/* Professional Map Interface */}
+                                                <div className="w-full h-48 bg-[#1e293b] rounded-2xl overflow-hidden border border-white/10 relative group">
+                                                    {/* Embed real Google Maps iframe if we have coordinates */}
+                                                    <iframe
+                                                        width="100%"
+                                                        height="100%"
+                                                        frameBorder="0"
+                                                        style={{ border: 0, opacity: 0.7 }}
+                                                        src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY_HERE&q=${deal.latitude},${deal.longitude}&zoom=15`}
+                                                        allowFullScreen
+                                                        loading="lazy"
+                                                        className="blur-[2px] group-hover:blur-0 transition-all duration-500"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLIFrameElement).style.display = 'none';
+                                                        }}
+                                                    ></iframe>
+
+                                                    {/* Pure Styling Overlay for that Premium Look */}
+                                                    <div className="absolute inset-0 bg-gradient-to-tr from-brand-bg/80 via-transparent to-brand-bg/20 pointer-events-none"></div>
+
+                                                    {/* Centered Marker & Action */}
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                        <div className="w-12 h-12 bg-gold-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.4)] animate-bounce">
+                                                            <LocationMarkerIcon className="w-6 h-6 text-brand-bg" />
+                                                        </div>
+                                                        <p className="mt-4 text-white font-bold text-sm tracking-widest uppercase drop-shadow-md">
+                                                            {deal.vendor}
+                                                        </p>
                                                     </div>
                                                 </div>
+
                                                 <button
-                                                    onClick={() => window.open(`https://maps.google.com/?q=${deal.latitude},${deal.longitude}`, '_blank')}
-                                                    className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-gold-500 hover:text-brand-bg transition-all duration-500"
+                                                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${deal.latitude},${deal.longitude}`, '_blank')}
+                                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 text-brand-bg font-black uppercase tracking-[0.2em] text-xs hover:from-gold-400 hover:to-gold-500 shadow-lg transform active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
                                                 >
-                                                    Open Navigation
+                                                    <GlobeIcon className="w-4 h-4" />
+                                                    {t('openInGoogleMaps') || 'Open Navigation'}
                                                 </button>
                                             </div>
                                         ) : deal.storeLocations && deal.storeLocations.length > 0 ? (
@@ -529,7 +563,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                                             onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(loc.address + ' ' + (loc.city || ''))}`, '_blank')}
                                                             className="p-2 rounded-lg text-gold-400/50 hover:text-gold-400 hover:bg-white/5 transition-all"
                                                         >
-                                                            <ExternalLink className="w-4 h-4" />
+                                                            <LinkIcon className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 ))}
