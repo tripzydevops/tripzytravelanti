@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-brand-bg text-white;
+    background-color: #001A33; /* Fallback for immediate render */
+  }
+}
+
 @layer components {
   .btn-secondary {
     @apply bg-brand-secondary hover:bg-brand-secondary/90 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105;
