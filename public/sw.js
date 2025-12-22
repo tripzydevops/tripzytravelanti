@@ -27,33 +27,10 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch Event
-// Stale-While-Revalidate Strategy for Fetch
 self.addEventListener('fetch', (event) => {
-    // Skip cross-origin requests like Google Analytics or Ads to avoid opaque response issues
-    if (!event.request.url.startsWith(self.location.origin)) {
-        return;
-    }
-
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') return;
-
     event.respondWith(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.match(event.request).then((cachedResponse) => {
-                const fetchPromise = fetch(event.request).then((networkResponse) => {
-                    // Update the cache with the fresh response
-                    if (networkResponse.status === 200) {
-                        cache.put(event.request, networkResponse.clone());
-                    }
-                    return networkResponse;
-                }).catch(() => {
-                    // If network fails and no cache, we might want a fallback. 
-                    // For now, just let it fail or handled by the app.
-                });
-
-                // Return cached response immediately if available, otherwise wait for network
-                return cachedResponse || fetchPromise;
-            });
+        caches.match(event.request).then((response) => {
+            return response || fetch(event.request);
         })
     );
 });

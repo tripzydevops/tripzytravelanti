@@ -113,8 +113,7 @@ const AdminPage: React.FC = () => {
   };
 
   return (
-
-    <div className="flex bg-brand-bg min-h-screen">
+    <div className="flex bg-gray-50 dark:bg-brand-bg min-h-screen">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
@@ -125,14 +124,14 @@ const AdminPage: React.FC = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:sticky top-0 left-0 z-30 h-screen glass border-r border-white/10 transition-all duration-300 ease-in-out transform 
+        className={`fixed md:sticky top-0 left-0 z-30 h-screen bg-white dark:bg-brand-surface border-r border-gray-200 dark:border-white/5 transition-all duration-300 ease-in-out transform 
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} 
           ${isCollapsed ? 'md:w-20' : 'md:w-64'}
           flex flex-col`}
       >
         <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} transition-all duration-300`}>
-          {!isCollapsed && <h1 className="text-xl font-bold text-white whitespace-nowrap overflow-hidden">{t('adminDashboard')}</h1>}
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
+          {!isCollapsed && <h1 className="text-xl font-bold text-gray-900 dark:text-brand-text-light whitespace-nowrap overflow-hidden">{t('adminDashboard')}</h1>}
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -149,11 +148,11 @@ const AdminPage: React.FC = () => {
           {menuGroups.map((group, idx) => (
             <div key={idx}>
               {!isCollapsed && (
-                <h3 className="px-2 text-xs font-semibold text-white/40 uppercase tracking-wider mb-2 animate-fade-in">
+                <h3 className="px-2 text-xs font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-2 animate-fade-in">
                   {group.title}
                 </h3>
               )}
-              {isCollapsed && idx > 0 && <div className="h-px bg-white/5 my-2 mx-2"></div>}
+              {isCollapsed && idx > 0 && <div className="h-px bg-gray-200 dark:bg-white/5 my-2 mx-2"></div>}
 
               <ul className="space-y-1">
                 {group.items.map((item) => (
@@ -161,12 +160,12 @@ const AdminPage: React.FC = () => {
                     <button
                       onClick={() => handleTabClick(item.id)}
                       className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === item.id
-                        ? 'bg-brand-primary/20 text-brand-primary shadow-sm border border-brand-primary/20'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-brand-primary/10 text-brand-primary shadow-sm'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                         }`}
                     >
                       <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'gap-3'}`}>
-                        <span className={`${activeTab === item.id ? 'text-brand-primary' : 'text-white/40 group-hover:text-white/60'} flex-shrink-0`}>
+                        <span className={`${activeTab === item.id ? 'text-brand-primary' : 'text-gray-400 dark:text-white/40 group-hover:text-gray-600'} flex-shrink-0`}>
                           {item.icon}
                         </span>
                         {!isCollapsed && <span>{item.label}</span>}
@@ -187,7 +186,7 @@ const AdminPage: React.FC = () => {
 
                     {/* Tooltip on Collapsed */}
                     {isCollapsed && (
-                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-brand-surface border border-white/10 text-white text-xs rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none whitespace-nowrap z-50">
                         {item.label}
                       </div>
                     )}
@@ -199,10 +198,10 @@ const AdminPage: React.FC = () => {
         </div>
 
         {/* Sidebar Footer Actions */}
-        <div className="p-4 border-t border-white/5 space-y-2">
+        <div className="p-4 border-t border-gray-200 dark:border-white/5 space-y-2">
           <button
             onClick={() => navigate('/')}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors`}
             title="Back to App"
           >
             <HomeIcon className="w-5 h-5 flex-shrink-0" />
@@ -211,7 +210,7 @@ const AdminPage: React.FC = () => {
 
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors`}
             title="Logout"
           >
             <LogoutIcon className="w-5 h-5 flex-shrink-0" />
@@ -223,15 +222,15 @@ const AdminPage: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden bg-brand-surface border-b border-white/5 px-4 py-3 flex items-center justify-between">
+        <header className="md:hidden bg-white dark:bg-brand-surface border-b border-gray-200 dark:border-white/5 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-2 text-gray-300 hover:bg-white/5 rounded-lg"
+              className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg"
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-lg font-bold text-white">Tripzy Admin</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Tripzy Admin</h1>
           </div>
           <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -240,11 +239,11 @@ const AdminPage: React.FC = () => {
         </header>
 
         {/* Global Admin Utilities / Health Status (Desktop Only) */}
-        <div className="hidden md:flex items-center justify-between px-8 py-4 glass border-b border-white/5">
+        <div className="hidden md:flex items-center justify-between px-8 py-4 bg-white dark:bg-brand-surface border-b border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-              <span className="text-xs font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-widest">System Operational</span>
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-widest">System Operational</span>
             </div>
             <div className="h-4 w-px bg-gray-200 dark:bg-white/10"></div>
             <div className="flex gap-4">
@@ -264,7 +263,7 @@ const AdminPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="text-[10px] text-slate-400 font-medium italic">
+            <div className="text-[10px] text-gray-400 font-medium italic">
               Logged in as <span className="text-brand-primary font-bold not-italic">Admin</span>
             </div>
           </div>

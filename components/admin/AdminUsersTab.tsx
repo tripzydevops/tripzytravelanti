@@ -400,7 +400,7 @@ const AdminUsersTab: React.FC = () => {
                 </div>
 
                 {isUserFormVisible && (
-                    <section className="glass-premium p-6 rounded-xl animate-fade-in border border-white/10">
+                    <section className="bg-white dark:bg-brand-surface p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 animate-fade-in">
                         <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{editingUser ? t('editUser') : 'Add User'}</h2>
                         <form onSubmit={handleUserFormSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -628,7 +628,7 @@ const AdminUsersTab: React.FC = () => {
                     </section >
                 )}
 
-                <section className="mb-8 glass-premium p-6 rounded-lg">
+                <section className="mb-8 bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
                     <h2 className="text-xl font-bold mb-4">Global User Actions</h2>
                     <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-brand-bg rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="flex-grow">
@@ -640,7 +640,8 @@ const AdminUsersTab: React.FC = () => {
                                 onClick={() => {
                                     if (window.confirm('Are you sure you want to ENABLE notifications for ALL users?')) {
                                         updateAllUsersNotificationPreferences({ generalNotifications: true });
-                                        showSuccessToast('Notifications enabled for all users');
+                                        setShowSuccess('Notifications enabled for all users');
+                                        setTimeout(() => setShowSuccess(''), 3000);
                                     }
                                 }}
                                 className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
@@ -651,7 +652,8 @@ const AdminUsersTab: React.FC = () => {
                                 onClick={() => {
                                     if (window.confirm('Are you sure you want to DISABLE notifications for ALL users?')) {
                                         updateAllUsersNotificationPreferences({ generalNotifications: false });
-                                        showSuccessToast('Notifications disabled for all users');
+                                        setShowSuccess('Notifications disabled for all users');
+                                        setTimeout(() => setShowSuccess(''), 3000);
                                     }
                                 }}
                                 className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
@@ -715,10 +717,10 @@ const AdminUsersTab: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="glass-premium rounded-lg overflow-hidden">
+                    <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left text-gray-300">
-                                <thead className="text-xs text-white/60 uppercase bg-white/5">
+                            <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
+                                <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                                     <tr>
                                         <th scope="col" className="px-6 py-3">
                                             <input type="checkbox" onChange={handleSelectAllUsers} checked={selectedUsers.size === paginatedUsers.length && paginatedUsers.length > 0} className="rounded text-brand-primary focus:ring-brand-primary" />
@@ -732,84 +734,84 @@ const AdminUsersTab: React.FC = () => {
                                         <th scope="col" className="px-6 py-3 text-right">{t('actions')}</th>
                                     </tr>
                                 </thead>
-                            <tbody>
-                                {isLoading ? (
-                                    <tr><td colSpan={8} className="text-center py-8 text-white/60">Loading users...</td></tr>
-                                ) : paginatedUsers.map(user => {
-                                    const { remaining, total } = calculateRemainingRedemptions(user);
-                                    const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
+                                <tbody>
+                                    {isLoading ? (
+                                        <tr><td colSpan={8} className="text-center py-8">Loading users...</td></tr>
+                                    ) : paginatedUsers.map(user => {
+                                        const { remaining, total } = calculateRemainingRedemptions(user);
+                                        const renewalDate = getNextRenewalDate(user).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US');
 
-                                    return (
-                                        <tr key={user.id} className={`border-b border-white/5 hover:bg-white/5 transition-colors ${user.status === 'banned' ? 'bg-red-500/10' : ''}`}>
-                                            <td className="px-6 py-4">
-                                                <input type="checkbox" checked={selectedUsers.has(user.id)} onChange={() => handleSelectUser(user.id)} className="rounded text-brand-primary focus:ring-brand-primary" />
-                                            </td>
-                                            <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">
-                                                {user.name}
-                                                {user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
-                                                {user.status === 'banned' && <span className="ml-2 text-xs bg-red-500 text-white font-bold px-2 py-0.5 rounded-full">Banned</span>}
-                                            </th>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col text-white/80">
-                                                    <span>{user.email}</span>
-                                                    {user.emailConfirmedAt ? (
-                                                        <span className="flex items-center text-xs text-green-400 mt-1">
-                                                            <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                            Verified
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center text-xs text-yellow-400 mt-1">
-                                                            <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                            Pending Verification
-                                                        </span>
+                                        return (
+                                            <tr key={user.id} className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${user.status === 'banned' ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
+                                                <td className="px-6 py-4">
+                                                    <input type="checkbox" checked={selectedUsers.has(user.id)} onChange={() => handleSelectUser(user.id)} className="rounded text-brand-primary focus:ring-brand-primary" />
+                                                </td>
+                                                <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
+                                                    {user.name}
+                                                    {user.isAdmin && <span className="ml-2 text-xs bg-brand-secondary text-brand-bg font-bold px-2 py-0.5 rounded-full">Admin</span>}
+                                                    {user.status === 'banned' && <span className="ml-2 text-xs bg-red-500 text-white font-bold px-2 py-0.5 rounded-full">Banned</span>}
+                                                </th>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span>{user.email}</span>
+                                                        {user.emailConfirmedAt ? (
+                                                            <span className="flex items-center text-xs text-green-500 mt-1">
+                                                                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                                Verified
+                                                            </span>
+                                                        ) : (
+                                                            <span className="flex items-center text-xs text-yellow-500 mt-1">
+                                                                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                                Pending Verification
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">{user.mobile || '-'}</td>
+                                                <td className="px-6 py-4">{user.tier}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`font-semibold ${remaining === 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                        {total === Infinity ? '∞' : `${remaining} / ${total}`}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">{renewalDate}</td>
+                                                <td className="px-6 py-4 text-right space-x-2">
+                                                    {!user.emailConfirmedAt && (
+                                                        <button onClick={() => handleVerifyUser(user.id)} className="font-medium text-blue-500 hover:underline">Verify</button>
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-white/80">{user.mobile || '-'}</td>
-                                            <td className="px-6 py-4 text-white/80">{user.tier}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`font-semibold ${remaining === 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                                    {total === Infinity ? '∞' : `${remaining} / ${total}`}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-white/80">{renewalDate}</td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                {!user.emailConfirmedAt && (
-                                                    <button onClick={() => handleVerifyUser(user.id)} className="font-medium text-blue-400 hover:text-blue-300 hover:underline">Verify</button>
-                                                )}
-                                                <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-400 hover:text-green-300 hover:underline">Payments</button>
-                                                <button onClick={() => handleViewActivityClick(user)} className="font-medium text-purple-400 hover:text-purple-300 hover:underline">Activity</button>
-                                                <button onClick={() => handleSendTestPush(user.id)} className="font-medium text-orange-400 hover:text-orange-300 hover:underline" title="Send Test Push Notification">Push</button>
-                                                <button onClick={() => handleResetHistory(user.id)} className="font-medium text-red-400 hover:text-red-300 hover:underline" title="Wipe Wallet & Redemptions">Reset</button>
-                                                <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-400 hover:text-blue-300 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
-                                                <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:text-brand-primary hover:underline">{t('editUser')}</button>
-                                                <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:text-red-400 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteUser')}</button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
+                                                    <button onClick={() => handleViewPaymentsClick(user)} className="font-medium text-green-500 hover:underline">Payments</button>
+                                                    <button onClick={() => handleViewActivityClick(user)} className="font-medium text-purple-500 hover:underline">Activity</button>
+                                                    <button onClick={() => handleSendTestPush(user.id)} className="font-medium text-orange-500 hover:underline" title="Send Test Push Notification">Push</button>
+                                                    <button onClick={() => handleResetHistory(user.id)} className="font-medium text-red-600 hover:underline" title="Wipe Wallet & Redemptions">Reset</button>
+                                                    <button onClick={() => setViewingRedemptionsForUser(user)} className="font-medium text-blue-500 hover:underline">{t('viewRedemptions') || 'View Redemptions'}</button>
+                                                    <button onClick={() => handleEditUserClick(user)} className="font-medium text-brand-secondary hover:underline">{t('editUser')}</button>
+                                                    <button onClick={() => handleDeleteUserClick(user.id)} className="font-medium text-red-500 hover:underline disabled:text-red-500/50 disabled:cursor-not-allowed" disabled={user.id === loggedInUser?.id}>{t('deleteUser')}</button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
                             </table>
                         </div>
                         {/* Pagination Controls */}
-                        <div className="flex justify-between items-center px-6 py-4 border-t border-white/10">
-                            <span className="text-sm text-white/50">
+                        <div className="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-brand-bg border-t border-gray-200 dark:border-gray-700">
+                            <span className="text-sm text-gray-700 dark:text-brand-text-muted">
                                 Showing {((page - 1) * USERS_PER_PAGE) + 1} to {Math.min(page * USERS_PER_PAGE, totalUsers)} of {totalUsers} users
                             </span>
-                            <div className="flex gap-2">
+                            <div className="space-x-2">
                                 <button
-                                    onClick={() => setPage(page - 1)}
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
                                     disabled={page === 1}
-                                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-md text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="px-4 py-2 bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-brand-text-light hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {t('previous')}
+                                    Previous
                                 </button>
                                 <button
-                                    onClick={() => setPage(page + 1)}
+                                    onClick={() => setPage(p => p + 1)}
                                     disabled={page * USERS_PER_PAGE >= totalUsers}
-                                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-md text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="px-4 py-2 bg-white dark:bg-brand-surface border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-brand-text-light hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {t('next')}
+                                    Next
                                 </button>
                             </div>
                         </div>

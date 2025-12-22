@@ -22,7 +22,7 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
 
 const StarRating: React.FC<{ rating: number; ratingCount: number; t: (key: string) => string }> = ({ rating, ratingCount, t }) => {
   if (ratingCount === 0) {
-    return <p className="text-sm text-slate-400">{t('noRatingsYet')}</p>;
+    return <p className="text-sm text-brand-text-muted">{t('noRatingsYet')}</p>;
   }
 
   const fullStars = Math.floor(rating);
@@ -33,7 +33,7 @@ const StarRating: React.FC<{ rating: number; ratingCount: number; t: (key: strin
         {[...Array(fullStars)].map((_, i) => <StarIcon key={`full-${i}`} className="w-4 h-4 text-yellow-400" fill="currentColor" />)}
         {[...Array(5 - fullStars)].map((_, i) => <StarIcon key={`empty-${i}`} className="w-4 h-4 text-yellow-400" />)}
       </div>
-      <span className="text-sm text-slate-500">
+      <span className="text-sm text-brand-text-muted">
         {rating.toFixed(1)} ({ratingCount})
       </span>
     </div>
@@ -57,7 +57,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const isSaved = isDealSaved(deal.id);
 
-  const title = language === 'tr' ? deal.title_tr || deal.title : deal.title;
+  const title = language === 'tr' ? deal.title_tr : deal.title;
+  const description = language === 'tr' ? deal.description_tr : deal.description;
   const discount = deal.discountPercentage && deal.discountPercentage > 0
     ? deal.discountPercentage
     : (deal.originalPrice > 0 ? Math.round(((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100) : 0);
@@ -99,6 +100,15 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     }
   };
 
+  const tierColors: Record<SubscriptionTier, { bg: string, text: string }> = {
+    [SubscriptionTier.BASIC]: { bg: 'rgba(99, 102, 241, 0.2)', text: '#6366F1' },
+    [SubscriptionTier.PREMIUM]: { bg: 'rgba(244, 114, 182, 0.2)', text: '#F472B6' },
+    [SubscriptionTier.VIP]: { bg: 'rgba(251, 191, 36, 0.2)', text: '#FBBF24' },
+    [SubscriptionTier.FREE]: { bg: 'rgba(148, 163, 184, 0.2)', text: '#94A3B8' },
+    [SubscriptionTier.NONE]: { bg: 'rgba(148, 163, 184, 0.2)', text: '#94A3B8' },
+  };
+  const requiredTierColor = tierColors[deal.requiredTier] || tierColors.FREE;
+
   const CardContent = () => (
     <>
       {/* Image Container with refined aspects */}
@@ -113,7 +123,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {/* Animated Shine Effect */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10 pointer-events-none"></div>
 
-        {/* Floating Heart Button (Top Right) */}
+        {/* Floating Heart Button (Top Right) - Industry Standard */}
         {user && !isLocked && (
           <button
             onClick={handleSaveToggle}
@@ -141,6 +151,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
               {language === 'tr' ? 'YENİ' : 'NEW'}
             </div>
           )}
+          {/* Popular Badge for well-rated deals */}
           {deal.ratingCount > 20 && !isLocked && (
             <div className="bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tighter uppercase whitespace-nowrap flex items-center gap-1">
               <StarIcon className="w-2.5 h-2.5 fill-current" />
@@ -174,10 +185,10 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         )}
       </div>
 
-      {/* Details Section */}
-      <div className="p-4 flex flex-col gap-3">
+      {/* Content Section */}
+      <div className="p-4 flex flex-col flex-grow relative bg-brand-surface/30">
         {/* Vendor Header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2.5">
           <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
             {deal.companyLogoUrl ? (
               <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover" />
@@ -189,26 +200,24 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           </div>
           <div className="flex flex-col items-start min-w-0">
             <div className="flex items-center gap-1 min-w-0 truncate w-full">
-              <span className="text-[11px] font-semibold text-brand-text-muted uppercase tracking-widest leading-tight truncate">{deal.vendor}</span>
+              <span className="text-[11px] font-semibold text-white/50 uppercase tracking-widest leading-tight truncate">{deal.vendor}</span>
               <CheckCircle className="w-3 h-3 text-gold-400 shrink-0" />
             </div>
             {deal.storeLocations && deal.storeLocations.length > 0 && (
-              <div className="flex items-center gap-1 mt-0.5 opacity-60 shrink-0">
-                <LocationIcon className="w-2.5 h-2.5 text-slate-400" />
-                <span className="text-[9px] font-medium text-slate-400 leading-none whitespace-nowrap">{deal.storeLocations[0].city || deal.storeLocations[0].name}</span>
+              <div className="flex items-center gap-1 mt-0.5 opacity-40 shrink-0">
+                <LocationIcon className="w-2.5 h-2.5" />
+                <span className="text-[9px] font-medium leading-none whitespace-nowrap">{deal.storeLocations[0].city || deal.storeLocations[0].name}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Title */}
-        <div className="space-y-1">
-          <h3 className="font-heading font-bold text-[16px] text-white leading-tight line-clamp-2 group-hover:text-gold-500 transition-colors">
-            {title}
-          </h3>
-        </div>
+        {/* Title & Description */}
+        <h3 className="text-base font-heading font-bold text-white mb-1.5 leading-[1.3] line-clamp-2 min-h-[2.6rem]">
+          {title}
+        </h3>
 
-        {/* Price & Rating Row */}
+        {/* Rating & Expiry info row */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
           <div className="flex flex-col gap-0.5">
             <div className={`flex items-baseline gap-1.5 ${discount >= 50 && !isLocked ? 'animate-pulse-subtle' : ''}`}>
@@ -216,18 +225,23 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
                 {deal.originalPrice > 0 ? `₺${deal.discountedPrice.toLocaleString()}` : `%${discount}`}
               </span>
               {deal.originalPrice > 0 && (
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 line-through decoration-gold-500/50">
+                <span className="text-[11px] text-white/30 line-through decoration-white/20">
                   ₺{deal.originalPrice.toLocaleString()}
                 </span>
               )}
             </div>
-            <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${daysLeftText === t('expired') ? 'text-red-500' : 'text-emerald-600'}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${daysLeftText === t('expired') ? 'text-red-400' : 'text-emerald-400/80'}`}>
               {daysLeftText}
             </p>
           </div>
 
           <div className="flex flex-col items-end gap-1">
             <StarRating rating={deal.rating} ratingCount={deal.ratingCount} t={t} />
+            {isLocked && (
+              <div className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold text-gold-400 uppercase tracking-tighter">
+                {deal.requiredTier}
+              </div>
+            )}
           </div>
         </div>
       </div>

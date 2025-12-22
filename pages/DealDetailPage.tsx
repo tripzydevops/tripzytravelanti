@@ -58,7 +58,7 @@ const DealDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-brand-bg">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
       </div>
     );
@@ -66,8 +66,8 @@ const DealDetailPage: React.FC = () => {
 
   if (!id || !fetchedDeal) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg p-4">
-        <h2 className="text-2xl font-bold text-white mb-4">{t('dealNotFound') || 'Deal Not Found'}</h2>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-brand-bg p-4">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{t('dealNotFound') || 'Deal Not Found'}</h2>
         <button
           onClick={() => navigate('/')}
           className="bg-brand-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors"

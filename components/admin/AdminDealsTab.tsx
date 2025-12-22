@@ -626,11 +626,11 @@ const AdminDealsTab: React.FC = () => {
             )}
 
             {isDealFormVisible && (
-                <section className="glass-premium p-6 rounded-lg mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-4">{editingDeal ? t('editDeal') : t('addDeal')}</h2>
+                <section className="bg-white dark:bg-brand-surface p-6 rounded-lg mb-8 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-4">{editingDeal ? t('editDeal') : t('addDeal')}</h2>
 
                     {/* Form Tabs - Reduced to 2 tabs */}
-                    <div className="flex border-b border-white/10 mb-6">
+                    <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
                         {['Deal Details', 'Redemption'].map((tab) => (
                             <button
                                 key={tab}
@@ -638,7 +638,7 @@ const AdminDealsTab: React.FC = () => {
                                 onClick={() => setFormTab(tab)}
                                 className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${formTab === tab
                                     ? 'border-brand-primary text-brand-primary'
-                                    : 'border-transparent text-gray-400 hover:text-white'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                     }`}
                             >
                                 {tab}
@@ -654,23 +654,23 @@ const AdminDealsTab: React.FC = () => {
                                 <div className="space-y-4 animate-fade-in">
                                     {/* Title - Primary Input */}
                                     <div>
-                                        <label className="block text-sm font-medium text-brand-text-muted mb-1">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
                                             Title <span className="text-red-500">*</span> {isTranslating.title && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
                                         </label>
-                                        <input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} required className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none transition-all" placeholder="Enter title (auto-translates)" />
+                                        <input type="text" name="title" value={dealFormData.title} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="Enter title (auto-translates)" />
                                     </div>
 
                                     {/* Description - Primary Input */}
                                     <div>
-                                        <label className="block text-sm font-medium text-brand-text-muted mb-1">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
                                             Description <span className="text-red-500">*</span> {isTranslating.description && <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />}
                                         </label>
-                                        <textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} required className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10 h-20 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none transition-all" placeholder="Enter description (auto-translates)" />
+                                        <textarea name="description" value={dealFormData.description} onChange={handleDealInputChange} required className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-20" placeholder="Enter description (auto-translates)" />
                                     </div>
 
                                     {/* Collapsible Translation Override */}
                                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                                        <button type="button" onClick={() => setShowTranslations(!showTranslations)} className="w-full px-3 py-2 bg-slate-50 dark:bg-brand-bg/50 text-left text-sm font-medium text-slate-600 dark:text-brand-text-muted flex justify-between items-center">
+                                        <button type="button" onClick={() => setShowTranslations(!showTranslations)} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 text-left text-sm font-medium text-gray-600 dark:text-gray-400 flex justify-between items-center">
                                             <span>📝 {showTranslations ? 'Hide' : 'View/Edit'} Translations (Turkish)</span>
                                             <span className={`transform transition-transform ${showTranslations ? 'rotate-180' : ''}`}>▼</span>
                                         </button>
@@ -708,18 +708,19 @@ const AdminDealsTab: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-white/10">
-                                        <h3 className="text-sm font-semibold text-brand-text-muted mb-3">Pricing & Category</h3>
+                                    {/* Pricing Section */}
+                                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <h3 className="text-sm font-semibold text-gray-600 dark:text-brand-text-muted mb-3">Pricing & Category</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-brand-text-muted mb-1">{t('dealTypeLabel')}</label>
-                                                <select name="dealTypeKey" value={dealFormData.dealTypeKey} onChange={handleDealInputChange} className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10 [&>option]:bg-brand-bg [&>option]:text-white">
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('dealTypeLabel')}</label>
+                                                <select name="dealTypeKey" value={dealFormData.dealTypeKey} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                                     {getDiscountTypeOptions(language, true).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-brand-text-muted mb-1">{t('categoryLabel')} <span className="text-red-500">*</span></label>
-                                                <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10 [&>option]:bg-brand-bg [&>option]:text-white">
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('categoryLabel')} <span className="text-red-500">*</span></label>
+                                                <select name="category" value={dealFormData.category} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
                                                     <option value="">Select a Category</option>
                                                     {categories.map(cat => (
                                                         <option key={cat.id} value={cat.name}>
@@ -731,13 +732,13 @@ const AdminDealsTab: React.FC = () => {
                                         </div>
                                         <div className="grid grid-cols-3 gap-4">
                                             {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
-                                                <div><label className="block text-sm font-medium text-brand-text-muted mb-1">{t('originalPriceLabel')} <span className="text-red-500">*</span></label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required min="0.01" step="0.01" className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10" /></div>
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('originalPriceLabel')} <span className="text-red-500">*</span></label><input type="number" name="originalPrice" value={dealFormData.originalPrice} onChange={handleDealInputChange} required min="0.01" step="0.01" className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                             )}
                                             {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
-                                                <div><label className="block text-sm font-medium text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10" placeholder="e.g. 20" /></div>
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountPercentageLabel')}</label><input type="number" name="discountPercentage" value={dealFormData.discountPercentage || ''} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" placeholder="e.g. 20" /></div>
                                             )}
                                             {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
-                                                <div><label className="block text-sm font-medium text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} className="w-full bg-white/5 rounded-md p-2 text-white border border-white/10" /></div>
+                                                <div><label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">{t('discountedPriceLabel')}</label><input type="number" name="discountedPrice" value={dealFormData.discountedPrice} onChange={handleDealInputChange} className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600" /></div>
                                             )}
                                         </div>
                                     </div>

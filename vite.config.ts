@@ -2,8 +2,6 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
-import WebfontDownload from 'vite-plugin-webfont-dl';
 import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig(({ mode }) => {
@@ -15,9 +13,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      WebfontDownload([
-        'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap'
-      ]),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -42,20 +37,6 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}']
         }
-      }),
-      ViteImageOptimizer({
-        png: {
-          quality: 80,
-        },
-        jpeg: {
-          quality: 80,
-        },
-        jpg: {
-          quality: 80,
-        },
-        webp: {
-          lossless: true,
-        },
       }),
       visualizer({
         open: false,

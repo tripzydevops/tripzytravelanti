@@ -73,9 +73,9 @@ const AdminPromoCodesTab: React.FC = () => {
             {loading ? (
                 <div className="flex justify-center p-8"><SpinnerIcon className="w-8 h-8 text-brand-primary animate-spin" /></div>
             ) : (
-                <div className="glass-premium rounded-lg shadow overflow-hidden">
-                    <table className="w-full text-sm text-left text-gray-300">
-                        <thead className="text-xs text-white/60 uppercase bg-white/5">
+                <div className="bg-white dark:bg-brand-surface rounded-lg shadow overflow-hidden">
+                    <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
+                        <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                             <tr>
                                 <th className="px-6 py-3">Code</th>
                                 <th className="px-6 py-3">Discount</th>
@@ -86,28 +86,28 @@ const AdminPromoCodesTab: React.FC = () => {
                                 <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/10">
+                        <tbody>
                             {codes.map((code) => (
-                                <tr key={code.code} className="hover:bg-white/5 transition-colors">
-                                    <td className="px-6 py-4 font-mono font-bold text-white">{code.code}</td>
+                                <tr key={code.code} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">{code.code}</td>
                                     <td className="px-6 py-4">
                                         {code.discountType === 'percentage' ? `${code.discountValue}%` : `₺${code.discountValue}`}
                                     </td>
                                     <td className="px-6 py-4">{code.currentUses}</td>
                                     <td className="px-6 py-4">{code.maxUses || '∞'}</td>
-                                    <td className="px-6 py-4 text-white/70">
+                                    <td className="px-6 py-4">
                                         {code.expiresAt ? new Date(code.expiresAt).toLocaleDateString() : 'Never'}
                                     </td>
                                     <td className="px-6 py-4">
                                         <button
                                             onClick={() => handleToggleStatus(code.code, code.isActive)}
-                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${code.isActive ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-400'}`}
+                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${code.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
                                         >
                                             {code.isActive ? 'Active' : 'Inactive'}
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button onClick={() => handleDelete(code.code)} className="text-red-400 hover:text-red-300">
+                                        <button onClick={() => handleDelete(code.code)} className="text-red-600 hover:text-red-900">
                                             <TrashIcon className="w-5 h-5" />
                                         </button>
                                     </td>
@@ -115,7 +115,7 @@ const AdminPromoCodesTab: React.FC = () => {
                             ))}
                             {codes.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-white/50">No promo codes found.</td>
+                                    <td colSpan={7} className="px-6 py-8 text-center">No promo codes found.</td>
                                 </tr>
                             )}
                         </tbody>

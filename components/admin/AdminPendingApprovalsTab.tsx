@@ -33,10 +33,10 @@ const AdminPendingApprovalsTab: React.FC = () => {
     return (
         <section>
             <h2 className="text-2xl font-bold mb-4">Pending Approvals</h2>
-            <div className="glass-premium rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-gray-300">
-                        <thead className="text-xs text-white/60 uppercase bg-white/5">
+                    <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
+                        <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Title</th>
                                 <th scope="col" className="px-6 py-3">Partner</th>
@@ -45,17 +45,17 @@ const AdminPendingApprovalsTab: React.FC = () => {
                                 <th scope="col" className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/10">
+                        <tbody>
                             {pendingDeals.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-white/50">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-brand-text-muted">
                                         No pending deals.
                                     </td>
                                 </tr>
                             ) : (
                                 pendingDeals.map(deal => (
-                                    <tr key={deal.id} className="hover:bg-white/5 transition-colors">
-                                        <th scope="row" className="px-6 py-4 font-medium text-white whitespace-nowrap">
+                                    <tr key={deal.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light whitespace-nowrap">
                                             <div className="flex items-center">
                                                 {deal.imageUrl && <img src={deal.imageUrl} alt="" className="w-8 h-8 rounded object-cover mr-2" />}
                                                 {deal.title}
@@ -65,9 +65,9 @@ const AdminPendingApprovalsTab: React.FC = () => {
                                         <td className="px-6 py-4">{deal.category}</td>
                                         <td className="px-6 py-4">${deal.discountedPrice}</td>
                                         <td className="px-6 py-4 text-right space-x-2">
-                                            <button onClick={() => setEditingDeal(deal)} className="font-medium text-blue-400 hover:text-blue-300 hover:underline">View Details</button>
-                                            <button onClick={() => handleApproveDeal(deal.id)} className="font-medium text-green-400 hover:text-green-300 hover:underline">Approve</button>
-                                            <button onClick={() => handleRejectDeal(deal.id)} className="font-medium text-red-500 hover:text-red-400 hover:underline">Reject</button>
+                                            <button onClick={() => setEditingDeal(deal)} className="font-medium text-blue-600 hover:underline">View Details</button>
+                                            <button onClick={() => handleApproveDeal(deal.id)} className="font-medium text-green-600 hover:underline">Approve</button>
+                                            <button onClick={() => handleRejectDeal(deal.id)} className="font-medium text-red-600 hover:underline">Reject</button>
                                         </td>
                                     </tr>
                                 ))

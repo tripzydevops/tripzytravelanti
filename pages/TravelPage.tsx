@@ -17,7 +17,7 @@ const TravelPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-brand-bg pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-brand-bg pb-24">
             <MetaHead
                 title={t('travelPageTitle') || "Travel Hub - Tripzy"}
                 description={t('travelPageDescription') || "Book hotels, flights, and exclusive travel experiences."}
@@ -77,7 +77,7 @@ const TravelPage: React.FC = () => {
                                     {t('notifyMe') || "Stay Tuned"}
                                 </button>
                                 <div className="px-6 py-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl text-xs font-bold text-white/40 uppercase tracking-[0.2em]">
-                                    Coming Q1 2026
+                                    Coming Q1 2024
                                 </div>
                             </div>
                         </div>
