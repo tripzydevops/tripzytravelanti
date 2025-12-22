@@ -28,8 +28,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       return 'tr';
     }
 
-    // Default to English for all other cases (Global)
-    return 'en';
+    // Default to Turkish for all other cases (Turkey Launch Priority)
+    return 'tr';
   };
 
   const [language, setLanguage] = useState<Language>(getInitialLanguage());

@@ -27,9 +27,9 @@ const TravelPage: React.FC = () => {
             {/* Hero Section */}
             <div className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden">
                 <img
-                    src="https://images.unsplash.com/photo-1436491865332-7a61a109c0f2?w=1600&q=80"
+                    src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80"
                     alt="Travel Hub Hero"
-                    className="absolute inset-0 w-full h-full object-cover brightness-50"
+                    className="absolute inset-0 w-full h-full object-cover brightness-50 bg-brand-bg/80"
                 />
                 <div className="relative z-10 text-center px-4">
                     <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-white mb-4 drop-shadow-lg">

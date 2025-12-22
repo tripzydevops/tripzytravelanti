@@ -17,7 +17,7 @@ const getInitialTheme = (): Theme => {
       return storedPrefs;
     }
   }
-  return 'system';
+  return 'dark';
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -30,7 +30,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() => {
     const initialTheme = getInitialTheme();
-    return initialTheme === 'system' ? getSystemTheme() : initialTheme;
+    return initialTheme === 'system' ? 'dark' : initialTheme;
   });
 
   const setTheme = (newTheme: Theme) => {
@@ -51,7 +51,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
       // Only update if the theme is currently set to 'system'
       if (localStorage.getItem('color-theme') === 'system') {
@@ -65,7 +65,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setEffectiveTheme(systemTheme);
       }
     };
-    
+
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [getSystemTheme]);
