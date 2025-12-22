@@ -83,7 +83,7 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+  <div className="min-h-screen flex items-center justify-center bg-white dark:bg-brand-bg transition-colors duration-300">
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
   </div>
 );
@@ -186,7 +186,7 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-brand-bg transition-colors duration-300">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
       </div>
     );
@@ -199,7 +199,7 @@ function AppContent() {
 
   return (
     <SearchProvider>
-      <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
+      <div className="flex flex-col min-h-screen bg-white dark:bg-brand-bg text-slate-900 dark:text-brand-text-light transition-colors duration-300">
         <main className={`flex-grow ${user && !isAdminRoute && !isDealDetailRoute ? 'pb-24' : ''}`}>
           <AnimatedRoutes />
         </main>

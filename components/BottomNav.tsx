@@ -21,13 +21,13 @@ const BottomNav: React.FC = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
       {/* Gradient fade effect at bottom of content */}
-      <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-brand-bg to-transparent pointer-events-none" />
+      <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-white dark:from-brand-bg to-transparent pointer-events-none transition-colors duration-300" />
 
       {/* Main navigation container */}
       <div className="mx-3 mb-3 sm:mx-4 sm:mb-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+        <div className="relative overflow-hidden rounded-2xl bg-white/70 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl transition-colors duration-300">
           {/* Subtle top highlight */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-white/20 to-transparent" />
 
           {/* Navigation items */}
           <div className="flex justify-around items-center px-1 py-2 sm:py-3">
@@ -39,7 +39,7 @@ const BottomNav: React.FC = () => {
                 className={({ isActive }) =>
                   `relative flex flex-col items-center justify-center flex-1 py-2 px-1 transition-all duration-300 ease-out group ${isActive
                     ? 'text-brand-primary'
-                    : 'text-white/50 hover:text-white/80'
+                    : 'text-slate-400 dark:text-white/50 hover:text-slate-600 dark:hover:text-white/80'
                   }`
                 }
               >

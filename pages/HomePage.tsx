@@ -390,7 +390,7 @@ const HomePage: React.FC = () => {
             {/* Premium Glass Search Bar */}
             <div className="max-w-3xl mx-auto relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-gold-500/20 to-purple-500/20 rounded-full blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-2 shadow-2xl flex items-center transition-all duration-300 focus-within:bg-white/15 focus-within:border-gold-500/50">
+              <div className="relative bg-white/70 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/20 rounded-full p-2 shadow-2xl flex items-center transition-all duration-300 focus-within:bg-white dark:focus-within:bg-white/15 focus-within:border-gold-500/50">
                 <div className="pl-4 pr-2">
                   <Search className="h-6 w-6 text-gold-400" />
                 </div>
@@ -404,7 +404,7 @@ const HomePage: React.FC = () => {
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                   onKeyDown={handleSearchKeyDown}
-                  className="w-full bg-transparent border-none text-white text-lg placeholder-white/60 focus:ring-0 px-2 py-3"
+                  className="w-full bg-transparent border-none text-slate-900 dark:text-white text-lg placeholder-slate-400 dark:placeholder-white/60 focus:ring-0 px-2 py-3"
                   aria-label={t('searchPlaceholder')}
                 />
 
@@ -431,7 +431,7 @@ const HomePage: React.FC = () => {
 
               {/* Recent Searches Dropdown */}
               {isSearchFocused && recentSearches.length > 0 && (
-                <div className="absolute top-full mt-4 w-full bg-[#0f172a]/90 backdrop-blur-xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-20 overflow-hidden border border-white/10 animate-slide-up">
+                <div className="absolute top-full mt-4 w-full bg-white/95 dark:bg-[#0f172a]/90 backdrop-blur-xl rounded-2xl shadow-2xl z-20 overflow-hidden border border-slate-200 dark:border-white/10 animate-slide-up">
                   <div className="flex justify-between items-center px-6 py-4 border-b border-white/10">
                     <h4 className="text-xs font-bold text-gold-500 uppercase tracking-widest">{t('recentSearches')}</h4>
                     <button onClick={clearRecentSearches} className="flex items-center text-xs text-white/50 hover:text-white transition-colors">
@@ -444,9 +444,9 @@ const HomePage: React.FC = () => {
                       <li key={index}>
                         <button
                           onClick={() => handleRecentSearchClick(term)}
-                          className="w-full text-left px-6 py-3 flex items-center text-white/90 hover:bg-white/5 hover:text-gold-400 transition-colors duration-150 border-b border-white/5 last:border-0"
+                          className="w-full text-left px-6 py-3 flex items-center text-slate-700 dark:text-white/90 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-gold-500 dark:hover:text-gold-400 transition-colors duration-150 border-b border-slate-100 dark:border-white/5 last:border-0"
                         >
-                          <ClockIcon className="w-4 h-4 mr-3 text-white/40" />
+                          <ClockIcon className="w-4 h-4 mr-3 text-slate-400 dark:text-white/40" />
                           {term}
                         </button>
                       </li>
@@ -457,7 +457,7 @@ const HomePage: React.FC = () => {
 
               {/* AI Search Suggestions (Did you mean?) */}
               {isSearchFocused && suggestions.length > 0 && (
-                <div className="absolute top-full mt-4 w-full bg-[#0f172a]/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] z-30 overflow-hidden border border-gold-500/20 animate-slide-up">
+                <div className="absolute top-full mt-4 w-full bg-white dark:bg-[#0f172a]/95 backdrop-blur-2xl rounded-2xl shadow-2xl z-30 overflow-hidden border border-gold-500/30 dark:border-gold-500/20 animate-slide-up">
                   <div className="px-6 py-4 border-b border-white/5 bg-gold-500/5 flex items-center gap-2">
                     <SparklesIcon className="w-4 h-4 text-gold-400" />
                     <h4 className="text-xs font-bold text-gold-500 uppercase tracking-widest">{t('didYouMean') || 'Did you mean?'}</h4>
@@ -472,9 +472,9 @@ const HomePage: React.FC = () => {
                           setIsSearchFocused(false);
                           clearSuggestions();
                         }}
-                        className="w-full text-left px-4 py-3 rounded-xl flex items-center text-white/90 hover:bg-gold-500/10 hover:text-gold-400 transition-all duration-200 group"
+                        className="w-full text-left px-4 py-3 rounded-xl flex items-center text-slate-800 dark:text-white/90 hover:bg-gold-500/5 dark:hover:bg-gold-500/10 hover:text-gold-500 dark:hover:text-gold-400 transition-all duration-200 group"
                       >
-                        <Search className="w-4 h-4 mr-3 text-white/20 group-hover:text-gold-400/50" />
+                        <Search className="w-4 h-4 mr-3 text-slate-300 dark:text-white/20 group-hover:text-gold-500 dark:group-hover:text-gold-400/50" />
                         <span className="font-medium">{suggestion}</span>
                         <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="text-[10px] bg-gold-500/20 text-gold-400 px-2 py-0.5 rounded-full uppercase tracking-tighter font-bold">Try this</span>
@@ -499,7 +499,7 @@ const HomePage: React.FC = () => {
                   <div className="p-2 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 backdrop-blur-md">
                     <FireIcon className="w-6 h-6 text-red-500 animate-pulse" />
                   </div>
-                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
+                  <h2 className="text-3xl font-heading font-bold text-slate-900 dark:text-white tracking-tight drop-shadow-lg">
                     {t('flashDeals') || 'Flash Deals'}
                   </h2>
                 </div>
@@ -532,7 +532,7 @@ const HomePage: React.FC = () => {
 
           {/* Main Deal Tabs */}
           <div className="mb-8 flex items-center justify-center">
-            <div className="flex bg-white/5 backdrop-blur-md p-1 rounded-2xl border border-white/10 shadow-2xl">
+            <div className="flex bg-slate-100/50 dark:bg-white/5 backdrop-blur-md p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-2xl">
               {[
                 { id: 'foryou', label: t('tabForYou'), icon: SparklesIcon },
                 { id: 'trending', label: t('tabTrending'), icon: FireIcon },
@@ -543,7 +543,7 @@ const HomePage: React.FC = () => {
                   onClick={() => setActiveMainTab(tab.id as any)}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeMainTab === tab.id
                     ? 'bg-gold-500 text-white shadow-[0_0_20px_rgba(212,175,55,0.3)]'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                    : 'text-slate-500 dark:text-white/40 hover:text-slate-900 dark:hover:text-white/70 hover:bg-slate-100 dark:hover:bg-white/5'
                     }`}
                 >
                   <tab.icon className={`w-4 h-4 ${activeMainTab === tab.id ? 'animate-pulse' : ''}`} />
@@ -563,7 +563,7 @@ const HomePage: React.FC = () => {
                       <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20">
                         <SparklesIcon className="w-6 h-6 text-gold-400" />
                       </div>
-                      <h2 className="text-3xl font-heading font-bold text-white tracking-tight">{smartPicksTitle}</h2>
+                      <h2 className="text-3xl font-heading font-bold text-slate-900 dark:text-white tracking-tight">{smartPicksTitle}</h2>
                     </div>
                     {loadingRecommendations ? (
                       <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
@@ -576,10 +576,10 @@ const HomePage: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
+                  <div className="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
                     <SparklesIcon className="w-12 h-12 text-gold-400/30 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">{t('loginToUnlock')}</h3>
-                    <p className="text-white/40 mb-6">{t('startExploringForRecommendations')}</p>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('loginToUnlock')}</h3>
+                    <p className="text-slate-500 dark:text-white/40 mb-6">{t('startExploringForRecommendations')}</p>
                     <Link to="/login" className="inline-block px-8 py-3 bg-gold-500 text-white font-bold rounded-full">{t('login')}</Link>
                   </div>
                 )}
@@ -592,7 +592,7 @@ const HomePage: React.FC = () => {
                   <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
                     <LocationMarkerIcon className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight">{t('nearbyDeals')}</h2>
+                  <h2 className="text-3xl font-heading font-bold text-slate-900 dark:text-white tracking-tight">{t('nearbyDeals')}</h2>
                 </div>
                 {isLocationEnabled && userLocation ? (
                   <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">

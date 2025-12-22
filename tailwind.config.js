@@ -21,15 +21,19 @@ export default {
     },
     extend: {
       colors: {
-        'brand-bg': '#001F3F', // Deep Ocean Blue (Top)
-        'brand-surface': '#003366', // Slightly lighter for cards/surfaces
+        'brand-bg': '#001A33', // Slightly darker Deep Ocean for more contrast if needed, but let's see. 
+        // Actually, let's brighten 'brand-surface' to make it feel less heavy
+        'brand-surface': '#003D7A',
         'brand-primary': '#D4AF37', // Soft Gold
-        'brand-secondary': '#0074D9', // Azure Blue (Bottom)
+        'brand-secondary': '#0074D9', // Azure Blue
         'brand-text-light': '#FFFFFF',
         'brand-text-muted': 'rgba(255, 255, 255, 0.7)',
+        'light-surface': '#F8FAFC',
+        'light-bg': '#FFFFFF',
+        'light-text-muted': '#64748B',
         'gold': {
           400: '#FACC15',
-          500: '#D4AF37', // Updated to match spec
+          500: '#D4AF37',
           600: '#B8860B',
         },
       },

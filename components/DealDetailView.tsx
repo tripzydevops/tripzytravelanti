@@ -112,7 +112,8 @@ interface DealDetailViewProps {
 const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false, onRate, onRedeem }) => {
     const { t, language } = useLanguage();
     const { user } = useAuth();
-    const { saveDeal, unsaveDeal, isDealSaved, claimDeal, isDealOwned, hasRedeemed } = useUserActivity();
+    const { effectiveTheme } = useTheme();
+    const { saveDeal, unsaveDeal, isDealSaved, claimDeal, isOwned, hasRedeemed } = useUserActivity();
     const navigate = useNavigate();
 
     const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
@@ -370,8 +371,8 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                 </div>
             </div>
 
-            {/* Immersive Hero Section */}
-            <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden group">
+            {/* Header / Hero Section */}
+            <div className="relative h-[45vh] md:h-[55vh] overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/20 to-transparent z-10"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <img
@@ -400,43 +401,54 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Floating Content Card */}
-            <div className="relative z-20 -mt-16 px-4 max-w-4xl mx-auto">
-                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.4)] p-8 relative overflow-hidden">
-                    {/* Top Glow */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-gold-500/50 blur-lg rounded-full"></div>
-
-                    {/* Partner spotlight / Vendor profile header */}
-                    <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10">
-                        <div className="relative shrink-0">
-                            <div className="w-24 h-24 rounded-3xl bg-[#0f172a] shadow-2xl p-1.5 border border-gold-500/30 overflow-hidden relative group/logo">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/20 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
-                                {deal.companyLogoUrl ? (
-                                    <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover rounded-2xl" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gold-400 font-bold text-4xl font-heading">
-                                        {deal.vendor.charAt(0)}
-                                    </div>
-                                )}
+            <div className="container mx-auto px-4 -mt-16 relative z-30">
+                <div className="bg-white dark:bg-brand-surface rounded-[32px] p-6 shadow-2xl border border-slate-200 dark:border-white/10 glass-premium">
+                    <div className="flex flex-col gap-6">
+                        {/* Title & Vendor Section */}
+                        <div className="flex flex-col gap-4">
+                            <div className="flex justify-between items-start gap-4">
+                                <h1 className="text-3xl font-heading font-black text-slate-900 dark:text-white leading-tight tracking-tight">
+                                    {language === 'tr' ? deal.title_tr || deal.title : deal.title}
+                                </h1>
+                                <button
+                                    onClick={() => setIsShareModalOpen(true)}
+                                    className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                                >
+                                    <ShareIcon className="w-5 h-5" />
+                                </button>
                             </div>
-                            {/* Verified Badge */}
-                            <div className="absolute -bottom-2 -right-2 bg-gold-500 text-brand-bg p-1.5 rounded-full shadow-lg border-2 border-brand-bg">
-                                <CheckCircle className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-xs font-black uppercase tracking-[0.2em] text-gold-400/80">Premium Partner</span>
-                                <div className="h-px flex-1 bg-gradient-to-r from-gold-500/30 to-transparent"></div>
-                            </div>
-                            <h2 className="text-4xl md:text-5xl font-heading font-black text-white leading-[1.1] mb-2 tracking-tight">{title}</h2>
                             <div className="flex items-center gap-3">
-                                <p className="text-xl text-white/60 font-medium">{deal.vendor}</p>
-                                <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
-                                <div className="flex items-center gap-1.5 text-gold-400/90 text-sm font-bold">
+                                <p className="text-base text-slate-600 dark:text-white/60 font-medium">{deal.vendor}</p>
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20"></span>
+                                <div className="flex items-center gap-1.5 text-gold-500 text-sm font-bold">
                                     <StarIcon className="w-4 h-4 fill-current" />
                                     <span>{deal.rating}</span>
-                                    <span className="text-white/30 font-normal">({deal.ratingCount})</span>
+                                    <span className="text-slate-400 dark:text-white/30 font-normal">({deal.ratingCount})</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Partner spotlight / Vendor profile header */}
+                        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+                            <div className="relative shrink-0">
+                                <div className="w-16 h-16 rounded-xl bg-white dark:bg-brand-bg shadow-lg p-1 border border-gold-500/30 overflow-hidden relative group/logo">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/20 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
+                                    {deal.companyLogoUrl ? (
+                                        <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover rounded-lg" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gold-400 font-bold text-3xl font-heading">
+                                            {deal.vendor.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Verified Badge */}
+                                <div className="absolute -bottom-1 -right-1 bg-gold-500 text-brand-bg p-1 rounded-full shadow-lg border-2 border-white dark:border-brand-bg">
+                                    <CheckCircle className="w-3 h-3" />
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <span className="text-xs font-black uppercase tracking-[0.2em] text-gold-500/80">Premium Partner</span>
+                                <p className="text-slate-800 dark:text-white font-semibold text-lg leading-tight">{deal.vendor}</p>
                             </div>
                         </div>
                     </div>
@@ -640,7 +652,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
                     {/* How it Works / Redemption Guide */}
                     <div className="mt-16 pt-10 border-t border-white/10">
-                        <h3 className="text-xl font-heading font-black text-white mb-8 uppercase tracking-widest text-center">
+                        <h3 className="text-xl font-heading font-black text-slate-900 dark:text-white mb-8 uppercase tracking-widest text-center">
                             {language === 'tr' ? 'Nasıl Çalışır?' : 'How it Works'}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -650,13 +662,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 { step: 3, title: t('step3'), desc: t('step3Desc'), icon: <TicketIcon className="w-6 h-6" /> },
                             ].map((item, idx) => (
                                 <div key={idx} className="flex flex-col items-center text-center group">
-                                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-brand-bg transition-all duration-500 shadow-xl">
+                                    <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-white dark:group-hover:text-brand-bg transition-all duration-500 shadow-xl">
                                         {item.icon}
                                     </div>
-                                    <h4 className="text-white font-bold mb-2">{item.title}</h4>
-                                    <p className="text-white/40 text-sm leading-relaxed max-w-[200px]">{item.desc}</p>
+                                    <h4 className="text-slate-900 dark:text-white font-bold mb-2">{item.title}</h4>
+                                    <p className="text-slate-500 dark:text-white/40 text-sm leading-relaxed max-w-[200px]">{item.desc}</p>
                                     {idx < 2 && (
-                                        <div className="hidden md:block absolute right-0 top-8 w-8 h-px bg-white/10"></div>
+                                        <div className="hidden md:block absolute right-0 top-8 w-8 h-px bg-slate-200 dark:bg-white/10"></div>
                                     )}
                                 </div>
                             ))}
@@ -670,9 +682,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             { label: t('noHiddenFees'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
                             { label: t('guaranteedAccess'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
                         ].map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-4 rounded-2xl">
+                            <div key={idx} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 px-5 py-4 rounded-2xl">
                                 {item.icon}
-                                <span className="text-[11px] font-black uppercase tracking-widest text-white/60">{item.label}</span>
+                                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white/60">{item.label}</span>
                             </div>
                         ))}
                     </div>

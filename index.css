@@ -11,12 +11,12 @@
 
   /* Card styles */
   .card {
-    @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-400 hover:shadow-2xl hover:border-white/10;
+    @apply bg-white dark:bg-brand-surface rounded-2xl p-6 shadow-xl border border-slate-200 dark:border-white/5 transition-all duration-400 hover:shadow-2xl hover:border-slate-300 dark:hover:border-white/10;
   }
 
   /* Input styles */
   .input {
-    @apply bg-brand-surface border border-white/10 rounded-xl px-4 py-3 text-brand-text-light placeholder:text-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all;
+    @apply bg-slate-50 dark:bg-brand-surface border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-brand-text-light placeholder:text-slate-400 dark:placeholder:text-brand-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all;
   }
 
   /* Entry Animations */
@@ -47,17 +47,15 @@
   }
 
   .glass {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    @apply bg-white/60 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/20 shadow-xl dark:shadow-[0_8px_32px_0_rgba(31,38,135,0.37)];
   }
 
   .glass-dark {
-    @apply bg-black/40 backdrop-blur-xl border border-white/5 shadow-2xl;
+    @apply bg-slate-900/40 dark:bg-black/40 backdrop-blur-xl border border-slate-700 dark:border-white/5 shadow-2xl;
   }
 
   .glass-premium {
-    @apply bg-white/5 backdrop-blur-2xl border border-white/10;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    @apply bg-white/20 dark:bg-white/5 backdrop-blur-2xl border border-slate-300 dark:border-white/10 shadow-lg dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
   }
 
   .icon-glow {

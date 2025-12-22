@@ -185,10 +185,10 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         )}
       </div>
 
-      {/* Content Section */}
-      <div className="p-4 flex flex-col flex-grow relative bg-brand-surface/30">
+      {/* Details Section */}
+      <div className="p-4 flex flex-col gap-3">
         {/* Vendor Header */}
-        <div className="flex items-center gap-2 mb-2.5">
+        <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
             {deal.companyLogoUrl ? (
               <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover" />
@@ -200,32 +200,34 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           </div>
           <div className="flex flex-col items-start min-w-0">
             <div className="flex items-center gap-1 min-w-0 truncate w-full">
-              <span className="text-[11px] font-semibold text-white/50 uppercase tracking-widest leading-tight truncate">{deal.vendor}</span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-white/50 uppercase tracking-widest leading-tight truncate">{deal.vendor}</span>
               <CheckCircle className="w-3 h-3 text-gold-400 shrink-0" />
             </div>
             {deal.storeLocations && deal.storeLocations.length > 0 && (
-              <div className="flex items-center gap-1 mt-0.5 opacity-40 shrink-0">
-                <LocationIcon className="w-2.5 h-2.5" />
-                <span className="text-[9px] font-medium leading-none whitespace-nowrap">{deal.storeLocations[0].city || deal.storeLocations[0].name}</span>
+              <div className="flex items-center gap-1 mt-0.5 opacity-60 dark:opacity-40 shrink-0">
+                <LocationIcon className="w-2.5 h-2.5 text-slate-400 dark:text-white" />
+                <span className="text-[9px] font-medium text-slate-400 dark:text-white leading-none whitespace-nowrap">{deal.storeLocations[0].city || deal.storeLocations[0].name}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Title & Description */}
-        <h3 className="text-base font-heading font-bold text-white mb-1.5 leading-[1.3] line-clamp-2 min-h-[2.6rem]">
-          {title}
-        </h3>
+        <div className="space-y-1">
+          <h3 className="font-heading font-bold text-[16px] text-slate-900 dark:text-white leading-tight line-clamp-2 group-hover:text-gold-500 transition-colors">
+            {language === 'tr' ? deal.title_tr || deal.title : deal.title}
+          </h3>
+        </div>
 
         {/* Rating & Expiry info row */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
           <div className="flex flex-col gap-0.5">
             <div className={`flex items-baseline gap-1.5 ${discount >= 50 && !isLocked ? 'animate-pulse-subtle' : ''}`}>
-              <span className="text-[20px] font-black tracking-tight text-white leading-none">
+              <span className="text-[20px] font-black tracking-tight text-slate-900 dark:text-white leading-none">
                 {deal.originalPrice > 0 ? `₺${deal.discountedPrice.toLocaleString()}` : `%${discount}`}
               </span>
               {deal.originalPrice > 0 && (
-                <span className="text-[11px] text-white/30 line-through decoration-white/20">
+                <span className="text-[11px] text-slate-400 dark:text-white/30 line-through decoration-gold-500/50">
                   ₺{deal.originalPrice.toLocaleString()}
                 </span>
               )}
@@ -249,7 +251,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full">
+    <div className="block group relative bg-white dark:bg-brand-surface rounded-[24px] overflow-hidden shadow-sm dark:shadow-2xl border border-slate-200 dark:border-white/5 transition-all duration-500 hover:shadow-xl dark:hover:shadow-gold-500/10 hover:-translate-y-1 active:scale-[0.98]">
       <Link
         to={`/deals/${deal.id}`}
         className="flex flex-col flex-grow cursor-pointer"
