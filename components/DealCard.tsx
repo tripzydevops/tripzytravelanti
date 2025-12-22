@@ -120,18 +120,20 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           alt={title}
           loading="lazy"
         />
+        {/* Animated Shine Effect */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10 pointer-events-none"></div>
 
         {/* Floating Heart Button (Top Right) - Industry Standard */}
         {user && !isLocked && (
           <button
             onClick={handleSaveToggle}
-            className="absolute top-3 right-3 z-30 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40 transition-all duration-300 group/heart"
+            className="absolute top-3 right-3 z-30 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40 transition-all duration-300 group/heart active:scale-90"
             aria-label={isSaved ? t('unsaveDealAction') : t('saveDealAction')}
           >
             <HeartIcon
-              className={`w-5 h-5 transition-all duration-300 ${isSaved
-                ? 'text-gold-500 fill-gold-500 scale-110'
-                : 'text-white group-hover/heart:scale-110 group-hover/heart:text-gold-400'
+              className={`w-5 h-5 transition-all duration-500 ${isSaved
+                ? 'text-red-500 fill-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                : 'text-white group-hover/heart:scale-110 group-hover/heart:text-red-400'
                 }`}
             />
           </button>
@@ -207,18 +209,18 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
         {/* Rating & Expiry info row */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xl font-black text-white">
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[20px] font-black tracking-tight text-white leading-none">
                 {deal.originalPrice > 0 ? `₺${deal.discountedPrice.toLocaleString()}` : `%${discount}`}
               </span>
               {deal.originalPrice > 0 && (
-                <span className="text-xs text-white/30 line-through">
+                <span className="text-[11px] text-white/30 line-through decoration-white/20">
                   ₺{deal.originalPrice.toLocaleString()}
                 </span>
               )}
             </div>
-            <p className={`text-[10px] font-bold uppercase tracking-wider ${daysLeftText === t('expired') ? 'text-red-400' : 'text-emerald-400/80'}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${daysLeftText === t('expired') ? 'text-red-400' : 'text-emerald-400/80'}`}>
               {daysLeftText}
             </p>
           </div>

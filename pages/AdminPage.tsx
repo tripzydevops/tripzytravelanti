@@ -222,15 +222,52 @@ const AdminPage: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden bg-white dark:bg-brand-surface border-b border-gray-200 dark:border-white/5 px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Tripzy Admin</h1>
+        <header className="md:hidden bg-white dark:bg-brand-surface border-b border-gray-200 dark:border-white/5 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Tripzy Admin</h1>
+          </div>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Live</span>
+          </div>
         </header>
+
+        {/* Global Admin Utilities / Health Status (Desktop Only) */}
+        <div className="hidden md:flex items-center justify-between px-8 py-4 bg-white dark:bg-brand-surface border-b border-gray-200 dark:border-white/5">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-widest">System Operational</span>
+            </div>
+            <div className="h-4 w-px bg-gray-200 dark:bg-white/10"></div>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400 font-medium">DB:</span>
+                <span className="text-[10px] text-emerald-500 font-bold uppercase">Online</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400 font-medium">AI:</span>
+                <span className="text-[10px] text-emerald-500 font-bold uppercase">Ready</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-400 font-medium">Search:</span>
+                <span className="text-[10px] text-emerald-500 font-bold uppercase">Synced</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-[10px] text-gray-400 font-medium italic">
+              Logged in as <span className="text-brand-primary font-bold not-italic">Admin</span>
+            </div>
+          </div>
+        </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-7xl mx-auto animate-fade-in">

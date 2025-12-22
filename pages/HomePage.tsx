@@ -93,7 +93,7 @@ const HomePage: React.FC = () => {
   // Local Storage for Recent Searches
   React.useEffect(() => {
     try {
-      const storedSearches = localStorage.getItem('wanderwise_recent_searches');
+      const storedSearches = localStorage.getItem('tripzy_recent_searches');
       if (storedSearches) {
         setRecentSearches(JSON.parse(storedSearches));
       }
@@ -217,7 +217,7 @@ const HomePage: React.FC = () => {
     ].slice(0, 5);
 
     setRecentSearches(updatedSearches);
-    localStorage.setItem('wanderwise_recent_searches', JSON.stringify(updatedSearches));
+    localStorage.setItem('tripzy_recent_searches', JSON.stringify(updatedSearches));
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -235,7 +235,7 @@ const HomePage: React.FC = () => {
 
   const clearRecentSearches = () => {
     setRecentSearches([]);
-    localStorage.removeItem('wanderwise_recent_searches');
+    localStorage.removeItem('tripzy_recent_searches');
   };
 
   const categories = React.useMemo(() => {
@@ -546,9 +546,11 @@ const HomePage: React.FC = () => {
                   <DealCardSkeleton count={5} />
                 </div>
               ) : recommendations.length > 0 ? (
-                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
-                  {recommendations.map(deal => (
-                    <DealCard key={deal.id} deal={deal} />
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000 animate-fade-in-up">
+                  {recommendations.map((deal, index) => (
+                    <div key={deal.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-fade-in-up">
+                      <DealCard deal={deal} />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -659,9 +661,11 @@ const HomePage: React.FC = () => {
 
                 {filteredDeals.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
-                      {filteredDeals.map(deal => (
-                        <DealCard key={deal.id} deal={deal} />
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000 animate-fade-in-up">
+                      {filteredDeals.map((deal, index) => (
+                        <div key={deal.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-fade-in-up">
+                          <DealCard deal={deal} />
+                        </div>
                       ))}
                     </div>
                     {/* Load More Button */}
@@ -689,27 +693,36 @@ const HomePage: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-24 bg-white/5 rounded-3xl border border-white/5 mx-auto max-w-2xl">
+                  <div className="text-center py-24 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/5 mx-auto max-w-2xl shadow-2xl overflow-hidden relative group">
+                    {/* Decorative Background Glow for Empty State */}
+                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-gold-500/10 rounded-full blur-[80px] group-hover:bg-gold-500/20 transition-all duration-700"></div>
+                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-[80px] group-hover:bg-purple-500/20 transition-all duration-700"></div>
+
                     {loading ? (
-                      <div className="flex justify-center">
-                        <SpinnerIcon className="w-10 h-10 text-gold-500 animate-spin" />
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gold-500/20 blur-xl rounded-full animate-pulse"></div>
+                          <SpinnerIcon className="w-12 h-12 text-gold-500 animate-spin relative z-10" />
+                        </div>
+                        <p className="text-gold-400 font-medium animate-pulse tracking-widest uppercase text-xs">Looking for deals...</p>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
-                          <Search className="w-8 h-8 text-white/30" />
+                      <div className="flex flex-col items-center relative z-10 px-8">
+                        <div className="w-20 h-20 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-xl border border-white/10 group-hover:scale-110 transition-transform duration-500">
+                          <Search className="w-10 h-10 text-white/20 group-hover:text-gold-400/50 transition-colors" />
                         </div>
-                        <p className="text-xl text-white/60 font-medium">{t('noResults')}</p>
+                        <h3 className="text-2xl font-bold text-white mb-2">{t('noResults')}</h3>
+                        <p className="text-white/40 mb-8 max-w-sm">We couldn't find exactly what you're looking for. Try adjusting your filters or use our Smart Search for better results.</p>
 
                         {suggestions.length > 0 && (
-                          <div className="mt-8">
-                            <p className="text-sm text-white/40 mb-3 uppercase tracking-widest font-bold">Suggested Searches:</p>
-                            <div className="flex flex-wrap justify-center gap-3">
+                          <div className="w-full">
+                            <p className="text-[10px] text-white/30 mb-4 uppercase tracking-[0.2em] font-extrabold">Recommended searches</p>
+                            <div className="flex flex-wrap justify-center gap-2">
                               {suggestions.map((s, i) => (
                                 <button
                                   key={i}
                                   onClick={() => setSearchQuery(s)}
-                                  className="px-4 py-2 bg-white/5 hover:bg-gold-500/20 border border-white/10 hover:border-gold-500/40 rounded-full text-gold-400 text-sm font-medium transition-all"
+                                  className="px-5 py-2.5 bg-white/5 hover:bg-gold-500/10 border border-white/10 hover:border-gold-500/30 rounded-full text-white/70 hover:text-gold-400 text-sm font-medium transition-all duration-300"
                                 >
                                   {s}
                                 </button>
@@ -718,8 +731,11 @@ const HomePage: React.FC = () => {
                           </div>
                         )}
 
-                        <button onClick={() => { setCategoryFilter('All'); setSearchQuery(''); clearSuggestions(); }} className="mt-8 text-gold-500 hover:text-gold-400 underline font-medium">
-                          Reset Filters
+                        <button
+                          onClick={() => { setCategoryFilter('All'); setSearchQuery(''); clearSuggestions(); }}
+                          className="mt-10 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white font-semibold transition-all hover:scale-105 active:scale-95"
+                        >
+                          Clear all filters
                         </button>
                       </div>
                     )}

@@ -303,29 +303,30 @@ const WalletPage: React.FC = () => {
 
                                 {/* Premium Progress Bar */}
                                 {!isUnlimited && (
-                                    <div className="relative h-3 rounded-full overflow-hidden bg-white/10">
-                                        {/* Glow effect */}
+                                    <div className="relative h-4 rounded-full overflow-hidden bg-white/5 border border-white/10 shadow-inner">
+                                        {/* Background track glow */}
+                                        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-gold-500/0 via-gold-500/10 to-gold-500/0"></div>
+
+                                        {/* Progress fill */}
                                         <div
-                                            className="absolute inset-0 rounded-full blur-sm"
-                                            style={{
-                                                background: `linear-gradient(90deg, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0.5) ${usagePercent}%, transparent ${usagePercent}%)`
-                                            }}
-                                        />
-                                        {/* Main bar */}
-                                        <div
-                                            className={`relative h-full rounded-full transition-all duration-500 ease-out ${isFull
-                                                ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500'
+                                            className={`relative h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isFull
+                                                ? 'bg-gradient-to-r from-red-600 via-red-400 to-red-600'
                                                 : nearCapacity
-                                                    ? 'bg-gradient-to-r from-orange-500 via-gold-400 to-orange-500'
-                                                    : 'bg-gradient-to-r from-gold-600 via-gold-400 to-gold-500'
+                                                    ? 'bg-gradient-to-r from-orange-600 via-gold-400 to-orange-600'
+                                                    : 'bg-gradient-to-r from-gold-600 via-gold-400 to-gold-600'
                                                 }`}
                                             style={{ width: `${usagePercent}%` }}
                                         >
-                                            {/* Shine effect */}
-                                            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent" />
-                                            {/* Animated shimmer */}
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"
-                                                style={{ animationDuration: '2s' }} />
+                                            {/* Shimmer effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer skew-x-12"></div>
+
+                                            {/* Top shine */}
+                                            <div className="absolute inset-x-0 top-0 h-[40%] bg-white/20 rounded-t-full"></div>
+
+                                            {/* Subtle pulse for near capacity */}
+                                            {(nearCapacity || isFull) && (
+                                                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -369,15 +370,15 @@ const WalletPage: React.FC = () => {
                         <DealCardSkeleton count={6} />
                     </div>
                 ) : currentDisplayDeals.length > 0 ? (
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 items-stretch">
-                        {currentDisplayDeals.map(deal => {
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 items-stretch animate-fade-in-up">
+                        {currentDisplayDeals.map((deal, index) => {
                             // Check if deal is from wallet (has walletStatus) or from wishlist
                             const isWalletDeal = 'walletStatus' in deal;
                             const walletStatus = isWalletDeal ? (deal as WalletDeal).walletStatus : null;
                             const expiryWarning = walletStatus === 'active' ? getExpiryWarning(deal.expiresAt) : null;
 
                             return (
-                                <div key={deal.id} className="relative group h-full">
+                                <div key={deal.id} style={{ animationDelay: `${index * 50}ms` }} className="relative group h-full animate-fade-in-up">
                                     {/* Status Badge */}
                                     {isWalletDeal && <StatusBadge status={walletStatus as WalletDeal['walletStatus']} />}
 
@@ -412,24 +413,35 @@ const WalletPage: React.FC = () => {
                         })}
                     </div>
                 ) : (
-                    <div className="text-center py-16 flex flex-col items-center">
-                        <div className="p-6 rounded-full bg-white/5 border border-white/10 mb-6">
-                            <CustomBriefcaseIcon className="w-16 h-16 text-white/30" />
-                        </div>
-                        <p className="text-xl text-white/60 mb-2">
-                            {activeFilter === 'all'
-                                ? (t('emptyWallet') || 'Your wallet is empty')
-                                : `${language === 'tr' ? 'Bu kategoride fırsat yok' : 'No deals in this category'}`
-                            }
-                        </p>
-                        {activeFilter === 'all' && (
+                    <div className="text-center py-20 bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/5 mx-auto max-w-lg shadow-2xl relative overflow-hidden group">
+                        {/* Background Decorative Elements */}
+                        <div className="absolute -top-12 -left-12 w-32 h-32 bg-gold-500/10 rounded-full blur-[50px] group-hover:bg-gold-500/20 transition-all duration-700"></div>
+                        <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-purple-500/10 rounded-full blur-[50px] group-hover:bg-purple-500/20 transition-all duration-700"></div>
+
+                        <div className="relative z-10 flex flex-col items-center px-6">
+                            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center mb-8 shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                                <CustomBriefcaseIcon className="w-12 h-12 text-white/20 group-hover:text-gold-400/50 transition-colors" />
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-white mb-3">
+                                {activeMainTab === 'wishlist'
+                                    ? (t('emptyWishlist') || 'Your wishlist is empty')
+                                    : (t('emptyWallet') || 'Your collection is empty')}
+                            </h3>
+
+                            <p className="text-white/40 mb-10 max-w-xs leading-relaxed">
+                                {activeMainTab === 'wishlist'
+                                    ? 'Save deals you love to keep track of them and never miss a price drop.'
+                                    : 'Start claiming deals to see them here. Your saved and redeemed deals will appear in this hub.'}
+                            </p>
+
                             <Link
                                 to="/"
-                                className="mt-4 px-6 py-3 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all"
+                                className="px-10 py-4 rounded-full bg-gradient-to-r from-gold-500 to-gold-600 text-white font-bold shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest"
                             >
-                                {t('browseDeals') || 'Browse Deals'}
+                                {t('browseDeals') || 'Discover Deals'}
                             </Link>
-                        )}
+                        </div>
                     </div>
                 )}
             </div>
