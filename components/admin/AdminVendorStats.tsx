@@ -48,7 +48,7 @@ const AdminVendorStats: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-brand-surface p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="glass-premium p-4 rounded-lg border border-white/10">
                 <input
                     type="text"
                     placeholder="Search Vendor..."
@@ -58,15 +58,15 @@ const AdminVendorStats: React.FC = () => {
                 />
             </div>
 
-            <div className="bg-white dark:bg-brand-surface rounded-lg overflow-hidden shadow-sm">
+            <div className="glass-premium rounded-lg overflow-hidden">
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
                         <SpinnerIcon className="w-8 h-8 text-brand-primary animate-spin" />
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-gray-500 dark:text-brand-text-muted">
-                            <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
+                        <table className="w-full text-sm text-left text-gray-300">
+                            <thead className="text-xs text-white/60 uppercase bg-white/5">
                                 <tr>
                                     <th className="px-6 py-3">Vendor Name</th>
                                     <th className="px-6 py-3 text-center">Active Deals</th>
@@ -74,29 +74,29 @@ const AdminVendorStats: React.FC = () => {
                                     <th className="px-6 py-3 text-right">Est. Revenue Generated</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-white/10">
                                 {filteredStats.length > 0 ? (
                                     filteredStats.map((vendor, idx) => (
-                                        <tr key={idx} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                            <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                        <tr key={idx} className="hover:bg-white/5 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-white">
                                                 {vendor.name}
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800">
+                                                <span className="bg-blue-500/20 text-blue-300 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-500/10">
                                                     {vendor.dealCount}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-center font-bold text-gray-900 dark:text-brand-text-light">
+                                            <td className="px-6 py-4 text-center font-bold text-white/80">
                                                 {vendor.totalRedemptions}
                                             </td>
-                                            <td className="px-6 py-4 text-right font-mono text-green-600 dark:text-green-400">
+                                            <td className="px-6 py-4 text-right font-mono text-green-400">
                                                 ${vendor.estimatedRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                        <td colSpan={4} className="px-6 py-8 text-center text-white/50">
                                             No vendors found matching your search.
                                         </td>
                                     </tr>
