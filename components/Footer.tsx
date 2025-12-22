@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
           <a href="/terms" className="hover:text-brand-primary transition-colors text-sm">{t('termsOfService') || 'Terms of Service'}</a>
           <a href="/faq" className="hover:text-brand-primary transition-colors text-sm">{t('helpCenter') || 'Q&A'}</a>
         </div>
-        <p className="text-sm opacity-70">{t('footerText') || '© 2024 Tripzy. All rights reserved.'}</p>
+        <p className="text-sm opacity-70">{t('footerText') || '© 2025 Tripzy. All rights reserved.'}</p>
       </div>
     </footer>
   );

@@ -109,7 +109,7 @@ const AnalyticsDashboard: React.FC = () => {
                     <button
                         onClick={handleRefresh}
                         disabled={refreshing}
-                        className="bg-white dark:bg-brand-surface border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+                        className="glass-premium text-white px-4 py-2 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-2 shadow-lg disabled:opacity-50"
                     >
                         <SpinnerIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> {t('refresh')}
                     </button>
@@ -156,14 +156,15 @@ const AnalyticsDashboard: React.FC = () => {
 
             {/* Scaling & Growth Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-brand-surface p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/5">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-brand-text-light mb-4 flex items-center gap-2">
-                        <TrendingUpIcon className="w-5 h-5 text-brand-primary" />
-                        Scaling to 100k Users (Turkey Ops)
-                    </h3>
-                    <div className="space-y-4">
+            <div className="glass-premium p-6 rounded-[24px] shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full blur-[80px] -mr-16 -mt-16 pointer-events-none"></div>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 relative z-10">
+                    <TrendingUpIcon className="w-5 h-5 text-gold-400" />
+                    Scaling to 100k Users (Turkey Ops)
+                </h3>
+                    <div className="space-y-4 relative z-10">
                         <div className="flex justify-between items-center text-sm font-medium">
-                            <span className="text-gray-500 dark:text-brand-text-muted">Target Progress</span>
+                            <span className="text-white/60">Target Progress</span>
                             <span className="text-brand-primary">{metrics.scalingProgress?.toFixed(2)}%</span>
                         </div>
                         <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden">
@@ -339,7 +340,7 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
 
             {/* Activity Log Section */}
-            <div className="bg-white dark:bg-brand-surface rounded-xl shadow-sm border border-gray-100 dark:border-white/5 overflow-hidden">
+            <div className="glass-premium rounded-[24px] overflow-hidden">
                 <AdminActivityLog />
             </div>
         </div>
@@ -348,25 +349,25 @@ const AnalyticsDashboard: React.FC = () => {
 
 // Helper Components
 const MetricCard = ({ title, value, change, icon, color }: any) => (
-    <div className="bg-white dark:bg-brand-surface p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 flex items-start justify-between">
+    <div className="glass-premium p-6 rounded-[24px] shadow-2xl flex items-start justify-between group hover:scale-[1.02] transition-transform duration-300">
         <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-brand-text-muted mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-brand-text-light">{value}</h3>
+            <p className="text-sm font-medium text-white/50 mb-1 uppercase tracking-wider">{title}</p>
+            <h3 className="text-2xl font-bold text-white">{value}</h3>
             {change && (
-                <span className={`text-xs font-medium ${change.startsWith('+') || change.includes('avg') || change.includes('Redemptions') ? 'text-green-500' : 'text-red-500'}`}>
+                <span className={`text-xs font-bold mt-1 block ${change.startsWith('+') || change.includes('avg') || change.includes('Redemptions') ? 'text-emerald-400 drop-shadow-sm' : 'text-red-400'}`}>
                     {change}
                 </span>
             )}
         </div>
-        <div className={`p-3 rounded-lg ${color}`}>
+        <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md shadow-inner`}>
             {icon}
         </div>
     </div>
 );
 
 const ChartCard = ({ title, children, className = '' }: any) => (
-    <div className={`bg-white dark:bg-brand-surface p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 ${className}`}>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-brand-text-light mb-6">{title}</h3>
+    <div className={`glass-premium p-6 rounded-[24px] shadow-2xl ${className}`}>
+        <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">{title}</h3>
         {children}
     </div>
 );
