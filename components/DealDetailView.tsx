@@ -305,7 +305,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const discountedPriceFormatted = deal.originalPrice > 0 ? `₺${deal.discountedPrice}` : (language === 'tr' ? `%${deal.discountPercentage}` : `${deal.discountPercentage}%`);
 
     return (
-        <div className="bg-white dark:bg-brand-bg min-h-screen relative pb-40 font-body text-slate-900 dark:text-brand-text-light selection:bg-gold-500/30">
+        <div className="bg-brand-bg min-h-screen relative pb-40 font-body text-brand-text-light selection:bg-gold-500/30">
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-white dark:from-brand-bg via-white/80 dark:via-brand-bg/80 to-transparent z-0"></div>
                 <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-900/10 rounded-full blur-[100px] opacity-20"></div>
@@ -371,7 +371,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Header / Hero Section */}
             <div className="relative h-[45vh] md:h-[55vh] overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-brand-bg via-transparent to-transparent z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-transparent to-transparent z-10"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <img
                     src={getHeroImageUrl(deal.imageUrl)}
@@ -400,7 +400,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Floating Content Card */}
             <div className="container mx-auto px-4 -mt-16 relative z-30">
-                <div className="bg-white dark:bg-brand-surface rounded-[32px] p-6 shadow-2xl border border-slate-200 dark:border-white/10 glass-premium">
+                <div className="bg-brand-surface rounded-[32px] p-6 shadow-2xl border border-white/10 glass-premium">
                     <div className="flex flex-col gap-6">
                         {/* Title & Vendor Section */}
                         <div className="flex flex-col gap-4">
@@ -426,10 +426,10 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             </div>
                         </div>
 
-                        {/* Partner spotlight / Vendor profile header */}
-                        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-brand-bg/50 rounded-2xl border border-slate-100 dark:border-white/5">
+                    {/* Partner spotlight / Vendor profile header */}
+                        <div className="flex items-center gap-4 p-4 bg-brand-bg/50 rounded-2xl border border-white/5">
                             <div className="relative shrink-0">
-                                <div className="w-16 h-16 rounded-xl bg-white dark:bg-brand-surface shadow-lg p-1 border border-gold-500/30 overflow-hidden relative group/logo">
+                                <div className="w-16 h-16 rounded-xl bg-brand-surface shadow-lg p-1 border border-gold-500/30 overflow-hidden relative group/logo">
                                     <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/20 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
                                     {deal.companyLogoUrl ? (
                                         <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover rounded-lg" />
@@ -446,14 +446,14 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             </div>
                             <div className="flex-1">
                                 <span className="text-xs font-black uppercase tracking-[0.2em] text-gold-500/80">Premium Partner</span>
-                                <p className="text-slate-800 dark:text-brand-text-light font-semibold text-lg leading-tight">{deal.vendor}</p>
+                                <p className="text-brand-text-light font-semibold text-lg leading-tight">{deal.vendor}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Days Left Badge */}
                     {daysLeft !== null && (
-                        <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-brand-bg/50 border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full mb-8 shadow-inner">
+                        <div className="inline-flex items-center gap-2 bg-brand-bg/50 border border-white/10 px-4 py-2 rounded-full mb-8 shadow-inner">
                             <ClockIcon className="w-4 h-4 text-gold-600 animate-pulse" />
                             <span className="text-slate-600 dark:text-brand-text-muted font-medium text-sm tracking-wide">
                                 {daysLeft} {t('daysLeft')}
@@ -477,13 +477,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     )}
 
                     {/* Polished Tabs - Pill Style */}
-                    <div className="flex p-1 bg-slate-100 dark:bg-brand-bg border border-slate-200 dark:border-white/10 rounded-2xl mb-10 relative">
+                    <div className="flex p-1 bg-brand-bg border border-white/10 rounded-2xl mb-10 relative">
                         {/* Animated background pill could be added with Framer Motion, but using Tailwind classes for now */}
                         <button
                             onClick={() => setActiveTab('conditions')}
                             className={`flex-1 py-3.5 text-xs font-black tracking-[0.2em] uppercase transition-all duration-500 rounded-xl relative z-10 ${activeTab === 'conditions'
                                 ? 'text-white bg-gold-500 shadow-xl'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
+                                : 'text-slate-400 hover:text-slate-300 hover:bg-white/5'
                                 }`}
                         >
                             {t('campaignConditions')}
@@ -492,7 +492,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             onClick={() => setActiveTab('locations')}
                             className={`flex-1 py-3.5 text-xs font-black tracking-[0.2em] uppercase transition-all duration-500 rounded-xl relative z-10 ${activeTab === 'locations'
                                 ? 'text-white bg-gold-500 shadow-xl'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
+                                : 'text-slate-400 hover:text-slate-300 hover:bg-white/5'
                                 }`}
                         >
                             {t('validLocations')}
@@ -503,13 +503,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     <div className="animate-fade-in min-h-[200px]">
                         {activeTab === 'conditions' ? (
                             <div className="space-y-6">
-                                <div className="prose prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-brand-text-muted leading-relaxed font-light text-lg">
+                                <div className="prose prose-invert max-w-none text-brand-text-muted leading-relaxed font-light text-lg">
                                     <p>{description}</p>
                                 </div>
 
                                 {/* Terms Link */}
                                 {deal.termsUrl && (
-                                    <div className="pt-6 border-t border-slate-100 dark:border-white/5">
+                                    <div className="pt-6 border-t border-white/5">
                                         <a
                                             href={deal.termsUrl || '#'}
                                             onClick={handleTermsClick}
@@ -522,9 +522,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 )}
 
                                 {/* Rating Section */}
-                                <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5">
-                                    <h3 className="text-sm font-semibold text-slate-900 dark:text-brand-text-light mb-4 uppercase tracking-wider">{t('rateThisDeal')}</h3>
-                                    <div className="flex justify-center bg-slate-50 dark:bg-brand-bg/50 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+                                <div className="mt-8 pt-6 border-t border-white/5">
+                                    <h3 className="text-sm font-semibold text-brand-text-light mb-4 uppercase tracking-wider">{t('rateThisDeal')}</h3>
+                                    <div className="flex justify-center bg-brand-bg/50 rounded-2xl p-4 border border-white/5">
                                         <StarRatingInput
                                             onRate={handleRate}
                                             disabled={isPreview || !user || (user && !user.redemptions?.some(r => r.dealId === deal.id))}
@@ -534,7 +534,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="bg-slate-50 dark:bg-brand-bg/50 border border-slate-100 dark:border-white/5 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                <div className="bg-brand-bg/50 border border-white/5 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
                                     <div className={`w-full flex flex-col items-center justify-center ${isLocked ? 'blur-md grayscale opacity-40' : ''}`}>
                                         {deal.latitude && deal.longitude ? (
                                             <div className="w-full space-y-6">
@@ -690,9 +690,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             </div>
 
             {/* Sticky Action Footer - Market Standard */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-3 pb-safe bg-gradient-to-t from-white dark:from-brand-bg via-white/95 dark:via-brand-bg/95 to-transparent backdrop-blur-md">
+            <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-3 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
                 <div className="max-w-4xl mx-auto">
-                    <div className="bg-white/80 dark:bg-brand-bg/80 backdrop-blur-xl rounded-[1.25rem] p-2 md:p-3 flex items-center justify-between gap-3 shadow-2xl border-t border-slate-200 dark:border-white/10">
+                    <div className="bg-brand-bg/80 backdrop-blur-xl rounded-[1.25rem] p-2 md:p-3 flex items-center justify-between gap-3 shadow-2xl border-t border-white/10">
                         {/* Price Display */}
                         <div className="flex flex-col min-w-fit pl-1">
                             <div className="flex items-center gap-2 mb-0.5">
