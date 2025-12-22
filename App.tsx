@@ -199,7 +199,7 @@ function AppContent() {
 
   return (
     <SearchProvider>
-      <div className="flex flex-col min-h-screen bg-white text-slate-900">
+      <div className="flex flex-col min-h-screen bg-white dark:bg-brand-bg text-slate-900 dark:text-white transition-colors duration-500">
         <main className={`flex-grow ${user && !isAdminRoute && !isDealDetailRoute ? 'pb-24' : ''}`}>
           <AnimatedRoutes />
         </main>

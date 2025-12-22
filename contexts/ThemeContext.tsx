@@ -1,34 +1,42 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
-export type Theme = 'light';
+export type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  effectiveTheme: 'light';
+  effectiveTheme: Theme;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [effectiveTheme, setEffectiveTheme] = useState<'light'>('light');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedTheme = window.localStorage.getItem('color-theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme as Theme;
+    }
+    return 'dark'; // Ocean as default
+  });
+
+  const [effectiveTheme, setEffectiveTheme] = useState<Theme>(theme);
 
   const setTheme = (newTheme: Theme) => {
-    // No-op as we only want light mode
-    console.log('Theme change requested to:', newTheme, 'but light mode is forced.');
+    setThemeState(newTheme);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('color-theme', newTheme);
+    }
   };
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('dark');
-    // Ensure local storage is also cleaned up if it exists
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('color-theme', 'light');
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
     }
-    setEffectiveTheme('light');
-    setThemeState('light');
-  }, []);
+    setEffectiveTheme(theme);
+  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, effectiveTheme }}>
