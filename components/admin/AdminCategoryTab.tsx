@@ -84,9 +84,9 @@ const AdminCategoryTab: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-brand-surface rounded-xl shadow-sm border border-gray-100 dark:border-white/5 overflow-hidden">
-                <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-gray-700 dark:text-brand-text-light uppercase bg-gray-50 dark:bg-brand-bg">
+            <div className="glass-premium rounded-xl shadow-sm border border-white/10 overflow-hidden">
+                <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs text-white/60 uppercase bg-white/5">
                         <tr>
                             <th className="px-6 py-4">Icon</th>
                             <th className="px-6 py-4">Name (EN)</th>
@@ -94,16 +94,16 @@ const AdminCategoryTab: React.FC = () => {
                             <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                    <tbody className="divide-y divide-white/10">
                         {isAdding && (
-                            <tr className="bg-brand-primary/5">
+                            <tr className="bg-brand-primary/10">
                                 <td className="px-6 py-4">
                                     <input
                                         type="text"
                                         placeholder="Icon name"
                                         value={editForm.icon}
                                         onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
-                                        className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-surface"
+                                        className="w-full p-2 rounded border border-white/10 bg-white/5 text-white"
                                     />
                                 </td>
                                 <td className="px-6 py-4">
@@ -112,7 +112,7 @@ const AdminCategoryTab: React.FC = () => {
                                         placeholder="English Name"
                                         value={editForm.name}
                                         onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                        className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-surface"
+                                        className="w-full p-2 rounded border border-white/10 bg-white/5 text-white"
                                     />
                                 </td>
                                 <td className="px-6 py-4">
@@ -121,40 +121,40 @@ const AdminCategoryTab: React.FC = () => {
                                         placeholder="Turkish Name"
                                         value={editForm.name_tr}
                                         onChange={e => setEditForm({ ...editForm, name_tr: e.target.value })}
-                                        className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-surface"
+                                        className="w-full p-2 rounded border border-white/10 bg-white/5 text-white"
                                     />
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-2">
-                                    <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-700 p-1">
+                                    <button onClick={handleSave} disabled={isSaving} className="text-green-400 hover:text-green-300 p-1">
                                         {isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : <CheckIcon className="w-5 h-5" />}
                                     </button>
-                                    <button onClick={handleCancelEdit} className="text-red-600 hover:text-red-700 p-1">
+                                    <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300 p-1">
                                         <XIcon className="w-5 h-5" />
                                     </button>
                                 </td>
                             </tr>
                         )}
                         {categories.map((cat) => (
-                            <tr key={cat.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                            <tr key={cat.id} className="hover:bg-white/5 transition-colors">
                                 <td className="px-6 py-4">
                                     {editingId === cat.id ? (
                                         <input
                                             type="text"
                                             value={editForm.icon}
                                             onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
-                                            className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-surface"
+                                            className="w-full p-2 rounded border border-white/10 bg-white/5 text-white"
                                         />
                                     ) : (
-                                        <span className="text-gray-500 dark:text-brand-text-muted">{cat.icon || '-'}</span>
+                                        <span className="text-brand-text-muted">{cat.icon || '-'}</span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-brand-text-light">
+                                <td className="px-6 py-4 font-medium text-white">
                                     {editingId === cat.id ? (
                                         <input
                                             type="text"
                                             value={editForm.name}
                                             onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                            className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-surface"
+                                            className="w-full p-2 rounded border border-white/10 bg-white/5 text-white"
                                         />
                                     ) : (
                                         cat.name
@@ -166,28 +166,28 @@ const AdminCategoryTab: React.FC = () => {
                                             type="text"
                                             value={editForm.name_tr}
                                             onChange={e => setEditForm({ ...editForm, name_tr: e.target.value })}
-                                            className="w-full p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-brand-surface"
+                                            className="w-full p-2 rounded border border-white/10 bg-white/5 text-white"
                                         />
                                     ) : (
-                                        cat.name_tr || <span className="text-gray-400 italic">No translation</span>
+                                        cat.name_tr || <span className="text-white/40 italic">No translation</span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-3">
                                     {editingId === cat.id ? (
                                         <>
-                                            <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-700 p-1">
+                                            <button onClick={handleSave} disabled={isSaving} className="text-green-400 hover:text-green-300 p-1">
                                                 {isSaving ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : <CheckIcon className="w-5 h-5" />}
                                             </button>
-                                            <button onClick={handleCancelEdit} className="text-red-600 hover:text-red-700 p-1">
+                                            <button onClick={handleCancelEdit} className="text-red-400 hover:text-red-300 p-1">
                                                 <XIcon className="w-5 h-5" />
                                             </button>
                                         </>
                                     ) : (
                                         <>
-                                            <button onClick={() => handleStartEdit(cat)} className="text-blue-600 hover:text-blue-700 p-1">
+                                            <button onClick={() => handleStartEdit(cat)} className="text-blue-400 hover:text-blue-300 p-1">
                                                 <EditIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => handleDelete(cat.id, cat.name)} className="text-red-600 hover:text-red-700 p-1">
+                                            <button onClick={() => handleDelete(cat.id, cat.name)} className="text-red-400 hover:text-red-300 p-1">
                                                 <TrashIcon className="w-5 h-5" />
                                             </button>
                                         </>

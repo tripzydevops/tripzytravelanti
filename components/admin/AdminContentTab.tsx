@@ -72,25 +72,25 @@ const AdminContentTab: React.FC = () => {
             </div>
 
             {Object.entries(pageContent).map(([sectionKey, items]: [string, PageContent[]]) => (
-                <section key={sectionKey} className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm">
-                    <h3 className="text-xl font-bold mb-4 capitalize text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2">{sectionKey} Section</h3>
+                <section key={sectionKey} className="glass-premium p-6 rounded-lg shadow-sm border border-white/10">
+                    <h3 className="text-xl font-bold mb-4 capitalize text-white border-b border-white/10 pb-2">{sectionKey} Section</h3>
                     <div className="space-y-6">
                         {items.map(item => (
-                            <div key={item.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-brand-bg rounded-lg">
+                            <div key={item.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 hover:bg-white/5 rounded-lg border border-white/5 transition-colors">
                                 <div className="md:col-span-2 flex justify-between items-center mb-2">
-                                    <span className="text-sm font-semibold text-gray-500 dark:text-brand-text-muted uppercase tracking-wider">{item.content_key}</span>
+                                    <span className="text-sm font-semibold text-brand-text-muted uppercase tracking-wider">{item.content_key}</span>
                                     <button
                                         onClick={() => handleSave(item)}
                                         disabled={isSaving || (!editingContent[`${item.id}-content_value`] && !editingContent[`${item.id}-content_value_tr`])}
-                                        className="text-sm bg-brand-secondary text-brand-bg px-3 py-1 rounded hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="text-sm bg-brand-secondary text-brand-bg px-3 py-1 rounded hover:bg-opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                                     >
                                         {isSaving ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-gray-500 dark:text-brand-text-muted mb-1">English</label>
-                                    <div className="text-xs text-gray-400 mb-1 truncate" title={item.content_value}>
+                                    <label className="block text-xs text-brand-text-muted mb-1">English</label>
+                                    <div className="text-xs text-white/50 mb-1 truncate" title={item.content_value}>
                                         Current: {item.content_value}
                                     </div>
                                     {item.content_type === 'image' ? (
@@ -101,12 +101,12 @@ const AdminContentTab: React.FC = () => {
                                                 placeholder="Upload Content Image"
                                             />
                                             <div className="mt-1">
-                                                <p className="text-xs text-gray-500 mb-1">Or enter URL:</p>
+                                                <p className="text-xs text-brand-text-muted mb-1">Or enter URL:</p>
                                                 <input
                                                     type="text"
                                                     value={editingContent[`${item.id}-content_value`] ?? item.content_value}
                                                     onChange={(e) => handleContentChange(item.id, 'content_value', e.target.value)}
-                                                    className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm"
+                                                    className="w-full bg-white/5 rounded border border-white/10 p-2 text-sm text-white focus:ring-1 focus:ring-brand-primary outline-none"
                                                     placeholder="https://..."
                                                 />
                                             </div>
@@ -115,23 +115,23 @@ const AdminContentTab: React.FC = () => {
                                         <textarea
                                             value={editingContent[`${item.id}-content_value`] ?? item.content_value}
                                             onChange={(e) => handleContentChange(item.id, 'content_value', e.target.value)}
-                                            className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm h-24"
+                                            className="w-full bg-white/5 rounded border border-white/10 p-2 text-sm h-24 text-white focus:ring-1 focus:ring-brand-primary outline-none"
                                         />
                                     )}
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-gray-500 dark:text-brand-text-muted mb-1">Turkish</label>
-                                    <div className="text-xs text-gray-400 mb-1 truncate" title={item.content_value_tr || ''}>
+                                    <label className="block text-xs text-brand-text-muted mb-1">Turkish</label>
+                                    <div className="text-xs text-white/50 mb-1 truncate" title={item.content_value_tr || ''}>
                                         Current: {item.content_value_tr || '-'}
                                     </div>
                                     {item.content_type === 'image' ? (
-                                        <p className="text-sm text-gray-400 italic">Images are shared across languages currently.</p>
+                                        <p className="text-sm text-white/40 italic">Images are shared across languages currently.</p>
                                     ) : (
                                         <textarea
                                             value={editingContent[`${item.id}-content_value_tr`] ?? (item.content_value_tr || '')}
                                             onChange={(e) => handleContentChange(item.id, 'content_value_tr', e.target.value)}
-                                            className="w-full bg-white dark:bg-brand-surface rounded border border-gray-300 dark:border-gray-600 p-2 text-sm h-24"
+                                            className="w-full bg-white/5 rounded border border-white/10 p-2 text-sm h-24 text-white focus:ring-1 focus:ring-brand-primary outline-none"
                                             placeholder="Add Turkish translation..."
                                         />
                                     )}
