@@ -4,7 +4,7 @@ import { Deal, SubscriptionTier } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActivity } from '../contexts/UserActivityContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Lock, StarIcon, HeartIcon, LocationMarkerIcon as LocationIcon } from './Icons';
+import { Lock, StarIcon, HeartIcon, LocationMarkerIcon as LocationIcon, CheckCircle } from './Icons';
 import { getThumbnailUrl } from '../lib/imageUtils';
 import { logEngagementEvent } from '../lib/supabaseService';
 
@@ -151,6 +151,13 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
               {language === 'tr' ? 'YENİ' : 'NEW'}
             </div>
           )}
+          {/* Popular Badge for well-rated deals */}
+          {deal.ratingCount > 20 && !isLocked && (
+            <div className="bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tighter uppercase whitespace-nowrap flex items-center gap-1">
+              <StarIcon className="w-2.5 h-2.5 fill-current" />
+              {t('popular')}
+            </div>
+          )}
         </div>
 
         {/* Premium Lock Overlay */}
@@ -192,7 +199,10 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
             )}
           </div>
           <div className="flex flex-col items-start min-w-0">
-            <span className="text-[11px] font-semibold text-white/50 uppercase tracking-widest leading-tight truncate w-full">{deal.vendor}</span>
+            <div className="flex items-center gap-1 min-w-0 truncate w-full">
+              <span className="text-[11px] font-semibold text-white/50 uppercase tracking-widest leading-tight truncate">{deal.vendor}</span>
+              <CheckCircle className="w-3 h-3 text-gold-400 shrink-0" />
+            </div>
             {deal.storeLocations && deal.storeLocations.length > 0 && (
               <div className="flex items-center gap-1 mt-0.5 opacity-40 shrink-0">
                 <LocationIcon className="w-2.5 h-2.5" />
@@ -210,7 +220,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {/* Rating & Expiry info row */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
           <div className="flex flex-col gap-0.5">
-            <div className="flex items-baseline gap-1.5">
+            <div className={`flex items-baseline gap-1.5 ${discount >= 50 && !isLocked ? 'animate-pulse-subtle' : ''}`}>
               <span className="text-[20px] font-black tracking-tight text-white leading-none">
                 {deal.originalPrice > 0 ? `₺${deal.discountedPrice.toLocaleString()}` : `%${discount}`}
               </span>

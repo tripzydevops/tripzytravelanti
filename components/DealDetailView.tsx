@@ -8,7 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActivity } from '../contexts/UserActivityContext';
 import { SubscriptionTier, Deal } from '../types';
-import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon, StarIcon, SparklesIcon, CustomBriefcaseIcon } from './Icons';
+import { ChevronLeftIcon, ShareIcon, WhatsappIcon, FacebookLogo, TelegramIcon, InstagramIcon, LinkIcon, CheckCircle, PremiumShareIcon, HeartIcon, ClockIcon, LocationMarkerIcon, GlobeIcon, StarIcon, SparklesIcon, CustomBriefcaseIcon, TicketIcon } from './Icons';
 import Modal from './Modal';
 import StarRatingInput from './StarRatingInput';
 import WalletQRCode from './WalletQRCode';
@@ -128,6 +128,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
     const [activeDealsCount, setActiveDealsCount] = useState(0);
     const [walletItemInfo, setWalletItemInfo] = useState<{ id: string; redemptionCode: string } | null>(null);
     const [localIsSoldOut, setLocalIsSoldOut] = useState(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal));
+    // Consistent random number for viewing count based on deal.id
+    const viewingCount = useMemo(() => {
+        const hash = deal.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return 8 + (hash % 18);
+    }, [deal.id]);
 
     useEffect(() => {
         setLocalIsSoldOut(deal.isSoldOut || (deal.maxRedemptionsTotal && (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal));
@@ -384,6 +389,14 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                     <SparklesIcon className="w-3.5 h-3.5 text-gold-400" />
                     <span>Exclusive Preview</span>
                 </div>
+
+                {/* Urgency Overlay */}
+                <div className="absolute top-24 left-6 z-20 px-4 py-2 rounded-xl bg-gold-600/20 backdrop-blur-xl border border-gold-500/30 flex items-center gap-2 animate-fade-in animate-pulse-subtle">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black text-white uppercase tracking-wider">
+                        {viewingCount} {t('peopleViewing')}
+                    </span>
+                </div>
             </div>
 
             {/* Floating Content Card */}
@@ -623,6 +636,45 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* How it Works / Redemption Guide */}
+                    <div className="mt-16 pt-10 border-t border-white/10">
+                        <h3 className="text-xl font-heading font-black text-white mb-8 uppercase tracking-widest text-center">
+                            {language === 'tr' ? 'Nasıl Çalışır?' : 'How it Works'}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[
+                                { step: 1, title: t('step1'), desc: t('step1Desc'), icon: <CustomBriefcaseIcon className="w-6 h-6" /> },
+                                { step: 2, title: t('step2'), desc: t('step2Desc'), icon: <CheckCircle className="w-6 h-6" /> },
+                                { step: 3, title: t('step3'), desc: t('step3Desc'), icon: <TicketIcon className="w-6 h-6" /> },
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex flex-col items-center text-center group">
+                                    <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-brand-bg transition-all duration-500 shadow-xl">
+                                        {item.icon}
+                                    </div>
+                                    <h4 className="text-white font-bold mb-2">{item.title}</h4>
+                                    <p className="text-white/40 text-sm leading-relaxed max-w-[200px]">{item.desc}</p>
+                                    {idx < 2 && (
+                                        <div className="hidden md:block absolute right-0 top-8 w-8 h-px bg-white/10"></div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Trust Signals Banner */}
+                    <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                            { label: t('secureRedemption'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
+                            { label: t('noHiddenFees'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
+                            { label: t('guaranteedAccess'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-4 rounded-2xl">
+                                {item.icon}
+                                <span className="text-[11px] font-black uppercase tracking-widest text-white/60">{item.label}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

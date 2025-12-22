@@ -76,6 +76,7 @@ const HomePage: React.FC = () => {
   const flightWidgetRef = React.useRef<HTMLDivElement>(null);
   const [flashDeals, setFlashDeals] = React.useState<Deal[]>([]);
   const [timeOfDay, setTimeOfDay] = React.useState<'morning' | 'afternoon' | 'evening' | 'night'>(getTimeOfDay());
+  const [activeMainTab, setActiveMainTab] = React.useState<'trending' | 'nearby' | 'foryou'>('trending');
 
   // Pull-to-refresh handler
   const handleRefresh = React.useCallback(async () => {
@@ -521,7 +522,7 @@ const HomePage: React.FC = () => {
           )}
 
           {/* Category Filters - Airbnb Style Category Bar */}
-          <div className="mb-12 transition-all duration-300">
+          <div className="mb-8 transition-all duration-300">
             <CategoryBar
               categories={categoryBarData}
               selectedCategoryId={categoryFilter}
@@ -529,219 +530,159 @@ const HomePage: React.FC = () => {
             />
           </div>
 
-          {/* Recommendations Section */}
-          {user && (
-            <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20 backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.15)]">
-                  <SparklesIcon className="w-6 h-6 text-gold-400" />
-                </div>
-                <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
-                  {smartPicksTitle}
-                </h2>
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
-                  <DealCardSkeleton count={5} />
-                </div>
-              ) : recommendations.length > 0 ? (
-                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000 animate-fade-in-up">
-                  {recommendations.map((deal, index) => (
-                    <div key={deal.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-fade-in-up">
-                      <DealCard deal={deal} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-white/50 italic bg-white/5 p-6 rounded-xl border border-white/5">{t('startExploringForRecommendations')}</p>
-              )}
-            </section>
-          )}
-
-          {/* Nearby Deals Section */}
-          {isLocationEnabled && userLocation && (
-            <section className="mb-16">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 backdrop-blur-md">
-                  <LocationMarkerIcon className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-heading font-bold text-white tracking-tight">
-                  {t('nearbyDeals') || 'Nearby Deals'}
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
-                {deals
-                  .filter(d => d.latitude && d.longitude)
-                  .map(d => {
-                    const R = 6371;
-                    const dLat = (d.latitude! - userLocation.lat) * (Math.PI / 180);
-                    const dLon = (d.longitude! - userLocation.lng) * (Math.PI / 180);
-                    const a =
-                      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      Math.cos(userLocation.lat * (Math.PI / 180)) * Math.cos(d.latitude! * (Math.PI / 180)) *
-                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                    const distance = R * c;
-                    return { ...d, distance };
-                  })
-                  .sort((a, b) => a.distance - b.distance)
-                  .slice(0, 3)
-                  .map(deal => (
-                    <div key={deal.id} className="relative group/nearby">
-                      <DealCard deal={deal} />
-                      <div className="absolute top-4 right-4 bg-[#0f172a]/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1.5 rounded-full flex items-center shadow-lg z-20 group-hover/nearby:bg-emerald-500 group-hover/nearby:text-white transition-all">
-                        <LocationMarkerIcon className="w-3 h-3 mr-1" />
-                        {deal.distance.toFixed(1)} km
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </section>
-          )}
-
-          {/* Rating Filters */}
-          {categoryFilter !== 'Flights' && (
-            <div className="flex items-center space-x-4 mb-10 overflow-x-auto pb-2 scrollbar-hide">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 shrink-0">
-                <StarIcon className="w-4 h-4 text-gold-500" />
-                <h3 className="text-sm font-bold text-white/80 whitespace-nowrap">{t('filterByRating')}:</h3>
-              </div>
-
-              <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10">
-                {ratingFilters.map(filter => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setRatingFilter(filter.value)}
-                    className={`px-5 py-1.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${ratingFilter === filter.value
-                      ? 'bg-white/20 text-white shadow-inner'
-                      : 'text-white/50 hover:text-white hover:bg-white/10'
-                      }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Deals Section */}
-          <section>
-            {categoryFilter === 'Flights' ? (
-              <div className="animate-fade-in text-center py-16 bg-white/5 rounded-3xl border border-white/10">
-                <div className="inline-flex p-4 bg-blue-500/10 rounded-full mb-6">
-                  <span className="text-4xl text-blue-400">✈️</span>
-                </div>
-                <h2 className="text-3xl font-heading font-bold text-white mb-4">
-                  {t('flightsMovedTitle') || 'Flights are now in Travel Hub'}
-                </h2>
-                <p className="text-brand-text-muted text-lg mb-8 max-w-lg mx-auto">
-                  {t('flightsMovedSubtitle') || 'We have moved all travel-related features to our new dedicated section.'}
-                </p>
+          {/* Main Deal Tabs */}
+          <div className="mb-8 flex items-center justify-center">
+            <div className="flex bg-white/5 backdrop-blur-md p-1 rounded-2xl border border-white/10 shadow-2xl">
+              {[
+                { id: 'foryou', label: t('tabForYou'), icon: SparklesIcon },
+                { id: 'trending', label: t('tabTrending'), icon: FireIcon },
+                { id: 'nearby', label: t('tabNearby'), icon: LocationMarkerIcon },
+              ].map((tab) => (
                 <button
-                  onClick={() => navigate('/travel')}
-                  className="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-3 px-8 rounded-2xl transition-all shadow-lg"
+                  key={tab.id}
+                  onClick={() => setActiveMainTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeMainTab === tab.id
+                    ? 'bg-gold-500 text-white shadow-[0_0_20px_rgba(212,175,55,0.3)]'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                    }`}
                 >
-                  {t('goToTravelHub') || 'Visit Travel Hub'}
+                  <tab.icon className={`w-4 h-4 ${activeMainTab === tab.id ? 'animate-pulse' : ''}`} />
+                  {tab.label}
                 </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20 backdrop-blur-md">
-                      <StarIcon className="w-6 h-6 text-purple-400" />
-                    </div>
-                    <h2 className="text-3xl font-heading font-bold text-white tracking-tight">
-                      {displayFeaturedDealsTitle || t('featuredDeals')}
-                    </h2>
-                  </div>
-                </div>
+              ))}
+            </div>
+          </div>
 
-                {filteredDeals.length > 0 ? (
+          {/* Tab Content */}
+          <section className="min-h-[400px]">
+            {activeMainTab === 'foryou' && (
+              <div className="animate-fade-in">
+                {user ? (
                   <>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000 animate-fade-in-up">
-                      {filteredDeals.map((deal, index) => (
-                        <div key={deal.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-fade-in-up">
-                          <DealCard deal={deal} />
-                        </div>
-                      ))}
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="p-2 bg-gold-500/10 rounded-xl border border-gold-500/20">
+                        <SparklesIcon className="w-6 h-6 text-gold-400" />
+                      </div>
+                      <h2 className="text-3xl font-heading font-bold text-white tracking-tight">{smartPicksTitle}</h2>
                     </div>
-                    {/* Load More Button */}
-                    {hasMore && (
-                      <div className="flex justify-center mt-12 mb-8">
-                        <button
-                          onClick={handleLoadMore}
-                          disabled={loading}
-                          className="relative group px-10 py-3.5 rounded-full overflow-hidden shadow-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 group-hover:via-gold-400 group-hover:to-gold-300 transition-all duration-500"></div>
-                          <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="relative flex items-center gap-2 text-white font-bold tracking-wide">
-                            {loading ? (
-                              <>
-                                <SpinnerIcon className="w-5 h-5 animate-spin" />
-                                {t('loading') || 'Loading...'}
-                              </>
-                            ) : (
-                              t('loadMore') || 'Load More'
-                            )}
-                          </div>
-                        </button>
+                    {loadingRecommendations ? (
+                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                        <DealCardSkeleton count={5} />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                        {recommendations.map(deal => <DealCard key={deal.id} deal={deal} />)}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-24 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/5 mx-auto max-w-2xl shadow-2xl overflow-hidden relative group">
-                    {/* Decorative Background Glow for Empty State */}
-                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-gold-500/10 rounded-full blur-[80px] group-hover:bg-gold-500/20 transition-all duration-700"></div>
-                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-[80px] group-hover:bg-purple-500/20 transition-all duration-700"></div>
+                  <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
+                    <SparklesIcon className="w-12 h-12 text-gold-400/30 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">{t('loginToUnlock')}</h3>
+                    <p className="text-white/40 mb-6">{t('startExploringForRecommendations')}</p>
+                    <Link to="/login" className="inline-block px-8 py-3 bg-gold-500 text-white font-bold rounded-full">{t('login')}</Link>
+                  </div>
+                )}
+              </div>
+            )}
 
-                    {loading ? (
-                      <div className="flex flex-col items-center justify-center space-y-4">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-gold-500/20 blur-xl rounded-full animate-pulse"></div>
-                          <SpinnerIcon className="w-12 h-12 text-gold-500 animate-spin relative z-10" />
+            {activeMainTab === 'nearby' && (
+              <div className="animate-fade-in">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                    <LocationMarkerIcon className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight">{t('nearbyDeals')}</h2>
+                </div>
+                {isLocationEnabled && userLocation ? (
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                    {deals
+                      .filter(d => d.latitude && d.longitude)
+                      .map(d => {
+                        const R = 6371;
+                        const dLat = (d.latitude! - userLocation.lat) * (Math.PI / 180);
+                        const dLon = (d.longitude! - userLocation.lng) * (Math.PI / 180);
+                        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(userLocation.lat * (Math.PI / 180)) * Math.cos(d.latitude! * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                        return { ...d, distance: R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))) };
+                      })
+                      .sort((a, b) => a.distance - b.distance)
+                      .map(deal => (
+                        <div key={deal.id} className="relative group/nearby">
+                          <DealCard deal={deal} />
+                          <div className="absolute top-4 right-4 bg-[#0f172a]/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-3 py-1 rounded-full z-20">
+                            {deal.distance.toFixed(1)} KM
+                          </div>
                         </div>
-                        <p className="text-gold-400 font-medium animate-pulse tracking-widest uppercase text-xs">Looking for deals...</p>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
+                    <LocationMarkerIcon className="w-12 h-12 text-emerald-400/30 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">{t('locationServices')}</h3>
+                    <p className="text-white/40 mb-6">{t('locationServicesSubtitle')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeMainTab === 'trending' && (
+              <div className="animate-fade-in">
+                {categoryFilter === 'Flights' ? (
+                  <div className="animate-fade-in text-center py-16 bg-white/5 rounded-3xl border border-white/10">
+                    <div className="inline-flex p-4 bg-blue-500/10 rounded-full mb-6">
+                      <span className="text-4xl text-blue-400">✈️</span>
+                    </div>
+                    <h2 className="text-3xl font-heading font-bold text-white mb-4">{t('flightsMovedTitle')}</h2>
+                    <p className="text-brand-text-muted text-lg mb-8 max-w-lg mx-auto">{t('flightsMovedSubtitle')}</p>
+                    <button onClick={() => navigate('/travel')} className="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-3 px-8 rounded-2xl transition-all shadow-lg">{t('goToTravelHub')}</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                        <FireIcon className="w-6 h-6 text-purple-400" />
+                      </div>
+                      <h2 className="text-3xl font-heading font-bold text-white tracking-tight">{t('trending') || displayFeaturedDealsTitle || t('featuredDeals')}</h2>
+                    </div>
+
+                    {filteredDeals.length > 0 ? (
+                      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
+                        {filteredDeals.map((deal, index) => (
+                          <div key={deal.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-fade-in-up">
+                            <DealCard deal={deal} />
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center relative z-10 px-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl flex items-center justify-center mb-6 shadow-xl border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                          <Search className="w-10 h-10 text-white/20 group-hover:text-gold-400/50 transition-colors" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">{t('noResults')}</h3>
-                        <p className="text-white/40 mb-8 max-w-sm">We couldn't find exactly what you're looking for. Try adjusting your filters or use our Smart Search for better results.</p>
-
-                        {suggestions.length > 0 && (
-                          <div className="w-full">
-                            <p className="text-[10px] text-white/30 mb-4 uppercase tracking-[0.2em] font-extrabold">Recommended searches</p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                              {suggestions.map((s, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => setSearchQuery(s)}
-                                  className="px-5 py-2.5 bg-white/5 hover:bg-gold-500/10 border border-white/10 hover:border-gold-500/30 rounded-full text-white/70 hover:text-gold-400 text-sm font-medium transition-all duration-300"
-                                >
-                                  {s}
-                                </button>
-                              ))}
-                            </div>
+                      <div className="text-center py-24 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/5 mx-auto max-w-2xl relative group overflow-hidden">
+                        <div className="absolute -top-24 -left-24 w-48 h-48 bg-gold-500/10 rounded-full blur-[80px]" />
+                        {loading ? (
+                          <div className="flex flex-col items-center justify-center space-y-4">
+                            <SpinnerIcon className="w-12 h-12 text-gold-500 animate-spin" />
+                            <p className="text-gold-400 font-medium animate-pulse tracking-widest uppercase text-xs">Looking for deals...</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center relative z-10 px-8">
+                            <Search className="w-16 h-16 text-white/10 mb-6" />
+                            <h3 className="text-2xl font-bold text-white mb-2">{t('noResults')}</h3>
+                            <p className="text-white/40 mb-8 max-w-sm">We couldn't find exactly what you're looking for. Try adjusting your filters.</p>
+                            <button onClick={() => { setCategoryFilter('All'); setSearchQuery(''); }} className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white font-semibold">{t('clear')}</button>
                           </div>
                         )}
+                      </div>
+                    )}
 
-                        <button
-                          onClick={() => { setCategoryFilter('All'); setSearchQuery(''); clearSuggestions(); }}
-                          className="mt-10 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white font-semibold transition-all hover:scale-105 active:scale-95"
-                        >
-                          Clear all filters
+                    {hasMore && (
+                      <div className="flex justify-center mt-12 mb-8">
+                        <button onClick={handleLoadMore} disabled={loading} className="relative group px-10 py-3.5 rounded-full overflow-hidden shadow-2xl transition-all hover:scale-105 disabled:opacity-50">
+                          <div className="absolute inset-0 bg-gradient-to-r from-gold-600 to-gold-400" />
+                          <div className="relative flex items-center gap-2 text-white font-bold">{loading ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : t('loadMore')}</div>
                         </button>
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
-              </>
+              </div>
             )}
           </section>
           {/* AI-Powered Trending Deals Section */}
