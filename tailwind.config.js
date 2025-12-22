@@ -1,3 +1,9 @@
+/** 
+ * CRITICAL STABILITY NOTE:
+ * This config defines the core branding colors (Deep Ocean / Gold).
+ * DO NOT CHANGE 'brand-bg' OR 'glass-premium' WITHOUT EXPLICIT APPROVAL.
+ * Stable Version: stable-v1
+ */
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
