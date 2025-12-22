@@ -21,9 +21,8 @@ export default {
     },
     extend: {
       colors: {
-        'brand-bg': '#001A33', // Slightly darker Deep Ocean for more contrast if needed, but let's see. 
-        // Actually, let's brighten 'brand-surface' to make it feel less heavy
-        'brand-surface': '#003D7A',
+        'brand-bg': '#001F3F', // Original Deep Ocean
+        'brand-surface': '#003366', // Original Surface
         'brand-primary': '#D4AF37', // Soft Gold
         'brand-secondary': '#0074D9', // Azure Blue
         'brand-text-light': '#FFFFFF',

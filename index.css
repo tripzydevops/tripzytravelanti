@@ -52,15 +52,15 @@
   }
 
   .glass {
-    @apply bg-white/60 dark:bg-[#001A33]/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-xl;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl;
   }
 
   .glass-dark {
-    @apply bg-slate-100/40 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-sm;
+    @apply bg-black/20 backdrop-blur-xl border border-white/10 shadow-sm;
   }
 
   .glass-premium {
-    @apply bg-white/20 dark:bg-white/5 backdrop-blur-2xl border border-slate-300 dark:border-white/10 shadow-lg;
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl;
   }
 
   .icon-glow {

@@ -400,7 +400,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Floating Content Card */}
             <div className="container mx-auto px-4 -mt-16 relative z-30">
-                <div className="bg-brand-surface rounded-[32px] p-6 shadow-2xl border border-white/10 glass-premium">
+                <div className="glass-premium rounded-[32px] p-6">
                     <div className="flex flex-col gap-6">
                         {/* Title & Vendor Section */}
                         <div className="flex flex-col gap-4">
@@ -692,7 +692,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
             {/* Sticky Action Footer - Market Standard */}
             <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-3 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
                 <div className="max-w-4xl mx-auto">
-                    <div className="bg-brand-bg/80 backdrop-blur-xl rounded-[1.25rem] p-2 md:p-3 flex items-center justify-between gap-3 shadow-2xl border-t border-white/10">
+                    <div className="glass backdrop-blur-xl rounded-[1.25rem] p-2 md:p-3 flex items-center justify-between gap-3">
                         {/* Price Display */}
                         <div className="flex flex-col min-w-fit pl-1">
                             <div className="flex items-center gap-2 mb-0.5">
