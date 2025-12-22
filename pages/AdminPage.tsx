@@ -113,7 +113,7 @@ const AdminPage: React.FC = () => {
   };
 
   return (
-  return (
+
     <div className="flex bg-brand-bg min-h-screen">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
