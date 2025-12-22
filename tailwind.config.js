@@ -22,6 +22,7 @@ export default {
     extend: {
       colors: {
         'brand-bg': '#001F3F', // Original Deep Ocean
+        'brand-dark': '#001529', // Darker Deep Ocean (Footer/Nav)
         'brand-surface': '#003366', // Original Surface
         'brand-primary': '#D4AF37', // Soft Gold
         'brand-secondary': '#0074D9', // Azure Blue
