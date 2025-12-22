@@ -640,8 +640,7 @@ const AdminUsersTab: React.FC = () => {
                                 onClick={() => {
                                     if (window.confirm('Are you sure you want to ENABLE notifications for ALL users?')) {
                                         updateAllUsersNotificationPreferences({ generalNotifications: true });
-                                        setShowSuccess('Notifications enabled for all users');
-                                        setTimeout(() => setShowSuccess(''), 3000);
+                                        showSuccessToast('Notifications enabled for all users');
                                     }
                                 }}
                                 className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
@@ -652,8 +651,7 @@ const AdminUsersTab: React.FC = () => {
                                 onClick={() => {
                                     if (window.confirm('Are you sure you want to DISABLE notifications for ALL users?')) {
                                         updateAllUsersNotificationPreferences({ generalNotifications: false });
-                                        setShowSuccess('Notifications disabled for all users');
-                                        setTimeout(() => setShowSuccess(''), 3000);
+                                        showSuccessToast('Notifications disabled for all users');
                                     }
                                 }}
                                 className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
