@@ -200,8 +200,8 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleNotImplemented = () => {
-    alert(t('featureNotImplemented'));
+  const handleContact = () => {
+    window.location.href = 'mailto:support@tripzy.app';
   };
 
   const handleLogout = () => {
@@ -672,7 +672,7 @@ const ProfilePage: React.FC = () => {
           {/* Support Section */}
           <SettingsSection title={t('supportSection')}>
             <SettingsItem onClick={() => navigate('/faq')} icon={<QuestionMarkCircleIcon className="w-6 h-6" />} title={t('helpCenter')} subtitle={t('helpCenterSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
-            <SettingsItem onClick={handleNotImplemented} icon={<MailIcon className="w-6 h-6" />} title={t('contact')} subtitle={t('contactSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
+            <SettingsItem onClick={handleContact} icon={<MailIcon className="w-6 h-6" />} title={t('contact')} subtitle={t('contactSubtitle')} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
             <SettingsItem icon={<InformationCircleIcon className="w-6 h-6" />} title={t('aboutApp')} subtitle={t('appVersion')} />
             <SettingsItem onClick={() => navigate('/terms')} icon={<DocumentTextIcon className="w-6 h-6" />} title={t('termsOfService') || 'Terms of Service'} action={<ChevronRightIcon className="w-5 h-5 text-gray-400 dark:text-brand-text-muted" />} />
             {/* Merged Privacy Links */}
