@@ -38,7 +38,7 @@ const RedemptionHistoryPage: React.FC = () => {
                 >
                     <ChevronLeftIcon className="w-6 h-6 text-gold-500" />
                 </button>
-                <h1 className="text-xl font-bold font-heading text-white">{t('redemptionHistory') || 'Redemption History'}</h1>
+                <h1 className="text-xl font-bold font-heading text-white">{t('redemptionHistory')}</h1>
             </div>
 
             <div className="container mx-auto px-4 py-6">

@@ -496,6 +496,13 @@ export const translations = {
     adminBackToApp: 'Back to App',
     // Footer
     footerText: '© 2024 Tripzy. All rights reserved.',
+    redemptionHistory: 'Redemption History',
+    noRedemptions: 'No Redemptions Yet',
+    startRedeeming: 'Start using your deals to see them here!',
+    referralSuccess: 'Referral applied: 100 points added!',
+    enterReferralCode: 'Enter Referral Code',
+    partnerPortal: 'Partner Portal',
+    shareOnWhatsApp: 'Share on WhatsApp',
   },
   tr: {
     // Header
@@ -988,5 +995,12 @@ export const translations = {
     maybeLater: 'Belki Daha Sonra',
     // Footer
     footerText: '© 2024 Tripzy. Tüm hakları saklıdır.',
+    redemptionHistory: 'Kullanım Geçmişi',
+    noRedemptions: 'Henüz Kullanım Yok',
+    startRedeeming: 'Kullandığınız fırsatları burada görmek için hemen başlayın!',
+    referralSuccess: 'Referans uygulandı: 100 puan eklendi!',
+    enterReferralCode: 'Davet Kodunu Girin',
+    partnerPortal: 'Partner Paneli',
+    shareOnWhatsApp: "WhatsApp'ta Paylaş",
   },
 };
