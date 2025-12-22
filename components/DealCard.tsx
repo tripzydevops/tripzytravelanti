@@ -235,7 +235,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div className="block group relative glass-premium rounded-[24px] overflow-hidden transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.98]">
+    <div className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full">
       <Link
         to={`/deals/${deal.id}`}
         className="flex flex-col flex-grow cursor-pointer"
