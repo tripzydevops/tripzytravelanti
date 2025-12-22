@@ -51,17 +51,10 @@
       // Force Dark Mode / Deep Ocean Theme globally
       // We prioritize dark mode for the premium experience.
       if (localStorage.getItem('color-theme') === 'light') {
-         // Optional: Uncomment to respect user choice if you really want to allow light mode
-         // document.documentElement.classList.remove('dark');
-
-         // For now, FORCE DARK even if they had light selected, to ensure the new look is seen.
-         // Reverting to user choice can be done by uncommenting above and removing below line.
+         // Force DARK even if they had light selected for now
          document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.add('dark');
-      }
-      } else {
-        document.documentElement.classList.remove('dark');
       }
     </script>
 

@@ -17,7 +17,7 @@ const TravelPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-brand-bg pb-24">
+        <div className="min-h-screen bg-brand-bg pb-24">
             <MetaHead
                 title={t('travelPageTitle') || "Travel Hub - Tripzy"}
                 description={t('travelPageDescription') || "Book hotels, flights, and exclusive travel experiences."}
