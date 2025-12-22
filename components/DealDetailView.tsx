@@ -402,17 +402,17 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
             {/* Floating Content Card */}
             <div className="container mx-auto px-4 -mt-16 relative z-30">
-                <div className="bg-white dark:bg-brand-surface rounded-[32px] p-6 shadow-2xl border border-slate-200 dark:border-white/10 glass-premium">
+                <div className="bg-white rounded-[32px] p-6 shadow-2xl border border-slate-200 glass-premium">
                     <div className="flex flex-col gap-6">
                         {/* Title & Vendor Section */}
                         <div className="flex flex-col gap-4">
                             <div className="flex justify-between items-start gap-4">
-                                <h1 className="text-3xl font-heading font-black text-slate-900 dark:text-white leading-tight tracking-tight">
+                                <h1 className="text-3xl font-heading font-black text-slate-900 leading-tight tracking-tight">
                                     {language === 'tr' ? deal.title_tr || deal.title : deal.title}
                                 </h1>
                                 <button
                                     onClick={() => setIsShareModalOpen(true)}
-                                    className="p-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                                    className="p-3 bg-slate-100 border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-200 transition-all"
                                 >
                                     <ShareIcon className="w-5 h-5" />
                                 </button>
@@ -652,7 +652,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
 
                     {/* How it Works / Redemption Guide */}
                     <div className="mt-16 pt-10 border-t border-white/10">
-                        <h3 className="text-xl font-heading font-black text-slate-900 dark:text-white mb-8 uppercase tracking-widest text-center">
+                        <h3 className="text-xl font-heading font-black text-slate-900 mb-8 uppercase tracking-widest text-center">
                             {language === 'tr' ? 'Nasıl Çalışır?' : 'How it Works'}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -662,13 +662,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                                 { step: 3, title: t('step3'), desc: t('step3Desc'), icon: <TicketIcon className="w-6 h-6" /> },
                             ].map((item, idx) => (
                                 <div key={idx} className="flex flex-col items-center text-center group">
-                                    <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-white dark:group-hover:text-brand-bg transition-all duration-500 shadow-xl">
+                                    <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-white transition-all duration-500 shadow-xl">
                                         {item.icon}
                                     </div>
-                                    <h4 className="text-slate-900 dark:text-white font-bold mb-2">{item.title}</h4>
-                                    <p className="text-slate-500 dark:text-white/40 text-sm leading-relaxed max-w-[200px]">{item.desc}</p>
+                                    <h4 className="text-slate-900 font-bold mb-2">{item.title}</h4>
+                                    <p className="text-slate-500 text-sm leading-relaxed max-w-[200px]">{item.desc}</p>
                                     {idx < 2 && (
-                                        <div className="hidden md:block absolute right-0 top-8 w-8 h-px bg-slate-200 dark:bg-white/10"></div>
+                                        <div className="hidden md:block absolute right-0 top-8 w-8 h-px bg-slate-200"></div>
                                     )}
                                 </div>
                             ))}
@@ -682,9 +682,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, isPreview = false
                             { label: t('noHiddenFees'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
                             { label: t('guaranteedAccess'), icon: <CheckCircle className="w-4 h-4 text-emerald-400" /> },
                         ].map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 px-5 py-4 rounded-2xl">
+                            <div key={idx} className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-5 py-4 rounded-2xl">
                                 {item.icon}
-                                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white/60">{item.label}</span>
+                                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">{item.label}</span>
                             </div>
                         ))}
                     </div>

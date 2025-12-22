@@ -9,7 +9,7 @@ export default {
     "./lib/**/*.{js,ts,jsx,tsx}",
     "./*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: [],
   theme: {
     screens: {
       'xs': '350px',    // Custom: 2 cards on wider mobile phones

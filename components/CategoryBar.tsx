@@ -28,7 +28,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({ categories, selectedCategoryI
                     >
                         <div className={`relative p-3 rounded-full border transition-all duration-300 ${selectedCategoryId === category.id
                             ? 'bg-brand-primary/20 border-brand-primary/50 scale-110 shadow-[0_0_15px_rgba(var(--color-brand-primary-rgb),0.3)]'
-                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 group-hover:bg-slate-100 dark:group-hover:bg-white/10 group-hover:border-slate-300 dark:group-hover:border-white/20'
+                            : 'bg-slate-50 border-slate-200 group-hover:bg-slate-100 group-hover:border-slate-300'
                             }`}>
                             <category.icon className={`w-6 h-6 ${selectedCategoryId === category.id ? 'drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]' : ''
                                 }`} />
