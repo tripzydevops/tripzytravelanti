@@ -252,7 +252,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     <div className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium text-white transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full">
       <Link
         to={`/deals/${deal.id}`}
-        className="flex flex-col flex-grow cursor-pointer"
+        className="flex flex-col flex-grow cursor-pointer text-white"
         onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: isLocked ? 'locked' : 'unlocked' })}
       >
         <CardContent />
