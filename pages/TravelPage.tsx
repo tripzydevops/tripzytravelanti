@@ -31,6 +31,16 @@ const TravelPage: React.FC = () => {
                     alt="Travel Hub Hero"
                     className="absolute inset-0 w-full h-full object-cover brightness-50 bg-brand-bg/80"
                 />
+                
+                {/* Back Button */}
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className="absolute top-6 left-6 z-30 p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all"
+                    aria-label={t('back') || "Back"}
+                >
+                    <ChevronRightIcon className="w-6 h-6 rotate-180" />
+                </button>
+
                 <div className="relative z-10 text-center px-4">
                     <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-white mb-4 drop-shadow-lg">
                         {t('travelHubTitle') || "Your World of Adventure"}
