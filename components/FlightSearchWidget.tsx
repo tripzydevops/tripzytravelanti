@@ -73,7 +73,7 @@ const FlightSearchWidget: React.FC<FlightSearchWidgetProps> = memo(({ origin, de
     return (
         <div
             ref={wrapperRef}
-            className="w-full min-h-[500px] bg-white dark:bg-brand-surface rounded-xl shadow-lg overflow-hidden relative"
+            className="w-full min-h-[500px] glass-premium rounded-[2.5rem] shadow-2xl overflow-hidden relative"
         >
             {/* Dedicated container for the script - React never touches its children */}
             <div ref={scriptContainerRef} className="w-full h-full" />
