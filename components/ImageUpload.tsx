@@ -1,204 +1,215 @@
-import React, { useState, useRef } from 'react';
-import { SpinnerIcon, TrashIcon } from './Icons';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useRef } from "react";
+import { SpinnerIcon, TrashIcon } from "./Icons";
+import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ImageUploadProps {
-    value?: string;
-    onChange: (url: string) => void;
-    placeholder?: string;
-    className?: string;
-    bucketName?: string;
+  value?: string;
+  onChange: (url: string) => void;
+  placeholder?: string;
+  className?: string;
+  bucketName?: string;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
-    value,
-    onChange,
-    placeholder = "Upload Image",
-    className = "",
-    bucketName = "deals"
+  value,
+  onChange,
+  placeholder = "Upload Image",
+  className = "",
+  bucketName = "deals",
 }) => {
-    const [isDragging, setIsDragging] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [imageError, setImageError] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { user } = useAuth();
+  const { user } = useAuth();
 
-    const handleFile = async (file: File) => {
-        if (!file.type.startsWith('image/')) {
-            alert('Please upload an image file');
-            return;
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
+      return;
+    }
+
+    setIsLoading(true);
+    setImageError(false);
+
+    try {
+      // Resize image before upload (max 1200x1200)
+      const { resizeImage } = await import("../utils/imageHelpers");
+      const resizedFile = await resizeImage(file, 1200, 1200);
+
+      // 5MB limit check (after resize)
+      if (resizedFile.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+
+      // Generate a unique file name
+      const fileExt = resizedFile.name.split(".").pop();
+      const fileName = `${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
+
+      // New Security Policy: User-scoped paths
+      const filePath = user ? `${user.id}/${fileName}` : fileName;
+
+      // Upload to Supabase
+      const { error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, resizedFile);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get Public URL
+      const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+
+      if (data) {
+        onChange(data.publicUrl);
+      }
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      alert(error.message || "Failed to upload image");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemove = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Try to delete from Supabase storage if it's a Supabase URL
+    if (value && value.includes("supabase.co/storage")) {
+      if (!window.confirm("Delete this image? This cannot be undone.")) {
+        return;
+      }
+
+      try {
+        // Robust URL parsing
+        const url = new URL(value);
+        const pathParts = url.pathname.split("/object/public/");
+
+        if (pathParts.length === 2) {
+          const fullPath = pathParts[1]; // e.g., "deals/folder/file.jpg"
+          const pathSegments = fullPath.split("/");
+          const bucket = pathSegments[0]; // "deals"
+          const filePath = pathSegments.slice(1).join("/"); // "folder/file.jpg"
+
+          if (bucket && filePath) {
+            const { error } = await supabase.storage
+              .from(bucket)
+              .remove([filePath]);
+            if (error) throw error;
+            console.log("Image deleted from storage:", filePath);
+          }
         }
+      } catch (error) {
+        console.error("Failed to delete image from storage:", error);
+        // Continue anyway - we still want to clear the URL in the UI
+      }
+    }
 
-        // 5MB limit
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
-            return;
-        }
+    onChange("");
+    setImageError(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
-        setIsLoading(true);
-        setImageError(false);
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
-        try {
-            // Generate a unique file name
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+  // Check if we should show the upload area (no value or broken image)
+  const showUploadArea = !value || imageError;
 
-            // New Security Policy: User-scoped paths
-            // If user exists, save to userId/fileName
-            // If admin or public upload (rare), might fail if not admin.
-            const filePath = user ? `${user.id}/${fileName}` : fileName;
-
-            // Upload to Supabase
-            const { error: uploadError } = await supabase.storage
-                .from(bucketName)
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            // Get Public URL
-            const { data } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(filePath);
-
-            if (data) {
-                onChange(data.publicUrl);
-            }
-        } catch (error: any) {
-            console.error('Error uploading image:', error);
-            alert(error.message || 'Failed to upload image');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const onDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const onDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const onDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFile(e.dataTransfer.files[0]);
-        }
-    };
-
-    const handleClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleRemove = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        // Try to delete from Supabase storage if it's a Supabase URL
-        if (value && value.includes('supabase.co/storage')) {
-            if (!window.confirm('Delete this image? This cannot be undone.')) {
-                return;
-            }
-
-            try {
-                // Robust URL parsing
-                const url = new URL(value);
-                const pathParts = url.pathname.split('/object/public/');
-
-                if (pathParts.length === 2) {
-                    const fullPath = pathParts[1]; // e.g., "deals/folder/file.jpg"
-                    const pathSegments = fullPath.split('/');
-                    const bucket = pathSegments[0]; // "deals"
-                    const filePath = pathSegments.slice(1).join('/'); // "folder/file.jpg"
-
-                    if (bucket && filePath) {
-                        const { error } = await supabase.storage.from(bucket).remove([filePath]);
-                        if (error) throw error;
-                        console.log('Image deleted from storage:', filePath);
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to delete image from storage:', error);
-                // Continue anyway - we still want to clear the URL in the UI
-            }
-        }
-
-        onChange('');
-        setImageError(false);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
-
-    const handleImageError = () => {
-        setImageError(true);
-    };
-
-    // Check if we should show the upload area (no value or broken image)
-    const showUploadArea = !value || imageError;
-
-    return (
-        <div className={`w-full ${className}`}>
-            <div
-                onClick={handleClick}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={onDrop}
-                className={`
+  return (
+    <div className={`w-full ${className}`}>
+      <div
+        onClick={handleClick}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        className={`
                     relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all duration-200
-                    ${isDragging ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-300 dark:border-gray-600 hover:border-brand-primary'}
-                    ${!showUploadArea ? 'h-auto' : 'h-32 flex items-center justify-center'}
+                    ${
+                      isDragging
+                        ? "border-brand-primary bg-brand-primary/5"
+                        : "border-gray-300 dark:border-gray-600 hover:border-brand-primary"
+                    }
+                    ${
+                      !showUploadArea
+                        ? "h-auto"
+                        : "h-32 flex items-center justify-center"
+                    }
                 `}
-            >
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                    accept="image/*"
-                    className="hidden"
-                />
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+          accept="image/*"
+          className="hidden"
+        />
 
-                {isLoading ? (
-                    <div className="flex flex-col items-center justify-center text-brand-text-muted">
-                        <SpinnerIcon className="w-8 h-8 animate-spin mb-2 text-brand-primary" />
-                        <span>Uploading...</span>
-                    </div>
-                ) : !showUploadArea ? (
-                    <div className="relative group">
-                        <img
-                            src={value}
-                            alt="Uploaded preview"
-                            className="max-h-64 mx-auto rounded-md shadow-sm object-contain"
-                            onError={handleImageError}
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                            <p className="text-white font-semibold">Click to change</p>
-                        </div>
-                        <button
-                            onClick={handleRemove}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md hover:bg-red-600 transition-colors z-10"
-                            title="Remove image"
-                        >
-                            <TrashIcon className="w-4 h-4" />
-                        </button>
-                    </div>
-                ) : (
-                    <div className="text-gray-500 dark:text-brand-text-muted">
-                        <p className="font-medium mb-1">{placeholder}</p>
-                        <p className="text-xs">Drag & drop or click to upload</p>
-                        <p className="text-xs mt-2 opacity-70">Max 5MB</p>
-                    </div>
-                )}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center text-brand-text-muted">
+            <SpinnerIcon className="w-8 h-8 animate-spin mb-2 text-brand-primary" />
+            <span>Uploading...</span>
+          </div>
+        ) : !showUploadArea ? (
+          <div className="relative group">
+            <img
+              src={value}
+              alt="Uploaded preview"
+              className="max-h-64 mx-auto rounded-md shadow-sm object-contain"
+              onError={handleImageError}
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+              <p className="text-white font-semibold">Click to change</p>
             </div>
-        </div>
-    );
+            <button
+              onClick={handleRemove}
+              className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md hover:bg-red-600 transition-colors z-10"
+              title="Remove image"
+            >
+              <TrashIcon className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="text-gray-500 dark:text-brand-text-muted">
+            <p className="font-medium mb-1">{placeholder}</p>
+            <p className="text-xs">Drag & drop or click to upload</p>
+            <p className="text-xs mt-2 opacity-70">Max 5MB</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ImageUpload;
-
