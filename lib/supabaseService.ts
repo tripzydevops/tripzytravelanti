@@ -8,6 +8,8 @@ export interface Category {
     name: string;
     name_tr: string;
     icon?: string;
+    default_image?: string;
+    usage_count?: number;
 }
 
 // Internal interface for raw DB deal response
@@ -279,10 +281,17 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
         query = query.eq('tier', filters.tier);
     }
 
+    if (filters?.status && filters.status !== 'All') {
+        query = query.eq('status', filters.status);
+    }
+
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    query = query.range(from, to).order('created_at', { ascending: false });
+    const sortBy = filters?.sortBy || 'created_at';
+    const sortOrder = filters?.sortOrder || 'desc';
+
+    query = query.range(from, to).order(sortBy, { ascending: sortOrder === 'asc' });
 
     const { data, count, error } = await query;
 
@@ -330,6 +339,26 @@ export async function confirmUserEmail(userId: string) {
         console.error('Error confirming user email:', error);
         throw error;
     }
+}
+
+export async function logAdminAction(payload: {
+    action_type: 'CREATE' | 'UPDATE' | 'DELETE' | 'RESET';
+    table_name: string;
+    record_id: string;
+    old_data?: any;
+    new_data?: any;
+}) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('admin_audit_logs').insert({
+        admin_id: user.id,
+        action_type: payload.action_type,
+        table_name: payload.table_name,
+        record_id: payload.record_id,
+        old_data: payload.old_data,
+        new_data: payload.new_data
+    });
 }
 
 export async function updateAllUsersNotificationPreferences(prefs: Partial<UserNotificationPreferences>) {
@@ -1857,17 +1886,32 @@ export async function applyPromoCode(code: string, txnId?: string): Promise<bool
 // =====================================================
 
 export async function getCategories(): Promise<Category[]> {
-    const { data, error } = await supabase
+    // We select *, and count deals that match the category name
+    const { data: categories, error: catError } = await supabase
         .from('categories')
         .select('*')
         .order('name');
 
-    if (error) {
-        console.error('Error fetching categories:', error);
+    if (catError) {
+        console.error('Error fetching categories:', catError);
         return [];
     }
 
-    return data;
+    // Since 'category' in deals is a string (name), we fetch counts separately or via a join if mapped
+    // For MVP efficiency, we fetch all deals and count locally or use a count query
+    const { data: counts, error: countError } = await supabase
+        .from('deals')
+        .select('category');
+
+    if (countError) {
+        console.error('Error fetching deal counts for categories:', countError);
+        return categories;
+    }
+
+    return categories.map(cat => ({
+        ...cat,
+        usage_count: counts.filter(d => d.category === cat.name).length
+    }));
 }
 
 export async function createCategory(category: Omit<Category, 'id'>) {

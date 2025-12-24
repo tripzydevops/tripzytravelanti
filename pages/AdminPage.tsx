@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { getPendingDeals } from '../lib/supabaseService';
-import AnalyticsDashboard from '../components/AnalyticsDashboard';
-import PaymentTransactionTable from '../components/PaymentTransactionTable';
-import AdminDealsTab from '../components/admin/AdminDealsTab';
-import AdminUsersTab from '../components/admin/AdminUsersTab';
-import AdminVendorStats from '../components/admin/AdminVendorStats';
-import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
-import AdminPendingApprovalsTab from '../components/admin/AdminPendingApprovalsTab';
-import AdminCategoryTab from '../components/admin/AdminCategoryTab';
-import AdminContentTab from '../components/admin/AdminContentTab';
-import AdminFlightRoutesTab from '../components/admin/AdminFlightRoutesTab';
-import AdminBackgroundsTab from '../components/admin/AdminBackgroundsTab';
-import { AdminAnnouncementsTab } from '../components/admin/AdminAnnouncementsTab';
-import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
-import AdminAuditLogsTab from '../components/admin/AdminAuditLogsTab';
+import React, { useState, useEffect } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { getPendingDeals } from "../lib/supabaseService";
+import AnalyticsDashboard from "../components/AnalyticsDashboard";
+import PaymentTransactionTable from "../components/PaymentTransactionTable";
+import AdminDealsTab from "../components/admin/AdminDealsTab";
+import AdminUsersTab from "../components/admin/AdminUsersTab";
+import AdminVendorStats from "../components/admin/AdminVendorStats";
+import AdminSubscriptionsTab from "../components/admin/AdminSubscriptionsTab";
+import AdminPendingApprovalsTab from "../components/admin/AdminPendingApprovalsTab";
+import AdminCategoryTab from "../components/admin/AdminCategoryTab";
+import AdminContentTab from "../components/admin/AdminContentTab";
+import AdminFlightRoutesTab from "../components/admin/AdminFlightRoutesTab";
+import AdminBackgroundsTab from "../components/admin/AdminBackgroundsTab";
+import { AdminAnnouncementsTab } from "../components/admin/AdminAnnouncementsTab";
+import AdminPromoCodesTab from "../components/admin/AdminPromoCodesTab";
+import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
 import {
   BarChartIcon,
   TagIcon,
@@ -33,69 +33,174 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   HomeIcon,
-  LogoutIcon
-} from '../components/Icons';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Menu } from 'lucide-react';
+  LogoutIcon,
+} from "../components/Icons";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { Menu } from "lucide-react";
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'deals' | 'categories' | 'users' | 'vendor_stats' | 'content' | 'flight_routes' | 'payments' | 'pending_approvals' | 'announcements' | 'backgrounds' | 'promo_codes' | 'audit_logs'>('analytics');
+  const [activeTab, setActiveTab] = useState<
+    | "analytics"
+    | "deals"
+    | "categories"
+    | "users"
+    | "vendor_stats"
+    | "content"
+    | "flight_routes"
+    | "payments"
+    | "pending_approvals"
+    | "announcements"
+    | "backgrounds"
+    | "promo_codes"
+    | "audit_logs"
+  >("analytics");
   const [pendingCount, setPendingCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile toggle
   const [isCollapsed, setIsCollapsed] = useState(false); // Desktop toggle
+  const [healthStatus, setHealthStatus] = useState({
+    db: "checking",
+    ai: "checking",
+    search: "checking",
+  });
 
   useEffect(() => {
-    const fetchPendingCount = async () => {
+    const fetchInitialData = async () => {
+      // 1. Fetch Pending Count
       const deals = await getPendingDeals();
       setPendingCount(deals.length);
+
+      // 2. Check Service Health
+      const checkHealth = async () => {
+        try {
+          const { supabase } = await import("../lib/supabaseClient");
+          const { isVectorServiceConfigured } = await import(
+            "../lib/vectorService"
+          );
+
+          // DB Ping
+          const { data, error } = await supabase
+            .from("categories")
+            .select("id")
+            .limit(1);
+          const dbStatus = error ? "error" : "online";
+
+          // AI Ping
+          const aiConfigured = isVectorServiceConfigured();
+          const aiStatus = aiConfigured ? "ready" : "offline";
+
+          // Search (Pinecone) Ping
+          const searchStatus = aiConfigured ? "synced" : "offline";
+
+          setHealthStatus({ db: dbStatus, ai: aiStatus, search: searchStatus });
+        } catch (err) {
+          console.error("Health check failed", err);
+        }
+      };
+
+      checkHealth();
+      const interval = setInterval(checkHealth, 30000); // Check every 30s
+      return () => clearInterval(interval);
     };
-    fetchPendingCount();
+
+    fetchInitialData();
   }, []);
 
   const menuGroups = [
     {
-      title: t('adminSidebarOverview'),
+      title: t("adminSidebarOverview"),
       items: [
-        { id: 'analytics', label: t('adminAnalytics'), icon: <BarChartIcon className="w-5 h-5" /> },
-        { id: 'vendor_stats', label: t('adminVendorReports'), icon: <BriefcaseIcon className="w-5 h-5" /> },
-      ]
-    },
-    {
-      title: t('adminSidebarManagement'),
-      items: [
-        { id: 'deals', label: t('manageDeals'), icon: <TagIcon className="w-5 h-5" /> },
-        { id: 'categories', label: t('adminCategories'), icon: <TagIcon className="w-5 h-5" /> },
-        { id: 'users', label: t('manageUsers'), icon: <UsersIcon className="w-5 h-5" /> },
-        { id: 'subscriptions', label: t('adminSubscriptions'), icon: <TicketIcon className="w-5 h-5" /> },
         {
-          id: 'pending_approvals',
-          label: t('adminPendingApprovals'),
-          icon: <CheckCircle className="w-5 h-5" />,
-          badge: pendingCount > 0 ? pendingCount : undefined
+          id: "analytics",
+          label: t("adminAnalytics"),
+          icon: <BarChartIcon className="w-5 h-5" />,
         },
-      ]
+        {
+          id: "vendor_stats",
+          label: t("adminVendorReports"),
+          icon: <BriefcaseIcon className="w-5 h-5" />,
+        },
+      ],
     },
     {
-      title: t('adminSidebarSystem'),
+      title: t("adminSidebarManagement"),
       items: [
-        { id: 'content', label: t('adminContent'), icon: <DocumentTextIcon className="w-5 h-5" /> },
-        { id: 'flight_routes', label: t('adminFlightRoutes'), icon: <GlobeIcon className="w-5 h-5" /> },
-        { id: 'backgrounds', label: t('adminBackgrounds'), icon: <MountainIcon className="w-5 h-5" /> },
-        { id: 'announcements', label: t('adminAnnouncements'), icon: <MegaphoneIcon className="w-5 h-5" /> },
-        { id: 'promo_codes', label: t('adminPromoCodes'), icon: <QrCodeIcon className="w-5 h-5" /> },
-        { id: 'audit_logs', label: t('adminAuditLogs'), icon: <Terminal className="w-5 h-5" /> },
-      ]
+        {
+          id: "deals",
+          label: t("manageDeals"),
+          icon: <TagIcon className="w-5 h-5" />,
+        },
+        {
+          id: "categories",
+          label: t("adminCategories"),
+          icon: <TagIcon className="w-5 h-5" />,
+        },
+        {
+          id: "users",
+          label: t("manageUsers"),
+          icon: <UsersIcon className="w-5 h-5" />,
+        },
+        {
+          id: "subscriptions",
+          label: t("adminSubscriptions"),
+          icon: <TicketIcon className="w-5 h-5" />,
+        },
+        {
+          id: "pending_approvals",
+          label: t("adminPendingApprovals"),
+          icon: <CheckCircle className="w-5 h-5" />,
+          badge: pendingCount > 0 ? pendingCount : undefined,
+        },
+      ],
     },
     {
-      title: t('adminSidebarFinance'),
+      title: t("adminSidebarSystem"),
       items: [
-        { id: 'payments', label: t('adminPaymentTransactions'), icon: <CreditCardIcon className="w-5 h-5" /> },
-      ]
-    }
+        {
+          id: "content",
+          label: t("adminContent"),
+          icon: <DocumentTextIcon className="w-5 h-5" />,
+        },
+        {
+          id: "flight_routes",
+          label: t("adminFlightRoutes"),
+          icon: <GlobeIcon className="w-5 h-5" />,
+        },
+        {
+          id: "backgrounds",
+          label: t("adminBackgrounds"),
+          icon: <MountainIcon className="w-5 h-5" />,
+        },
+        {
+          id: "announcements",
+          label: t("adminAnnouncements"),
+          icon: <MegaphoneIcon className="w-5 h-5" />,
+        },
+        {
+          id: "promo_codes",
+          label: t("adminPromoCodes"),
+          icon: <QrCodeIcon className="w-5 h-5" />,
+        },
+        {
+          id: "audit_logs",
+          label: t("adminAuditLogs"),
+          icon: <Terminal className="w-5 h-5" />,
+        },
+      ],
+    },
+    {
+      title: t("adminSidebarFinance"),
+      items: [
+        {
+          id: "payments",
+          label: t("adminPaymentTransactions"),
+          icon: <CreditCardIcon className="w-5 h-5" />,
+        },
+      ],
+    },
   ];
 
   const handleTabClick = (tabId: any) => {
@@ -106,9 +211,9 @@ const AdminPage: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Logout failed', error);
+      console.error("Logout failed", error);
     }
   };
 
@@ -125,13 +230,28 @@ const AdminPage: React.FC = () => {
       {/* Sidebar */}
       <aside
         className={`fixed md:sticky top-0 left-0 z-30 h-screen bg-white dark:bg-brand-surface border-r border-gray-200 dark:border-white/5 transition-all duration-300 ease-in-out transform 
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} 
-          ${isCollapsed ? 'md:w-20' : 'md:w-64'}
+          ${
+            isSidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0"
+          } 
+          ${isCollapsed ? "md:w-20" : "md:w-64"}
           flex flex-col`}
       >
-        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} transition-all duration-300`}>
-          {!isCollapsed && <h1 className="text-xl font-bold text-gray-900 dark:text-brand-text-light whitespace-nowrap overflow-hidden">{t('adminDashboard')}</h1>}
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400">
+        <div
+          className={`p-6 flex items-center ${
+            isCollapsed ? "justify-center" : "justify-between"
+          } transition-all duration-300`}
+        >
+          {!isCollapsed && (
+            <h1 className="text-xl font-bold text-gray-900 dark:text-brand-text-light whitespace-nowrap overflow-hidden">
+              {t("adminDashboard")}
+            </h1>
+          )}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          >
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -141,7 +261,11 @@ const AdminPage: React.FC = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="hidden md:flex absolute -right-3 top-8 bg-brand-primary text-white rounded-full p-1 shadow-md hover:bg-brand-primary/80 transition-colors z-40"
         >
-          {isCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronLeftIcon className="w-4 h-4" />}
+          {isCollapsed ? (
+            <ChevronRightIcon className="w-4 h-4" />
+          ) : (
+            <ChevronLeftIcon className="w-4 h-4" />
+          )}
         </button>
 
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-6 scrollbar-hide">
@@ -152,20 +276,37 @@ const AdminPage: React.FC = () => {
                   {group.title}
                 </h3>
               )}
-              {isCollapsed && idx > 0 && <div className="h-px bg-gray-200 dark:bg-white/5 my-2 mx-2"></div>}
+              {isCollapsed && idx > 0 && (
+                <div className="h-px bg-gray-200 dark:bg-white/5 my-2 mx-2"></div>
+              )}
 
               <ul className="space-y-1">
                 {group.items.map((item) => (
                   <li key={item.id} className="relative group/tooltip">
                     <button
                       onClick={() => handleTabClick(item.id)}
-                      className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === item.id
-                        ? 'bg-brand-primary/10 text-brand-primary shadow-sm'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
-                        }`}
+                      className={`w-full flex items-center ${
+                        isCollapsed
+                          ? "justify-center px-0"
+                          : "justify-between px-3"
+                      } py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        activeTab === item.id
+                          ? "bg-brand-primary/10 text-brand-primary shadow-sm"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
+                      }`}
                     >
-                      <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'gap-3'}`}>
-                        <span className={`${activeTab === item.id ? 'text-brand-primary' : 'text-gray-400 dark:text-white/40 group-hover:text-gray-600'} flex-shrink-0`}>
+                      <div
+                        className={`flex items-center ${
+                          isCollapsed ? "justify-center w-full" : "gap-3"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            activeTab === item.id
+                              ? "text-brand-primary"
+                              : "text-gray-400 dark:text-white/40 group-hover:text-gray-600"
+                          } flex-shrink-0`}
+                        >
                           {item.icon}
                         </span>
                         {!isCollapsed && <span>{item.label}</span>}
@@ -200,17 +341,21 @@ const AdminPage: React.FC = () => {
         {/* Sidebar Footer Actions */}
         <div className="p-4 border-t border-gray-200 dark:border-white/5 space-y-2">
           <button
-            onClick={() => navigate('/')}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors`}
+            onClick={() => navigate("/")}
+            className={`w-full flex items-center ${
+              isCollapsed ? "justify-center" : "gap-3 px-3"
+            } py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors`}
             title="Back to App"
           >
             <HomeIcon className="w-5 h-5 flex-shrink-0" />
-            {!isCollapsed && <span>{t('adminBackToApp')}</span>}
+            {!isCollapsed && <span>{t("adminBackToApp")}</span>}
           </button>
 
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors`}
+            className={`w-full flex items-center ${
+              isCollapsed ? "justify-center" : "gap-3 px-3"
+            } py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors`}
             title="Logout"
           >
             <LogoutIcon className="w-5 h-5 flex-shrink-0" />
@@ -230,11 +375,15 @@ const AdminPage: React.FC = () => {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Tripzy Admin</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+              Tripzy Admin
+            </h1>
           </div>
           <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Live</span>
+            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">
+              Live
+            </span>
           </div>
         </header>
 
@@ -242,49 +391,93 @@ const AdminPage: React.FC = () => {
         <div className="hidden md:flex items-center justify-between px-8 py-4 bg-white dark:bg-brand-surface border-b border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-widest">System Operational</span>
+              <div
+                className={`w-2.5 h-2.5 rounded-full shadow-md ${
+                  healthStatus.db === "online"
+                    ? "bg-emerald-500 shadow-emerald-500/20"
+                    : "bg-red-500 shadow-red-500/20"
+                }`}
+              ></div>
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+                System{" "}
+                {healthStatus.db === "online"
+                  ? "Operational"
+                  : "Issues Detected"}
+              </span>
             </div>
             <div className="h-4 w-px bg-gray-200 dark:bg-white/10"></div>
             <div className="flex gap-4">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 font-medium">DB:</span>
-                <span className="text-[10px] text-emerald-500 font-bold uppercase">Online</span>
+                <span className="text-[10px] text-gray-400 font-medium">
+                  DB:
+                </span>
+                <span
+                  className={`text-[10px] font-bold uppercase ${
+                    healthStatus.db === "online"
+                      ? "text-emerald-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {healthStatus.db}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 font-medium">AI:</span>
-                <span className="text-[10px] text-emerald-500 font-bold uppercase">Ready</span>
+                <span className="text-[10px] text-gray-400 font-medium">
+                  AI:
+                </span>
+                <span
+                  className={`text-[10px] font-bold uppercase ${
+                    healthStatus.ai === "ready"
+                      ? "text-emerald-500"
+                      : "text-orange-500"
+                  }`}
+                >
+                  {healthStatus.ai}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-gray-400 font-medium">Search:</span>
-                <span className="text-[10px] text-emerald-500 font-bold uppercase">Synced</span>
+                <span className="text-[10px] text-gray-400 font-medium">
+                  Search:
+                </span>
+                <span
+                  className={`text-[10px] font-bold uppercase ${
+                    healthStatus.search === "synced"
+                      ? "text-emerald-500"
+                      : "text-orange-500"
+                  }`}
+                >
+                  {healthStatus.search}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-[10px] text-gray-400 font-medium italic">
-              Logged in as <span className="text-brand-primary font-bold not-italic">Admin</span>
+              Logged in as{" "}
+              <span className="text-brand-primary font-bold not-italic">
+                Admin
+              </span>
             </div>
           </div>
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-7xl mx-auto animate-fade-in">
-            {activeTab === 'analytics' && <AnalyticsDashboard />}
-            {activeTab === 'vendor_stats' && <AdminVendorStats />}
-            {activeTab === 'deals' && <AdminDealsTab />}
-            {activeTab === 'categories' && <AdminCategoryTab />}
-            {activeTab === 'users' && <AdminUsersTab />}
-            {activeTab === 'subscriptions' && <AdminSubscriptionsTab />}
-            {activeTab === 'content' && <AdminContentTab />}
-            {activeTab === 'flight_routes' && <AdminFlightRoutesTab />}
-            {activeTab === 'payments' && <PaymentTransactionTable />}
-            {activeTab === 'pending_approvals' && <AdminPendingApprovalsTab />}
-            {activeTab === 'announcements' && <AdminAnnouncementsTab />}
-            {activeTab === 'backgrounds' && <AdminBackgroundsTab />}
-            {activeTab === 'promo_codes' && <AdminPromoCodesTab />}
-            {activeTab === 'audit_logs' && <AdminAuditLogsTab />}
+            {activeTab === "analytics" && <AnalyticsDashboard />}
+            {activeTab === "vendor_stats" && <AdminVendorStats />}
+            {activeTab === "deals" && <AdminDealsTab />}
+            {activeTab === "categories" && <AdminCategoryTab />}
+            {activeTab === "users" && <AdminUsersTab />}
+            {activeTab === "subscriptions" && <AdminSubscriptionsTab />}
+            {activeTab === "content" && <AdminContentTab />}
+            {activeTab === "flight_routes" && <AdminFlightRoutesTab />}
+            {activeTab === "payments" && <PaymentTransactionTable />}
+            {activeTab === "pending_approvals" && <AdminPendingApprovalsTab />}
+            {activeTab === "announcements" && <AdminAnnouncementsTab />}
+            {activeTab === "backgrounds" && <AdminBackgroundsTab />}
+            {activeTab === "promo_codes" && <AdminPromoCodesTab />}
+            {activeTab === "audit_logs" && <AdminAuditLogsTab />}
           </div>
         </main>
       </div>

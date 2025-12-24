@@ -13,7 +13,10 @@ import CountrySelector from "../CountrySelector";
 import {
   getDealsPaginated,
   createDeal,
+  updateDeal,
+  deleteDeal,
   getAllDeals,
+  logAdminAction,
 } from "../../lib/supabaseService";
 import {
   upsertDealVector,
@@ -109,6 +112,8 @@ const AdminDealsTab: React.FC = () => {
   const [isTranslating, setIsTranslating] = useState({
     title: false,
     description: false,
+    usageLimit: false,
+    validity: false,
   });
   const [lastEditedField, setLastEditedField] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -236,6 +241,10 @@ const AdminDealsTab: React.FC = () => {
   const debouncedTitleTr = useDebounce(dealFormData.title_tr, 800);
   const debouncedDescription = useDebounce(dealFormData.description, 800);
   const debouncedDescriptionTr = useDebounce(dealFormData.description_tr, 800);
+  const debouncedUsageLimit = useDebounce(dealFormData.usageLimit, 800);
+  const debouncedUsageLimitTr = useDebounce(dealFormData.usageLimit_tr, 800);
+  const debouncedValidity = useDebounce(dealFormData.validity, 800);
+  const debouncedValidityTr = useDebounce(dealFormData.validity_tr, 800);
 
   const translateText = useCallback(
     async (
@@ -320,13 +329,68 @@ const AdminDealsTab: React.FC = () => {
     }
   }, [debouncedDescriptionTr, lastEditedField, translateText]);
 
+  useEffect(() => {
+    if (debouncedUsageLimit && lastEditedField === "usageLimit") {
+      (async () => {
+        setIsTranslating((p) => ({ ...p, usageLimit: true }));
+        const tr = await translateText(debouncedUsageLimit, "Turkish");
+        if (tr) setDealFormData((p) => ({ ...p, usageLimit_tr: tr }));
+        setIsTranslating((p) => ({ ...p, usageLimit: false }));
+      })();
+    }
+  }, [debouncedUsageLimit, lastEditedField, translateText]);
+
+  useEffect(() => {
+    if (debouncedUsageLimitTr && lastEditedField === "usageLimit_tr") {
+      (async () => {
+        setIsTranslating((p) => ({ ...p, usageLimit: true }));
+        const tr = await translateText(debouncedUsageLimitTr, "English");
+        if (tr) setDealFormData((p) => ({ ...p, usageLimit: tr }));
+        setIsTranslating((p) => ({ ...p, usageLimit: false }));
+      })();
+    }
+  }, [debouncedUsageLimitTr, lastEditedField, translateText]);
+
+  useEffect(() => {
+    if (debouncedValidity && lastEditedField === "validity") {
+      (async () => {
+        setIsTranslating((p) => ({ ...p, validity: true }));
+        const tr = await translateText(debouncedValidity, "Turkish");
+        if (tr) setDealFormData((p) => ({ ...p, validity_tr: tr }));
+        setIsTranslating((p) => ({ ...p, validity: false }));
+      })();
+    }
+  }, [debouncedValidity, lastEditedField, translateText]);
+
+  useEffect(() => {
+    if (debouncedValidityTr && lastEditedField === "validity_tr") {
+      (async () => {
+        setIsTranslating((p) => ({ ...p, validity: true }));
+        const tr = await translateText(debouncedValidityTr, "English");
+        if (tr) setDealFormData((p) => ({ ...p, validity: tr }));
+        setIsTranslating((p) => ({ ...p, validity: false }));
+      })();
+    }
+  }, [debouncedValidityTr, lastEditedField, translateText]);
+
   const handleDealInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
     const { name, value, type } = e.target;
-    if (["title", "title_tr", "description", "description_tr"].includes(name))
+    if (
+      [
+        "title",
+        "title_tr",
+        "description",
+        "description_tr",
+        "usageLimit",
+        "usageLimit_tr",
+        "validity",
+        "validity_tr",
+      ].includes(name)
+    )
       setLastEditedField(name);
 
     let newValue: any =
@@ -335,7 +399,7 @@ const AdminDealsTab: React.FC = () => {
         : type === "number"
         ? value === ""
           ? null
-          : parseFloat(value)
+          : Math.max(0, parseFloat(value)) // Ensure non-negative
         : value;
     if (name === "isTeasable")
       newValue = (e.target as HTMLInputElement).checked;
@@ -428,7 +492,14 @@ const AdminDealsTab: React.FC = () => {
 
   const handleDeleteDealClick = async (dealId: string) => {
     if (window.confirm(t("deleteConfirmation"))) {
+      const dealToDelete = adminDeals.find((d) => d.id === dealId);
       await deleteDeal(dealId);
+      await logAdminAction({
+        action_type: "DELETE",
+        table_name: "deals",
+        record_id: dealId,
+        old_data: dealToDelete,
+      });
       showSuccessToast(t("dealDeletedSuccess"));
       loadAdminDeals(adminPage);
     }
@@ -629,12 +700,36 @@ const AdminDealsTab: React.FC = () => {
     }
 
     // Price Validation: Allow 0 for generic discounts (e.g. 20% off bill), but strictly disallow negative numbers.
-    if (dealFormData.originalPrice < 0) {
+    if (
+      (dealFormData.originalPrice || 0) < 0 ||
+      (dealFormData.discountedPrice || 0) < 0 ||
+      (dealFormData.discountPercentage || 0) < 0
+    ) {
       showErrorToast(
-        t("negativePriceError") || "Original Price cannot be negative."
+        t("negativeValueError") || "Prices and percentages cannot be negative."
       );
       setIsSaving(false);
       return;
+    }
+
+    if (
+      dealFormData.maxRedemptionsTotal !== null &&
+      dealFormData.maxRedemptionsTotal < 0
+    ) {
+      showErrorToast("Max Redemptions cannot be negative.");
+      setIsSaving(false);
+      return;
+    }
+
+    // URL Validation
+    if (dealFormData.termsUrl) {
+      try {
+        new URL(dealFormData.termsUrl);
+      } catch (e) {
+        showErrorToast(t("invalidUrlError") || "Please enter a valid URL.");
+        setIsSaving(false);
+        return;
+      }
     }
 
     // Only enforce logic if both prices are positive (standard product discount)
@@ -732,8 +827,24 @@ const AdminDealsTab: React.FC = () => {
       };
       if (editingDeal) {
         await updateDeal(dealData);
+        await logAdminAction({
+          action_type: "UPDATE",
+          table_name: "deals",
+          record_id: editingDeal.id,
+          old_data: editingDeal,
+          new_data: dealData,
+        });
       } else {
-        await addDeal({ ...dealData, id: Date.now().toString() });
+        const result = await addDeal({
+          ...dealData,
+          id: Date.now().toString(),
+        });
+        await logAdminAction({
+          action_type: "CREATE",
+          table_name: "deals",
+          record_id: (result as any)?.id?.toString() || "new",
+          new_data: dealData,
+        });
       }
       await loadAdminDeals(adminPage);
       showSuccessToast(t("adminSuccessTitle"));
@@ -798,49 +909,69 @@ const AdminDealsTab: React.FC = () => {
             {editingDeal ? t("editDeal") : t("addDeal")}
           </h2>
 
-          {/* Form Tabs - Reduced to 2 tabs */}
-          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-            {["Deal Details", "Redemption"].map((tab) => (
+          {/* Form Tabs */}
+          <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700 mb-6 scrollbar-hide">
+            {[
+              "General",
+              "Pricing",
+              "Usage & Validity",
+              "Redemption & Location",
+            ].map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setFormTab(tab)}
-                className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors ${
+                className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
                   formTab === tab
                     ? "border-brand-primary text-brand-primary"
                     : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
-                {tab}
+                {t(tab.toLowerCase().replace(/ & /g, "_").replace(/ /g, "_")) ||
+                  tab}
               </button>
             ))}
           </div>
 
           <form onSubmit={handleDealSubmit}>
             <div className="grid grid-cols-1 gap-6">
-              {/* Tab 1: Deal Details (merged basic info + pricing) */}
-              {formTab === "Deal Details" && (
+              {/* Tab 1: General */}
+              {formTab === "General" && (
                 <div className="space-y-4 animate-fade-in">
-                  {/* Title - Primary Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                      Title <span className="text-red-500">*</span>{" "}
-                      {isTranslating.title && (
-                        <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={dealFormData.title}
-                      onChange={handleDealInputChange}
-                      required
-                      className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                      placeholder="Enter title (auto-translates)"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        Title <span className="text-red-500">*</span>{" "}
+                        {isTranslating.title && (
+                          <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={dealFormData.title}
+                        onChange={handleDealInputChange}
+                        required
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                        placeholder="Enter title (auto-translates)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("vendorLabel")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="vendor"
+                        value={dealFormData.vendor}
+                        onChange={handleDealInputChange}
+                        required
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
                   </div>
 
-                  {/* Description - Primary Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
                       Description <span className="text-red-500">*</span>{" "}
@@ -858,7 +989,7 @@ const AdminDealsTab: React.FC = () => {
                     />
                   </div>
 
-                  {/* Collapsible Translation Override */}
+                  {/* Translations Override */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <button
                       type="button"
@@ -879,55 +1010,66 @@ const AdminDealsTab: React.FC = () => {
                     </button>
                     {showTranslations && (
                       <div className="p-3 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            Title (Turkish)
-                          </label>
-                          <input
-                            type="text"
-                            name="title_tr"
-                            value={dealFormData.title_tr}
-                            onChange={handleDealInputChange}
-                            className="w-full bg-white dark:bg-gray-700 rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                            Description (Turkish)
-                          </label>
-                          <textarea
-                            name="description_tr"
-                            value={dealFormData.description_tr}
-                            onChange={handleDealInputChange}
-                            className="w-full bg-white dark:bg-gray-700 rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-16 text-sm"
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              Title (Turkish)
+                            </label>
+                            <input
+                              type="text"
+                              name="title_tr"
+                              value={dealFormData.title_tr}
+                              onChange={handleDealInputChange}
+                              className="w-full bg-white dark:bg-gray-700 rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              Description (Turkish)
+                            </label>
+                            <textarea
+                              name="description_tr"
+                              value={dealFormData.description_tr}
+                              onChange={handleDealInputChange}
+                              className="w-full bg-white dark:bg-gray-700 rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 h-10 text-sm"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                      {t("vendorLabel")} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="vendor"
-                      value={dealFormData.vendor}
-                      onChange={handleDealInputChange}
-                      required
-                      className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("categoryLabel")}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="category"
+                        value={dealFormData.category}
+                        onChange={handleDealInputChange}
+                        required
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      >
+                        <option value="">Select a Category</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.name}>
+                            {language === "tr" ? cat.name_tr : cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <CountrySelector
+                        selectedCountries={dealFormData.countries || []}
+                        onChange={(countries) =>
+                          setDealFormData((prev) => ({ ...prev, countries }))
+                        }
+                        language={language === "tr" ? "tr" : "en"}
+                      />
+                    </div>
                   </div>
-
-                  {/* Country Selector */}
-                  <CountrySelector
-                    selectedCountries={dealFormData.countries || []}
-                    onChange={(countries) =>
-                      setDealFormData((prev) => ({ ...prev, countries }))
-                    }
-                    language={language === "tr" ? "tr" : "en"}
-                  />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -963,146 +1105,30 @@ const AdminDealsTab: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
+              )}
 
-                  {/* Pricing Section */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h3 className="text-sm font-semibold text-gray-600 dark:text-brand-text-muted mb-3">
-                      Pricing & Category
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                          {t("dealTypeLabel")}
-                        </label>
-                        <select
-                          name="dealTypeKey"
-                          value={dealFormData.dealTypeKey}
-                          onChange={handleDealInputChange}
-                          className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                        >
-                          {getDiscountTypeOptions(language, true).map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                          {t("categoryLabel")}{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          name="category"
-                          value={dealFormData.category}
-                          onChange={handleDealInputChange}
-                          className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                        >
-                          <option value="">Select a Category</option>
-                          {categories.map((cat) => (
-                            <option key={cat.id} value={cat.name}>
-                              {language === "tr" ? cat.name_tr : cat.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      {!dealTypeConfig?.hiddenFields.includes(
-                        "originalPrice"
-                      ) && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                            {t("originalPriceLabel")}{" "}
-                            {dealTypeConfig?.requiredFields.includes(
-                              "originalPrice"
-                            ) && <span className="text-red-500">*</span>}
-                          </label>
-                          <input
-                            type="number"
-                            name="originalPrice"
-                            value={dealFormData.originalPrice}
-                            onChange={handleDealInputChange}
-                            required={dealTypeConfig?.requiredFields.includes(
-                              "originalPrice"
-                            )}
-                            min={
-                              dealTypeConfig?.requiredFields.includes(
-                                "originalPrice"
-                              )
-                                ? "0.01"
-                                : "0"
-                            }
-                            step="0.01"
-                            className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                          />
-                        </div>
-                      )}
-                      {!dealTypeConfig?.hiddenFields.includes(
-                        "discountPercentage"
-                      ) && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                            {t("discountPercentageLabel")}{" "}
-                            {dealTypeConfig?.requiredFields.includes(
-                              "discountPercentage"
-                            ) && <span className="text-red-500">*</span>}
-                          </label>
-                          <input
-                            type="number"
-                            name="discountPercentage"
-                            value={dealFormData.discountPercentage || ""}
-                            onChange={handleDealInputChange}
-                            required={dealTypeConfig?.requiredFields.includes(
-                              "discountPercentage"
-                            )}
-                            min={
-                              dealTypeConfig?.requiredFields.includes(
-                                "discountPercentage"
-                              )
-                                ? "1"
-                                : "0"
-                            }
-                            max="100"
-                            className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                            placeholder="e.g. 20"
-                          />
-                        </div>
-                      )}
-                      {!dealTypeConfig?.hiddenFields.includes(
-                        "discountedPrice"
-                      ) && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                            {t("discountedPriceLabel")}{" "}
-                            {dealTypeConfig?.requiredFields.includes(
-                              "discountedPrice"
-                            ) && <span className="text-red-500">*</span>}
-                          </label>
-                          <input
-                            type="number"
-                            name="discountedPrice"
-                            value={dealFormData.discountedPrice}
-                            onChange={handleDealInputChange}
-                            required={dealTypeConfig?.requiredFields.includes(
-                              "discountedPrice"
-                            )}
-                            min={
-                              dealTypeConfig?.requiredFields.includes(
-                                "discountedPrice"
-                              )
-                                ? "0.01"
-                                : "0"
-                            }
-                            step="0.01"
-                            className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
+              {/* Tab 2: Pricing */}
+              {formTab === "Pricing" && (
+                <div className="space-y-6 animate-fade-in">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("dealTypeLabel")}
+                      </label>
+                      <select
+                        name="dealTypeKey"
+                        value={dealFormData.dealTypeKey}
+                        onChange={handleDealInputChange}
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      >
+                        {getDiscountTypeOptions(language, true).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
                         {t("requiredTierLabel")}
@@ -1122,75 +1148,303 @@ const AdminDealsTab: React.FC = () => {
                           ))}
                       </select>
                     </div>
-                    <div className="flex items-center gap-2 pt-6">
-                      <input
-                        type="checkbox"
-                        id="isTeasable"
-                        name="isTeasable"
-                        checked={dealFormData.isTeasable}
-                        onChange={handleDealInputChange}
-                        className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                      />
-                      <label
-                        htmlFor="isTeasable"
-                        className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >
-                        Teasable (Visible but locked for lower tiers)
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {!dealTypeConfig?.hiddenFields.includes(
+                      "originalPrice"
+                    ) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                          {t("originalPriceLabel")}{" "}
+                          {dealTypeConfig?.requiredFields.includes(
+                            "originalPrice"
+                          ) && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="number"
+                          name="originalPrice"
+                          value={dealFormData.originalPrice}
+                          onChange={handleDealInputChange}
+                          required={dealTypeConfig?.requiredFields.includes(
+                            "originalPrice"
+                          )}
+                          min="0"
+                          step="0.01"
+                          className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                        />
+                      </div>
+                    )}
+                    {!dealTypeConfig?.hiddenFields.includes(
+                      "discountPercentage"
+                    ) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                          {t("discountPercentageLabel")}{" "}
+                          {dealTypeConfig?.requiredFields.includes(
+                            "discountPercentage"
+                          ) && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="number"
+                          name="discountPercentage"
+                          value={dealFormData.discountPercentage || ""}
+                          onChange={handleDealInputChange}
+                          required={dealTypeConfig?.requiredFields.includes(
+                            "discountPercentage"
+                          )}
+                          min="0"
+                          max="100"
+                          className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                          placeholder="e.g. 20"
+                        />
+                      </div>
+                    )}
+                    {!dealTypeConfig?.hiddenFields.includes(
+                      "discountedPrice"
+                    ) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                          {t("discountedPriceLabel")}{" "}
+                          {dealTypeConfig?.requiredFields.includes(
+                            "discountedPrice"
+                          ) && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type="number"
+                          name="discountedPrice"
+                          value={dealFormData.discountedPrice}
+                          onChange={handleDealInputChange}
+                          required={dealTypeConfig?.requiredFields.includes(
+                            "discountedPrice"
+                          )}
+                          min="0"
+                          step="0.01"
+                          className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isTeasable"
+                      name="isTeasable"
+                      checked={dealFormData.isTeasable}
+                      onChange={handleDealInputChange}
+                      className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                    />
+                    <label
+                      htmlFor="isTeasable"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Teasable (Visible but locked for lower tiers)
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Usage & Validity */}
+              {formTab === "Usage & Validity" && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("usageLimitLabel")}{" "}
+                        <span className="text-red-500">*</span>{" "}
+                        {isTranslating.usageLimit && (
+                          <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />
+                        )}
                       </label>
+                      <input
+                        type="text"
+                        name="usageLimit"
+                        value={dealFormData.usageLimit}
+                        onChange={handleDealInputChange}
+                        required
+                        placeholder="e.g. One per person"
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("usageLimitTrLabel")}
+                      </label>
+                      <input
+                        type="text"
+                        name="usageLimit_tr"
+                        value={dealFormData.usageLimit_tr}
+                        onChange={handleDealInputChange}
+                        required
+                        placeholder="e.g. Kişi başı bir adet"
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("validityLabel")}{" "}
+                        <span className="text-red-500">*</span>{" "}
+                        {isTranslating.validity && (
+                          <SpinnerIcon className="inline w-4 h-4 ml-1 text-brand-primary" />
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        name="validity"
+                        value={dealFormData.validity}
+                        onChange={handleDealInputChange}
+                        required
+                        placeholder="e.g. valid on weekdays"
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("validityTrLabel")}
+                      </label>
+                      <input
+                        type="text"
+                        name="validity_tr"
+                        value={dealFormData.validity_tr}
+                        onChange={handleDealInputChange}
+                        required
+                        placeholder="e.g. hafta içi geçerlidir"
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                      {t("termsUrlLabel")}
+                    </label>
+                    <input
+                      type="url"
+                      name="termsUrl"
+                      value={dealFormData.termsUrl}
+                      onChange={handleDealInputChange}
+                      placeholder="https://..."
+                      className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                    />
+                  </div>
+
+                  {/* Expiry logic */}
+                  <div className="p-4 bg-gray-50 dark:bg-brand-bg rounded-lg border border-gray-200 dark:border-gray-700">
+                    <h4 className="text-sm font-semibold mb-3">
+                      Expiry Settings
+                    </h4>
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="neverExpires"
+                          checked={neverExpires}
+                          onChange={(e) => setNeverExpires(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-brand-primary"
+                        />
+                        <label
+                          htmlFor="neverExpires"
+                          className="text-sm font-medium"
+                        >
+                          No Expiry Date
+                        </label>
+                      </div>
+                      {!neverExpires && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">
+                            Expires in
+                          </label>
+                          <input
+                            type="number"
+                            value={expiresInDays}
+                            onChange={(e) => setExpiresInDays(e.target.value)}
+                            className="w-20 bg-white dark:bg-gray-700 rounded-md p-1 border border-gray-300 dark:border-gray-600 text-sm"
+                            min="1"
+                          />
+                          <span className="text-sm">days</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Tab 2: Redemption */}
-              {formTab === "Redemption" && (
-                <div className="space-y-4 animate-fade-in">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                      {t("redemptionCodeLabel")}
-                    </label>
-                    <div className="flex gap-2">
+              {/* Tab 4: Redemption & Location */}
+              {formTab === "Redemption & Location" && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        {t("redemptionCodeLabel")}
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          name="redemptionCode"
+                          value={dealFormData.redemptionCode}
+                          onChange={handleDealInputChange}
+                          required
+                          className="flex-1 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 font-mono"
+                          placeholder="CODE-123"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const code = generateRedemptionCode(
+                              dealFormData.category,
+                              dealFormData.vendor
+                            );
+                            setDealFormData((prev) => ({
+                              ...prev,
+                              redemptionCode: code,
+                            }));
+                          }}
+                          className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-1"
+                        >
+                          <Save className="w-4 h-4" />
+                          Generate
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                        Global Redemption Limit (Total Supply)
+                      </label>
                       <input
-                        type="text"
-                        name="redemptionCode"
-                        value={dealFormData.redemptionCode}
-                        onChange={handleDealInputChange}
-                        required
-                        className="flex-1 bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                        placeholder="e.g., DIN-L7K9M2"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const code = generateRedemptionCode(
-                            dealFormData.category,
-                            dealFormData.vendor
-                          );
+                        type="number"
+                        name="maxRedemptionsTotal"
+                        value={dealFormData.maxRedemptionsTotal ?? ""}
+                        onChange={(e) => {
+                          const val =
+                            e.target.value === ""
+                              ? null
+                              : parseInt(e.target.value);
                           setDealFormData((prev) => ({
                             ...prev,
-                            redemptionCode: code,
+                            maxRedemptionsTotal: val,
                           }));
                         }}
-                        className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-1 whitespace-nowrap"
-                      >
-                        <Save className="w-4 h-4" />
-                        Generate
-                      </button>
+                        placeholder="Infinite supply"
+                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                      />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-2">
                       Redemption Style
                     </label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center space-x-2">
+                    <div className="flex gap-6">
+                      <label className="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={
-                            dealFormData.redemptionStyle?.includes("online") ||
-                            false
-                          }
+                          checked={dealFormData.redemptionStyle?.includes(
+                            "online"
+                          )}
                           onChange={(e) => {
                             const current = dealFormData.redemptionStyle || [];
                             const updated = e.target.checked
@@ -1206,18 +1460,14 @@ const AdminDealsTab: React.FC = () => {
                           }}
                           className="h-4 w-4 rounded text-brand-primary"
                         />
-                        <span className="text-sm text-gray-700 dark:text-brand-text-light">
-                          Online
-                        </span>
+                        <span className="text-sm">Online</span>
                       </label>
-                      <label className="flex items-center space-x-2">
+                      <label className="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={
-                            dealFormData.redemptionStyle?.includes(
-                              "in_store"
-                            ) || false
-                          }
+                          checked={dealFormData.redemptionStyle?.includes(
+                            "in_store"
+                          )}
                           onChange={(e) => {
                             const current = dealFormData.redemptionStyle || [];
                             const updated = e.target.checked
@@ -1233,44 +1483,12 @@ const AdminDealsTab: React.FC = () => {
                           }}
                           className="h-4 w-4 rounded text-brand-primary"
                         />
-                        <span className="text-sm text-gray-700 dark:text-brand-text-light">
-                          In Store
-                        </span>
+                        <span className="text-sm">In Store</span>
                       </label>
                     </div>
                   </div>
 
-                  {/* Global & Smart Location Fields */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                        Global Redemption Limit (Total Supply)
-                      </label>
-                      <div className="flex flex-col gap-1">
-                        <input
-                          type="number"
-                          name="maxRedemptionsTotal"
-                          value={dealFormData.maxRedemptionsTotal ?? ""}
-                          onChange={(e) => {
-                            const val =
-                              e.target.value === ""
-                                ? null
-                                : parseInt(e.target.value);
-                            setDealFormData((prev) => ({
-                              ...prev,
-                              maxRedemptionsTotal: val,
-                            }));
-                          }}
-                          placeholder="Leave empty for infinite supply"
-                          className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                        />
-                        <span className="text-xs text-gray-500">
-                          Current total usage:{" "}
-                          {dealFormData.redemptionsCount || 0}
-                        </span>
-                      </div>
-                    </div>
-
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <StoreLocationFields
                       redemptionStyle={dealFormData.redemptionStyle || []}
                       storeLocations={dealFormData.storeLocations || []}
@@ -1280,79 +1498,6 @@ const AdminDealsTab: React.FC = () => {
                           storeLocations: locations,
                         }))
                       }
-                    />
-                  </div>
-
-                  {/* Usage Limit & Validity Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                        {t("usageLimitLabel")}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="usageLimit"
-                        value={dealFormData.usageLimit}
-                        onChange={handleDealInputChange}
-                        required
-                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                        {t("usageLimitTrLabel")}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="usageLimit_tr"
-                        value={dealFormData.usageLimit_tr}
-                        onChange={handleDealInputChange}
-                        required
-                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                        {t("validityLabel")}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="validity"
-                        value={dealFormData.validity}
-                        onChange={handleDealInputChange}
-                        required
-                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                        {t("validityTrLabel")}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="validity_tr"
-                        value={dealFormData.validity_tr}
-                        onChange={handleDealInputChange}
-                        required
-                        className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
-                      />
-                    </div>
-                  </div>
-                  {/* Terms URL */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-brand-text-muted mb-1">
-                      {t("termsUrlLabel")}
-                    </label>
-                    <input
-                      type="text"
-                      name="termsUrl"
-                      value={dealFormData.termsUrl}
-                      onChange={handleDealInputChange}
-                      className="w-full bg-gray-100 dark:bg-brand-bg rounded-md p-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
                     />
                   </div>
                 </div>
