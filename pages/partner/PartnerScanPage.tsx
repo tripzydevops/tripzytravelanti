@@ -153,15 +153,16 @@ const PartnerScanPage: React.FC = () => {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Redeem Deal</h2>
+            <h2 className="text-3xl font-bold text-white mb-8 text-center tracking-tight">Redeem Deal</h2>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-6">
+            <div className="glass-premium rounded-2xl shadow-2xl overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none"></div>
+                <div className="p-8 relative z-10">
                     {verificationStatus === 'idle' && (
                         <>
                             <div className="mb-8">
-                                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center">Scan QR Code</h3>
-                                <div className="bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden h-64 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 relative">
+                                <h3 className="text-lg font-semibold text-white mb-4 text-center">Scan QR Code</h3>
+                                <div className="bg-black/40 rounded-xl overflow-hidden h-64 flex items-center justify-center border-2 border-dashed border-white/20 relative shadow-inner">
                                     <QRScanner onScan={handleScan} onError={(err) => console.error(err)} />
                                     {/* Overlay text if camera not active */}
                                     <p className="absolute text-gray-400 text-sm pointer-events-none">Camera View</p>
@@ -169,14 +170,14 @@ const PartnerScanPage: React.FC = () => {
                             </div>
 
                             <div className="relative flex py-5 items-center">
-                                <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-                                <span className="flex-shrink-0 mx-4 text-gray-400">OR</span>
-                                <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+                                <div className="flex-grow border-t border-white/10"></div>
+                                <span className="flex-shrink-0 mx-4 text-brand-text-muted text-sm">OR ENTER CODE</span>
+                                <div className="flex-grow border-t border-white/10"></div>
                             </div>
 
                             <form onSubmit={handleManualSubmit} className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Enter Redemption Code
+                                <label className="block text-sm font-medium text-brand-text-light mb-2">
+                                    Redemption Code
                                 </label>
                                 <div className="flex gap-2">
                                     <input
@@ -184,7 +185,7 @@ const PartnerScanPage: React.FC = () => {
                                         value={manualCode}
                                         onChange={(e) => setManualCode(e.target.value)}
                                         placeholder="e.g. DEAL-123-USER-456"
-                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                        className="flex-1 px-4 py-3 border border-white/10 bg-white/5 text-white placeholder-brand-text-muted rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none transition-all"
                                     />
                                     <button
                                         type="submit"

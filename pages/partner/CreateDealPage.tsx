@@ -328,14 +328,15 @@ const CreateDealPage: React.FC = () => {
         <div className="max-w-4xl mx-auto">
             <button
                 onClick={() => navigate('/partner/dashboard')}
-                className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+                className="flex items-center text-brand-text-muted hover:text-white mb-6 transition-colors group"
             >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
                 Back to Dashboard
             </button>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            <div className="glass-premium p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none"></div>
+                <h1 className="text-3xl font-bold text-white mb-8 tracking-tight relative z-10">
                     {isEditing ? 'Edit Deal' : 'Create New Deal'}
                 </h1>
 
@@ -345,16 +346,16 @@ const CreateDealPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Form Tabs - Reduced to 2 tabs */}
-                <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+                {/* Form Tabs - Premium Glass Style */}
+                <div className="flex border-b border-white/10 mb-8 overflow-x-auto relative z-10">
                     {['Deal Details', 'Redemption'].map((tab) => (
                         <button
                             key={tab}
                             type="button"
                             onClick={() => setFormTab(tab)}
-                            className={`py-2 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${formTab === tab
-                                ? 'border-brand-primary text-brand-primary'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            className={`py-3 px-6 font-medium text-sm border-b-2 transition-all duration-300 whitespace-nowrap ${formTab === tab
+                                ? 'border-brand-primary text-brand-primary bg-brand-primary/5'
+                                : 'border-transparent text-brand-text-muted hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             {tab}
@@ -369,14 +370,14 @@ const CreateDealPage: React.FC = () => {
                         <div className="space-y-6 animate-fade-in">
                             {/* Title - Primary */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                                <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Enter title (auto-translates)" />
+                                <label className="text-sm font-medium text-brand-text-light mb-2 block">Title</label>
+                                <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" placeholder="Enter title (auto-translates)" />
                             </div>
 
                             {/* Description - Primary */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                                <textarea name="description" rows={2} value={formData.description} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Enter description (auto-translates)" />
+                                <label className="text-sm font-medium text-brand-text-light mb-2 block">Description</label>
+                                <textarea name="description" rows={2} value={formData.description} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" placeholder="Enter description (auto-translates)" />
                             </div>
 
                             {/* Collapsible Translations */}
@@ -400,8 +401,8 @@ const CreateDealPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name (Vendor)</label>
-                                <input type="text" name="vendor" required value={formData.vendor} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                <label className="text-sm font-medium text-brand-text-light mb-2 block">Company Name (Vendor)</label>
+                                <input type="text" name="vendor" required value={formData.vendor} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" />
                             </div>
 
                             {/* Country Selector */}
@@ -413,11 +414,11 @@ const CreateDealPage: React.FC = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
+                                    <label className="text-sm font-medium text-brand-text-light mb-2 block">Image</label>
                                     <ImageUpload value={formData.imageUrl} onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))} bucketName="deals" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Logo (Optional)</label>
+                                    <label className="text-sm font-medium text-brand-text-light mb-2 block">Company Logo (Optional)</label>
                                     <ImageUpload value={formData.companyLogoUrl} onChange={(url) => setFormData(prev => ({ ...prev, companyLogoUrl: url }))} bucketName="deals" />
                                 </div>
                             </div>
@@ -427,14 +428,14 @@ const CreateDealPage: React.FC = () => {
                                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Pricing & Category</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('dealTypeLabel')}</label>
-                                        <select name="dealTypeKey" value={formData.dealTypeKey} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <label className="text-sm font-medium text-brand-text-light mb-2 block">{t('dealTypeLabel')}</label>
+                                        <select name="dealTypeKey" value={formData.dealTypeKey} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none">
                                             {getDiscountTypeOptions(language).map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('categoryLabel')}</label>
-                                        <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <label className="text-sm font-medium text-brand-text-light mb-2 block">{t('categoryLabel')}</label>
+                                        <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none">
                                             {categories.map(cat => (
                                                 <option key={cat.id} value={cat.name}>
                                                     {cat.icon} {language === 'tr' ? cat.name_tr : cat.name}
@@ -446,20 +447,20 @@ const CreateDealPage: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {!dealTypeConfig?.hiddenFields.includes('originalPrice') && (
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('originalPriceLabel')}</label>
-                                            <input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                            <label className="text-sm font-medium text-brand-text-light mb-2 block">{t('originalPriceLabel')}</label>
+                                            <input type="number" name="originalPrice" min="0" step="0.01" value={formData.originalPrice} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" />
                                         </div>
                                     )}
                                     {!dealTypeConfig?.hiddenFields.includes('discountedPrice') && (
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountedPriceLabel')}</label>
-                                            <input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                            <label className="text-sm font-medium text-brand-text-light mb-2 block">{t('discountedPriceLabel')}</label>
+                                            <input type="number" name="discountedPrice" min="0" step="0.01" value={formData.discountedPrice} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" />
                                         </div>
                                     )}
                                     {!dealTypeConfig?.hiddenFields.includes('discountPercentage') && (
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('discountPercentageLabel')}</label>
-                                            <input type="number" name="discountPercentage" min="0" max="100" value={formData.discountPercentage} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                            <label className="text-sm font-medium text-brand-text-light mb-2 block">{t('discountPercentageLabel')}</label>
+                                            <input type="number" name="discountPercentage" min="0" max="100" value={formData.discountPercentage} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" />
                                         </div>
                                     )}
                                 </div>
@@ -477,14 +478,14 @@ const CreateDealPage: React.FC = () => {
                             {/* Settings */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('requiredTierLabel')}</label>
-                                    <select name="requiredTier" value={formData.requiredTier} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    <label className="text-sm font-medium text-brand-text-light mb-2 block">{t('requiredTierLabel')}</label>
+                                    <select name="requiredTier" value={formData.requiredTier} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none">
                                         {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.NONE).map(tier => <option key={tier} value={tier}>{tier}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiration Date</label>
-                                    <input type="date" name="expiresAt" required={!neverExpires} disabled={neverExpires} value={formData.expiresAt} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50" />
+                                    <label className="text-sm font-medium text-brand-text-light mb-2 block">Expiration Date</label>
+                                    <input type="date" name="expiresAt" required={!neverExpires} disabled={neverExpires} value={formData.expiresAt} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none disabled:opacity-50" />
                                     <label className="flex items-center mt-2">
                                         <input type="checkbox" checked={neverExpires} onChange={(e) => setNeverExpires(e.target.checked)} className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded mr-2" />
                                         <span className="text-sm text-gray-700 dark:text-gray-300">Never Expires</span>
@@ -502,7 +503,7 @@ const CreateDealPage: React.FC = () => {
                     {formTab === 'Redemption' && (
                         <div className="space-y-6 animate-fade-in">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Redemption Code</label>
+                                <label className="text-sm font-medium text-brand-text-light mb-2 block">Redemption Code</label>
                                 <div className="flex gap-2">
                                     <input type="text" name="redemptionCode" required value={formData.redemptionCode} onChange={handleChange} className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="e.g., DIN-L7K9M2" />
                                     <button type="button" onClick={() => { const code = generateRedemptionCode(formData.category, formData.vendor); setFormData(prev => ({ ...prev, redemptionCode: code })); }} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 whitespace-nowrap">
@@ -513,7 +514,7 @@ const CreateDealPage: React.FC = () => {
 
                             {/* Global Redemption Limit */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="text-sm font-medium text-brand-text-light mb-2 block">
                                     Total Global Redemptions (Optional)
                                 </label>
                                 <div className="flex flex-col">
@@ -524,7 +525,7 @@ const CreateDealPage: React.FC = () => {
                                         value={formData.maxRedemptionsTotal || ''}
                                         onChange={handleChange}
                                         placeholder="e.g. 100 (Leave empty for unlimited)"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none"
                                     />
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         Limit the total number of times this deal can be redeemed by ALL users combined.
@@ -534,7 +535,7 @@ const CreateDealPage: React.FC = () => {
 
                             {/* User Redemption Limit */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label className="text-sm font-medium text-brand-text-light mb-2 block">
                                     Max Redemptions Per User (Monthly)
                                 </label>
                                 <div className="flex flex-col">
@@ -545,7 +546,7 @@ const CreateDealPage: React.FC = () => {
                                         value={formData.maxRedemptionsUser || ''}
                                         onChange={handleChange}
                                         placeholder="e.g. 1 (Default: Unlimited if empty)"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none"
                                     />
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         Limit how many times a SINGLE user can redeem this deal PER CALENDAR MONTH.
@@ -577,12 +578,12 @@ const CreateDealPage: React.FC = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usage Limit (English)</label><input type="text" name="usageLimit" value={formData.usageLimit} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usage Limit (Turkish)</label><input type="text" name="usageLimit_tr" value={formData.usageLimit_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Validity (English)</label><input type="text" name="validity" value={formData.validity} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-                                <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Validity (Turkish)</label><input type="text" name="validity_tr" value={formData.validity_tr} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                                <div><label className="text-sm font-medium text-brand-text-light mb-2 block">Usage Limit (English)</label><input type="text" name="usageLimit" value={formData.usageLimit} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" /></div>
+                                <div><label className="text-sm font-medium text-brand-text-light mb-2 block">Usage Limit (Turkish)</label><input type="text" name="usageLimit_tr" value={formData.usageLimit_tr} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" /></div>
+                                <div><label className="text-sm font-medium text-brand-text-light mb-2 block">Validity (English)</label><input type="text" name="validity" value={formData.validity} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" /></div>
+                                <div><label className="text-sm font-medium text-brand-text-light mb-2 block">Validity (Turkish)</label><input type="text" name="validity_tr" value={formData.validity_tr} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" /></div>
                             </div>
-                            <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Terms URL</label><input type="text" name="termsUrl" value={formData.termsUrl} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                            <div><label className="text-sm font-medium text-brand-text-light mb-2 block">Terms URL</label><input type="text" name="termsUrl" value={formData.termsUrl} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-brand-text-muted focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all outline-none" /></div>
                         </div>
                     )}
 
