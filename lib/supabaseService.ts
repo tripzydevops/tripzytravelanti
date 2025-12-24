@@ -925,7 +925,7 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
     // Increment global count using RPC
     try {
-        await supabase.rpc('increment_redemptions_count', { deal_id: dealId });
+        await supabase.rpc('increment_deal_redemption', { deal_id_input: dealId });
     } catch (e) {
         console.warn('Failed to increment global redemption count:', e);
     }
@@ -2157,10 +2157,10 @@ export async function addDealToWallet(userId: string, dealId: string, bypassChec
 
     // INCREMENT GLOBAL REDEMPTION COUNT (Claiming a spot)
     try {
-        const { error: updateError } = await supabase.rpc('increment_redemptions_count', { row_id: dealId });
+        const { error: updateError } = await supabase.rpc('increment_deal_redemption', { deal_id_input: dealId });
         if (updateError) throw updateError;
     } catch (rpcError) {
-        console.warn('RPC increment_redemptions_count failed in addDealToWallet, falling back to direct update:', rpcError);
+        console.warn('RPC increment_deal_redemption failed in addDealToWallet, falling back to direct update:', rpcError);
         // Fallback logic
         const { data: currentDeal } = await supabase.from('deals').select('redemptions_count').eq('id', dealId).single();
         const nextCount = (currentDeal?.redemptions_count || 0) + 1;

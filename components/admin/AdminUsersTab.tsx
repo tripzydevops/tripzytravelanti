@@ -814,6 +814,15 @@ const AdminUsersTab: React.FC = () => {
                 >
                   {t("cancel")}
                 </button>
+                {!userForm.emailConfirmedAt && (
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyUser(userForm.id)}
+                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex items-center gap-2"
+                  >
+                    📧 {t("verifyEmail") || "Verify Email"}
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors"
