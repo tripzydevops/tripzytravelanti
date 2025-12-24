@@ -229,7 +229,7 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Charts Section 1: Revenue & Activity Log */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard title="Revenue Growth" className="lg:col-span-2">
-          <div className="h-[300px]">
+          <div className="h-[300px] min-h-[1px] min-w-[1px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={charts.revenueData}>
                 <defs>
@@ -321,7 +321,7 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Charts Section 2: City Distribution & Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard title="City Distribution (Turkey)">
-          <div className="h-[300px]">
+          <div className="h-[300px] min-h-[1px] min-w-[1px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
@@ -362,7 +362,7 @@ const AnalyticsDashboard: React.FC = () => {
         </ChartCard>
 
         <ChartCard title="Deal Categories">
-          <div className="h-[300px]">
+          <div className="h-[300px] min-h-[1px] min-w-[1px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={charts.categoryData}>
                 <CartesianGrid
@@ -398,7 +398,7 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Charts Section 3: Performance Rankings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
         <ChartCard title="Top Performing Deals">
-          <div className="h-[300px]">
+          <div className="h-[350px] min-h-[1px] min-w-[1px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart
                 data={charts.topDeals}
