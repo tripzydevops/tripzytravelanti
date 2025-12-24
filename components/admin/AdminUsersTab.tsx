@@ -12,6 +12,7 @@ import {
 } from "../../lib/redemptionLogic";
 import {
   getPendingDeals,
+  getUsersPaginated,
   getUserTransactions,
   confirmUserEmail,
   getAllDeals,

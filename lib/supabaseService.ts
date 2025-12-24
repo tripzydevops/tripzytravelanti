@@ -1242,7 +1242,8 @@ export async function getAnalyticsData() {
 
         const { data: users, error: usersError } = await supabase
             .from('profiles')
-            .select('tier, created_at');
+            .select('id, name, email, tier, created_at')
+            .order('created_at', { ascending: false });
         if (usersError) throw usersError;
 
         // --- Aggregation for complex metrics ---
@@ -1297,7 +1298,14 @@ export async function getAnalyticsData() {
             },
             charts: {
                 revenueData: revenueByMonth.map((r: any) => ({ name: r.month_name, revenue: r.revenue })),
-                userGrowthData: [], // We can keep user growth calculation or move to RPC too
+                userGrowthData: [],
+                recentUsers: users.slice(0, 5).map((u: any) => ({
+                    id: u.id,
+                    name: u.name || 'Anonymous',
+                    email: u.email,
+                    tier: u.tier,
+                    joinedAt: u.created_at
+                })),
                 categoryData,
                 topDeals,
                 tierData,
