@@ -799,9 +799,15 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                             <button
                               onClick={() =>
                                 window.open(
-                                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                    loc.address + " " + (loc.city || "")
-                                  )}&zoom=20`,
+                                  deal.latitude && deal.longitude
+                                    ? `https://www.google.com/maps/search/${encodeURIComponent(
+                                        loc.address + " " + (loc.city || "")
+                                      )}/@${deal.latitude},${
+                                        deal.longitude
+                                      },20z`
+                                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                        loc.address + " " + (loc.city || "")
+                                      )}&zoom=20`,
                                   "_blank"
                                 )
                               }
