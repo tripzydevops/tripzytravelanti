@@ -705,7 +705,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                               style={{ border: 0, opacity: 0.8 }}
                               src={`https://www.google.com/maps/embed/v1/place?key=${
                                 import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-                              }&q=${deal.latitude},${deal.longitude}&zoom=19`}
+                              }&q=${deal.latitude},${deal.longitude}&zoom=20`}
                               allowFullScreen
                               loading="lazy"
                               className="group-hover:opacity-100 transition-opacity duration-700"
@@ -766,7 +766,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                         <button
                           onClick={() =>
                             window.open(
-                              `https://www.google.com/maps/place/${deal.latitude},${deal.longitude}/@${deal.latitude},${deal.longitude},19z`,
+                              `https://www.google.com/maps/place/${deal.latitude},${deal.longitude}/@${deal.latitude},${deal.longitude},20z`,
                               "_blank"
                             )
                           }
@@ -799,9 +799,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                             <button
                               onClick={() =>
                                 window.open(
-                                  `https://maps.google.com/?q=${encodeURIComponent(
+                                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                                     loc.address + " " + (loc.city || "")
-                                  )}`,
+                                  )}&zoom=20`,
                                   "_blank"
                                 )
                               }
