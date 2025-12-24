@@ -25,8 +25,8 @@ const WalletQRCode: React.FC<WalletQRCodeProps> = ({
     });
 
     return (
-        <div className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-lg">
-            {/* QR Code */}
+        <div className="flex flex-col items-center p-6 glass-premium rounded-2xl shadow-lg">
+            {/* QR Code - Must stay white for scanning reliability */}
             <div className="p-4 bg-white rounded-xl border-2 border-gray-100">
                 <QRCodeSVG
                     value={qrPayload}
@@ -40,21 +40,21 @@ const WalletQRCode: React.FC<WalletQRCodeProps> = ({
 
             {/* Redemption Code Display */}
             <div className="mt-4 text-center">
-                <p className="text-sm text-gray-500 mb-1">Your Redemption Code</p>
-                <p className="text-3xl font-bold tracking-widest text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Your Redemption Code</p>
+                <p className="text-3xl font-bold tracking-widest text-gray-900 dark:text-white font-mono">
                     {redemptionCode}
                 </p>
             </div>
 
             {/* Deal Title */}
             {dealTitle && (
-                <p className="mt-3 text-sm text-gray-600 text-center max-w-xs">
+                <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 text-center max-w-xs font-medium">
                     {dealTitle}
                 </p>
             )}
 
             {/* Instructions */}
-            <p className="mt-4 text-xs text-gray-400 text-center max-w-xs">
+            <p className="mt-4 text-xs text-gray-400 dark:text-gray-500 text-center max-w-xs">
                 Show this QR code to the vendor, or give them the code above
             </p>
         </div>

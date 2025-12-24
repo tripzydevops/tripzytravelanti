@@ -160,7 +160,7 @@ const CheckoutPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Order Summary */}
                     <div className="md:col-span-1 order-2 md:order-1">
-                        <div className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                        <div className="glass-premium p-6 rounded-2xl shadow-xl mb-6">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('orderSummary') || 'Order Summary'}</h2>
 
                             {isUpgrade && currentPlan && (
@@ -258,7 +258,7 @@ const CheckoutPage: React.FC = () => {
 
                     {/* Payment Form */}
                     <div className="md:col-span-2 order-1 md:order-2">
-                        <div className="bg-white dark:bg-brand-surface p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="glass-premium p-6 rounded-2xl shadow-xl">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">{t('paymentDetails') || 'Payment Details'}</h2>
 
                             {/* Payment Method Selector */}

@@ -67,7 +67,7 @@ const PaymentTransactionTable: React.FC = () => {
     return (
         <div className="space-y-4">
             {/* Filters */}
-            <div className="bg-white dark:bg-brand-surface p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="glass-premium p-4 rounded-2xl shadow-lg">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Search */}
                     <div>
@@ -132,7 +132,7 @@ const PaymentTransactionTable: React.FC = () => {
             </div>
 
             {/* Transactions Table */}
-            <div className="bg-white dark:bg-brand-surface rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="glass-premium rounded-2xl shadow-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand-primary mx-auto"></div>
@@ -145,7 +145,7 @@ const PaymentTransactionTable: React.FC = () => {
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <thead className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-brand-text-muted uppercase tracking-wider">
                                         {t('date') || 'Date'}
@@ -175,7 +175,7 @@ const PaymentTransactionTable: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {filteredTransactions.map((transaction) => (
-                                    <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                    <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-200">
                                         <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
                                             {formatDate(transaction.created_at)}
                                         </td>

@@ -29,7 +29,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ plan, isCurrent }) 
   const currencySymbol = language === 'tr' ? '₺' : '$';
 
   return (
-    <div className={`border-2 p-6 rounded-lg shadow-lg flex flex-col bg-white dark:bg-brand-surface ${isCurrent ? 'border-brand-primary scale-105' : 'border-gray-200 dark:border-transparent'}`}>
+    <div className={`p-6 rounded-2xl flex flex-col transition-all duration-300 ${isCurrent ? 'glass-premium ring-2 ring-brand-primary scale-105 shadow-2xl relative z-10' : 'bg-white dark:glass-premium border border-gray-200 dark:border-white/10 shadow-lg hover:scale-[1.02]'}`}>
       <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-brand-text-light mb-2">{name}</h3>
       <p className="text-4xl font-extrabold text-center text-brand-primary mb-4">{currencySymbol}{price}<span className="text-lg font-medium text-gray-500 dark:text-brand-text-muted">/year</span></p>
       <ul className="space-y-3 mb-6 flex-grow">
