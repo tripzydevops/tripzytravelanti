@@ -10,20 +10,7 @@ import {
   calculateRemainingRedemptions,
   getNextRenewalDate,
 } from "../../lib/redemptionLogic";
-import {
-  getPendingDeals,
-  getUsersPaginated,
-  getUserTransactions,
-  confirmUserEmail,
-  getAllDeals,
-  getUserActivityLog,
-  ActivityLogItem,
-  sendTestNotification,
-  resetUserHistory,
-  removeWalletItemFromUser,
-  bulkUpdateUserStatus,
-  logAdminAction,
-} from "../../lib/supabaseService";
+import * as supabaseService from "../../lib/supabaseService";
 
 const EMPTY_USER: User = {
   id: "",
@@ -93,7 +80,7 @@ const AdminUsersTab: React.FC = () => {
 
   const fetchAllDeals = async () => {
     try {
-      const dealsData = await getAllDeals(true); // true = include expired
+      const dealsData = await supabaseService.getAllDeals(true); // true = include expired
       setAllDeals(dealsData);
     } catch (error) {
       console.error("Failed to fetch deals for admin:", error);
@@ -108,7 +95,7 @@ const AdminUsersTab: React.FC = () => {
       )
     ) {
       try {
-        await confirmUserEmail(userId);
+        await supabaseService.confirmUserEmail(userId);
         showSuccessToast(t("userUpdateSuccess"));
         fetchUsersData();
       } catch (error) {
@@ -124,7 +111,7 @@ const AdminUsersTab: React.FC = () => {
       )
     ) {
       try {
-        const result = await sendTestNotification(userId);
+        const result = await supabaseService.sendTestNotification(userId);
         if (result.success) {
           showSuccessToast(result.message);
         } else {
@@ -143,8 +130,8 @@ const AdminUsersTab: React.FC = () => {
     if (confirmation === "RESET") {
       try {
         const oldUser = paginatedUsers.find((u) => u.id === userId);
-        await resetUserHistory(userId);
-        await logAdminAction({
+        await supabaseService.resetUserHistory(userId);
+        await supabaseService.logAdminAction({
           action_type: "RESET",
           table_name: "profiles",
           record_id: userId,
@@ -175,13 +162,20 @@ const AdminUsersTab: React.FC = () => {
   const fetchUsersData = async () => {
     setIsLoading(true);
     try {
-      const { users, total } = await getUsersPaginated(page, USERS_PER_PAGE, {
-        search: searchQuery,
-        tier: tierFilter,
-        status: statusFilter,
-        sortBy,
-        sortOrder,
-      });
+      if (!supabaseService.getUsersPaginated) {
+        throw new Error("getUsersPaginated is not defined in supabaseService");
+      }
+      const { users, total } = await supabaseService.getUsersPaginated(
+        page,
+        USERS_PER_PAGE,
+        {
+          search: searchQuery,
+          tier: tierFilter,
+          status: statusFilter,
+          sortBy,
+          sortOrder,
+        }
+      );
       setPaginatedUsers(users);
       setTotalUsers(total);
     } catch (error) {
