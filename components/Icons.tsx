@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Home,
   Search as LucideSearch,
@@ -54,8 +54,8 @@ import {
   Utensils,
   Plane,
   ShoppingBag,
-  Terminal as LucideTerminal
-} from 'lucide-react';
+  Terminal as LucideTerminal,
+} from "lucide-react";
 
 type IconProps = {
   className?: string;
@@ -64,228 +64,506 @@ type IconProps = {
 
 // --- Lucide Icon Wrappers ---
 
-export const HomeIcon: React.FC<IconProps> = ({ className }) => <Home className={className} strokeWidth={1.5} />;
-export const Search: React.FC<IconProps> = ({ className }) => <LucideSearch className={className} strokeWidth={1.5} />;
-export const BriefcaseIcon: React.FC<IconProps> = ({ className }) => <Briefcase className={className} strokeWidth={1.5} />; // Renamed to avoid conflict if any, but kept consistent with export
+export const HomeIcon: React.FC<IconProps> = ({ className }) => (
+  <Home className={className} strokeWidth={1.5} />
+);
+export const Search: React.FC<IconProps> = ({ className }) => (
+  <LucideSearch className={className} strokeWidth={1.5} />
+);
+export const BriefcaseIcon: React.FC<IconProps> = ({ className }) => (
+  <Briefcase className={className} strokeWidth={1.5} />
+); // Renamed to avoid conflict if any, but kept consistent with export
 export { Briefcase }; // Export direct component too if needed
-export const UserIcon: React.FC<IconProps> = ({ className }) => <User className={className} strokeWidth={1.5} />;
-export const CogIcon: React.FC<IconProps> = ({ className }) => <Settings className={className} />;
-export const ChevronLeftIcon: React.FC<IconProps> = ({ className }) => <ChevronLeft className={className} />;
-export const ChevronRightIcon: React.FC<IconProps> = ({ className }) => <ChevronRight className={className} />;
-export const ChevronUpIcon: React.FC<IconProps> = ({ className }) => <ChevronUp className={className} />;
-export const ChevronDownIcon: React.FC<IconProps> = ({ className }) => <ChevronDown className={className} />;
-export const XMarkIcon: React.FC<IconProps> = ({ className }) => <X className={className} />;
-export const XCircle: React.FC<IconProps> = ({ className }) => <X className={className} />; // Mapping XCircle to X for now or use XCircle from lucide if available
-export const ShareIcon: React.FC<IconProps> = ({ className }) => <Share2 className={className} />;
-export const PencilIcon: React.FC<IconProps> = ({ className }) => <Pencil className={className} />;
-export const LogoutIcon: React.FC<IconProps> = ({ className }) => <LogOut className={className} />;
-export const CheckIcon: React.FC<IconProps> = ({ className }) => <Check className={className} />;
-export const XIcon: React.FC<IconProps> = ({ className }) => <X className={className} />;
-export const EditIcon: React.FC<IconProps> = ({ className }) => <Pencil className={className} />;
-export const ChatBubbleOvalLeftIcon: React.FC<IconProps> = ({ className }) => <MessageCircle className={className} />;
-export const CreditCardIcon: React.FC<IconProps> = ({ className }) => <CreditCard className={className} />;
-export const BellIcon: React.FC<IconProps> = ({ className }) => <Bell className={className} />;
-export const HeartIcon: React.FC<IconProps> = ({ className }) => <Heart className={className} />;
-export const TicketIcon: React.FC<IconProps> = ({ className }) => <Ticket className={className} />;
-export const LocationMarkerIcon: React.FC<IconProps> = ({ className }) => <MapPin className={className} />;
-export const FingerPrintIcon: React.FC<IconProps> = ({ className }) => <Fingerprint className={className} />;
-export const MoonIcon: React.FC<IconProps> = ({ className }) => <Moon className={className} />;
-export const DocumentTextIcon: React.FC<IconProps> = ({ className }) => <FileText className={className} />;
-export const QuestionMarkCircleIcon: React.FC<IconProps> = ({ className }) => <HelpCircle className={className} />;
-export const MailIcon: React.FC<IconProps> = ({ className }) => <Mail className={className} />;
-export const InformationCircleIcon: React.FC<IconProps> = ({ className }) => <Info className={className} />;
-export const BookmarkIcon: React.FC<IconProps> = ({ className }) => <Bookmark className={className} />;
-export const SunIcon: React.FC<IconProps> = ({ className }) => <Sun className={className} />;
-export const MountainIcon: React.FC<IconProps> = ({ className }) => <Mountain className={className} />;
-export const BuildingOfficeIcon: React.FC<IconProps> = ({ className }) => <Building2 className={className} />;
-export const UsersIcon: React.FC<IconProps> = ({ className }) => <Users className={className} />;
-export const TagIcon: React.FC<IconProps> = ({ className }) => <Tag className={className} />;
-export const TrendingUpIcon: React.FC<IconProps> = ({ className }) => <TrendingUp className={className} />;
-export const EyeIcon: React.FC<IconProps> = ({ className }) => <Eye className={className} />;
-export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => <ArrowRight className={className} />;
-export const CheckCircle: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} />;
-export const Lock: React.FC<IconProps> = ({ className }) => <LucideLock className={className} />;
-export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => <CheckCircle2 className={className} strokeWidth={1.5} />;
-export const GlobeIcon: React.FC<IconProps> = ({ className }) => <LucideGlobe className={className} strokeWidth={1.5} />;
-export const CompassIcon: React.FC<IconProps> = ({ className }) => <Compass className={className} strokeWidth={1.5} />;
-export const FireIcon: React.FC<IconProps> = ({ className }) => <Flame className={className} strokeWidth={1.5} />;
-export const UploadIcon: React.FC<IconProps> = ({ className }) => <Upload className={className} strokeWidth={1.5} />;
-export const PlusIcon: React.FC<IconProps> = ({ className }) => <Plus className={className} strokeWidth={1.5} />;
-export const BarChartIcon: React.FC<IconProps> = ({ className }) => <BarChart3 className={className} strokeWidth={1.5} />;
-export const QrCodeIcon: React.FC<IconProps> = ({ className }) => <QrCode className={className} strokeWidth={1.5} />;
-export const ArrowLeftIcon: React.FC<IconProps> = ({ className }) => <ArrowLeft className={className} strokeWidth={1.5} />;
-export const SaveIcon: React.FC<IconProps> = ({ className }) => <Save className={className} strokeWidth={1.5} />;
-export const MegaphoneIcon: React.FC<IconProps> = ({ className }) => <Megaphone className={className} strokeWidth={1.5} />;
-export const AlertCircleIcon: React.FC<IconProps> = ({ className }) => <AlertCircle className={className} strokeWidth={1.5} />;
-export const CalendarIcon: React.FC<IconProps> = ({ className }) => <Calendar className={className} strokeWidth={1.5} />;
-export const Terminal: React.FC<IconProps> = ({ className }) => <LucideTerminal className={className} strokeWidth={1.5} />;
+export const UserIcon: React.FC<IconProps> = ({ className }) => (
+  <User className={className} strokeWidth={1.5} />
+);
+export const CogIcon: React.FC<IconProps> = ({ className }) => (
+  <Settings className={className} />
+);
+export const ChevronLeftIcon: React.FC<IconProps> = ({ className }) => (
+  <ChevronLeft className={className} />
+);
+export const ChevronRightIcon: React.FC<IconProps> = ({ className }) => (
+  <ChevronRight className={className} />
+);
+export const ChevronUpIcon: React.FC<IconProps> = ({ className }) => (
+  <ChevronUp className={className} />
+);
+export const ChevronDownIcon: React.FC<IconProps> = ({ className }) => (
+  <ChevronDown className={className} />
+);
+export const XMarkIcon: React.FC<IconProps> = ({ className }) => (
+  <X className={className} />
+);
+export const XCircle: React.FC<IconProps> = ({ className }) => (
+  <X className={className} />
+); // Mapping XCircle to X for now or use XCircle from lucide if available
+export const ShareIcon: React.FC<IconProps> = ({ className }) => (
+  <Share2 className={className} />
+);
+export const PencilIcon: React.FC<IconProps> = ({ className }) => (
+  <Pencil className={className} />
+);
+export const LogoutIcon: React.FC<IconProps> = ({ className }) => (
+  <LogOut className={className} />
+);
+export const CheckIcon: React.FC<IconProps> = ({ className }) => (
+  <Check className={className} />
+);
+export const XIcon: React.FC<IconProps> = ({ className }) => (
+  <X className={className} />
+);
+export const EditIcon: React.FC<IconProps> = ({ className }) => (
+  <Pencil className={className} />
+);
+export const ChatBubbleOvalLeftIcon: React.FC<IconProps> = ({ className }) => (
+  <MessageCircle className={className} />
+);
+export const CreditCardIcon: React.FC<IconProps> = ({ className }) => (
+  <CreditCard className={className} />
+);
+export const BellIcon: React.FC<IconProps> = ({ className }) => (
+  <Bell className={className} />
+);
+export const HeartIcon: React.FC<IconProps> = ({ className }) => (
+  <Heart className={className} />
+);
+export const TicketIcon: React.FC<IconProps> = ({ className }) => (
+  <Ticket className={className} />
+);
+export const LocationMarkerIcon: React.FC<IconProps> = ({ className }) => (
+  <MapPin className={className} />
+);
+export const FingerPrintIcon: React.FC<IconProps> = ({ className }) => (
+  <Fingerprint className={className} />
+);
+export const MoonIcon: React.FC<IconProps> = ({ className }) => (
+  <Moon className={className} />
+);
+export const DocumentTextIcon: React.FC<IconProps> = ({ className }) => (
+  <FileText className={className} />
+);
+export const QuestionMarkCircleIcon: React.FC<IconProps> = ({ className }) => (
+  <HelpCircle className={className} />
+);
+export const MailIcon: React.FC<IconProps> = ({ className }) => (
+  <Mail className={className} />
+);
+export const InformationCircleIcon: React.FC<IconProps> = ({ className }) => (
+  <Info className={className} />
+);
+export const BookmarkIcon: React.FC<IconProps> = ({ className }) => (
+  <Bookmark className={className} />
+);
+export const SunIcon: React.FC<IconProps> = ({ className }) => (
+  <Sun className={className} />
+);
+export const MountainIcon: React.FC<IconProps> = ({ className }) => (
+  <Mountain className={className} />
+);
+export const BuildingOfficeIcon: React.FC<IconProps> = ({ className }) => (
+  <Building2 className={className} />
+);
+export const UsersIcon: React.FC<IconProps> = ({ className }) => (
+  <Users className={className} />
+);
+export const TagIcon: React.FC<IconProps> = ({ className }) => (
+  <Tag className={className} />
+);
+export const TrendingUpIcon: React.FC<IconProps> = ({ className }) => (
+  <TrendingUp className={className} />
+);
+export const EyeIcon: React.FC<IconProps> = ({ className }) => (
+  <Eye className={className} />
+);
+export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => (
+  <ArrowRight className={className} />
+);
+export const CheckCircle: React.FC<IconProps> = ({ className }) => (
+  <CheckCircle2 className={className} />
+);
+export const Lock: React.FC<IconProps> = ({ className }) => (
+  <LucideLock className={className} />
+);
+export const ShieldCheckIcon: React.FC<IconProps> = ({ className }) => (
+  <CheckCircle2 className={className} strokeWidth={1.5} />
+);
+export const GlobeIcon: React.FC<IconProps> = ({ className }) => (
+  <LucideGlobe className={className} strokeWidth={1.5} />
+);
+export const CompassIcon: React.FC<IconProps> = ({ className }) => (
+  <Compass className={className} strokeWidth={1.5} />
+);
+export const FireIcon: React.FC<IconProps> = ({ className }) => (
+  <Flame className={className} strokeWidth={1.5} />
+);
+export const UploadIcon: React.FC<IconProps> = ({ className }) => (
+  <Upload className={className} strokeWidth={1.5} />
+);
+export const PlusIcon: React.FC<IconProps> = ({ className }) => (
+  <Plus className={className} strokeWidth={1.5} />
+);
+export const BarChartIcon: React.FC<IconProps> = ({ className }) => (
+  <BarChart3 className={className} strokeWidth={1.5} />
+);
+export const QrCodeIcon: React.FC<IconProps> = ({ className }) => (
+  <QrCode className={className} strokeWidth={1.5} />
+);
+export const ArrowLeftIcon: React.FC<IconProps> = ({ className }) => (
+  <ArrowLeft className={className} strokeWidth={1.5} />
+);
+export const SaveIcon: React.FC<IconProps> = ({ className }) => (
+  <Save className={className} strokeWidth={1.5} />
+);
+export const MegaphoneIcon: React.FC<IconProps> = ({ className }) => (
+  <Megaphone className={className} strokeWidth={1.5} />
+);
+export const AlertCircleIcon: React.FC<IconProps> = ({ className }) => (
+  <AlertCircle className={className} strokeWidth={1.5} />
+);
+export const CalendarIcon: React.FC<IconProps> = ({ className }) => (
+  <Calendar className={className} strokeWidth={1.5} />
+);
+export const Terminal: React.FC<IconProps> = ({ className }) => (
+  <LucideTerminal className={className} strokeWidth={1.5} />
+);
 
 export { Compass };
 
 // --- Custom Branded Icons (Lucide with Premium Gold Glow Styling) ---
 
 export const CustomHomeIcon: React.FC<IconProps> = ({ className }) => (
-  <Home className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Home
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomGlobeIcon: React.FC<IconProps> = ({ className }) => (
-  <LucideGlobe className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <LucideGlobe
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomBriefcaseIcon: React.FC<IconProps> = ({ className }) => (
-  <Briefcase className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Briefcase
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomSearchIcon: React.FC<IconProps> = ({ className }) => (
-  <LucideSearch className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <LucideSearch
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomTicketIcon: React.FC<IconProps> = ({ className }) => (
-  <Ticket className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Ticket
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomUserIcon: React.FC<IconProps> = ({ className }) => (
-  <User className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <User
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomSettingsIcon: React.FC<IconProps> = ({ className }) => (
-  <Settings className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Settings
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomChevronLeftIcon: React.FC<IconProps> = ({ className }) => (
-  <ChevronLeft className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <ChevronLeft
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomXIcon: React.FC<IconProps> = ({ className }) => (
-  <X className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <X
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomShareIcon: React.FC<IconProps> = ({ className }) => (
-  <Share2 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Share2
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomPencilIcon: React.FC<IconProps> = ({ className }) => (
-  <Pencil className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Pencil
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomLogoutIcon: React.FC<IconProps> = ({ className }) => (
-  <LogOut className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <LogOut
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomChatIcon: React.FC<IconProps> = ({ className }) => (
-  <MessageCircle className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <MessageCircle
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomCreditCardIcon: React.FC<IconProps> = ({ className }) => (
-  <CreditCard className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <CreditCard
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomBellIcon: React.FC<IconProps> = ({ className }) => (
-  <Bell className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Bell
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomHeartIcon: React.FC<IconProps> = ({ className }) => (
-  <Heart className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Heart
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomMailIcon: React.FC<IconProps> = ({ className }) => (
-  <Mail className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Mail
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomLockIcon: React.FC<IconProps> = ({ className }) => (
-  <LucideLock className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <LucideLock
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomShieldCheckIcon: React.FC<IconProps> = ({ className }) => (
-  <CheckCircle2 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <CheckCircle2
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomBarChartIcon: React.FC<IconProps> = ({ className }) => (
-  <BarChart3 className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <BarChart3
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomUtensilsIcon: React.FC<IconProps> = ({ className }) => (
-  <Utensils className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Utensils
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomPlaneIcon: React.FC<IconProps> = ({ className }) => (
-  <Plane className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Plane
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomShoppingBagIcon: React.FC<IconProps> = ({ className }) => (
-  <ShoppingBag className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <ShoppingBag
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomSparklesIcon: React.FC<IconProps> = ({ className }) => {
   // Re-using the SVG path for SparklesIcon but with Custom styling
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.456L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.456L16.5 14.25l.398 1.178a3.375 3.375 0 002.456 2.456L20.25 18l-1.178.398a3.375 3.375 0 00-2.456 2.456z" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.456L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.456L16.5 14.25l.398 1.178a3.375 3.375 0 002.456 2.456L20.25 18l-1.178.398a3.375 3.375 0 00-2.456 2.456z"
+      />
     </svg>
   );
 };
 
 export const CustomQrCodeIcon: React.FC<IconProps> = ({ className }) => (
-  <QrCode className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <QrCode
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomArrowLeftIcon: React.FC<IconProps> = ({ className }) => (
-  <ArrowLeft className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <ArrowLeft
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomSaveIcon: React.FC<IconProps> = ({ className }) => (
-  <Save className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Save
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomMegaphoneIcon: React.FC<IconProps> = ({ className }) => (
-  <Megaphone className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <Megaphone
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
 );
 
 export const CustomAlertCircleIcon: React.FC<IconProps> = ({ className }) => (
-  <AlertCircle className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`} strokeWidth={1.5} />
+  <AlertCircle
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_3px_rgba(212,175,55,0.5)]`}
+    strokeWidth={1.5}
+  />
+);
+
+export const PremiumLocationIcon: React.FC<IconProps> = ({ className }) => (
+  <MapPin
+    className={`${className} text-[#D4AF37] drop-shadow-[0_0_5px_rgba(212,175,55,0.4)] transition-all duration-500 group-hover:scale-110`}
+    strokeWidth={1.5}
+  />
 );
 
 // --- Custom / Complex Icons ---
 
 export const LayoutDashboard: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="7" height="9" x="3" y="3" /><rect width="7" height="5" x="14" y="3" /><rect width="7" height="9" x="14" y="12" /><rect width="7" height="5" x="3" y="16" /></svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="7" height="9" x="3" y="3" />
+    <rect width="7" height="5" x="14" y="3" />
+    <rect width="7" height="9" x="14" y="12" />
+    <rect width="7" height="5" x="3" y="16" />
+  </svg>
 );
 
 export const GoogleLogo: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className={className}>
-    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
-    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" />
-    <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.223 0-9.657-3.657-11.303-8H6.306C9.656 39.663 16.318 44 24 44z" />
-    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.438 36.372 48 30.651 48 24c0-1.341-.138-2.65-.389-3.917z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 48 48"
+    className={className}
+  >
+    <path
+      fill="#FFC107"
+      d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+    />
+    <path
+      fill="#FF3D00"
+      d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"
+    />
+    <path
+      fill="#4CAF50"
+      d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.223 0-9.657-3.657-11.303-8H6.306C9.656 39.663 16.318 44 24 44z"
+    />
+    <path
+      fill="#1976D2"
+      d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.438 36.372 48 30.651 48 24c0-1.341-.138-2.65-.389-3.917z"
+    />
   </svg>
 );
 
 export const FacebookLogo: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
     <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
   </svg>
 );
 
 export const AppleLogo: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
     <path d="M12.012 16.142c-.285.43-1.033.43-1.318 0-1.226-1.88-3.52-6.182-3.52-8.34 0-2.43 1.91-3.418 3.443-3.418.91 0 1.58.332 2.162.91.528-.555 1.345-.91 2.24-.91 1.48 0 3.313.91 3.313 3.236 0 2.21-1.033 5.46-2.185 7.48-.528.933-1.162 1.748-1.933 1.748-.614 0-.856-.355-1.5-.355-.644 0-.857.355-1.524.355-.733 0-1.345-.91-1.688-1.748zM13.62 3.193c.023-.505.435-.91.932-.91.07 0 .14.004.21.013a2.41 2.41 0 0 0-1.142.897z" />
   </svg>
 );
 
 export const WhatsappIcon: React.FC<IconProps> = ({ className }) => (
-  <svg fill="currentColor" viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24zm4.52-6.2c-.25-.12-1.47-.72-1.7-.82s-.39-.12-.56.12c-.17.25-.64.82-.79.99-.14.17-.29.19-.54.06-.25-.12-1.06-.39-2-1.23-.74-.66-1.23-1.47-1.38-1.72s-.02-.38.11-.51c.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07s.88 2.4 1 2.56c.12.17 1.76 2.68 4.25 3.73.59.25 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18s-.24-.12-.5-.24z"></path></svg>
+  <svg
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.04 20.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24s8.24 3.7 8.24 8.24-3.7 8.24-8.24 8.24zm4.52-6.2c-.25-.12-1.47-.72-1.7-.82s-.39-.12-.56.12c-.17.25-.64.82-.79.99-.14.17-.29.19-.54.06-.25-.12-1.06-.39-2-1.23-.74-.66-1.23-1.47-1.38-1.72s-.02-.38.11-.51c.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07s.88 2.4 1 2.56c.12.17 1.76 2.68 4.25 3.73.59.25 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18s-.24-.12-.5-.24z"></path>
+  </svg>
 );
 
 export const TwitterIcon: React.FC<IconProps> = ({ className }) => (
-  <svg fill="currentColor" viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+  <svg
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+  </svg>
 );
 
 export const TelegramIcon: React.FC<IconProps> = ({ className }) => (
-  <svg fill="currentColor" viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg"><path d="M11.95 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm4.54 7.42-1.46 6.84c-.13.61-.53.76-.97.47l-2.21-1.62-1.07 1.03c-.12.12-.22.22-.44.22l.16-2.26 4.13-3.74c.18-.16-.05-.26-.3-.1l-5.11 3.24-2.16-.67c-.6-.19-.62-.58.13-.86l8.52-3.32c.55-.21.85.14.7.74z"></path></svg>
+  <svg
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M11.95 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm4.54 7.42-1.46 6.84c-.13.61-.53.76-.97.47l-2.21-1.62-1.07 1.03c-.12.12-.22.22-.44.22l.16-2.26 4.13-3.74c.18-.16-.05-.26-.3-.1l-5.11 3.24-2.16-.67c-.6-.19-.62-.58.13-.86l8.52-3.32c.55-.21.85.14.7.74z"></path>
+  </svg>
 );
 
 export const InstagramIcon: React.FC<IconProps> = ({ className }) => (
-  <svg fill="url(#instagram-gradient)" viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+  <svg
+    fill="url(#instagram-gradient)"
+    viewBox="0 0 24 24"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <defs>
       <radialGradient id="instagram-gradient" cx="30%" cy="107%" r="150%">
         <stop offset="0%" stopColor="#fdf497" />
@@ -300,62 +578,175 @@ export const InstagramIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const PremiumShareIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className={className}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+  >
     <defs>
-      <linearGradient id="premium-share-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient
+        id="premium-share-gradient"
+        x1="0%"
+        y1="0%"
+        x2="100%"
+        y2="100%"
+      >
         <stop offset="0%" stopColor="#6366F1" />
         <stop offset="100%" stopColor="#EC4899" />
       </linearGradient>
     </defs>
-    <path stroke="url(#premium-share-gradient)" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 100-2.186m0 2.186c-.18.324-.283.696-.283 1.093s.103.77.283 1.093m0-2.186V12m0 6V12m0-6.093v.08" />
+    <path
+      stroke="url(#premium-share-gradient)"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.5}
+      d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 100-2.186m0 2.186c-.18.324-.283.696-.283 1.093s.103.77.283 1.093m0-2.186V12m0 6V12m0-6.093v.08"
+    />
   </svg>
 );
 
 export const PaperAirplaneIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+    />
   </svg>
 );
 
 export const ClockIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 
 export const TrashIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.134H8.09a2.09 2.09 0 00-2.09 2.134v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.09-2.134H8.09a2.09 2.09 0 00-2.09 2.134v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+    />
   </svg>
 );
 
 export const SparklesIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.456L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.456L16.5 14.25l.398 1.178a3.375 3.375 0 002.456 2.456L20.25 18l-1.178.398a3.375 3.375 0 00-2.456 2.456z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.456L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.456L16.5 14.25l.398 1.178a3.375 3.375 0 002.456 2.456L20.25 18l-1.178.398a3.375 3.375 0 00-2.456 2.456z"
+    />
   </svg>
 );
 
-export const StarIcon: React.FC<IconProps & { fill?: string }> = ({ className, fill = 'none' }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={1.5} className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.321l5.588.513a.563.563 0 01.31.956l-4.23 3.548a.563.563 0 00-.162.524l1.28 5.385a.563.563 0 01-.84.61l-4.735-2.667a.563.563 0 00-.536 0l-4.735 2.667a.563.563 0 01-.84-.61l1.28-5.385a.563.563 0 00-.162-.524l-4.23-3.548a.563.563 0 01.31-.956l5.588-.513a.563.563 0 00.475-.321l2.125-5.111z" />
+export const StarIcon: React.FC<IconProps & { fill?: string }> = ({
+  className,
+  fill = "none",
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke="currentColor"
+    strokeWidth={1.5}
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.321l5.588.513a.563.563 0 01.31.956l-4.23 3.548a.563.563 0 00-.162.524l1.28 5.385a.563.563 0 01-.84.61l-4.735-2.667a.563.563 0 00-.536 0l-4.735 2.667a.563.563 0 01-.84-.61l1.28-5.385a.563.563 0 00-.162-.524l-4.23-3.548a.563.563 0 01.31-.956l5.588-.513a.563.563 0 00.475-.321l2.125-5.111z"
+    />
   </svg>
 );
 
 export const SpinnerIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className={`animate-spin ${className}`}>
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    className={`animate-spin ${className}`}
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    ></circle>
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    ></path>
   </svg>
 );
 
 export const PercentIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5l9 9M9.75 7.5a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM14.25 16.5a2.25 2.25 0 114.5 0 2.25 2.25 0 01-4.5 0z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M7.5 7.5l9 9M9.75 7.5a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM14.25 16.5a2.25 2.25 0 114.5 0 2.25 2.25 0 01-4.5 0z"
+    />
   </svg>
 );
 
 export const LinkIcon: React.FC<IconProps> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
+    />
   </svg>
 );

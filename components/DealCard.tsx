@@ -1,12 +1,18 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Deal, SubscriptionTier } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActivity } from '../contexts/UserActivityContext';
-import { useLanguage } from '../contexts/LanguageContext';
-import { Lock, StarIcon, HeartIcon, LocationMarkerIcon as LocationIcon, CheckCircle } from './Icons';
-import { getThumbnailUrl } from '../lib/imageUtils';
-import { logEngagementEvent } from '../lib/supabaseService';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Deal, SubscriptionTier } from "../types";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserActivity } from "../contexts/UserActivityContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import {
+  Lock,
+  StarIcon,
+  HeartIcon,
+  LocationMarkerIcon as LocationIcon,
+  CheckCircle,
+} from "./Icons";
+import { getThumbnailUrl } from "../lib/imageUtils";
+import { logEngagementEvent } from "../lib/supabaseService";
 
 interface DealCardProps {
   deal: Deal;
@@ -20,9 +26,13 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.VIP]: 4,
 };
 
-const StarRating: React.FC<{ rating: number; ratingCount: number; t: (key: string) => string }> = ({ rating, ratingCount, t }) => {
+const StarRating: React.FC<{
+  rating: number;
+  ratingCount: number;
+  t: (key: string) => string;
+}> = ({ rating, ratingCount, t }) => {
   if (ratingCount === 0) {
-    return <p className="text-sm text-brand-text-muted">{t('noRatingsYet')}</p>;
+    return <p className="text-sm text-brand-text-muted">{t("noRatingsYet")}</p>;
   }
 
   const fullStars = Math.floor(rating);
@@ -30,8 +40,16 @@ const StarRating: React.FC<{ rating: number; ratingCount: number; t: (key: strin
   return (
     <div className="flex items-center">
       <div className="flex items-center mr-2">
-        {[...Array(fullStars)].map((_, i) => <StarIcon key={`full-${i}`} className="w-4 h-4 text-yellow-400" fill="currentColor" />)}
-        {[...Array(5 - fullStars)].map((_, i) => <StarIcon key={`empty-${i}`} className="w-4 h-4 text-yellow-400" />)}
+        {[...Array(fullStars)].map((_, i) => (
+          <StarIcon
+            key={`full-${i}`}
+            className="w-4 h-4 text-yellow-400"
+            fill="currentColor"
+          />
+        ))}
+        {[...Array(5 - fullStars)].map((_, i) => (
+          <StarIcon key={`empty-${i}`} className="w-4 h-4 text-yellow-400" />
+        ))}
       </div>
       <span className="text-sm text-brand-text-muted">
         {rating.toFixed(1)} ({ratingCount})
@@ -46,7 +64,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
 
-  const userTierLevel = user ? TIER_LEVELS[user.tier] : TIER_LEVELS[SubscriptionTier.NONE];
+  const userTierLevel = user
+    ? TIER_LEVELS[user.tier]
+    : TIER_LEVELS[SubscriptionTier.NONE];
   const requiredTierLevel = TIER_LEVELS[deal.requiredTier];
 
   // Logic update: Guests see FREE tier deals as unlocked, but others as locked.
@@ -57,25 +77,34 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const isSaved = isDealSaved(deal.id);
 
-  const title = language === 'tr' ? deal.title_tr : deal.title;
-  const description = language === 'tr' ? deal.description_tr : deal.description;
-  const discount = deal.discountPercentage && deal.discountPercentage > 0
-    ? deal.discountPercentage
-    : (deal.originalPrice > 0 ? Math.round(((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100) : 0);
+  const title = language === "tr" ? deal.title_tr : deal.title;
+  const description =
+    language === "tr" ? deal.description_tr : deal.description;
+  const discount =
+    deal.discountPercentage && deal.discountPercentage > 0
+      ? deal.discountPercentage
+      : deal.originalPrice > 0
+      ? Math.round(
+          ((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) *
+            100
+        )
+      : 0;
 
   const calculateDaysLeft = (expiryDate: string) => {
     const now = new Date();
     const expiry = new Date(expiryDate);
 
     if (expiry.getFullYear() > now.getFullYear() + 50) {
-      return t('neverExpires');
+      return t("neverExpires");
     }
 
     expiry.setHours(23, 59, 59, 999);
     const diffTime = expiry.getTime() - now.getTime();
-    if (diffTime <= 0) return t('expired');
+    if (diffTime <= 0) return t("expired");
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${t('expiresIn')} ${diffDays} ${diffDays > 1 ? t('days') : t('daySingular')}`;
+    return `${t("expiresIn")} ${diffDays} ${
+      diffDays > 1 ? t("days") : t("daySingular")
+    }`;
   };
 
   const daysLeftText = calculateDaysLeft(deal.expiresAt);
@@ -85,7 +114,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     if (!deal.createdAt) return false;
     const createdDate = new Date(deal.createdAt);
     const now = new Date();
-    const hoursDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
+    const hoursDiff =
+      (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
     return hoursDiff <= 48;
   }, [deal.createdAt]);
 
@@ -100,12 +130,24 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     }
   };
 
-  const tierColors: Record<SubscriptionTier, { bg: string, text: string }> = {
-    [SubscriptionTier.BASIC]: { bg: 'rgba(99, 102, 241, 0.2)', text: '#6366F1' },
-    [SubscriptionTier.PREMIUM]: { bg: 'rgba(244, 114, 182, 0.2)', text: '#F472B6' },
-    [SubscriptionTier.VIP]: { bg: 'rgba(251, 191, 36, 0.2)', text: '#FBBF24' },
-    [SubscriptionTier.FREE]: { bg: 'rgba(148, 163, 184, 0.2)', text: '#94A3B8' },
-    [SubscriptionTier.NONE]: { bg: 'rgba(148, 163, 184, 0.2)', text: '#94A3B8' },
+  const tierColors: Record<SubscriptionTier, { bg: string; text: string }> = {
+    [SubscriptionTier.BASIC]: {
+      bg: "rgba(99, 102, 241, 0.2)",
+      text: "#6366F1",
+    },
+    [SubscriptionTier.PREMIUM]: {
+      bg: "rgba(244, 114, 182, 0.2)",
+      text: "#F472B6",
+    },
+    [SubscriptionTier.VIP]: { bg: "rgba(251, 191, 36, 0.2)", text: "#FBBF24" },
+    [SubscriptionTier.FREE]: {
+      bg: "rgba(148, 163, 184, 0.2)",
+      text: "#94A3B8",
+    },
+    [SubscriptionTier.NONE]: {
+      bg: "rgba(148, 163, 184, 0.2)",
+      text: "#94A3B8",
+    },
   };
   const requiredTierColor = tierColors[deal.requiredTier] || tierColors.FREE;
 
@@ -116,7 +158,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
         <img
           className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
-          src={getThumbnailUrl(deal.imageUrl)}
+          src={getThumbnailUrl(deal.imageUrl, deal.category)}
           alt={title}
           loading="lazy"
         />
@@ -128,13 +170,14 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           <button
             onClick={handleSaveToggle}
             className="absolute top-3 right-3 z-30 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40 transition-all duration-300 group/heart active:scale-90"
-            aria-label={isSaved ? t('unsaveDealAction') : t('saveDealAction')}
+            aria-label={isSaved ? t("unsaveDealAction") : t("saveDealAction")}
           >
             <HeartIcon
-              className={`w-5 h-5 transition-all duration-500 ${isSaved
-                ? 'text-red-500 fill-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]'
-                : 'text-white group-hover/heart:scale-110 group-hover/heart:text-red-400'
-                }`}
+              className={`w-5 h-5 transition-all duration-500 ${
+                isSaved
+                  ? "text-red-500 fill-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                  : "text-white group-hover/heart:scale-110 group-hover/heart:text-red-400"
+              }`}
             />
           </button>
         )}
@@ -143,19 +186,19 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         <div className="absolute bottom-3 left-3 z-20 flex flex-col gap-1.5 items-start">
           {discount > 0 && !isLocked && (
             <div className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tighter uppercase whitespace-nowrap">
-              {language === 'tr' ? `%${discount} İNDİRİM` : `${discount}% OFF`}
+              {language === "tr" ? `%${discount} İNDİRİM` : `${discount}% OFF`}
             </div>
           )}
           {isNewDeal && !isLocked && (
             <div className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tighter uppercase whitespace-nowrap">
-              {language === 'tr' ? 'YENİ' : 'NEW'}
+              {language === "tr" ? "YENİ" : "NEW"}
             </div>
           )}
           {/* Popular Badge for well-rated deals */}
           {deal.ratingCount > 20 && !isLocked && (
             <div className="bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xl tracking-tighter uppercase whitespace-nowrap flex items-center gap-1">
               <StarIcon className="w-2.5 h-2.5 fill-current" />
-              {t('popular')}
+              {t("popular")}
             </div>
           )}
         </div>
@@ -170,7 +213,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
               Member Exclusive
             </span>
             <span className="text-[11px] font-medium text-white/80 max-w-[150px]">
-              {!user ? t('loginToUnlock') : `${deal.requiredTier} ${t('toUnlock')}`}
+              {!user
+                ? t("loginToUnlock")
+                : `${deal.requiredTier} ${t("toUnlock")}`}
             </span>
           </div>
         )}
@@ -191,7 +236,11 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         <div className="flex items-center gap-2 mb-2.5">
           <div className="w-5 h-5 rounded-full overflow-hidden border border-white/10 shrink-0">
             {deal.companyLogoUrl ? (
-              <img src={deal.companyLogoUrl} alt={deal.vendor} className="w-full h-full object-cover" />
+              <img
+                src={deal.companyLogoUrl}
+                alt={deal.vendor}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full bg-gold-500/10 flex items-center justify-center text-[8px] font-bold text-gold-500 uppercase">
                 {deal.vendor.substring(0, 1)}
@@ -200,13 +249,17 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           </div>
           <div className="flex flex-col items-start min-w-0">
             <div className="flex items-center gap-1 min-w-0 truncate w-full">
-              <span className="text-[11px] font-semibold text-white/50 uppercase tracking-widest leading-tight truncate">{deal.vendor}</span>
+              <span className="text-[11px] font-semibold text-white/50 uppercase tracking-widest leading-tight truncate">
+                {deal.vendor}
+              </span>
               <CheckCircle className="w-3 h-3 text-gold-400 shrink-0" />
             </div>
             {deal.storeLocations && deal.storeLocations.length > 0 && (
               <div className="flex items-center gap-1 mt-0.5 opacity-40 shrink-0">
                 <LocationIcon className="w-2.5 h-2.5" />
-                <span className="text-[9px] font-medium leading-none whitespace-nowrap">{deal.storeLocations[0].city || deal.storeLocations[0].name}</span>
+                <span className="text-[9px] font-medium leading-none whitespace-nowrap">
+                  {deal.storeLocations[0].city || deal.storeLocations[0].name}
+                </span>
               </div>
             )}
           </div>
@@ -220,9 +273,15 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {/* Rating & Expiry info row */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
           <div className="flex flex-col gap-0.5">
-            <div className={`flex items-baseline gap-1.5 ${discount >= 50 && !isLocked ? 'animate-pulse-subtle' : ''}`}>
+            <div
+              className={`flex items-baseline gap-1.5 ${
+                discount >= 50 && !isLocked ? "animate-pulse-subtle" : ""
+              }`}
+            >
               <span className="text-[20px] font-black tracking-tight text-white leading-none">
-                {deal.originalPrice > 0 ? `₺${deal.discountedPrice.toLocaleString()}` : `%${discount}`}
+                {deal.originalPrice > 0
+                  ? `₺${deal.discountedPrice.toLocaleString()}`
+                  : `%${discount}`}
               </span>
               {deal.originalPrice > 0 && (
                 <span className="text-[11px] text-white/30 line-through decoration-white/20">
@@ -230,13 +289,23 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
                 </span>
               )}
             </div>
-            <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${daysLeftText === t('expired') ? 'text-red-400' : 'text-emerald-400/80'}`}>
+            <p
+              className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${
+                daysLeftText === t("expired")
+                  ? "text-red-400"
+                  : "text-emerald-400/80"
+              }`}
+            >
               {daysLeftText}
             </p>
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <StarRating rating={deal.rating} ratingCount={deal.ratingCount} t={t} />
+            <StarRating
+              rating={deal.rating}
+              ratingCount={deal.ratingCount}
+              t={t}
+            />
             {isLocked && (
               <div className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] font-bold text-gold-400 uppercase tracking-tighter">
                 {deal.requiredTier}
@@ -253,7 +322,12 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
       <Link
         to={`/deals/${deal.id}`}
         className="flex flex-col flex-grow cursor-pointer"
-        onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'DealCard', state: isLocked ? 'locked' : 'unlocked' })}
+        onClick={() =>
+          logEngagementEvent(user?.id, "click", deal.id, {
+            source: "DealCard",
+            state: isLocked ? "locked" : "unlocked",
+          })
+        }
       >
         <CardContent />
       </Link>
