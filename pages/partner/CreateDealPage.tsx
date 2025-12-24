@@ -326,9 +326,9 @@ const CreateDealPage: React.FC = () => {
 
       const dealData: Partial<Deal> = {
         ...formData,
-        originalPrice: hasPrice ? original : 0,
-        discountedPrice: hasPrice ? discounted : 0,
-        discountPercentage: percentage || 0,
+        originalPrice: hasPrice ? original : null,
+        discountedPrice: hasPrice ? discounted : null,
+        discountPercentage: isNaN(percentage) ? null : percentage,
         partnerId: user.id,
         status: (user.isAdmin
           ? "approved"

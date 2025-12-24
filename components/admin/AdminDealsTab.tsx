@@ -333,7 +333,9 @@ const AdminDealsTab: React.FC = () => {
       type === "checkbox"
         ? (e.target as HTMLInputElement).checked
         : type === "number"
-        ? parseFloat(value)
+        ? value === ""
+          ? null
+          : parseFloat(value)
         : value;
     if (name === "isTeasable")
       newValue = (e.target as HTMLInputElement).checked;
@@ -710,6 +712,15 @@ const AdminDealsTab: React.FC = () => {
     try {
       const dealData = {
         ...dealFormData,
+        originalPrice: isNaN(Number(dealFormData.originalPrice))
+          ? null
+          : dealFormData.originalPrice,
+        discountedPrice: isNaN(Number(dealFormData.discountedPrice))
+          ? null
+          : dealFormData.discountedPrice,
+        discountPercentage: isNaN(Number(dealFormData.discountPercentage))
+          ? null
+          : dealFormData.discountPercentage,
         imageUrl: finalImageUrl,
         expiresAt: neverExpires
           ? getFarFutureDate()
