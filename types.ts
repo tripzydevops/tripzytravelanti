@@ -91,6 +91,8 @@ export interface Deal {
     name: string;
     address: string;
     city?: string;
+    latitude?: number;
+    longitude?: number;
   }[];
   countries?: string[]; // For filtering deals by country
   partnerId?: string;

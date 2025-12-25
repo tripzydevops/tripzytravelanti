@@ -36,7 +36,9 @@ import StarRatingInput from "./StarRatingInput";
 import WalletQRCode from "./WalletQRCode";
 import { getWalletLimit, isWalletFull } from "../lib/walletUtils";
 import { canUserClaimDeal } from "../lib/redemptionLogic";
-import { Lock } from "./Icons";
+import { Lock, Navigation, Phone, ExternalLink } from "lucide-react";
+import { useSearch } from "../contexts/SearchContext";
+import { calculateDistance, formatDistance } from "../lib/locationUtils";
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.NONE]: 0,
@@ -224,6 +226,35 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
       (deal.maxRedemptionsTotal &&
         (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)
   );
+
+  const { userLocation } = useSearch();
+
+  // Unified location selection logic
+  const initialLocation = useMemo(() => {
+    if (deal.storeLocations && deal.storeLocations.length > 0) {
+      // Prefer first one with coordinates
+      return deal.storeLocations.find(l => l.latitude && l.longitude) || deal.storeLocations[0];
+    }
+    // Fallback to top-level deal coordinates if they exist
+    if (deal.latitude && deal.longitude) {
+      return { 
+        name: deal.vendor, 
+        address: deal.address || "", 
+        city: deal.city || "",
+        latitude: deal.latitude,
+        longitude: deal.longitude 
+      };
+    }
+    return null;
+  }, [deal]);
+
+  const [selectedLocation, setSelectedLocation] = useState<any>(initialLocation);
+
+  useEffect(() => {
+    if (initialLocation && !selectedLocation) {
+      setSelectedLocation(initialLocation);
+    }
+  }, [initialLocation]);
   // Consistent random number for viewing count based on deal.id
   const viewingCount = useMemo(() => {
     const hash = deal.id
@@ -687,155 +718,142 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                  <div
-                    className={`w-full flex flex-col items-center justify-center ${
-                      isLocked ? "blur-md grayscale opacity-40" : ""
-                    }`}
-                  >
-                    {deal.latitude && deal.longitude ? (
-                      <div className="w-full space-y-6">
-                        {/* Professional Map Interface or Premium Fallback */}
-                        <div className="w-full aspect-video rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative group shadow-2xl">
+              <div className="space-y-6">
+                <div className={`transition-all duration-700 ${isLocked ? "blur-md grayscale opacity-40 pointer-events-none" : ""}`}>
+                  {/* UNIFIED MAP CONTAINER */}
+                  {(selectedLocation?.latitude || (deal.latitude && deal.longitude)) && (
+                    <div className="w-full space-y-4 mb-8">
+                       <div className="w-full aspect-[16/10] md:aspect-video rounded-[2.5rem] overflow-hidden border border-white/10 bg-[#0f172a] relative group shadow-2xl">
                           {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
                             <iframe
                               width="100%"
                               height="100%"
                               frameBorder="0"
-                              style={{ border: 0, opacity: 0.8 }}
+                              style={{ border: 0, opacity: 0.9 }}
                               src={`https://www.google.com/maps/embed/v1/place?key=${
                                 import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-                              }&q=${deal.latitude},${deal.longitude}&zoom=22`}
+                              }&q=${selectedLocation?.latitude || deal.latitude},${selectedLocation?.longitude || deal.longitude}&zoom=20`}
                               allowFullScreen
                               loading="lazy"
                               className="group-hover:opacity-100 transition-opacity duration-700"
                             ></iframe>
                           ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                              {/* Premium Abstract Map Pattern BG */}
                               <div className="absolute inset-0 opacity-10 pointer-events-none">
-                                <svg
-                                  width="100%"
-                                  height="100%"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
+                                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                                   <defs>
-                                    <pattern
-                                      id="grid"
-                                      width="40"
-                                      height="40"
-                                      patternUnits="userSpaceOnUse"
-                                    >
-                                      <path
-                                        d="M 40 0 L 0 0 0 40"
-                                        fill="none"
-                                        stroke="white"
-                                        strokeWidth="0.5"
-                                      />
+                                    <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                                      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
                                     </pattern>
                                   </defs>
-                                  <rect
-                                    width="100%"
-                                    height="100%"
-                                    fill="url(#grid)"
-                                  />
+                                  <rect width="100%" height="100%" fill="url(#grid-pattern)" />
                                 </svg>
                               </div>
-
-                              <div className="relative mb-4">
-                                <div className="absolute inset-0 bg-gold-500/30 blur-2xl rounded-full scale-150 animate-pulse"></div>
-                                <div className="relative w-16 h-16 bg-gradient-to-tr from-gold-600 to-gold-400 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.4)] transform rotate-12 group-hover:rotate-0 transition-transform duration-700">
-                                  <PremiumLocationIcon className="w-8 h-8 text-gold-400" />
-                                </div>
-                              </div>
-
-                              <h4 className="text-white font-black text-lg tracking-tight mb-2 uppercase italic">
-                                {deal.vendor || "Premium Location"}
-                              </h4>
-                              <p className="text-white/50 text-xs font-medium max-w-[240px] leading-relaxed">
-                                Precision location detected. Tap below to
-                                navigate directly using Google Maps.
-                              </p>
+                              <PremiumLocationIcon className="w-12 h-12 text-gold-400/50 mb-3" />
+                              <h4 className="text-white font-black text-lg uppercase italic">{selectedLocation?.name || deal.vendor}</h4>
                             </div>
                           )}
+                          
+                          {/* Floating Badge on Map */}
+                          <div className="absolute top-4 left-4 z-20 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                             <span className="text-[10px] font-black text-white uppercase tracking-wider">
+                               Live Map Detection
+                             </span>
+                          </div>
+                       </div>
+                       
+                       {/* Quick Directions Button */}
+                       <button
+                          onClick={() => {
+                            const lat = selectedLocation?.latitude || deal.latitude;
+                            const lng = selectedLocation?.longitude || deal.longitude;
+                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank");
+                          }}
+                          className="w-full py-4 rounded-2xl bg-gold-500 text-brand-bg font-black uppercase tracking-[0.2em] text-[10px] hover:bg-gold-400 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 shadow-xl"
+                       >
+                          <Navigation className="w-4 h-4" />
+                          {t("getDirections") || "Get Directions to this Branch"}
+                       </button>
+                    </div>
+                  )}
 
-                          {/* Premium Glass Overlay */}
-                          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
-                        </div>
+                  {/* BRANCH LIST */}
+                  <div className="space-y-3">
+                    {deal.storeLocations && deal.storeLocations.length > 0 ? (
+                      deal.storeLocations.map((loc, idx) => {
+                        const distance = userLocation && loc.latitude && loc.longitude
+                          ? calculateDistance(userLocation.lat, userLocation.lng, loc.latitude, loc.longitude)
+                          : null;
+                        const isSelected = selectedLocation === loc;
 
-                        <button
-                          onClick={() =>
-                            window.open(
-                              `https://www.google.com/maps/dir/?api=1&destination=${deal.latitude},${deal.longitude}`,
-                              "_blank"
-                            )
-                          }
-                          className="w-full py-4.5 rounded-2xl bg-gradient-to-r from-gold-500 via-gold-400 to-gold-600 text-brand-bg font-black uppercase tracking-[0.25em] text-xs hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] active:scale-95 transition-all duration-500 flex items-center justify-center gap-3 shadow-xl group"
-                        >
-                          <GlobeIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                          {t("openInGoogleMaps") || "Launch Navigation"}
-                        </button>
-                      </div>
-                    ) : deal.storeLocations &&
-                      deal.storeLocations.length > 0 ? (
-                      <div className="w-full space-y-3">
-                        {deal.storeLocations.map((loc, idx) => (
+                        return (
                           <div
                             key={idx}
-                            className="flex items-start gap-4 bg-white/5 border border-white/10 p-4 rounded-xl text-left group hover:bg-white/10 transition-all"
+                            onClick={() => setSelectedLocation(loc)}
+                            className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer group ${
+                              isSelected 
+                                ? "bg-gold-500/10 border-gold-500/50" 
+                                : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-white/20"
+                            }`}
                           >
-                            <div className="mt-1 w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center border border-gold-500/20 group-hover:bg-gold-500/20 transition-colors">
-                              <PremiumLocationIcon className="w-4 h-4 text-gold-400" />
+                            <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                              isSelected ? "bg-gold-500 text-brand-bg" : "bg-white/5 text-gold-400 border border-gold-500/20"
+                            }`}>
+                              <MapPin className="w-6 h-6" />
                             </div>
-                            <div className="flex-1">
-                              <p className="text-white font-bold text-sm">
-                                {loc.name}
-                              </p>
-                              <p className="text-white/40 text-xs mt-0.5">
-                                {loc.address}
-                                {loc.city ? `, ${loc.city}` : ""}
+                            
+                            <div className="flex-1 text-left">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-white font-bold text-sm tracking-tight">{loc.name}</h4>
+                                {distance !== null && (
+                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-black">
+                                    {formatDistance(distance)} AWAY
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-white/40 text-xs mt-1 leading-relaxed">
+                                {loc.address}{loc.city ? `, ${loc.city}` : ""}
                               </p>
                             </div>
-                            <button
-                              onClick={() =>
-                                window.open(
-                                  `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                                    loc.address + " " + (loc.city || "")
-                                  )}`,
-                                  "_blank"
-                                )
-                              }
-                              className="p-2 rounded-lg text-gold-400/50 hover:text-gold-400 hover:bg-white/5 transition-all"
-                            >
-                              <LinkIcon className="w-4 h-4" />
-                            </button>
+
+                            <div className="flex gap-2">
+                              {isSelected && (
+                                <div className="w-2 h-2 rounded-full bg-gold-400 shadow-[0_0_8px_rgba(212,175,55,1)]" />
+                              )}
+                            </div>
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })
                     ) : (
-                      <div className="flex flex-col items-center py-10">
-                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
-                          <GlobeIcon className="w-8 h-8 text-gold-400" />
+                      <div className="flex flex-col items-center py-12 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10">
+                        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10">
+                           <GlobeIcon className="w-10 h-10 text-gold-400" />
                         </div>
-                        <p className="text-white/70 font-light text-lg">
-                          {t("validAtAllLocations") ||
-                            "Valid at all branch locations."}
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm">
+                           {t("validAtAllBranches") || "Valid at all branches"}
+                        </h4>
+                        <p className="text-white/30 text-xs mt-2 max-w-[200px] leading-relaxed">
+                           Redeem this exclusive offer at any physical location of {deal.vendor}.
                         </p>
                       </div>
                     )}
                   </div>
-                  {isLocked && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                      <Lock className="w-12 h-12 text-gold-500 mb-2" />
-                      <p className="text-gold-200 font-bold uppercase tracking-widest text-sm">
-                        Location Hidden
-                      </p>
-                      <p className="text-white/40 text-xs mt-1">
-                        Upgrade to see branches
-                      </p>
-                    </div>
-                  )}
                 </div>
+
+                {isLocked && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-20">
+                    <div className="w-20 h-20 bg-gold-500/20 backdrop-blur-xl rounded-full flex items-center justify-center border border-gold-500/30 mb-4 animate-pulse">
+                       <Lock className="w-10 h-10 text-gold-500" />
+                    </div>
+                    <div className="text-center">
+                       <h3 className="text-gold-200 font-black uppercase tracking-[0.2em] text-lg mb-2">Location Restricted</h3>
+                       <p className="text-white/50 text-sm max-w-[240px] leading-relaxed">
+                         Upgrade your premium tier to unlock branch details and navigation features.
+                       </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-4 pt-4 border-t border-white/10">
                   <h4 className="text-sm font-bold text-white uppercase tracking-wider">
