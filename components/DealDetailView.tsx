@@ -739,93 +739,100 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                   }`}
                 >
                   {/* UNIFIED MAP CONTAINER */}
-                  <div
-                      className="w-full space-y-4 mb-8"
-                      ref={mapContainerRef}
-                    >
-                      <div className="w-full aspect-[16/10] md:aspect-video rounded-[2.5rem] overflow-hidden border border-white/10 bg-[#0f172a] relative group shadow-2xl">
-                        {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            style={{ border: 0, opacity: 0.9 }}
-                            src={`https://www.google.com/maps/embed/v1/place?key=${
-                              import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-                              }&q=${
-                                (selectedLocation?.latitude && selectedLocation?.longitude)
-                                  ? `${selectedLocation.latitude},${selectedLocation.longitude}`
-                                  : encodeURIComponent(`${selectedLocation?.address || deal.address || ""}${selectedLocation?.city || deal.city ? ", " + (selectedLocation?.city || deal.city) : ""}`)
-                              }&zoom=15`}
-                            allowFullScreen
-                            loading="lazy"
-                            className="group-hover:opacity-100 transition-opacity duration-700"
-                          ></iframe>
-                        ) : (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                            <div className="absolute inset-0 opacity-10 pointer-events-none">
-                              <svg
+                  <div className="w-full space-y-4 mb-8" ref={mapContainerRef}>
+                    <div className="w-full aspect-[16/10] md:aspect-video rounded-[2.5rem] overflow-hidden border border-white/10 bg-[#0f172a] relative group shadow-2xl">
+                      {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          style={{ border: 0, opacity: 0.9 }}
+                          src={`https://www.google.com/maps/embed/v1/place?key=${
+                            import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+                          }&q=${
+                            selectedLocation?.latitude &&
+                            selectedLocation?.longitude
+                              ? `${selectedLocation.latitude},${selectedLocation.longitude}`
+                              : encodeURIComponent(
+                                  `${
+                                    selectedLocation?.address ||
+                                    deal.address ||
+                                    ""
+                                  }${
+                                    selectedLocation?.city || deal.city
+                                      ? ", " +
+                                        (selectedLocation?.city || deal.city)
+                                      : ""
+                                  }`
+                                )
+                          }&zoom=15`}
+                          allowFullScreen
+                          loading="lazy"
+                          className="group-hover:opacity-100 transition-opacity duration-700"
+                        ></iframe>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                          <div className="absolute inset-0 opacity-10 pointer-events-none">
+                            <svg
+                              width="100%"
+                              height="100%"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <defs>
+                                <pattern
+                                  id="grid-pattern"
+                                  width="40"
+                                  height="40"
+                                  patternUnits="userSpaceOnUse"
+                                >
+                                  <path
+                                    d="M 40 0 L 0 0 0 40"
+                                    fill="none"
+                                    stroke="white"
+                                    strokeWidth="0.5"
+                                  />
+                                </pattern>
+                              </defs>
+                              <rect
                                 width="100%"
                                 height="100%"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <defs>
-                                  <pattern
-                                    id="grid-pattern"
-                                    width="40"
-                                    height="40"
-                                    patternUnits="userSpaceOnUse"
-                                  >
-                                    <path
-                                      d="M 40 0 L 0 0 0 40"
-                                      fill="none"
-                                      stroke="white"
-                                      strokeWidth="0.5"
-                                    />
-                                  </pattern>
-                                </defs>
-                                <rect
-                                  width="100%"
-                                  height="100%"
-                                  fill="url(#grid-pattern)"
-                                />
-                              </svg>
-                            </div>
-                            <PremiumLocationIcon className="w-12 h-12 text-gold-400/50 mb-3" />
-                            <h4 className="text-white font-black text-lg uppercase italic">
-                              {selectedLocation?.name || deal.vendor}
-                            </h4>
+                                fill="url(#grid-pattern)"
+                              />
+                            </svg>
                           </div>
-                        )}
-
-                        {/* Floating Badge on Map */}
-                        <div className="absolute top-4 left-4 z-20 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-[10px] font-black text-white uppercase tracking-wider">
-                            Live Map Detection
-                          </span>
+                          <PremiumLocationIcon className="w-12 h-12 text-gold-400/50 mb-3" />
+                          <h4 className="text-white font-black text-lg uppercase italic">
+                            {selectedLocation?.name || deal.vendor}
+                          </h4>
                         </div>
-                      </div>
+                      )}
 
-                      {/* Quick Directions Button */}
-                      <button
-                        onClick={() => {
-                          const lat =
-                            selectedLocation?.latitude || deal.latitude;
-                          const lng =
-                            selectedLocation?.longitude || deal.longitude;
-                          window.open(
-                            `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-                            "_blank"
-                          );
-                        }}
-                        className="w-full py-4 rounded-2xl bg-gold-500 text-brand-bg font-black uppercase tracking-[0.2em] text-[10px] hover:bg-gold-400 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 shadow-xl"
-                      >
-                        <Navigation className="w-4 h-4" />
-                        {t("getDirections") || "Get Directions to this Branch"}
-                      </button>
+                      {/* Floating Badge on Map */}
+                      <div className="absolute top-4 left-4 z-20 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">
+                          Live Map Detection
+                        </span>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Quick Directions Button */}
+                    <button
+                      onClick={() => {
+                        const lat = selectedLocation?.latitude || deal.latitude;
+                        const lng =
+                          selectedLocation?.longitude || deal.longitude;
+                        window.open(
+                          `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+                          "_blank"
+                        );
+                      }}
+                      className="w-full py-4 rounded-2xl bg-gold-500 text-brand-bg font-black uppercase tracking-[0.2em] text-[10px] hover:bg-gold-400 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 shadow-xl"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      {t("getDirections") || "Get Directions to this Branch"}
+                    </button>
+                  </div>
 
                   {/* BRANCH LIST */}
                   <div className="space-y-3">
@@ -840,7 +847,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                                 loc.longitude
                               )
                             : null;
-                        const isSelected = selectedLocation === loc || (!selectedLocation && idx === 0);
+                        const isSelected =
+                          selectedLocation === loc ||
+                          (!selectedLocation && idx === 0);
 
                         return (
                           <div
