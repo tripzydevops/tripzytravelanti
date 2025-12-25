@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getHeroImageUrl } from "../lib/imageUtils";
 import {
@@ -259,6 +259,15 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
       setSelectedLocation(initialLocation);
     }
   }, [initialLocation]);
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToMap = () => {
+    mapContainerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
   // Consistent random number for viewing count based on deal.id
   const viewingCount = useMemo(() => {
     const hash = deal.id
@@ -732,7 +741,10 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                   {/* UNIFIED MAP CONTAINER */}
                   {(selectedLocation?.latitude ||
                     (deal.latitude && deal.longitude)) && (
-                    <div className="w-full space-y-4 mb-8">
+                    <div
+                      className="w-full space-y-4 mb-8"
+                      ref={mapContainerRef}
+                    >
                       <div className="w-full aspect-[16/10] md:aspect-video rounded-[2.5rem] overflow-hidden border border-white/10 bg-[#0f172a] relative group shadow-2xl">
                         {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
                           <iframe
@@ -835,7 +847,10 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                         return (
                           <div
                             key={idx}
-                            onClick={() => setSelectedLocation(loc)}
+                            onClick={() => {
+                              setSelectedLocation(loc);
+                              scrollToMap();
+                            }}
                             className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer group ${
                               isSelected
                                 ? "bg-gold-500/10 border-gold-500/50"
@@ -870,6 +885,37 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                             </div>
 
                             <div className="flex gap-2">
+                              {loc.latitude && loc.longitude ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(
+                                      `https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`,
+                                      "_blank"
+                                    );
+                                  }}
+                                  className="p-2 rounded-xl bg-gold-400/10 text-gold-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-gold-500 hover:text-brand-bg"
+                                  title={t("getDirections")}
+                                >
+                                  <Navigation className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(
+                                      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                        loc.address + " " + (loc.city || "")
+                                      )}`,
+                                      "_blank"
+                                    );
+                                  }}
+                                  className="p-2 rounded-xl bg-white/5 text-white/30 opacity-0 group-hover:opacity-100 transition-all hover:bg-white/10 hover:text-white"
+                                  title={t("getDirections")}
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </button>
+                              )}
                               {isSelected && (
                                 <div className="w-2 h-2 rounded-full bg-gold-400 shadow-[0_0_8px_rgba(212,175,55,1)]" />
                               )}
