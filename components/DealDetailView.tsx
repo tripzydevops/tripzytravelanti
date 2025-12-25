@@ -36,7 +36,7 @@ import StarRatingInput from "./StarRatingInput";
 import WalletQRCode from "./WalletQRCode";
 import { getWalletLimit, isWalletFull } from "../lib/walletUtils";
 import { canUserClaimDeal } from "../lib/redemptionLogic";
-import { Lock, Navigation, Phone, ExternalLink } from "lucide-react";
+import { Lock, Navigation, Phone, ExternalLink, MapPin } from "lucide-react";
 import { useSearch } from "../contexts/SearchContext";
 import { calculateDistance, formatDistance } from "../lib/locationUtils";
 
