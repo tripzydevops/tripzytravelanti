@@ -739,9 +739,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                   }`}
                 >
                   {/* UNIFIED MAP CONTAINER */}
-                  {(selectedLocation?.latitude ||
-                    (deal.latitude && deal.longitude)) && (
-                    <div
+                  <div
                       className="w-full space-y-4 mb-8"
                       ref={mapContainerRef}
                     >
@@ -754,11 +752,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                             style={{ border: 0, opacity: 0.9 }}
                             src={`https://www.google.com/maps/embed/v1/place?key=${
                               import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-                            }&q=${
-                              selectedLocation?.latitude || deal.latitude
-                            },${
-                              selectedLocation?.longitude || deal.longitude
-                            }&zoom=20`}
+                              }&q=${
+                                (selectedLocation?.latitude && selectedLocation?.longitude)
+                                  ? `${selectedLocation.latitude},${selectedLocation.longitude}`
+                                  : encodeURIComponent(`${selectedLocation?.address || deal.address || ""}${selectedLocation?.city || deal.city ? ", " + (selectedLocation?.city || deal.city) : ""}`)
+                              }&zoom=15`}
                             allowFullScreen
                             loading="lazy"
                             className="group-hover:opacity-100 transition-opacity duration-700"
@@ -842,7 +840,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                                 loc.longitude
                               )
                             : null;
-                        const isSelected = selectedLocation === loc;
+                        const isSelected = selectedLocation === loc || (!selectedLocation && idx === 0);
 
                         return (
                           <div

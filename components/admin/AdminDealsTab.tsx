@@ -824,6 +824,9 @@ const AdminDealsTab: React.FC = () => {
                 ? expiresInDays
                 : parseInt(expiresInDays as string) || 7
             ),
+        storeLocations: (dealFormData.storeLocations || []).filter(
+          (loc) => loc.name?.trim() || loc.address?.trim()
+        ),
       };
       if (editingDeal) {
         await updateDeal(dealData);

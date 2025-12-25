@@ -548,6 +548,24 @@ export async function updateDeal(dealId: string, updates: Partial<Deal>) {
     return updatedDeal;
 }
 
+export async function deleteDeal(dealId: string) {
+    const { error } = await supabase
+        .from('deals')
+        .delete()
+        .eq('id', dealId);
+
+    if (error) {
+        console.error('Error deleting deal:', error);
+        throw error;
+    }
+
+    // Index update in vector database (async)
+    const { deleteDealVector } = await import('./vectorService');
+    deleteDealVector(dealId).catch(err => console.error('Failed to delete deal from vector index:', err));
+
+    return { success: true };
+}
+
 export async function getDealsByPartner(partnerId: string): Promise<Deal[]> {
     const { data, error } = await supabase
         .from('deals')
