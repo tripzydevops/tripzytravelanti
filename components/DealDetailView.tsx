@@ -5,6 +5,7 @@ import {
   checkMonthlyLimit,
   getWalletItems,
   logEngagementEvent,
+  verifyCouponCode,
 } from "../lib/supabaseService";
 import { supabase } from "../lib/supabaseClient";
 import { triggerConfetti } from "../utils/confetti";
@@ -36,7 +37,7 @@ import StarRatingInput from "./StarRatingInput";
 import WalletQRCode from "./WalletQRCode";
 import { getWalletLimit, isWalletFull } from "../lib/walletUtils";
 import { canUserClaimDeal } from "../lib/redemptionLogic";
-import { Lock, Navigation, Phone, ExternalLink, MapPin } from "lucide-react";
+import { Lock, Navigation, Phone, ExternalLink, MapPin, Ticket, X, Loader2 } from "lucide-react";
 import { useSearch } from "../contexts/SearchContext";
 import { calculateDistance, formatDistance } from "../lib/locationUtils";
 
@@ -227,6 +228,69 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
         (deal.redemptionsCount || 0) >= deal.maxRedemptionsTotal)
   );
 
+  // === Coupon Code State ===
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string;
+    discountType: string;
+    discountValue: number;
+    maxDiscountAmount?: number;
+    campaignTitle: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [showCouponInput, setShowCouponInput] = useState(false);
+
+  // Calculate coupon-adjusted price
+  const couponAdjustedPrice = useMemo(() => {
+    if (!appliedCoupon) return null;
+    const basePrice = deal.discountedPrice > 0 ? deal.discountedPrice : deal.originalPrice;
+    if (basePrice <= 0) return 0;
+    if (appliedCoupon.discountType === 'percentage') {
+      const discount = basePrice * (appliedCoupon.discountValue / 100);
+      const cappedDiscount = appliedCoupon.maxDiscountAmount
+        ? Math.min(discount, appliedCoupon.maxDiscountAmount)
+        : discount;
+      return Math.max(0, basePrice - cappedDiscount);
+    } else if (appliedCoupon.discountType === 'fixed_amount') {
+      return Math.max(0, basePrice - appliedCoupon.discountValue);
+    }
+    return basePrice;
+  }, [appliedCoupon, deal.discountedPrice, deal.originalPrice]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    try {
+      const result = await verifyCouponCode(couponCode, user?.id, deal.id);
+      if (result.valid && result.campaign && result.codeDetails) {
+        setAppliedCoupon({
+          id: result.codeDetails.id,
+          discountType: result.campaign.discount_type,
+          discountValue: Number(result.campaign.discount_value),
+          maxDiscountAmount: result.campaign.max_discount_amount ? Number(result.campaign.max_discount_amount) : undefined,
+          campaignTitle: result.campaign.title,
+        });
+        setCouponError(null);
+      } else {
+        setCouponError(result.message);
+        setAppliedCoupon(null);
+      }
+    } catch (err) {
+      setCouponError('Failed to verify coupon code');
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError(null);
+  };
+
   const { userLocation } = useSearch();
 
   // Unified location selection logic
@@ -363,7 +427,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
           setTimeout(() => triggerConfetti("burst"), 300);
         }
       } else if (action === "claim") {
-        await claimDeal(deal.id);
+        await claimDeal(deal.id, appliedCoupon?.id);
         triggerConfetti("default");
       }
     } catch (error: any) {
@@ -1066,6 +1130,88 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
       {/* Sticky Action Footer - Market Standard */}
       <div className="fixed bottom-0 left-0 right-0 z-50 p-2 md:p-3 pb-safe bg-gradient-to-t from-brand-bg via-brand-bg/95 to-transparent backdrop-blur-md">
         <div className="max-w-4xl mx-auto">
+          {/* Coupon Code Input Card */}
+          {!isPreview && !localIsSoldOut && !hasRedeemed(deal.id) && user && (
+            <div className="mb-2">
+              {!showCouponInput && !appliedCoupon ? (
+                <button
+                  onClick={() => setShowCouponInput(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2 text-xs text-white/50 hover:text-white/80 transition-colors group"
+                >
+                  <Ticket className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                  <span className="uppercase tracking-widest font-bold">
+                    {language === 'tr' ? 'Kupon Kodun Var Mı?' : 'Have a Coupon Code?'}
+                  </span>
+                </button>
+              ) : appliedCoupon ? (
+                <div className="glass-premium rounded-xl p-2.5 flex items-center justify-between border border-green-500/30 bg-green-500/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-green-500/20 flex items-center justify-center">
+                      <Ticket className="w-4 h-4 text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-green-400 uppercase tracking-wider">
+                        {appliedCoupon.campaignTitle}
+                      </p>
+                      <p className="text-[10px] text-green-400/60">
+                        {appliedCoupon.discountType === 'percentage'
+                          ? `${appliedCoupon.discountValue}% ${language === 'tr' ? 'indirim' : 'off'}`
+                          : `₺${appliedCoupon.discountValue} ${language === 'tr' ? 'indirim' : 'off'}`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleRemoveCoupon}
+                    className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white/40 hover:text-white/80" />
+                  </button>
+                </div>
+              ) : (
+                <div className="glass-premium rounded-xl p-2.5 border border-white/10">
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponError(null);
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                        placeholder={language === 'tr' ? 'Kupon kodu girin' : 'Enter coupon code'}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-gold-500/50 font-mono tracking-wider uppercase"
+                        maxLength={20}
+                        disabled={couponLoading}
+                      />
+                    </div>
+                    <button
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="px-4 py-2 bg-gold-500/20 hover:bg-gold-500/30 border border-gold-500/30 text-gold-400 text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      {couponLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        language === 'tr' ? 'Uygula' : 'Apply'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => { setShowCouponInput(false); setCouponCode(''); setCouponError(null); }}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4 text-white/40" />
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="text-[10px] text-red-400 mt-1.5 pl-1 font-medium">{couponError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="glass-premium rounded-[1.25rem] p-2 md:p-3 flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/20">
             {/* Price Display */}
             <div className="flex flex-col min-w-fit pl-1">
@@ -1076,7 +1222,12 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                       ₺{deal.originalPrice}
                     </span>
                     <span className="bg-brand-primary/10 text-brand-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-brand-primary/20">
-                      {deal.discountPercentage}% OFF
+                      {appliedCoupon
+                        ? (appliedCoupon.discountType === 'percentage'
+                          ? `${deal.discountPercentage + appliedCoupon.discountValue}% OFF`
+                          : `${deal.discountPercentage}% + ₺${appliedCoupon.discountValue} OFF`)
+                        : `${deal.discountPercentage}% OFF`
+                      }
                     </span>
                   </>
                 ) : (
@@ -1090,7 +1241,19 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
                 )}
               </div>
               <div className="text-2xl font-black text-white tracking-tighter flex items-baseline gap-1">
-                {deal.discountedPrice > 0 ? (
+                {couponAdjustedPrice !== null && couponAdjustedPrice !== deal.discountedPrice ? (
+                  <>
+                    <span className="text-sm font-bold text-white/30 line-through mr-1">
+                      ₺{deal.discountedPrice > 0 ? deal.discountedPrice : deal.originalPrice}
+                    </span>
+                    <span className="text-base font-bold text-green-400/80">
+                      ₺
+                    </span>
+                    <span className="bg-gradient-to-r from-green-300 via-green-400 to-green-300/60 bg-clip-text text-transparent">
+                      {couponAdjustedPrice.toFixed(0)}
+                    </span>
+                  </>
+                ) : deal.discountedPrice > 0 ? (
                   <>
                     <span className="text-base font-bold text-gold-500/60">
                       ₺

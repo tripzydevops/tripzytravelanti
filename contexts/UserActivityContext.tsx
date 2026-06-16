@@ -10,8 +10,8 @@ interface UserActivityContextType {
     redemptions: any[]; // using any for now, should be Redemption type if available
     saveDeal: (dealId: string) => Promise<void>;
     unsaveDeal: (dealId: string) => Promise<void>;
-    claimDeal: (dealId: string) => Promise<void>;
-    redeemDeal: (dealId: string) => Promise<void>;
+    claimDeal: (dealId: string, couponCodeId?: string) => Promise<void>;
+    redeemDeal: (dealId: string, couponCodeId?: string) => Promise<void>;
     isDealSaved: (dealId: string) => boolean;
     isDealOwned: (dealId: string) => boolean;
     hasRedeemed: (dealId: string) => boolean;
@@ -83,10 +83,10 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     }, [user]);
 
-    const handleClaimDeal = useCallback(async (dealId: string) => {
+    const handleClaimDeal = useCallback(async (dealId: string, couponCodeId?: string) => {
         if (!user) return;
         try {
-            await claimDeal(user.id, dealId);
+            await claimDeal(user.id, dealId, couponCodeId);
             setOwnedDeals(prev => [...new Set([...prev, dealId])]);
         } catch (error) {
             console.error('Error claiming deal:', error);
@@ -94,10 +94,10 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     }, [user]);
 
-    const handleRedeemDeal = useCallback(async (dealId: string) => {
+    const handleRedeemDeal = useCallback(async (dealId: string, couponCodeId?: string) => {
         if (!user) return;
         try {
-            await redeemDeal(user.id, dealId);
+            await redeemDeal(user.id, dealId, couponCodeId);
             const newRedemption = {
                 id: crypto.randomUUID(),
                 dealId,

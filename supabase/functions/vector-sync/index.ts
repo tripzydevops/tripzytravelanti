@@ -311,13 +311,15 @@ async function generateEmbedding(text: string): Promise<number[]> {
         throw new Error('Missing AI Configuration');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            content: { parts: [{ text }] }
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text }] },
+            outputDimensionality: 768
         })
     });
 

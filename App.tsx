@@ -78,6 +78,12 @@ const PartnerScanPage = lazyLoadRetry(
 const CreateDealPage = lazyLoadRetry(
   () => import("./pages/partner/CreateDealPage")
 );
+const CouponCampaignsPage = lazyLoadRetry(
+  () => import("./pages/partner/CouponCampaignsPage")
+);
+const GeofencePage = lazyLoadRetry(
+  () => import("./pages/partner/GeofencePage")
+);
 const MyDealsPage = lazyLoadRetry(() => import("./pages/MyDealsPage"));
 const WalletPage = lazyLoadRetry(() => import("./pages/WalletPage"));
 const CheckoutPage = lazyLoadRetry(() => import("./pages/CheckoutPage"));
@@ -281,6 +287,8 @@ function AnimatedRoutes() {
             <Route path="create-deal" element={<CreateDealPage />} />
             <Route path="edit-deal/:id" element={<CreateDealPage />} />
             <Route path="scan" element={<PartnerScanPage />} />
+            <Route path="coupons" element={<CouponCampaignsPage />} />
+            <Route path="geofence" element={<GeofencePage />} />
           </Route>
         </Routes>
       </Suspense>

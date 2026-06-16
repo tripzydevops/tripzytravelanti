@@ -48,6 +48,7 @@ export interface User {
   emailConfirmedAt?: string | null;
   lastSignInAt?: string | null;
   walletLimit?: number | null; // Admin override for wallet capacity (null = use tier default)
+  geofenceEnforcementMode?: 'off' | 'soft_warning' | 'hard_block';
   createdAt?: string;
 }
 
@@ -72,7 +73,7 @@ export interface Deal {
   discountedPrice: number;
   discountPercentage?: number;
   requiredTier: SubscriptionTier;
-  isTeasable: boolean;
+  isTeasable?: boolean;
   isExternal: boolean;
   vendor: string;
   expiresAt: string;
@@ -170,4 +171,169 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   link?: string;
+}
+
+export interface WalletItem {
+  id: string;
+  userId: string;
+  dealId: string;
+  redemptionCode: string;
+  status: 'active' | 'redeemed' | 'expired';
+  confirmationToken?: string;
+  confirmationExpiresAt?: string;
+  createdAt: string;
+  redeemedAt?: string;
+  expiresAt?: string;
+  qrTokenId?: string;
+  claimedLatitude?: number;
+  claimedLongitude?: number;
+  couponCodeId?: string;
+  // Joined fields
+  deal?: Deal;
+}
+
+export interface ExternalUserMapping {
+  id: string;
+  userId: string;
+  externalPlatform: string;
+  externalUserId: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  userId: string;
+  type:
+    | 'earn_redemption'
+    | 'earn_referral'
+    | 'earn_streak'
+    | 'earn_campaign'
+    | 'burn_reward'
+    | 'burn_coupon'
+    | 'expire'
+    | 'adjust_admin'
+    | 'transfer_out'
+    | 'transfer_in';
+  amount: number;
+  runningBalance: number;
+  referenceType?: string;
+  referenceId?: string;
+  expiresAt?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface LoyaltyReward {
+  id: string;
+  title: string;
+  title_tr: string;
+  description?: string;
+  description_tr?: string;
+  pointsCost: number;
+  rewardType: 'deal_unlock' | 'subscription_upgrade' | 'custom_voucher';
+  rewardData?: Record<string, any>;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouponCampaign {
+  id: string;
+  partnerId?: string;
+  dealId?: string;
+  title: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed_amount' | 'free_gift' | 'bogo';
+  discountValue: number;
+  maxDiscountAmount?: number;
+  minSubtotal: number;
+  usageLimit?: number;
+  usageCount: number;
+  maxPerUser: number;
+  startsAt?: string;
+  expiresAt?: string;
+  isActive: boolean;
+  stackingRules?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouponCode {
+  id: string;
+  campaignId: string;
+  code: string;
+  status: 'active' | 'redeemed' | 'expired' | 'revoked';
+  assignedTo?: string;
+  claimedAt?: string;
+  redeemedBy?: string;
+  redeemedAt?: string;
+  createdAt: string;
+}
+
+export interface QRToken {
+  id: string;
+  walletItemId: string;
+  tokenHash: string;
+  issuedAt: string;
+  expiresAt: string;
+  usedAt?: string;
+  version: number;
+  ipAddress?: string;
+  deviceInfo?: string;
+}
+
+export interface QRScanEvent {
+  id: string;
+  walletItemId?: string;
+  qrTokenId?: string;
+  vendorId?: string;
+  scanTimestamp: string;
+  scanLatitude?: number;
+  scanLongitude?: number;
+  scanMethod: 'qr_scan' | 'manual_code' | 'nfc' | 'geo_auto';
+  scanResult: 'success' | 'invalid_code' | 'expired_token' | 'already_redeemed' | 'geo_mismatch' | 'rate_limited';
+  rawScannedPayload?: string;
+  ipAddress?: string;
+  deviceInfo?: string;
+}
+
+export interface GeofenceZone {
+  id: string;
+  partnerId: string;
+  dealId?: string;
+  name: string;
+  zone?: any; // postgis polygon
+  radiusMeters?: number;
+  centroid?: any; // postgis point
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GeoValidationEvent {
+  id: string;
+  userId: string;
+  dealId: string;
+  geofenceZoneId?: string;
+  userLatitude: number;
+  userLongitude: number;
+  distanceMeters?: number;
+  isWithinBounds: boolean;
+  checkedAt: string;
+}
+
+export interface FraudSignal {
+  id: string;
+  userId?: string;
+  vendorId?: string;
+  walletItemId?: string;
+  signalType: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  details?: Record<string, any>;
+  isResolved: boolean;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  createdAt: string;
 }

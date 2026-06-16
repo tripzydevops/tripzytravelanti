@@ -25,6 +25,8 @@ const EMPTY_USER: User = {
   status: "active",
   points: 0,
   rank: "",
+  role: "user",
+  geofenceEnforcementMode: "off",
 };
 
 const AdminUsersTab: React.FC = () => {
@@ -55,7 +57,7 @@ const AdminUsersTab: React.FC = () => {
     useState<User | null>(null);
   const [viewingActivityForUser, setViewingActivityForUser] =
     useState<User | null>(null);
-  const [userActivityLog, setUserActivityLog] = useState<ActivityLogItem[]>([]);
+  const [userActivityLog, setUserActivityLog] = useState<supabaseService.ActivityLogItem[]>([]);
   const [userPayments, setUserPayments] = useState<PaymentTransaction[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
@@ -239,6 +241,8 @@ const AdminUsersTab: React.FC = () => {
       referredBy: user.referredBy || "",
       points: user.points || 0,
       rank: user.rank || "",
+      role: user.role || "user",
+      geofenceEnforcementMode: user.geofenceEnforcementMode || "off",
     });
     setDealToAdd("");
     setRedemptionsToAdd(0);
@@ -250,7 +254,7 @@ const AdminUsersTab: React.FC = () => {
     if (window.confirm(t("deleteUserConfirm"))) {
       const oldUser = paginatedUsers.find((u) => u.id === userId);
       await deleteUser(userId);
-      await logAdminAction({
+      await supabaseService.logAdminAction({
         action_type: "DELETE",
         table_name: "profiles",
         record_id: userId,
@@ -403,7 +407,7 @@ const AdminUsersTab: React.FC = () => {
 
       const newStatus = statusMap[action as keyof typeof statusMap];
       if (newStatus) {
-        await bulkUpdateUserStatus(userIds as string[], newStatus);
+        await supabaseService.bulkUpdateUserStatus(userIds as string[], newStatus);
         showSuccessToast(
           `Bulk ${action} successful for ${selectedUsers.size} users`
         );
@@ -456,7 +460,7 @@ const AdminUsersTab: React.FC = () => {
   const handleViewPaymentsClick = async (user: User) => {
     setViewingPaymentsForUser(user);
     try {
-      const data = await getUserTransactions(user.id);
+      const data = await supabaseService.getUserTransactions(user.id);
       setUserPayments(data);
     } catch (error) {
       console.error("Failed to fetch user payments", error);
@@ -466,7 +470,7 @@ const AdminUsersTab: React.FC = () => {
   const handleViewActivityClick = async (user: User) => {
     setViewingActivityForUser(user);
     try {
-      const data = await getUserActivityLog(user.id);
+      const data = await supabaseService.getUserActivityLog(user.id);
       setUserActivityLog(data);
     } catch (error) {
       console.error("Failed to fetch user activity", error);
@@ -544,6 +548,39 @@ const AdminUsersTab: React.FC = () => {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    User Role
+                  </label>
+                  <select
+                    name="role"
+                    value={userFormData.role || "user"}
+                    onChange={handleUserFormChange}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary"
+                  >
+                    <option value="user">User</option>
+                    <option value="partner">Partner</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                {(userFormData.role === "partner" || userFormData.role === "vendor") && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Geofence Enforcement Mode
+                    </label>
+                    <select
+                      name="geofenceEnforcementMode"
+                      value={userFormData.geofenceEnforcementMode || "off"}
+                      onChange={handleUserFormChange}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-primary"
+                    >
+                      <option value="off">Off (Zero restriction)</option>
+                      <option value="soft_warning">Soft Warning (Log warning but allow)</option>
+                      <option value="hard_block">Hard Block (Reject scan)</option>
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Extra Redemptions

@@ -25,5 +25,13 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "supabase/functions",
+    "dist",
+    "check_categories.ts",
+    "lib/*.test.ts",
+    "src/test"
+  ]
 }

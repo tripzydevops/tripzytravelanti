@@ -92,6 +92,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         rank: data.rank,
         totalReferrals: data.total_referrals || 0,
         emailConfirmedAt: data.email_confirmed_at,
+        geofenceEnforcementMode: data.geofence_enforcement_mode,
         redemptions: data.deal_redemptions ? data.deal_redemptions.map((r: any) => ({
             id: r.id,
             dealId: r.deal_id,
@@ -117,6 +118,8 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
     if (updates.status) dbUpdates.status = updates.status;
     if (updates.points !== undefined) dbUpdates.points = updates.points;
     if (updates.rank !== undefined) dbUpdates.rank = updates.rank;
+    if (updates.role) dbUpdates.role = updates.role;
+    if (updates.geofenceEnforcementMode) dbUpdates.geofence_enforcement_mode = updates.geofenceEnforcementMode;
 
     const { error } = await supabase
         .from('profiles')
@@ -264,7 +267,10 @@ export async function getAllUsers(): Promise<User[]> {
         billingAddress: data.billing_address,
         status: data.status,
         referredBy: data.referred_by,
-        emailConfirmedAt: data.email_confirmed_at
+        emailConfirmedAt: data.email_confirmed_at,
+        points: data.points || 0,
+        rank: data.rank,
+        geofenceEnforcementMode: data.geofence_enforcement_mode
     }));
 }
 
@@ -319,6 +325,9 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
         status: d.status,
         referredBy: d.referred_by,
         emailConfirmedAt: d.email_confirmed_at,
+        points: d.points || 0,
+        rank: d.rank,
+        geofenceEnforcementMode: d.geofence_enforcement_mode,
         redemptions: d.deal_redemptions ? d.deal_redemptions.map((r: any) => ({
             id: r.id,
             dealId: r.deal_id,
@@ -801,7 +810,7 @@ export async function checkMonthlyLimit(userId: string): Promise<{ allowed: bool
     };
 }
 
-export const redeemDeal = async (userId: string, dealId: string) => {
+export const redeemDeal = async (userId: string, dealId: string, couponCodeId?: string) => {
     const cleanUserId = userId.trim();
     const cleanDealId = dealId.trim();
 
@@ -863,19 +872,25 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
     if (updatedItems && updatedItems.length > 0) {
         // Record the redemption in history
+        const activeCouponId = updatedItems[0].coupon_code_id || couponCodeId || null;
         const { data: redemptionRecord } = await supabase
             .from('deal_redemptions')
             .insert({
                 user_id: userId,
                 deal_id: dealId,
-                redeemed_at: new Date().toISOString()
+                redeemed_at: new Date().toISOString(),
+                coupon_code_id: activeCouponId
             })
             .select()
             .single();
 
         // Award Points (100 pts)
         try {
-            await addUserPoints(userId, 100);
+            if (redemptionRecord?.id) {
+                await addUserPoints(userId, 100, 'earn_redemption', 'deal_redemption', redemptionRecord.id);
+            } else {
+                await addUserPoints(userId, 100);
+            }
         } catch (e) {
             console.warn('Failed to award loyalty points:', e);
         }
@@ -931,7 +946,8 @@ export const redeemDeal = async (userId: string, dealId: string) => {
         .insert({
             user_id: userId,
             deal_id: dealId,
-            redeemed_at: new Date().toISOString()
+            redeemed_at: new Date().toISOString(),
+            coupon_code_id: couponCodeId || null
         })
         .select()
         .single();
@@ -950,7 +966,11 @@ export const redeemDeal = async (userId: string, dealId: string) => {
 
     // Award Points (100 pts)
     try {
-        await addUserPoints(userId, 100);
+        if (redemptionRecord?.id) {
+            await addUserPoints(userId, 100, 'earn_redemption', 'deal_redemption', redemptionRecord.id);
+        } else {
+            await addUserPoints(userId, 100);
+        }
     } catch (e) {
         console.warn('Failed to award loyalty points:', e);
     }
@@ -963,8 +983,8 @@ export const redeemDeal = async (userId: string, dealId: string) => {
     };
 };
 
-export async function redeemImmediate(userId: string, dealId: string) {
-    return redeemDeal(userId, dealId);
+export async function redeemImmediate(userId: string, dealId: string, couponCodeId?: string) {
+    return redeemDeal(userId, dealId, couponCodeId);
 }
 
 
@@ -986,15 +1006,36 @@ export async function handleReferralCode(referrerCode: string, userId: string) {
     return data;
 }
 
-export async function addUserPoints(userId: string, pointsToAdd: number) {
-    const { data, error } = await supabase.rpc('add_user_points', {
-        user_uuid: userId,
-        points_to_add: pointsToAdd
+export async function addUserPoints(
+    userId: string, 
+    pointsToAdd: number, 
+    type: string = 'earn_redemption', 
+    referenceType?: string, 
+    referenceId?: string,
+    expiresAt?: string,
+    metadata: any = {}
+) {
+    const { data, error } = await supabase.rpc('secure_earn_points', {
+        p_user_id: userId,
+        p_amount: pointsToAdd,
+        p_type: type,
+        p_reference_type: referenceType || null,
+        p_reference_id: referenceId || null,
+        p_expires_at: expiresAt || null,
+        p_metadata: metadata
     });
 
     if (error) {
-        console.error('Error adding points:', error);
-        throw error;
+        console.warn('Error adding points via secure_earn_points, falling back to legacy add_user_points:', error);
+        const { data: legacyData, error: legacyError } = await supabase.rpc('add_user_points', {
+            user_uuid: userId,
+            points_to_add: pointsToAdd
+        });
+        if (legacyError) {
+            console.error('Legacy add_user_points failed:', legacyError);
+            throw legacyError;
+        }
+        return legacyData;
     }
 
     return data;
@@ -1161,10 +1202,10 @@ export async function getSavedDeals(userId: string): Promise<Deal[]> {
     return data.map((item: any) => transformDealFromDB(item.deals));
 }
 
-export async function claimDeal(userId: string, dealId: string): Promise<{ walletItemId: string; redemptionCode: string }> {
+export async function claimDeal(userId: string, dealId: string, couponCodeId?: string): Promise<{ walletItemId: string; redemptionCode: string }> {
     // Use the new secure wallet system
     // This handles monthly limits, global limits, and generates unique codes
-    return addDealToWallet(userId, dealId);
+    return addDealToWallet(userId, dealId, false, couponCodeId);
 }
 
 
@@ -2099,7 +2140,12 @@ export function generateRedemptionCode(): string {
 /**
  * Add a deal to user's wallet with a unique redemption code
  */
-export async function addDealToWallet(userId: string, dealId: string, bypassChecks: boolean = false): Promise<{ walletItemId: string; redemptionCode: string }> {
+export async function addDealToWallet(
+    userId: string, 
+    dealId: string, 
+    bypassChecks: boolean = false,
+    couponCodeId?: string
+): Promise<{ walletItemId: string; redemptionCode: string }> {
     // Check if already in wallet
     const { data: existing } = await supabase
         .from('wallet_items')
@@ -2152,15 +2198,14 @@ export async function addDealToWallet(userId: string, dealId: string, bypassChec
         throw new Error(`This deal requires ${requiredTier} membership. Please upgrade to unlock.`);
     }
 
-    // Generate unique code and insert
-    const redemptionCode = generateRedemptionCode();
+    // Let database securely generate unique code and insert
     const { data, error } = await supabase
         .from('wallet_items')
         .insert({
             user_id: userId,
             deal_id: dealId,
-            redemption_code: redemptionCode,
-            status: 'active'
+            status: 'active',
+            coupon_code_id: couponCodeId || null
         })
         .select('id, redemption_code')
         .single();
@@ -2168,7 +2213,7 @@ export async function addDealToWallet(userId: string, dealId: string, bypassChec
     if (error) {
         if (error.code === '23505') {
             // Unique constraint - retry with different code
-            return addDealToWallet(userId, dealId);
+            return addDealToWallet(userId, dealId, bypassChecks, couponCodeId);
         }
         throw error;
     }
@@ -2410,4 +2455,386 @@ export async function getMAUTrend() {
         return [];
     }
     return data;
+}
+
+// =====================================================
+// CROSS-PLATFORM USER MAPPING (PHASE 1)
+// =====================================================
+
+export async function createExternalUserMapping(
+    userId: string,
+    externalPlatform: string,
+    externalUserId: string,
+    metadata: any = {}
+): Promise<any> {
+    const { data, error } = await supabase
+        .from('external_user_mappings')
+        .insert({
+            user_id: userId,
+            external_platform: externalPlatform,
+            external_user_id: externalUserId,
+            metadata
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating external user mapping:', error);
+        throw error;
+    }
+    return data;
+}
+
+export async function getExternalUserMapping(userId: string, externalPlatform: string): Promise<any | null> {
+    const { data, error } = await supabase
+        .from('external_user_mappings')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('external_platform', externalPlatform)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching external user mapping:', error);
+        throw error;
+    }
+    return data;
+}
+
+export async function getUserByExternalId(externalPlatform: string, externalUserId: string): Promise<any | null> {
+    const { data, error } = await supabase
+        .from('external_user_mappings')
+        .select('user_id, profiles(*)')
+        .eq('external_platform', externalPlatform)
+        .eq('external_user_id', externalUserId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching user by external ID:', error);
+        throw error;
+    }
+    return data ? { ...data.profiles, userId: data.user_id } : null;
+}
+
+export async function deleteExternalUserMapping(userId: string, externalPlatform: string): Promise<boolean> {
+    const { error } = await supabase
+        .from('external_user_mappings')
+        .delete()
+        .eq('user_id', userId)
+        .eq('external_platform', externalPlatform);
+
+    if (error) {
+        console.error('Error deleting external user mapping:', error);
+        throw error;
+    }
+    return true;
+}
+
+// =====================================================
+// LOYALTY LEDGER (PHASE 1)
+// =====================================================
+
+export async function burnUserPoints(
+    userId: string,
+    pointsToBurn: number,
+    type: string = 'burn_reward',
+    referenceType?: string,
+    referenceId?: string,
+    metadata: any = {}
+): Promise<any> {
+    const { data, error } = await supabase.rpc('secure_burn_points', {
+        p_user_id: userId,
+        p_amount: pointsToBurn,
+        p_type: type,
+        p_reference_type: referenceType || null,
+        p_reference_id: referenceId || null,
+        p_metadata: metadata
+    });
+
+    if (error) {
+        console.error('Error burning points via ledger:', error);
+        throw error;
+    }
+    return data;
+}
+
+// =====================================================
+// COUPON CAMPAIGN & CODE OPERATIONS (PHASE 1)
+// =====================================================
+
+export async function createCouponCampaign(campaign: any): Promise<any> {
+    const { data, error } = await supabase
+        .from('coupon_campaigns')
+        .insert({
+            partner_id: campaign.partnerId,
+            deal_id: campaign.dealId || null,
+            title: campaign.title,
+            description: campaign.description || null,
+            discount_type: campaign.discountType,
+            discount_value: campaign.discountValue,
+            max_discount_amount: campaign.maxDiscountAmount || null,
+            min_subtotal: campaign.minSubtotal || 0.00,
+            usage_limit: campaign.usageLimit || null,
+            max_per_user: campaign.maxPerUser || 1,
+            starts_at: campaign.startsAt || null,
+            expires_at: campaign.expiresAt || null,
+            is_active: campaign.isActive !== undefined ? campaign.isActive : true,
+            stacking_rules: campaign.stackingRules || { stackable: false }
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating coupon campaign:', error);
+        throw error;
+    }
+    return data;
+}
+
+export async function getCouponCampaigns(partnerId?: string): Promise<any[]> {
+    let query = supabase.from('coupon_campaigns').select('*');
+    if (partnerId) {
+        query = query.eq('partner_id', partnerId);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) {
+        console.error('Error fetching coupon campaigns:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+export async function generateCouponCodes(campaignId: string, count: number, customCodes?: string[]): Promise<any[]> {
+    const codesToInsert = [];
+    if (customCodes && customCodes.length > 0) {
+        for (const code of customCodes) {
+            codesToInsert.push({
+                campaign_id: campaignId,
+                code: code.trim().toUpperCase(),
+                status: 'active'
+            });
+        }
+    } else {
+        // Generate random 8-character code prefixes
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        for (let i = 0; i < count; i++) {
+            let code = '';
+            for (let j = 0; j < 8; j++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            codesToInsert.push({
+                campaign_id: campaignId,
+                code,
+                status: 'active'
+            });
+        }
+    }
+
+    const { data, error } = await supabase
+        .from('coupon_codes')
+        .insert(codesToInsert)
+        .select();
+
+    if (error) {
+        console.error('Error generating coupon codes:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+export async function verifyCouponCode(code: string, userId?: string, dealId?: string): Promise<{ valid: boolean; message: string; campaign?: any; codeDetails?: any }> {
+    const cleanCode = code.trim().toUpperCase();
+    
+    // Fetch code details with campaign
+    const { data: codeDetails, error } = await supabase
+        .from('coupon_codes')
+        .select('*, campaign:coupon_campaigns(*)')
+        .eq('code', cleanCode)
+        .maybeSingle();
+
+    if (error || !codeDetails) {
+        return { valid: false, message: 'Invalid coupon code' };
+    }
+
+    if (codeDetails.status !== 'active') {
+        return { valid: false, message: `Coupon is ${codeDetails.status}` };
+    }
+
+    const campaign = codeDetails.campaign;
+    if (!campaign || !campaign.is_active) {
+        return { valid: false, message: 'Campaign is inactive' };
+    }
+
+    const now = new Date();
+    if (campaign.starts_at && new Date(campaign.starts_at) > now) {
+        return { valid: false, message: 'Campaign has not started yet' };
+    }
+
+    if (campaign.expires_at && new Date(campaign.expires_at) < now) {
+        return { valid: false, message: 'Campaign has expired' };
+    }
+
+    if (campaign.usage_limit && campaign.usage_count >= campaign.usage_limit) {
+        return { valid: false, message: 'Coupon campaign usage limit reached' };
+    }
+
+    // Deal-level validation: if campaign is locked to a specific deal, verify match
+    if (campaign.deal_id && dealId && campaign.deal_id !== dealId) {
+        return { valid: false, message: 'This coupon is not valid for this deal' };
+    }
+
+    // Check user-specific limit
+    if (userId) {
+        const { count: userUsageCount } = await supabase
+            .from('coupon_codes')
+            .select('id', { count: 'exact', head: true })
+            .eq('campaign_id', campaign.id)
+            .eq('redeemed_by', userId)
+            .eq('status', 'redeemed');
+
+        if ((userUsageCount || 0) >= (campaign.max_per_user || 1)) {
+            return { valid: false, message: 'You have reached the usage limit for this coupon campaign' };
+        }
+    }
+
+    return {
+        valid: true,
+        message: 'Coupon code is valid!',
+        campaign,
+        codeDetails
+    };
+}
+
+// =====================================================
+// LOYALTY TRANSACTION HISTORY (PHASE 4)
+// =====================================================
+
+export async function getUserLoyaltyTransactions(userId: string, limit: number = 50): Promise<any[]> {
+    const { data, error } = await supabase
+        .from('loyalty_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching loyalty transactions:', error);
+        return [];
+    }
+    return data || [];
+}
+
+// =====================================================
+// GEOFENCE ZONE MANAGEMENT (PHASE 6)
+// =====================================================
+
+export async function getGeofenceZones(partnerId: string): Promise<any[]> {
+    const { data, error } = await supabase
+        .from('geofence_zones')
+        .select('*')
+        .eq('partner_id', partnerId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching geofence zones:', error);
+        return [];
+    }
+    return data || [];
+}
+
+export async function saveGeofenceZone(zoneData: {
+    partner_id: string;
+    deal_id?: string;
+    name: string;
+    radius_meters: number;
+    centroid_lat: number;
+    centroid_lng: number;
+    is_active?: boolean;
+}): Promise<any> {
+    const { data, error } = await supabase
+        .from('geofence_zones')
+        .insert({
+            partner_id: zoneData.partner_id,
+            deal_id: zoneData.deal_id || null,
+            name: zoneData.name,
+            radius_meters: zoneData.radius_meters,
+            centroid: `POINT(${zoneData.centroid_lng} ${zoneData.centroid_lat})`,
+            zone: `POINT(${zoneData.centroid_lng} ${zoneData.centroid_lat})`, // Will be overridden by trigger if polygon is needed
+            is_active: zoneData.is_active ?? true,
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error saving geofence zone:', error);
+        throw error;
+    }
+    return data;
+}
+
+export async function deleteGeofenceZone(zoneId: string): Promise<void> {
+    const { error } = await supabase
+        .from('geofence_zones')
+        .delete()
+        .eq('id', zoneId);
+
+    if (error) {
+        console.error('Error deleting geofence zone:', error);
+        throw error;
+    }
+}
+
+export async function toggleGeofenceZone(zoneId: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase
+        .from('geofence_zones')
+        .update({ is_active: isActive })
+        .eq('id', zoneId);
+
+    if (error) {
+        console.error('Error toggling geofence zone:', error);
+        throw error;
+    }
+}
+
+// =====================================================
+// PARTNER ANALYTICS TRENDS (PHASE 5)
+// =====================================================
+
+export async function getPartnerRedemptionTrends(partnerId: string): Promise<{
+    redemptionsLast30: number;
+    redemptionsPrev30: number;
+    viewsLast30: number;
+    viewsPrev30: number;
+    redemptionGrowth: number;
+    viewGrowth: number;
+} | null> {
+    const { data, error } = await supabase
+        .from('partner_redemption_trends')
+        .select('*')
+        .eq('partner_id', partnerId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching partner trends:', error);
+        return null;
+    }
+
+    if (!data) return null;
+
+    const redemptionsLast30 = data.redemptions_last_30 || 0;
+    const redemptionsPrev30 = data.redemptions_prev_30 || 0;
+    const viewsLast30 = data.views_last_30 || 0;
+    const viewsPrev30 = data.views_prev_30 || 0;
+
+    return {
+        redemptionsLast30,
+        redemptionsPrev30,
+        viewsLast30,
+        viewsPrev30,
+        redemptionGrowth: redemptionsPrev30 > 0
+            ? Math.round(((redemptionsLast30 - redemptionsPrev30) / redemptionsPrev30) * 100)
+            : (redemptionsLast30 > 0 ? 100 : 0),
+        viewGrowth: viewsPrev30 > 0
+            ? Math.round(((viewsLast30 - viewsPrev30) / viewsPrev30) * 100)
+            : (viewsLast30 > 0 ? 100 : 0),
+    };
 }

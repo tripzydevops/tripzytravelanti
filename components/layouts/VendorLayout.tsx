@@ -4,12 +4,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LayoutDashboard, ShoppingBag, QrCode, LogOut, Settings } from 'lucide-react';
 
 export const VendorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, signOut } = useAuth();
+    const { user, logout } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
 
     const handleSignOut = async () => {
-        await signOut();
+        await logout();
         navigate('/login');
     };
 

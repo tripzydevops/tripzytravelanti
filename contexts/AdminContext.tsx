@@ -60,6 +60,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 billingAddress: updatedUser.billingAddress,
                 status: updatedUser.status,
                 referredBy: updatedUser.referredBy || undefined,
+                role: updatedUser.role,
+                geofenceEnforcementMode: updatedUser.geofenceEnforcementMode,
             });
 
             // Handle Owned Deals logic (Wallet)

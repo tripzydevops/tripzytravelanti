@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { PartnerStats, Deal } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
-import { getDealsByPartnerPaginated } from '../../lib/supabaseService';
-import { BarChart3, Users, QrCode, TrendingUp, Plus, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getDealsByPartnerPaginated, getPartnerRedemptionTrends } from '../../lib/supabaseService';
+import { BarChart3, Users, QrCode, TrendingUp, TrendingDown, Plus, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
@@ -26,6 +26,16 @@ const PartnerDashboard: React.FC = () => {
 
             if (error && error.code !== 'PGRST116') throw error;
             return data as PartnerStats;
+        },
+        enabled: !!user
+    });
+
+    // Query for real analytics trends (replaces hardcoded +12% / +5%)
+    const { data: trends } = useQuery({
+        queryKey: ['partnerTrends', user?.id],
+        queryFn: async () => {
+            if (!user) return null;
+            return getPartnerRedemptionTrends(user.id);
         },
         enabled: !!user
     });
@@ -53,6 +63,32 @@ const PartnerDashboard: React.FC = () => {
         setPage(newPage);
     };
 
+    // Helper to render trend badge with real data
+    const renderTrendBadge = (growth: number | undefined | null) => {
+        if (growth === undefined || growth === null) {
+            return (
+                <span className="text-xs px-2 py-1 rounded-full bg-white/5 text-white/30 border border-white/10 flex items-center">
+                    <Minus className="w-3 h-3 mr-1" />
+                    N/A
+                </span>
+            );
+        }
+        if (growth >= 0) {
+            return (
+                <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    +{growth}%
+                </span>
+            );
+        }
+        return (
+            <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 flex items-center">
+                <TrendingDown className="w-3 h-3 mr-1" />
+                {growth}%
+            </span>
+        );
+    };
+
     if (isDealsLoading && !isPlaceholderData && !dealsData) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -77,7 +113,7 @@ const PartnerDashboard: React.FC = () => {
                 </Link>
             </div>
 
-            {/* Stats Grid */}
+            {/* Stats Grid — now using real trend data */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="glass-premium p-6 rounded-2xl relative overflow-hidden group hover:bg-white/10 transition-colors duration-300">
                     <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
@@ -85,13 +121,15 @@ const PartnerDashboard: React.FC = () => {
                         <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
                             <Users className="w-6 h-6 text-blue-400" />
                         </div>
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            +12%
-                        </span>
+                        {renderTrendBadge(trends?.viewGrowth)}
                     </div>
                     <h3 className="text-brand-text-muted text-sm font-medium">Total Views</h3>
                     <p className="text-3xl font-bold text-white mt-1">{stats?.totalViews || 0}</p>
+                    {trends && (
+                        <p className="text-[10px] text-white/30 mt-1">
+                            {trends.viewsLast30} last 30d · {trends.viewsPrev30} prev 30d
+                        </p>
+                    )}
                 </div>
 
                 <div className="glass-premium p-6 rounded-2xl relative overflow-hidden group hover:bg-white/10 transition-colors duration-300">
@@ -100,13 +138,15 @@ const PartnerDashboard: React.FC = () => {
                         <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
                             <QrCode className="w-6 h-6 text-purple-400" />
                         </div>
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            +5%
-                        </span>
+                        {renderTrendBadge(trends?.redemptionGrowth)}
                     </div>
                     <h3 className="text-brand-text-muted text-sm font-medium">Total Redemptions</h3>
                     <p className="text-3xl font-bold text-white mt-1">{stats?.totalRedemptions || 0}</p>
+                    {trends && (
+                        <p className="text-[10px] text-white/30 mt-1">
+                            {trends.redemptionsLast30} last 30d · {trends.redemptionsPrev30} prev 30d
+                        </p>
+                    )}
                 </div>
 
                 <div className="glass-premium p-6 rounded-2xl relative overflow-hidden group hover:bg-white/10 transition-colors duration-300">
@@ -175,7 +215,10 @@ const PartnerDashboard: React.FC = () => {
                                             ${deal.discountedPrice}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-text-light">
-                                            -
+                                            <span className="font-mono">{deal.redemptionsCount || 0}</span>
+                                            {deal.maxRedemptionsTotal && (
+                                                <span className="text-white/30 text-xs"> / {deal.maxRedemptionsTotal}</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <Link to={`/partner/edit-deal/${deal.id}`} className="text-brand-primary hover:text-brand-secondary transition-colors">Edit</Link>

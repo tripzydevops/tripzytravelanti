@@ -17,7 +17,7 @@ import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemp
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useSearch } from '../contexts/SearchContext';
 import InvoiceModal from '../components/InvoiceModal';
-import { getUserTransactions, uploadUserAvatar, handleReferralCode } from '../lib/supabaseService';
+import { getUserTransactions, uploadUserAvatar, handleReferralCode, getUserLoyaltyTransactions } from '../lib/supabaseService';
 import { PaymentTransaction } from '../types';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -67,6 +67,108 @@ const SettingsItem: React.FC<{ icon: React.ReactNode; title: string; subtitle?: 
   return (
     <div className={`${commonClasses} px-4`}>
       {content}
+    </div>
+  );
+};
+
+// =====================================================
+// LOYALTY HISTORY SECTION (PHASE 4)
+// =====================================================
+
+const LoyaltyHistorySection: React.FC<{
+  userId: string;
+  language: string;
+  points: number;
+}> = ({ userId, language, points }) => {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    getUserLoyaltyTransactions(userId, 20).then((data) => {
+      setTransactions(data);
+      setLoading(false);
+    });
+  }, [userId]);
+
+  const getTypeConfig = (type: string) => {
+    if (type.startsWith('earn')) return { label: language === 'tr' ? 'Kazanıldı' : 'Earned', color: 'text-green-400', bg: 'bg-green-500/10', icon: '+' };
+    if (type === 'burn' || type === 'redeem') return { label: language === 'tr' ? 'Harcandı' : 'Spent', color: 'text-red-400', bg: 'bg-red-500/10', icon: '-' };
+    if (type === 'expire') return { label: language === 'tr' ? 'Süresi Doldu' : 'Expired', color: 'text-amber-400', bg: 'bg-amber-500/10', icon: '-' };
+    return { label: type, color: 'text-white/60', bg: 'bg-white/5', icon: '' };
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+  };
+
+  return (
+    <div className="p-4">
+      {/* Points Balance */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs text-white/40 uppercase tracking-widest font-bold">
+            {language === 'tr' ? 'Mevcut Puanlar' : 'Current Balance'}
+          </p>
+          <p className="text-3xl font-black text-white mt-0.5">
+            {points.toLocaleString()}
+            <span className="text-sm font-medium text-gold-500/60 ml-1.5">pts</span>
+          </p>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
+          <span className="text-2xl">⭐</span>
+        </div>
+      </div>
+
+      {/* Transaction List */}
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gold-500"></div>
+        </div>
+      ) : transactions.length === 0 ? (
+        <p className="text-center text-white/30 text-sm py-6">
+          {language === 'tr' ? 'Henüz işlem yok.' : 'No transactions yet.'}
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {(expanded ? transactions : transactions.slice(0, 5)).map((tx) => {
+            const cfg = getTypeConfig(tx.type);
+            return (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/5 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center text-xs font-bold ${cfg.color}`}>
+                    {cfg.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{cfg.label}</p>
+                    <p className="text-[10px] text-white/30">{formatDate(tx.created_at)}</p>
+                  </div>
+                </div>
+                <span className={`text-sm font-bold font-mono ${cfg.color}`}>
+                  {cfg.icon}{Math.abs(tx.points_delta)}
+                </span>
+              </div>
+            );
+          })}
+          {transactions.length > 5 && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="w-full text-center text-xs text-gold-500/70 hover:text-gold-500 py-2 transition-colors font-bold uppercase tracking-wider"
+            >
+              {expanded
+                ? (language === 'tr' ? 'Daha Az Göster' : 'Show Less')
+                : (language === 'tr' ? `Tümünü Göster (${transactions.length})` : `Show All (${transactions.length})`)
+              }
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -428,6 +530,13 @@ const ProfilePage: React.FC = () => {
               </button>
             </div>
           </div>
+        </SettingsSection>
+      </div>
+
+      {/* Loyalty Points & Transaction History */}
+      <div className="mb-6">
+        <SettingsSection title={language === 'tr' ? 'Sadakat Puanları & Geçmiş' : 'Loyalty Points & History'}>
+          <LoyaltyHistorySection userId={user.id} language={language} points={user.points || 0} />
         </SettingsSection>
       </div>
 

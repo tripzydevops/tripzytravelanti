@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { LogOut, LayoutDashboard, QrCode, Settings, Menu, X } from 'lucide-react';
+import { LogOut, LayoutDashboard, QrCode, Settings, Menu, X, Ticket, MapPin } from 'lucide-react';
 
 const PartnerLayout: React.FC = () => {
     const { user, logout, loading } = useAuth();
@@ -138,6 +138,30 @@ const PartnerLayout: React.FC = () => {
                     >
                         <QrCode className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
                         Scan Code
+                    </NavLink>
+                    <NavLink
+                        to="/partner/coupons"
+                        className={({ isActive }) =>
+                            `flex items-center px-4 py-3 rounded-xl transition-all duration-300 group ${isActive
+                                ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/20 shadow-[0_0_15px_rgba(212,175,55,0.15)]'
+                                : 'text-brand-text-muted hover:bg-white/5 hover:text-white border border-transparent'
+                            }`
+                        }
+                    >
+                        <Ticket className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+                        Coupons
+                    </NavLink>
+                    <NavLink
+                        to="/partner/geofence"
+                        className={({ isActive }) =>
+                            `flex items-center px-4 py-3 rounded-xl transition-all duration-300 group ${isActive
+                                ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/20 shadow-[0_0_15px_rgba(212,175,55,0.15)]'
+                                : 'text-brand-text-muted hover:bg-white/5 hover:text-white border border-transparent'
+                            }`
+                        }
+                    >
+                        <MapPin className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+                        Geofencing
                     </NavLink>
                     <NavLink
                         to="/profile"

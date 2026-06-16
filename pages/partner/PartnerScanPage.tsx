@@ -30,32 +30,40 @@ const PartnerScanPage: React.FC = () => {
         setRedeemedDeal(null);
 
         try {
-            // Parse the QR code - new format: { "wi": "wallet_item_id", "rc": "redemption_code" }
-            // Also support legacy format: { "dealId": "...", "userId": "..." } or "dealId:userId"
+            // Parse the QR code - new dynamic format: { "wi": "wallet_item_id", "token": "rotating_token" }
+            // Also support static format: { "wi": "wallet_item_id", "rc": "redemption_code" }
             let walletItemId: string | null = null;
             let redemptionCode: string | null = null;
+            let rotatingToken: string | null = null;
 
             try {
                 const parsed = JSON.parse(code);
-                if (parsed.wi && parsed.rc) {
-                    // New secure format
+                if (parsed.wi && parsed.token) {
+                    // Dynamic rotating token format
+                    walletItemId = parsed.wi;
+                    rotatingToken = parsed.token;
+                } else if (parsed.wi && parsed.rc) {
+                    // Static secure code format
                     walletItemId = parsed.wi;
                     redemptionCode = parsed.rc;
                 } else if (parsed.walletItemId && parsed.redemptionCode) {
-                    // Alternative new format
+                    // Alternative static format
                     walletItemId = parsed.walletItemId;
                     redemptionCode = parsed.redemptionCode;
                 } else if (parsed.dealId && parsed.userId) {
-                    // Legacy format - can't use new system
+                    // Legacy format
                     throw new Error('Legacy QR code format. Please have user regenerate their QR code.');
                 }
             } catch (parseError: any) {
-                // Try splitting by colon for legacy format
+                if (parseError.message && parseError.message.includes('Legacy')) {
+                    throw parseError;
+                }
+                // Check if it's splitting by colon for legacy format
                 const parts = code.split(':');
                 if (parts.length === 2) {
                     throw new Error('Legacy code format. Please have user regenerate their QR code.');
                 }
-                // Maybe it's just the redemption code directly
+                // Maybe it's just the manual redemption code
                 redemptionCode = code.toUpperCase();
             }
 
@@ -74,20 +82,64 @@ const PartnerScanPage: React.FC = () => {
                 walletItemId = item.id;
             }
 
-            if (!walletItemId || !redemptionCode) {
+            if (!walletItemId) {
                 throw new Error('Invalid code format. Please scan a valid QR code.');
             }
 
-            // Call the secure redemption service
-            const { redeemWalletItem } = await import('../../lib/supabaseService');
-            const result = await redeemWalletItem(walletItemId, redemptionCode, user?.id);
+            let result: any;
+
+            if (rotatingToken) {
+                setVerificationMessage('Verifying dynamic token & geo-proximity...');
+                
+                // Get geolocation coordinates if available for geofencing validation
+                let vendorLatitude: number | undefined = undefined;
+                let vendorLongitude: number | undefined = undefined;
+                
+                try {
+                    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            timeout: 6000,
+                            maximumAge: 10000,
+                            enableHighAccuracy: true
+                        });
+                    });
+                    vendorLatitude = position.coords.latitude;
+                    vendorLongitude = position.coords.longitude;
+                } catch (geoErr) {
+                    console.warn('Geolocation denied or timed out. Continuing with token validation only:', geoErr);
+                }
+
+                // Call validate-qr-token Edge Function
+                const { data, error: functionError } = await supabase.functions.invoke('validate-qr-token', {
+                    body: {
+                        walletItemId,
+                        token: rotatingToken,
+                        vendorLatitude,
+                        vendorLongitude
+                    }
+                });
+
+                if (functionError) {
+                    throw functionError;
+                }
+                if (!data || data.error) {
+                    throw new Error(data?.error || 'Validation function returned an empty response');
+                }
+                result = data;
+            } else if (redemptionCode) {
+                // Call the secure redemption service (legacy static code path)
+                const { redeemWalletItem } = await import('../../lib/supabaseService');
+                result = await redeemWalletItem(walletItemId, redemptionCode, user?.id);
+            } else {
+                throw new Error('No validation credentials found. Please scan again.');
+            }
 
             if (result.requiresConfirmation) {
                 // High-value deal - waiting for user confirmation
                 setVerificationStatus('loading');
                 setVerificationMessage('Waiting for user to confirm on their device... (60 seconds)');
 
-                // Poll for confirmation (simple approach)
+                // Poll for confirmation
                 let attempts = 0;
                 const pollInterval = setInterval(async () => {
                     attempts++;
@@ -113,7 +165,7 @@ const PartnerScanPage: React.FC = () => {
             }
 
             if (!result.success) {
-                throw new Error(result.message);
+                throw new Error(result.message || 'Verification failed');
             }
 
             // Update partner stats (optional, for tracking)
@@ -202,7 +254,7 @@ const PartnerScanPage: React.FC = () => {
                     {verificationStatus === 'loading' && (
                         <div className="text-center py-12">
                             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary mx-auto mb-4"></div>
-                            <p className="text-lg text-gray-600 dark:text-gray-300">Verifying redemption code...</p>
+                            <p className="text-lg text-gray-600 dark:text-gray-300">{verificationMessage}</p>
                         </div>
                     )}
 
