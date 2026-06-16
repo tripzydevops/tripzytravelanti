@@ -11,7 +11,7 @@
 
   /* Card styles */
   .card {
-    @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-400 hover:shadow-2xl hover:border-white/10;
+    @apply bg-brand-surface rounded-2xl p-6 shadow-xl border border-white/5 transition-all duration-300 hover:shadow-2xl hover:border-white/10;
   }
 
   /* Input styles */

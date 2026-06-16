@@ -10,16 +10,16 @@ Phase 1: Git Staging & Committing
 
 ### Phase 1: Git Staging & Committing
 - [x] Create plan files (`task_plan.md`, `findings.md`, `progress.md`)
-- [ ] Run `git add` for all modified/untracked files in `C:\Users\elif\.gemini\antigravity\scratch\tripzy`
-- [ ] Commit changes with clear, descriptive messages
-- [ ] Push changes to `origin/main` on GitHub
-- **Status:** in_progress
+- [x] Run `git add` for all modified/untracked files in `C:\Users\elif\.gemini\antigravity\scratch\tripzy`
+- [x] Commit changes with clear, descriptive messages
+- [x] Push changes to `origin/main` on GitHub
+- **Status:** complete
 
 ### Phase 2: Requirements Analysis for Testing
 - [ ] Inspect existing test harness configurations in the Tripzy repository
 - [ ] Draft mock scenarios for scan validation and loyalty point expiration
 - [ ] Document research in `findings.md`
-- **Status:** pending
+- **Status:** in_progress
 
 ### Phase 3: Implementing Pytest (Backend & RPCs)
 - [ ] Write pytest test files for `secure_earn_points()`, `secure_burn_points()`, and `expire_loyalty_points()` RPCs

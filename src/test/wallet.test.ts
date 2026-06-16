@@ -210,6 +210,21 @@ describe('Wallet Logic', () => {
     });
 
     describe('redeemDeal', () => {
+        const createMockChain = (data: any = null, count: number = 0, error: any = null) => {
+            const chain: any = {
+                select: vi.fn().mockImplementation(() => chain),
+                insert: vi.fn().mockImplementation(() => chain),
+                update: vi.fn().mockImplementation(() => chain),
+                eq: vi.fn().mockImplementation(() => chain),
+                neq: vi.fn().mockImplementation(() => chain),
+                gte: vi.fn().mockImplementation(() => chain),
+                single: vi.fn().mockImplementation(() => Promise.resolve({ data, error })),
+                maybeSingle: vi.fn().mockImplementation(() => Promise.resolve({ data, error })),
+                then: vi.fn().mockImplementation((resolve: any) => resolve({ data, count, error })),
+            };
+            return chain;
+        };
+
         it('should atomically redeem an OWNED ACTIVE deal', async () => {
             // Mock successful atomic update
             const mockRedeemedItem = {
@@ -221,12 +236,10 @@ describe('Wallet Logic', () => {
             };
 
             // Setup mock for update chain
-            // from('wallet_items').update().eq().eq().eq().select() -> returns data
             const walletChain = {
                 update: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
                 select: vi.fn().mockResolvedValue({ data: [mockRedeemedItem], error: null }),
-                // Fallbacks if existing checks are called (should not be for this path)
                 maybeSingle: vi.fn(),
             };
 
@@ -234,13 +247,24 @@ describe('Wallet Logic', () => {
             const redemptionsChain = {
                 insert: vi.fn().mockReturnThis(),
                 select: vi.fn().mockReturnThis(),
-                single: vi.fn().mockResolvedValue({ data: { id: 'redemption-1', ...mockRedeemedItem }, error: null })
+                eq: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({ data: { id: 'redemption-1', ...mockRedeemedItem }, error: null }),
+                then: (resolve: any) => resolve({ count: 0, error: null })
             };
+
+            const dealsChain = createMockChain({
+                max_redemptions_total: null,
+                redemptions_count: 0,
+                usage_limit: 'unlimited',
+                max_user_redemptions: null,
+                required_tier: 'FREE'
+            });
 
             (supabase.from as any).mockImplementation((table: string) => {
                 if (table === 'wallet_items') return walletChain;
                 if (table === 'deal_redemptions') return redemptionsChain;
-                return { select: vi.fn() };
+                if (table === 'deals') return dealsChain;
+                return createMockChain();
             });
 
             const result = await redeemDeal(mockUserId, mockDealId);
@@ -256,12 +280,9 @@ describe('Wallet Logic', () => {
             const walletChain = {
                 update: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
-                // Fix: select() behaves differently based on usage
-                // select() -> end of update -> returns data
-                // select('status') -> start of query -> returns chain
                 select: vi.fn().mockImplementation((...args) => {
                     if (args.length > 0) return walletChain; // Query mode: return chain
-                    return { data: [], error: null }; // Update mode: return empty result (synchronous object for await)
+                    return { data: [], error: null }; // Update mode: return empty result
                 }),
 
                 // Then logic falls back to check "why" -> maybeSingle
@@ -271,21 +292,21 @@ describe('Wallet Logic', () => {
                 }),
             };
 
-            // Note: We need to bind the 'this' context or ensure the object returned is correct.
-            // Since walletChain is defined as const, we can return it.
+            const dealsChain = createMockChain({
+                max_redemptions_total: null,
+                redemptions_count: 0,
+                usage_limit: 'unlimited',
+                max_user_redemptions: null,
+                required_tier: 'FREE'
+            });
 
-            // Also need to handle 'then' if the chain itself is awaited?
-            // In the "Query mode", it returns walletChain.
-            // The code does: await supabase...select('status')...maybeSingle()
-            // .maybeSingle() returns a promise. So walletChain needs maybeSingle.
-            // It has it.
-            // But what if code does: await supabase...select('status')? 
-            // It doesn't. it chains maybeSingle.
-            // So this mock implementation should work.
+            const redemptionsChain = createMockChain(null, 0);
 
             (supabase.from as any).mockImplementation((table: string) => {
                 if (table === 'wallet_items') return walletChain;
-                return { select: vi.fn() };
+                if (table === 'deals') return dealsChain;
+                if (table === 'deal_redemptions') return redemptionsChain;
+                return createMockChain();
             });
 
             await expect(redeemDeal(mockUserId, mockDealId)).rejects.toThrow('already been redeemed');
@@ -303,45 +324,46 @@ describe('Wallet Logic', () => {
                 maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
             };
 
-            const dealChain = {
+            const dealChain = createMockChain({
+                max_redemptions_total: 100,
+                max_user_redemptions: 2, // 2 Per Month
+                redemptions_count: 5,
+                usage_limit: 'monthly',
+                required_tier: 'FREE'
+            });
+
+            // Mock past redemptions count check -> Returns 0 for lifetime check, then 2 for monthly check
+            let callCount = 0;
+            const redemptionsChain = {
                 select: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
-                single: vi.fn().mockResolvedValue({
-                    data: {
-                        max_redemptions_total: 100,
-                        max_user_redemptions: 1, // 1 Per Month
-                        redemptions_count: 5
-                    },
-                    error: null
-                })
+                gte: vi.fn().mockReturnThis(),
+                then: (resolve: any) => {
+                    callCount++;
+                    if (callCount === 1) {
+                        return resolve({ count: 0, error: null }); // lifetime check
+                    } else {
+                        return resolve({ count: 2, error: null }); // monthly check
+                    }
+                }
             };
 
-            // Mock past redemptions count check -> Returns 1 for THIS MONTH
-            const redemptionsQueryChain = {
-                select: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-                gte: vi.fn().mockReturnThis(), // Check for date filter
-                then: (resolve: any) => resolve({ count: 1, error: null })
-            };
+            const profileChain = createMockChain({ id: mockUserId, tier: 'BASIC' });
+            const planChain = createMockChain({ redemptions_per_period: 10 });
 
             (supabase.from as any).mockImplementation((table: string) => {
                 if (table === 'wallet_items') return walletChain;
+                if (table === 'profiles') return profileChain;
+                if (table === 'subscription_plans') return planChain;
                 if (table === 'deals') return dealChain;
-                // We need to differentiate the INSERT into deal_redemptions vs SELECT from it
-                if (table === 'deal_redemptions') {
-                    // Since we can't easily distinguish in this simple mock without more state,
-                    // We will assume the FIRST call is the check.
-                    // But wait, the code does: .select('id', { count: 'exact'... })
-                    // The chain has 'then' which returns count.
-                    return redemptionsQueryChain;
-                }
-                return { select: vi.fn() };
+                if (table === 'deal_redemptions') return redemptionsChain;
+                return createMockChain();
             });
 
             await expect(redeemDeal(mockUserId, mockDealId)).rejects.toThrow(/monthly redemption limit/);
 
             // Verify date filter was applied
-            expect(redemptionsQueryChain.gte).toHaveBeenCalledWith('redeemed_at', expect.any(String));
+            expect(redemptionsChain.gte).toHaveBeenCalledWith('redeemed_at', expect.any(String));
         });
 
         it('should proceed to unowned redemption checks if deal not in wallet', async () => {
@@ -349,7 +371,6 @@ describe('Wallet Logic', () => {
             const walletChain: any = {
                 update: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
-                // Same fix here
                 select: vi.fn().mockImplementation((...args) => {
                     if (args.length > 0) return walletChain;
                     return { data: [], error: null };
@@ -363,10 +384,23 @@ describe('Wallet Logic', () => {
             };
 
             // Limit checks
-            const profileChain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: mockUserId, tier: 'BASIC' }, error: null }) };
-            const planChain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { redemptions_per_period: 10 }, error: null }) };
-            const dealChain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { max_redemptions_total: 100 }, error: null }) };
-            const redemptionsChain = { insert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'r-1' }, error: null }) };
+            const profileChain = createMockChain({ id: mockUserId, tier: 'BASIC' });
+            const planChain = createMockChain({ redemptions_per_period: 10 });
+            const dealChain = createMockChain({
+                max_redemptions_total: 100,
+                redemptions_count: 0,
+                usage_limit: 'unlimited',
+                max_user_redemptions: null,
+                required_tier: 'FREE'
+            });
+            
+            const redemptionsChain = {
+                select: vi.fn().mockReturnThis(),
+                insert: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({ data: { id: 'r-1' }, error: null }),
+                then: (resolve: any) => resolve({ count: 0, error: null })
+            };
 
             (supabase.from as any).mockImplementation((table: string) => {
                 if (table === 'wallet_items') return walletChain;
@@ -374,7 +408,7 @@ describe('Wallet Logic', () => {
                 if (table === 'subscription_plans') return planChain;
                 if (table === 'deals') return dealChain;
                 if (table === 'deal_redemptions') return redemptionsChain;
-                return { select: vi.fn() };
+                return createMockChain();
             });
 
             // Should succeed

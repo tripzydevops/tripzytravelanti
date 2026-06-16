@@ -151,7 +151,9 @@ export async function getAIRecommendations(
         const recommendedIds = await rankDeals(prompt);
 
         if (recommendedIds && recommendedIds.length > 0) {
-            const recommendations = allDeals.filter(d => recommendedIds.includes(d.id));
+            const recommendations = recommendedIds
+                .map(id => allDeals.find(d => d.id === id))
+                .filter((d): d is Deal => !!d);
             if (recommendations.length > 0) {
                 return recommendations;
             }
