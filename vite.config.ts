@@ -68,6 +68,16 @@ export default defineConfig(({ mode }) => {
       // Improve build performance
       sourcemap: false, // Disable sourcemaps for faster builds
       reportCompressedSize: false, // Skip gzip size reporting
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'lib/**/*.test.ts'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html'],
+      },
     }
   };
 });

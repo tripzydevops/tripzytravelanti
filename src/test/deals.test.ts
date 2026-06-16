@@ -14,6 +14,10 @@ vi.mock('../../lib/supabaseClient', () => ({
             order: vi.fn(),
             single: vi.fn(),
         })),
+        functions: {
+            invoke: vi.fn().mockResolvedValue({ data: { success: true }, error: null })
+        },
+        rpc: vi.fn().mockResolvedValue({ data: null, error: null })
     },
 }));
 

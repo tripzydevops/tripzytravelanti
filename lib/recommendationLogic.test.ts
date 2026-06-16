@@ -1,6 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getAIRecommendations } from './recommendationLogic';
-import { User, Deal, SubscriptionTier } from '../types';
+
+// Mock supabaseClient FIRST to prevent crash on import
+vi.mock('./supabaseClient', () => ({
+    supabase: {
+        from: vi.fn(),
+        auth: { getUser: vi.fn() },
+        rpc: vi.fn(),
+        functions: { invoke: vi.fn() },
+    }
+}));
+
+// Mock supabaseService to prevent getEngagementLogs from calling real Supabase
+vi.mock('./supabaseService', () => ({
+    getEngagementLogs: vi.fn().mockResolvedValue([]),
+}));
 
 // Mock vectorService
 vi.mock('./vectorService', () => ({
@@ -8,6 +21,9 @@ vi.mock('./vectorService', () => ({
     rankDeals: vi.fn(),
     generateText: vi.fn().mockResolvedValue('')
 }));
+
+import { getAIRecommendations } from './recommendationLogic';
+import { User, Deal, SubscriptionTier } from '../types';
 
 import { rankDeals } from './vectorService';
 
