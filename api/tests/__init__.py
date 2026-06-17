@@ -1,0 +1,1 @@
+# Tripzy FastAPI tests package
