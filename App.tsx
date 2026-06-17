@@ -297,8 +297,12 @@ function AnimatedRoutes() {
 }
 
 function AppContent() {
+  const location = useLocation();
   const { isChatbotVisible } = useLayout();
   const { user, loading } = useAuth();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isPartnerRoute = location.pathname.startsWith("/partner");
+  const isDealDetailRoute = /^\/deals\/[^/]+/.test(location.pathname);
 
   if (loading) {
     return (
@@ -307,12 +311,6 @@ function AppContent() {
       </div>
     );
   }
-
-  /* Check if we are on an admin or partner route */
-  const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith("/admin");
-  const isPartnerRoute = location.pathname.startsWith("/partner");
-  const isDealDetailRoute = /^\/deals\/[^/]+/.test(location.pathname);
 
   return (
     <SearchProvider>
