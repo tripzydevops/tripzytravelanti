@@ -146,11 +146,37 @@ export async function getAIRecommendations(
     Return ONLY a JSON array of the 3 matching deal IDs. Example: ["123", "456", "789"]
   `;
 
-    // 4. Call Gemini via Secure Edge Function
+    // 4. Call FastAPI Backend Recommendation Engine
     try {
-        const recommendedIds = await rankDeals(prompt);
+        const { supabase } = await import('./supabaseClient');
+        const session = (await supabase.auth.getSession()).data.session;
+        const token = session?.access_token;
+        
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
 
-        if (recommendedIds && recommendedIds.length > 0) {
+        const response = await fetch(`${apiUrl}/api/v1/recommendations`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                user_id: user.id,
+                limit: 3
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`FastAPI request failed with status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const recommendedIds: string[] = data.recommendations?.map((r: any) => r.id) || [];
+
+        if (recommendedIds.length > 0) {
             const recommendations = recommendedIds
                 .map(id => allDeals.find(d => d.id === id))
                 .filter((d): d is Deal => !!d);
@@ -159,8 +185,22 @@ export async function getAIRecommendations(
             }
         }
     } catch (error) {
-        console.error("AI Recommendation failed:", error);
-        // Fall through to fallback logic below
+        console.error("FastAPI AI Recommendation failed, falling back to local/edge:", error);
+        
+        // Fallback: Call legacy Gemini via Edge Function
+        try {
+            const recommendedIds = await rankDeals(prompt);
+            if (recommendedIds && recommendedIds.length > 0) {
+                const recommendations = recommendedIds
+                    .map(id => allDeals.find(d => d.id === id))
+                    .filter((d): d is Deal => !!d);
+                if (recommendations.length > 0) {
+                    return recommendations;
+                }
+            }
+        } catch (fallbackError) {
+            console.error("Edge Function AI Recommendation fallback failed:", fallbackError);
+        }
     }
 
     // Fallback Logic

@@ -12,6 +12,7 @@ else:
 SUPABASE_URL = os.getenv("VITE_SUPABASE_URL") or os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("VITE_SUPABASE_ANON_KEY") or os.getenv("SUPABASE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET") or os.getenv("VITE_SUPABASE_JWT_SECRET")
 
 if not SUPABASE_URL:
     raise ValueError("Missing SUPABASE_URL environment variable")
@@ -19,3 +20,6 @@ if not SUPABASE_KEY:
     raise ValueError("Missing SUPABASE_KEY/VITE_SUPABASE_ANON_KEY environment variable")
 if not GEMINI_API_KEY:
     raise ValueError("Missing GEMINI_API_KEY environment variable")
+if not SUPABASE_JWT_SECRET:
+    raise ValueError("Missing SUPABASE_JWT_SECRET environment variable")
+

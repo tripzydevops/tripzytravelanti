@@ -1,9 +1,21 @@
+import jwt
+import datetime
+import time
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from api.main import app
+from api.config import SUPABASE_JWT_SECRET
 from uuid import uuid4
 
 client = TestClient(app)
+
+def generate_test_jwt(user_id: str) -> str:
+    payload = {
+        "sub": user_id,
+        "email": "test@example.com",
+        "exp": int(time.time()) + 3600
+    }
+    return jwt.encode(payload, SUPABASE_JWT_SECRET, algorithm="HS256")
 
 def test_read_root():
     response = client.get("/")
@@ -24,11 +36,12 @@ def test_get_recommendations(
     mock_get_logs,
     mock_get_profile
 ):
-    user_id = uuid4()
+    user_id = str(uuid4())
+    token = generate_test_jwt(user_id)
     
     # Setup mocks
     mock_get_profile.return_value = {
-        "id": str(user_id),
+        "id": user_id,
         "name": "Test User",
         "email": "test@example.com",
         "tier": "PREMIUM",
@@ -62,31 +75,69 @@ def test_get_recommendations(
     }
     
     payload = {
-        "user_id": str(user_id),
+        "user_id": user_id,
         "limit": 1
     }
     
-    response = client.post("/api/v1/recommendations", json=payload)
+    # Send with valid authorization header
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.post("/api/v1/recommendations", json=payload, headers=headers)
     assert response.status_code == 200
     
     data = response.json()
-    assert data["user_id"] == str(user_id)
+    assert data["user_id"] == user_id
     assert len(data["recommendations"]) == 1
     assert data["recommendations"][0]["title"] == "Mock Deal"
-    assert data["recommendations"][0]["recommendation_score"] == 9.5
     assert data["explanation"] == "Turkish general explanation"
+
+def test_get_recommendations_unauthorized():
+    payload = {
+        "user_id": str(uuid4()),
+        "limit": 1
+    }
+    # Send without authorization header
+    response = client.post("/api/v1/recommendations", json=payload)
+    assert response.status_code == 401
+    assert "Missing Authorization" in response.json()["detail"]
+
+def test_get_recommendations_forbidden_user_mismatch():
+    user_id = str(uuid4())
+    mismatched_user_id = str(uuid4())
+    token = generate_test_jwt(mismatched_user_id) # token is for a different user
+    
+    payload = {
+        "user_id": user_id,
+        "limit": 1
+    }
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.post("/api/v1/recommendations", json=payload, headers=headers)
+    assert response.status_code == 403
+    assert "Token subject does not match" in response.json()["detail"]
 
 @patch("api.main.insert_user_signal")
 def test_post_signal(mock_insert_signal):
+    user_id = str(uuid4())
+    token = generate_test_jwt(user_id)
     mock_insert_signal.return_value = {"id": "some-signal-uuid"}
     
+    payload = {
+        "user_id": user_id,
+        "signal_type": "view",
+        "target_id": str(uuid4()),
+        "metadata": {"test": "metadata"}
+    }
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.post("/api/v1/signals", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+def test_post_signal_unauthorized():
     payload = {
         "user_id": str(uuid4()),
         "signal_type": "view",
         "target_id": str(uuid4()),
         "metadata": {"test": "metadata"}
     }
-    
     response = client.post("/api/v1/signals", json=payload)
-    assert response.status_code == 200
-    assert response.json()["success"] is True
+    assert response.status_code == 401

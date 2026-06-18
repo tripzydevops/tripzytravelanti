@@ -27,6 +27,73 @@ const corsHeaders = {
 };
 
 const registerCommonMocks = async (page: any) => {
+  // Mock FastAPI backend endpoints
+  await page.route(/localhost:8000\/api\/v1/, async (route: any) => {
+    const request = route.request();
+    const url = request.url();
+    const method = request.method();
+    console.log('MOCK FASTAPI INTERCEPTED:', method, url);
+
+    if (method === 'OPTIONS') {
+      await route.fulfill({
+        status: 204,
+        headers: corsHeaders
+      });
+      return;
+    }
+
+    if (url.includes('/api/v1/recommendations')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: corsHeaders,
+        body: JSON.stringify({
+          user_id: '500f14fb-0d04-4ea0-a3cf-63a9ea561ddf',
+          recommendations: [
+            {
+              id: '787c88b9-47b2-4d00-9856-11f46bf84347',
+              title: 'Historical Galata Tour',
+              title_tr: 'Tarihi Galata Turu',
+              description: 'Walk around Galata Tower.',
+              description_tr: 'Tarihi Galata Kulesi Yürüyüşü',
+              image_url: 'https://picsum.photos/seed/galata/400/300',
+              category: 'Travel',
+              category_tr: 'Seyahat',
+              original_price: 50.0,
+              discounted_price: 30.0,
+              required_tier: 'FREE',
+              vendor: 'Istanbul Guides',
+              rating: 4.8,
+              rating_count: 12,
+              recommendation_score: 9.5,
+              reason_tr: 'Cunku bunu seversiniz',
+              reason_en: 'Because you would love this'
+            }
+          ],
+          explanation: 'Mocked FastAPI recommendation explanation'
+        })
+      });
+      return;
+    }
+
+    if (url.includes('/api/v1/signals')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: corsHeaders,
+        body: JSON.stringify({ success: true, message: 'Signal recorded successfully' })
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: corsHeaders,
+      body: JSON.stringify([])
+    });
+  });
+
   await page.route(/cwmerdoqeokuufotsvmd\.supabase\.co/, async (route: any) => {
     const request = route.request();
     const url = request.url();
