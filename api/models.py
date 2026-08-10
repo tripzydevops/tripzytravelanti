@@ -54,6 +54,23 @@ class RecommendationResponse(BaseModel):
 class SignalRequest(BaseModel):
     user_id: Optional[UUID] = None
     session_id: Optional[str] = None
-    signal_type: str  # 'view', 'click', 'search', 'favorite', 'save', 'claim', 'redeem', 'rate'
+    signal_type: str  # 'view', 'click', 'search', 'favorite', 'save', 'claim', 'redeem', 'rate', 'dwell', 'scroll', 'hover'
     target_id: str
     metadata: Optional[Dict[str, Any]] = None
+
+class BatchSignalRequest(BaseModel):
+    user_id: UUID
+    session_id: Optional[str] = None
+    signals: List[Dict[str, Any]]
+
+class LocationUpdateRequest(BaseModel):
+    user_id: UUID
+    geofence_zone_id: UUID
+    latitude: float
+    longitude: float
+
+class LocationUpdateResponse(BaseModel):
+    triggered: bool
+    match_probability: float
+    notification_sent: bool
+    message: str

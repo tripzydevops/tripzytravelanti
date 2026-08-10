@@ -60,9 +60,32 @@ const StarRating: React.FC<{
 
 const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   const { user } = useAuth();
-  const { saveDeal, unsaveDeal, isDealSaved } = useUserActivity();
+  const { saveDeal, unsaveDeal, isDealSaved, bufferSignal } = useUserActivity();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+
+  const hoverTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    hoverTimerRef.current = setTimeout(() => {
+      bufferSignal("hover", deal.id, { source: "DealCard", duration_ms: 750 });
+    }, 750);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   const userTierLevel = user
     ? TIER_LEVELS[user.tier]
@@ -318,12 +341,16 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full">
+    <div
+      className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <Link
         to={`/deals/${deal.id}`}
         className="flex flex-col flex-grow cursor-pointer"
         onClick={() =>
-          logEngagementEvent(user?.id, "click", deal.id, {
+          bufferSignal("click", deal.id, {
             source: "DealCard",
             state: isLocked ? "locked" : "unlocked",
           })

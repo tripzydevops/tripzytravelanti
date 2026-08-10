@@ -4,13 +4,24 @@ import jwt
 from collections import defaultdict
 from fastapi import FastAPI, HTTPException, status, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from api.models import RecommendationRequest, RecommendationResponse, SignalRequest
+from api.models import (
+    RecommendationRequest, 
+    RecommendationResponse, 
+    SignalRequest,
+    BatchSignalRequest,
+    LocationUpdateRequest,
+    LocationUpdateResponse
+)
 from api.services.supabase_service import (
     get_user_profile, 
     get_engagement_logs, 
     get_linked_loyalty_mappings, 
     get_candidate_deals,
-    insert_user_signal
+    insert_user_signal,
+    get_geofence_zone,
+    get_deal_by_id,
+    check_recent_notification,
+    insert_notification
 )
 from api.services.agents import run_cold_start_agent, run_recommendation_agent
 from api.config import SUPABASE_JWT_SECRET
@@ -158,3 +169,151 @@ def post_signal(req: SignalRequest, token_payload: dict = Depends(verify_jwt_tok
             detail="Failed to record signal"
         )
     return {"success": True, "message": "Signal recorded successfully"}
+
+@app.post("/api/v1/signals/batch", dependencies=[Depends(check_rate_limit)])
+def post_signals_batch(req: BatchSignalRequest, token_payload: dict = Depends(verify_jwt_token)):
+    token_user_id = token_payload.get("sub")
+    if token_user_id != str(req.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Token subject does not match requested user ID"
+        )
+
+    recorded_count = 0
+    for sig in req.signals:
+        sig_type = sig.get("signal_type")
+        target_id = sig.get("target_id")
+        meta = sig.get("metadata")
+        if sig_type and target_id:
+            res = insert_user_signal(
+                user_id=req.user_id,
+                session_id=req.session_id,
+                signal_type=sig_type,
+                target_id=target_id,
+                metadata=meta
+            )
+            if res:
+                recorded_count += 1
+
+    return {"success": True, "recorded_count": recorded_count, "total_count": len(req.signals)}
+
+@app.post("/api/v1/location-update", response_model=LocationUpdateResponse, dependencies=[Depends(check_rate_limit)])
+def handle_location_update(req: LocationUpdateRequest, token_payload: dict = Depends(verify_jwt_token)):
+    token_user_id = token_payload.get("sub")
+    if token_user_id != str(req.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Token subject does not match requested user ID"
+        )
+        
+    zone = get_geofence_zone(req.geofence_zone_id)
+    if not zone:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Geofence zone not found"
+        )
+        
+    if not zone.get("is_active"):
+        return LocationUpdateResponse(
+            triggered=False,
+            match_probability=0.0,
+            notification_sent=False,
+            message="Geofence zone is inactive"
+        )
+        
+    deal_id = zone.get("deal_id")
+    if not deal_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No deal linked to this geofence zone"
+        )
+        
+    deal = get_deal_by_id(deal_id)
+    if not deal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Associated deal not found"
+        )
+        
+    profile = get_user_profile(req.user_id)
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found"
+        )
+        
+    logs = get_engagement_logs(req.user_id)
+    mappings = get_linked_loyalty_mappings(req.user_id)
+    
+    inferred_prefs = run_cold_start_agent(profile, mappings)
+    category = deal.get("category") or "Unknown"
+    
+    c_cat = 0.3
+    for pref in inferred_prefs:
+        if pref.get("category") == category:
+            c_cat = float(pref.get("confidence") or 0.3)
+            break
+            
+    category_boost = 0.0
+    has_history = len(logs) > 0
+    
+    for log in logs:
+        log_event = log.get("event_type")
+        item_id = log.get("item_id")
+        log_meta = log.get("metadata") or {}
+        log_category = log_meta.get("category")
+        
+        if item_id == str(deal_id) or log_category == category:
+            if log_event in ("save", "claim", "favorite"):
+                category_boost = max(category_boost, 0.3)
+            elif log_event in ("view", "click"):
+                category_boost = max(category_boost, 0.2)
+                
+    rating = float(deal.get("rating") or 0.0)
+    rating_boost = (rating / 5.0) * 0.3
+    
+    if has_history:
+        p = 0.4 * c_cat + category_boost + rating_boost
+    else:
+        # Cold start adjustment: distribute category_boost's weight to c_cat
+        p = 0.7 * c_cat + rating_boost
+        
+    p = round(min(max(p, 0.0), 1.0), 2)
+    
+    triggered = p >= 0.85
+    notification_sent = False
+    message = f"Location update processed. Match probability: {p}."
+    
+    if triggered:
+        link = f"#/deal/{deal_id}"
+        has_recent = check_recent_notification(req.user_id, link, hours=24)
+        
+        if not has_recent:
+            title = "Exclusive Deal Nearby!"
+            body = f"You are close to {deal.get('vendor', 'merchant')}! Claim \"{deal.get('title')}\" now."
+            
+            inserted = insert_notification(
+                user_id=req.user_id,
+                title=title,
+                message=body,
+                type_str="geofence_deal",
+                link=link
+            )
+            
+            if inserted:
+                notification_sent = True
+                message += " Push notification triggered and delivered."
+                
+                fcm_token = profile.get("fcm_token") or "unknown_token"
+                print(f"[FCM] Dispatched geofence push notification to user token [{fcm_token}] for deal [{deal_id}]")
+            else:
+                message += " Failed to insert notification record."
+        else:
+            message += " Bypassed notification dispatch due to active 24h cooling window."
+            
+    return LocationUpdateResponse(
+        triggered=triggered,
+        match_probability=p,
+        notification_sent=notification_sent,
+        message=message
+    )

@@ -228,10 +228,15 @@ const registerCommonMocks = async (page: any) => {
         expires_at: new Date(Date.now() + 86400000 * 5).toISOString()
       };
 
+      const headers = {
+        ...corsHeaders,
+        ...(isSingle ? {} : { 'content-range': '0-0/1' })
+      };
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        headers: corsHeaders,
+        headers: headers,
         body: JSON.stringify(isSingle ? dealData : [dealData])
       });
       return;
@@ -285,6 +290,7 @@ const registerCommonMocks = async (page: any) => {
 
     // Partner stats mock
     if (url.includes('/rest/v1/partner_stats')) {
+      const isSingle = request.headers()['accept']?.includes('vnd.pgrst.object') || url.includes('single') || url.includes('?id=eq.') || url.includes('&id=eq.');
       const statsData = {
         id: 'stats-111-222',
         partner_id: 'b0f3742f-858a-4e3b-9bfb-31620beef6db',
@@ -298,7 +304,7 @@ const registerCommonMocks = async (page: any) => {
         status: 200,
         contentType: 'application/json',
         headers: corsHeaders,
-        body: JSON.stringify(statsData)
+        body: JSON.stringify(isSingle ? statsData : [statsData])
       });
       return;
     }
@@ -404,18 +410,16 @@ test.describe('Deals and Coupon Verification Flow', () => {
       await dealLink.click();
       await expect(page).toHaveURL(/\/deals\/.+/);
     } else {
-      // Check deal title is visible (use .first() to avoid strict mode violations if rendered in carousel/main list)
-      const dealTitle = page.locator('text=Tarihi Galata Turu').first();
-      await dealTitle.waitFor({ state: 'visible', timeout: 15000 });
-      await expect(dealTitle).toBeVisible();
-
       // Click on the deal card to open detail page/view
-      await dealTitle.click();
+      const dealLink = page.locator('a[href^="/deals/"]').first();
+      await dealLink.waitFor({ state: 'visible', timeout: 15000 });
+      await expect(dealLink).toBeVisible();
+      await dealLink.click();
 
       // Verify detail page has correct details
       await expect(page.locator('h2').first()).toContainText('Tarihi Galata Turu');
       await expect(page.locator('text=Istanbul Guides')).toBeVisible();
-      await expect(page.locator('text=30')).toBeVisible();
+      await expect(page.locator('text=30').first()).toBeVisible();
     }
   });
 
@@ -429,26 +433,36 @@ test.describe('Deals and Coupon Verification Flow', () => {
 
     // Mock coupon code lookup
     await page.route(/\/rest\/v1\/coupon_codes/, async route => {
+      const url = route.request().url();
+      if (url.includes('status=eq.redeemed')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: corsHeaders,
+          body: JSON.stringify([])
+        });
+        return;
+      }
+      const isSingle = route.request().headers()['accept']?.includes('vnd.pgrst.object') || url.includes('limit=1');
+      const couponData = {
+        id: 'abc788b9-47b2-4d00-9856-11f46bf84347',
+        status: 'active',
+        code: 'WELCOME10',
+        campaign: {
+          id: 'camp788b9-47b2-4d00-9856-11f46bf84347',
+          title: 'Welcome Discount',
+          discount_type: 'percentage',
+          discount_value: 10.0,
+          max_per_user: 1,
+          is_active: true,
+          deal_id: null
+        }
+      };
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         headers: corsHeaders,
-        body: JSON.stringify([
-          {
-            id: 'abc788b9-47b2-4d00-9856-11f46bf84347',
-            status: 'active',
-            code: 'WELCOME10',
-            campaign: {
-              id: 'camp788b9-47b2-4d00-9856-11f46bf84347',
-              title: 'Welcome Discount',
-              discount_type: 'percentage',
-              discount_value: 10.0,
-              max_per_user: 1,
-              is_active: true,
-              deal_id: null
-            }
-          }
-        ])
+        body: JSON.stringify(isSingle ? couponData : [couponData])
       });
     });
 

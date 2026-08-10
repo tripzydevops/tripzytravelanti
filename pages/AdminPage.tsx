@@ -15,6 +15,7 @@ import AdminBackgroundsTab from "../components/admin/AdminBackgroundsTab";
 import { AdminAnnouncementsTab } from "../components/admin/AdminAnnouncementsTab";
 import AdminPromoCodesTab from "../components/admin/AdminPromoCodesTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
+import AdminFraudSignalsTab from "../components/admin/AdminFraudSignalsTab";
 import {
   BarChartIcon,
   TagIcon,
@@ -37,7 +38,7 @@ import {
 } from "../components/Icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Menu } from "lucide-react";
+import { Menu, ShieldAlert } from "lucide-react";
 
 const AdminPage: React.FC = () => {
   const { t } = useLanguage();
@@ -57,6 +58,7 @@ const AdminPage: React.FC = () => {
     | "backgrounds"
     | "promo_codes"
     | "audit_logs"
+    | "fraud_signals"
   >("analytics");
   const [pendingCount, setPendingCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile toggle
@@ -188,6 +190,11 @@ const AdminPage: React.FC = () => {
           id: "audit_logs",
           label: t("adminAuditLogs"),
           icon: <Terminal className="w-5 h-5" />,
+        },
+        {
+          id: "fraud_signals",
+          label: "Security Warnings",
+          icon: <ShieldAlert className="w-5 h-5 text-orange-500" />,
         },
       ],
     },
@@ -478,6 +485,7 @@ const AdminPage: React.FC = () => {
             {activeTab === "backgrounds" && <AdminBackgroundsTab />}
             {activeTab === "promo_codes" && <AdminPromoCodesTab />}
             {activeTab === "audit_logs" && <AdminAuditLogsTab />}
+            {activeTab === "fraud_signals" && <AdminFraudSignalsTab />}
           </div>
         </main>
       </div>

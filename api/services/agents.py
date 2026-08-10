@@ -1,10 +1,19 @@
+import math
+import numpy as np
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from api.config import GEMINI_API_KEY
-from api.services.supabase_service import get_user_profile, get_engagement_logs, get_linked_loyalty_mappings
+from api.services.supabase_service import (
+    get_user_profile,
+    get_engagement_logs,
+    get_linked_loyalty_mappings,
+    get_user_latent_factors,
+    get_deal_latent_factors,
+    get_implicit_latent_factors
+)
 
 # Initialize Gemini Client
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -104,26 +113,54 @@ def run_recommendation_agent(
     if not candidate_deals:
         return {"selected_deal_ids": [], "recommendation_explanations": [], "general_summary": "No active deals found."}
 
-    # 1. Compute Hybrid Score for each candidate deal
+    # 1. Fetch SVD++ Latent Factors from DB
+    user_id = user_profile.get("id")
+    user_factors = get_user_latent_factors(user_id) if user_id else None
+    
+    deal_ids = [str(d["id"]) for d in candidate_deals]
+    deal_factors_list = get_deal_latent_factors(deal_ids)
+    deal_factors_map = {f["deal_id"]: f for f in deal_factors_list}
+    
+    implicit_factors_list = get_implicit_latent_factors()
+    implicit_factors_map = {f["category"]: f for f in implicit_factors_list}
+    
+    # SVD++ User components
+    mu = 0.5
+    b_u = float(user_factors.get("bias", 0.0)) if user_factors else 0.0
+    p_u = np.array(user_factors.get("factors")) if user_factors and user_factors.get("factors") else np.zeros(32)
+    
+    I_u = [log.get("item_id") for log in history_logs if log.get("item_id")]
+    sz_I_u = len(I_u)
+    
+    sum_y = np.zeros(32)
+    for j in I_u:
+        # Find category of implicit deal
+        deal_ref = next((d for d in candidate_deals if str(d["id"]) == j), None)
+        cat = deal_ref.get("category") if deal_ref else "Unknown"
+        if cat in implicit_factors_map and implicit_factors_map[cat].get("factors"):
+            sum_y += np.array(implicit_factors_map[cat]["factors"])
+            
+    norm_sum_y = sum_y / math.sqrt(sz_I_u) if sz_I_u > 0 else np.zeros(32)
+    u_factor = p_u + norm_sum_y
+    
+    # Dynamic weight fusion based on history volume
+    num_interactions = len(history_logs)
+    if num_interactions == 0:
+        alpha = 0.0
+    elif num_interactions < 5:
+        alpha = 0.5
+    else:
+        alpha = 0.8
+        
     scored_candidates = []
     
     # User interaction history mapping
     saved_deal_ids = set()
     redeemed_deal_ids = set()
-    category_interaction_counts = {}
     
     for log in history_logs:
         event = log.get("event_type")
         item_id = log.get("item_id")
-        
-        # We need to find corresponding deal categories
-        # Let's count category frequencies
-        deal_ref = next((d for d in candidate_deals if str(d["id"]) == item_id), None)
-        if deal_ref:
-            cat = deal_ref.get("category")
-            if cat:
-                category_interaction_counts[cat] = category_interaction_counts.get(cat, 0) + 1
-                
         if event in ("save", "favorite"):
             saved_deal_ids.add(item_id)
         elif event in ("claim", "redeem"):
@@ -136,26 +173,34 @@ def run_recommendation_agent(
         deal_id_str = str(deal["id"])
         category = deal.get("category")
         
-        score = 0.0
+        # A. SVD++ prediction
+        b_i = 0.0
+        q_i = np.zeros(32)
         
-        # A. History interactions
+        if deal_id_str in deal_factors_map:
+            b_i = float(deal_factors_map[deal_id_str].get("bias", 0.0))
+            if deal_factors_map[deal_id_str].get("factors"):
+                q_i = np.array(deal_factors_map[deal_id_str]["factors"])
+                
+        svd_score = mu + b_u + b_i + np.dot(q_i, u_factor)
+        svd_rating_score = min(max(svd_score, 0.0), 1.0) * 10.0
+        
+        # B. Lifestyle projection (Cold start confidence)
+        lifestyle_score = float(inferred_weights.get(category, 0.3)) * 10.0
+        
+        # C. Fusion
+        fused_score = alpha * svd_rating_score + (1.0 - alpha) * lifestyle_score
+        
+        # D. Direct history & rating boost
+        rating = float(deal.get("rating") or 0.0)
+        rating_boost = (rating / 5.0) * 2.0
+        
+        score = fused_score + rating_boost
         if deal_id_str in saved_deal_ids:
             score += 5.0
         if deal_id_str in redeemed_deal_ids:
             score += 10.0
             
-        # B. Category interactions
-        cat_count = category_interaction_counts.get(category, 0)
-        score += min(cat_count * 1.5, 6.0)
-        
-        # C. Cold-start / Inferred preferences boost
-        inferred_conf = inferred_weights.get(category, 0.0)
-        score += inferred_conf * 5.0
-        
-        # D. Rating boost
-        rating = float(deal.get("rating") or 0.0)
-        score += (rating / 5.0) * 2.0
-        
         scored_candidates.append({
             "deal": deal,
             "score": round(score, 2)

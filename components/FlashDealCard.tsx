@@ -15,10 +15,33 @@ interface FlashDealCardProps {
 const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
     const { user } = useAuth();
     const { language, t } = useLanguage();
-    const { saveDeal, unsaveDeal, isDealSaved } = useUserActivity();
+    const { saveDeal, unsaveDeal, isDealSaved, bufferSignal } = useUserActivity();
     const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
 
     const isSaved = isDealSaved(deal.id);
+
+    const hoverTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    const handleMouseEnter = () => {
+        hoverTimerRef.current = setTimeout(() => {
+            bufferSignal('hover', deal.id, { source: 'FlashDealCard', duration_ms: 750 });
+        }, 750);
+    };
+
+    const handleMouseLeave = () => {
+        if (hoverTimerRef.current) {
+            clearTimeout(hoverTimerRef.current);
+            hoverTimerRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (hoverTimerRef.current) {
+                clearTimeout(hoverTimerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (!deal.flash_end_time) return;
@@ -62,7 +85,11 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
     const description = language === 'tr' ? deal.description_tr : deal.description;
 
     return (
-        <div className="w-full max-w-5xl mx-auto mb-16 transform hover:scale-[1.005] transition-all duration-500">
+        <div
+            className="w-full max-w-5xl mx-auto mb-16 transform hover:scale-[1.005] transition-all duration-500"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
             <div className="relative overflow-hidden rounded-[2.5rem] glass-premium shadow-2xl group">
                 {/* Save Button (Floating) */}
                 {user && (
@@ -151,7 +178,7 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
 
                             <Link
                                 to={`/deals/${deal.id}`}
-                                onClick={() => logEngagementEvent(user?.id, 'click', deal.id, { source: 'FlashDealCard' })}
+                                onClick={() => bufferSignal('click', deal.id, { source: 'FlashDealCard' })}
                                 className="group w-full flex items-center justify-center gap-3 bg-white text-black px-10 py-5 rounded-2xl font-black text-lg hover:bg-gold-500 hover:text-white transition-all duration-300 transform active:scale-[0.98] shadow-2xl shadow-gold-500/10"
                             >
                                 {language === 'tr' ? 'FIRSATI YAKALA' : 'SECURE DEAL'}

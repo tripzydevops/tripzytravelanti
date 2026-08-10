@@ -82,7 +82,7 @@ def insert_user_signal(user_id: Optional[UUID], session_id: Optional[str], signa
         response = supabase.table("user_signals").insert(payload).execute()
         
         # Log to engagement_logs table if user is authenticated and signal maps to allowed types
-        allowed_events = {"view", "click", "search", "favorite", "save", "claim", "redeem", "rate"}
+        allowed_events = {"view", "click", "search", "favorite", "save", "claim", "redeem", "rate", "dwell", "scroll", "hover"}
         if user_id and signal_type in allowed_events:
             log_payload = {
                 "user_id": str(user_id),
@@ -126,4 +126,82 @@ def get_similar_deals_semantic(query_text: str, top_k: int = 5) -> List[Dict[str
         return []
     except Exception as e:
         print(f"Error performing semantic query: {e}")
+        return []
+
+def get_geofence_zone(zone_id: UUID) -> Optional[Dict[str, Any]]:
+    try:
+        response = supabase.table("geofence_zones").select("*").eq("id", str(zone_id)).execute()
+        if response.data:
+            return response.data[0]
+        return None
+    except Exception as e:
+        print(f"Error getting geofence zone: {e}")
+        return None
+
+def get_deal_by_id(deal_id: UUID) -> Optional[Dict[str, Any]]:
+    try:
+        response = supabase.table("deals").select("*").eq("id", str(deal_id)).execute()
+        if response.data:
+            return response.data[0]
+        return None
+    except Exception as e:
+        print(f"Error getting deal by id: {e}")
+        return None
+
+def check_recent_notification(user_id: UUID, link: str, hours: int = 24) -> bool:
+    try:
+        from datetime import datetime, timedelta, timezone
+        time_threshold = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        
+        response = supabase.table("notifications") \
+            .select("id") \
+            .eq("user_id", str(user_id)) \
+            .eq("type", "geofence_deal") \
+            .eq("link", link) \
+            .gt("created_at", time_threshold) \
+            .execute()
+            
+        return len(response.data or []) > 0
+    except Exception as e:
+        print(f"Error checking recent notification: {e}")
+        return False
+
+def insert_notification(user_id: UUID, title: str, message: str, type_str: str, link: str) -> bool:
+    try:
+        payload = {
+            "user_id": str(user_id),
+            "title": title,
+            "message": message,
+            "type": type_str,
+            "link": link,
+            "is_read": False
+        }
+        response = supabase.table("notifications").insert(payload).execute()
+        return len(response.data or []) > 0
+    except Exception as e:
+        print(f"Error inserting notification: {e}")
+        return False
+
+def get_user_latent_factors(user_id: UUID) -> Optional[Dict[str, Any]]:
+    try:
+        response = supabase.table("user_latent_factors").select("*").eq("user_id", str(user_id)).execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        print(f"Error getting user latent factors: {e}")
+        return None
+
+def get_deal_latent_factors(deal_ids: List[str]) -> List[Dict[str, Any]]:
+    try:
+        response = supabase.table("deal_latent_factors").select("*").in_("deal_id", deal_ids).execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error getting deal latent factors: {e}")
+        return []
+
+def get_implicit_latent_factors() -> List[Dict[str, Any]]:
+    try:
+        response = supabase.table("implicit_latent_factors").select("*").execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error getting implicit category latent factors: {e}")
         return []

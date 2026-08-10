@@ -4,7 +4,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('./supabaseClient', () => ({
     supabase: {
         from: vi.fn(),
-        auth: { getUser: vi.fn() },
+        auth: { 
+            getUser: vi.fn(),
+            getSession: vi.fn().mockResolvedValue({ data: { session: null } })
+        },
         rpc: vi.fn(),
         functions: { invoke: vi.fn() },
     }

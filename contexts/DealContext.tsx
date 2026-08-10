@@ -27,15 +27,37 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
-  // Load deals from Supabase (Legacy/Initial - can be replaced or kept for non-paginated needs if any)
+  // Load deals from Supabase
   const loadDeals = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedDeals = await getAllDeals();
-      setDeals(fetchedDeals);
-      setTotal(fetchedDeals.length); // Fallback total
+      if (navigator.onLine) {
+        const fetchedDeals = await getAllDeals();
+        setDeals(fetchedDeals);
+        setTotal(fetchedDeals.length);
+        
+        // Cache to IndexedDB async
+        import('../lib/offlineStorage').then(({ saveDealsToOfflineCache }) => {
+          saveDealsToOfflineCache(fetchedDeals).catch(err => console.error('Failed to cache deals offline:', err));
+        });
+      } else {
+        const { getCachedDeals } = await import('../lib/offlineStorage');
+        const cached = await getCachedDeals();
+        setDeals(cached);
+        setTotal(cached.length);
+      }
     } catch (error) {
       console.error('Error loading deals:', error);
+      try {
+        const { getCachedDeals } = await import('../lib/offlineStorage');
+        const cached = await getCachedDeals();
+        if (cached && cached.length > 0) {
+          setDeals(cached);
+          setTotal(cached.length);
+        }
+      } catch (dbErr) {
+        console.error('IndexedDB fallback failed:', dbErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -45,11 +67,36 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loadCategories = useCallback(async () => {
     try {
       setCategoriesLoading(true);
-      const { getCategories } = await import('../lib/supabaseService');
-      const fetchedCategories = await getCategories();
-      setCategories(fetchedCategories);
+      if (navigator.onLine) {
+        const { getCategories } = await import('../lib/supabaseService');
+        const fetchedCategories = await getCategories();
+        setCategories(fetchedCategories);
+
+        // Cache categories in metadata store
+        import('../lib/offlineStorage').then(({ saveMetadata }) => {
+          saveMetadata('categories', fetchedCategories).catch(err => console.error('Failed to cache categories offline:', err));
+        });
+      } else {
+        const { getMetadata } = await import('../lib/offlineStorage');
+        const cached = await getMetadata('categories');
+        if (cached) {
+          setCategories(cached);
+        } else {
+          setCategories([
+            { id: '1', name: 'Travel', name_tr: 'Seyahat', icon: 'plane' },
+            { id: '2', name: 'Dining', name_tr: 'Yemek', icon: 'utensils' }
+          ]);
+        }
+      }
     } catch (error) {
       console.error('Error loading categories:', error);
+      try {
+        const { getMetadata } = await import('../lib/offlineStorage');
+        const cached = await getMetadata('categories');
+        if (cached) setCategories(cached);
+      } catch (dbErr) {
+        console.error('Offline fallback for categories failed:', dbErr);
+      }
     } finally {
       setCategoriesLoading(false);
     }
@@ -59,23 +106,57 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loadDealsPaginated = useCallback(async (page: number, limit: number, filters?: any, append: boolean = false) => {
     try {
       setLoading(true);
-      let newDeals: Deal[];
-      let totalCount: number;
+      let newDeals: Deal[] = [];
+      let totalCount: number = 0;
 
-      if (filters?.isSmartSearch && filters?.search) {
-        newDeals = await searchDealsSemantic(filters.search, limit);
-        totalCount = newDeals.length; // Pinecone doesn't always return total count, we take what we get
+      if (navigator.onLine) {
+        if (filters?.isSmartSearch && filters?.search) {
+          newDeals = await searchDealsSemantic(filters.search, limit);
+          totalCount = newDeals.length;
+        } else {
+          const result = await getDealsPaginated(page, limit, filters);
+          newDeals = result.deals;
+          totalCount = result.total;
+        }
+
+        // Cache page of deals to IndexedDB async
+        if (newDeals.length > 0) {
+          import('../lib/offlineStorage').then(async ({ getCachedDeals, saveDealsToOfflineCache }) => {
+            try {
+              const currentCached = await getCachedDeals();
+              const mergedMap = new Map(currentCached.map(d => [d.id, d]));
+              newDeals.forEach(d => mergedMap.set(d.id, d));
+              const merged = Array.from(mergedMap.values()).slice(0, 50);
+              await saveDealsToOfflineCache(merged);
+            } catch (err) {
+              console.error('Failed to update deals offline cache:', err);
+            }
+          });
+        }
       } else {
-        const result = await getDealsPaginated(page, limit, filters);
-        newDeals = result.deals;
-        totalCount = result.total;
+        const { getCachedDeals } = await import('../lib/offlineStorage');
+        let cached = await getCachedDeals();
+
+        if (filters?.category && filters.category !== 'All' && filters.category !== '') {
+          cached = cached.filter(d => d.category === filters.category);
+        }
+        if (filters?.search) {
+          const searchLower = filters.search.toLowerCase();
+          cached = cached.filter(d => 
+            d.title.toLowerCase().includes(searchLower) || 
+            d.description.toLowerCase().includes(searchLower)
+          );
+        }
+
+        totalCount = cached.length;
+        const from = (page - 1) * limit;
+        newDeals = cached.slice(from, from + limit);
       }
 
       setTotal(totalCount);
 
       if (append) {
         setDeals(prev => {
-          // Filter out duplicates just in case
           const existingIds = new Set(prev.map(d => d.id));
           const uniqueNewDeals = newDeals.filter(d => !existingIds.has(d.id));
           return [...prev, ...uniqueNewDeals];
@@ -85,6 +166,14 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error('Error loading paginated deals:', error);
+      try {
+        const { getCachedDeals } = await import('../lib/offlineStorage');
+        const cached = await getCachedDeals();
+        setDeals(cached.slice(0, limit));
+        setTotal(cached.length);
+      } catch (dbErr) {
+        console.error('IndexedDB paginated fallback failed:', dbErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -93,17 +182,12 @@ export const DealProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Initial load
   useEffect(() => {
     loadCategories();
-    // Optimization: Do not automatically load all deals on mount.
-    // Pages (HomePage, AdminPage) should trigger their own data fetching
-    // using loadDealsPaginated or refreshDeals as needed.
   }, [loadCategories]);
 
   // Refresh deals manually
   const refreshDeals = useCallback(async () => {
     await loadDeals();
-  }, [loadDeals]);
-
-  // Rate a deal
+  }, [loadDeals]);  // Rate a deal
   const rateDeal = useCallback(async (dealId: string, rating: number) => {
     try {
       const deal = deals.find((d) => d.id === dealId);

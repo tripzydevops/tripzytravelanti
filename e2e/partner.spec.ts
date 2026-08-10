@@ -228,10 +228,15 @@ const registerCommonMocks = async (page: any) => {
         expires_at: new Date(Date.now() + 86400000 * 5).toISOString()
       };
 
+      const headers = {
+        ...corsHeaders,
+        ...(isSingle ? {} : { 'content-range': '0-0/1' })
+      };
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        headers: corsHeaders,
+        headers: headers,
         body: JSON.stringify(isSingle ? dealData : [dealData])
       });
       return;
@@ -285,17 +290,19 @@ const registerCommonMocks = async (page: any) => {
 
     // Partner redemption trends mock
     if (url.includes('/rest/v1/partner_redemption_trends')) {
+      const isSingle = request.headers()['accept']?.includes('vnd.pgrst.object') || url.includes('single') || url.includes('limit=1') || url.includes('partner_id=eq.');
+      const trendData = {
+        partner_id: 'b0f3742f-858a-4e3b-9bfb-31620beef6db',
+        redemptions_last_30: 15,
+        redemptions_prev_30: 10,
+        views_last_30: 100,
+        views_prev_30: 80
+      };
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         headers: corsHeaders,
-        body: JSON.stringify([{
-          partner_id: 'b0f3742f-858a-4e3b-9bfb-31620beef6db',
-          redemptions_last_30: 15,
-          redemptions_prev_30: 10,
-          views_last_30: 100,
-          views_prev_30: 80
-        }])
+        body: JSON.stringify(isSingle ? trendData : [trendData])
       });
       return;
     }
@@ -323,6 +330,7 @@ const registerCommonMocks = async (page: any) => {
 
     // Partner stats mock
     if (url.includes('/rest/v1/partner_stats')) {
+      const isSingle = request.headers()['accept']?.includes('vnd.pgrst.object') || url.includes('single') || url.includes('?partner_id=eq.') || url.includes('&partner_id=eq.');
       const statsData = {
         id: 'stats-111-222',
         partner_id: 'b0f3742f-858a-4e3b-9bfb-31620beef6db',
@@ -336,7 +344,7 @@ const registerCommonMocks = async (page: any) => {
         status: 200,
         contentType: 'application/json',
         headers: corsHeaders,
-        body: JSON.stringify(statsData)
+        body: JSON.stringify(isSingle ? statsData : [statsData])
       });
       return;
     }
@@ -435,7 +443,7 @@ test.describe('Partner Geofencing & Analytics Flow', () => {
     await page.goto('/partner/dashboard');
 
     // Check header (use specific text locator to avoid sidebar header collision)
-    await expect(page.locator('h1', { hasText: 'Dashboard' })).toBeVisible();
+    await expect(page.locator('main h1').filter({ hasText: 'Dashboard' }).first()).toBeVisible();
 
     if (useLiveApi) {
       // Verify dashboard content is visible generally

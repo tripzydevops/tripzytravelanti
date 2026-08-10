@@ -38,64 +38,71 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
   // Load user profile from Supabase
   const loadUserProfile = useCallback(async (authUser: SupabaseUser) => {
     try {
-      let profile = await getUserProfile(authUser.id);
+      let profile = null;
+      let isOfflineMode = false;
 
-      if (!profile) {
-        // Trigger might be slow, so we retry fetching a few times
-        // We do NOT insert from client-side anymore to avoid RLS/Permission issues.
-        let retries = 3;
-        while (!profile && retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+      if (navigator.onLine) {
+        try {
           profile = await getUserProfile(authUser.id);
-          retries--;
-        }
 
-        if (!profile) {
-          console.warn('Profile not found after retries. Attempting client-side upsert...');
-          try {
-            // Fallback: Upsert profile client-side if trigger/fetch failed
-            // Use upsert to avoid "duplicate key" errors if profile exists but fetch failed
-            const { error: upsertError } = await supabase.from('profiles').upsert({
-              id: authUser.id,
-              email: authUser.email,
-              name: authUser.user_metadata?.full_name || authUser.email,
-              avatar_url: authUser.user_metadata?.avatar_url,
-              tier: 'FREE',
-              referred_by: authUser.user_metadata?.referred_by
-            }, { onConflict: 'id' });
-
-            if (!upsertError) {
+          if (!profile) {
+            let retries = 3;
+            while (!profile && retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
               profile = await getUserProfile(authUser.id);
-            } else {
-              console.error('Failed to upsert profile client-side:', upsertError);
+              retries--;
             }
-          } catch (e) {
-            console.error('Error in client-side profile upsert:', e);
+
+            if (!profile) {
+              console.warn('Profile not found after retries. Attempting client-side upsert...');
+              const { error: upsertError } = await supabase.from('profiles').upsert({
+                id: authUser.id,
+                email: authUser.email,
+                name: authUser.user_metadata?.full_name || authUser.email,
+                avatar_url: authUser.user_metadata?.avatar_url,
+                tier: 'FREE',
+                referred_by: authUser.user_metadata?.referred_by
+              }, { onConflict: 'id' });
+
+              if (!upsertError) {
+                profile = await getUserProfile(authUser.id);
+              }
+            }
           }
+        } catch (netError) {
+          console.warn('Network issue during profile load, falling back to local DB cache:', netError);
+          isOfflineMode = true;
+        }
+      } else {
+        isOfflineMode = true;
+      }
+
+      if (isOfflineMode) {
+        const { getCachedProfile } = await import('../lib/offlineStorage');
+        const cached = await getCachedProfile(authUser.id);
+        if (cached) {
+          setUser(cached);
+          return;
         }
       }
 
       if (profile) {
-        // If there's a referral code in metadata, process it (idempotent RPC)
         if (authUser.user_metadata?.referred_by) {
           try {
             await handleReferralCode(authUser.user_metadata.referred_by, authUser.id);
-            // Refresh profile to get updated points/referred_by
             profile = await getUserProfile(authUser.id) || profile;
           } catch (e) {
-            console.warn('Silent referral error (likely already set):', e);
+            console.warn('Silent referral error:', e);
           }
         }
 
-        // Fetch referral data
         const [referrals, referralChain, referralNetwork] = await Promise.all([
-          getDirectReferrals(authUser.id),
-          getReferralChain(authUser.id),
-          getReferralNetwork(authUser.id),
+          getDirectReferrals(authUser.id).catch(() => []),
+          getReferralChain(authUser.id).catch(() => []),
+          getReferralNetwork(authUser.id).catch(() => []),
         ]);
 
         const fullProfile: User = {
@@ -106,12 +113,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         setUser(fullProfile);
+
+        // Cache profile offline
+        import('../lib/offlineStorage').then(({ saveProfileToOfflineCache }) => {
+          saveProfileToOfflineCache(fullProfile).catch(err => console.error('Failed to cache profile offline:', err));
+        });
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
     }
   }, []);
-
   // Listen to auth state changes AND Realtime Profile Updates
   useEffect(() => {
     let mounted = true;

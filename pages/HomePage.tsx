@@ -39,6 +39,7 @@ import MetaHead from '../components/MetaHead';
 import FlashDealCard from '../components/FlashDealCard';
 import SimilarDeals from '../components/SimilarDeals';
 import CategoryBar from '../components/CategoryBar';
+import { NotificationBell } from '../components/NotificationBell';
 
 // Helper function to get time-based greeting
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
@@ -355,8 +356,8 @@ const HomePage: React.FC = () => {
             </div>
           ))}
 
-          {/* Login Button for Unauthenticated Users */}
-          {!user && (
+          {/* Login Button for Unauthenticated Users / Notification Bell for Authenticated Users */}
+          {!user ? (
             <div className="absolute top-6 right-6 z-20">
               <Link
                 to="/login"
@@ -364,6 +365,10 @@ const HomePage: React.FC = () => {
               >
                 {t('login') || 'Login'}
               </Link>
+            </div>
+          ) : (
+            <div className="absolute top-6 right-6 z-20">
+              <NotificationBell />
             </div>
           )}
 

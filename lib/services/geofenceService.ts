@@ -26,6 +26,24 @@ export async function saveGeofenceZone(zoneData: {
     centroid_lng: number;
     is_active?: boolean;
 }): Promise<any> {
+    const lat = zoneData.centroid_lat;
+    const lng = zoneData.centroid_lng;
+    const r = zoneData.radius_meters;
+
+    // Convert circular radius in meters to a bounding square Polygon in WKT coordinates
+    // 1 degree of latitude is approximately 111,000 meters
+    const dLat = r / 111000;
+    // 1 degree of longitude is approximately 111,000 * cos(latitude) meters
+    const dLng = r / (111000 * Math.cos(lat * Math.PI / 180));
+
+    const polygonWKT = `POLYGON((` +
+        `${lng - dLng} ${lat - dLat}, ` +
+        `${lng + dLng} ${lat - dLat}, ` +
+        `${lng + dLng} ${lat + dLat}, ` +
+        `${lng - dLng} ${lat + dLat}, ` +
+        `${lng - dLng} ${lat - dLat}` +
+        `))`;
+
     const { data, error } = await supabase
         .from('geofence_zones')
         .insert({
@@ -33,8 +51,8 @@ export async function saveGeofenceZone(zoneData: {
             deal_id: zoneData.deal_id || null,
             name: zoneData.name,
             radius_meters: zoneData.radius_meters,
-            centroid: `POINT(${zoneData.centroid_lng} ${zoneData.centroid_lat})`,
-            zone: `POINT(${zoneData.centroid_lng} ${zoneData.centroid_lat})`, // Will be overridden by trigger if polygon is needed
+            centroid: `POINT(${lng} ${lat})`,
+            zone: polygonWKT,
             is_active: zoneData.is_active ?? true,
         })
         .select()
@@ -71,3 +89,15 @@ export async function toggleGeofenceZone(zoneId: string, isActive: boolean): Pro
     }
 }
 
+export async function getAllActiveGeofenceZones(): Promise<any[]> {
+    const { data, error } = await supabase
+        .from('geofence_zones')
+        .select('*')
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('Error fetching all active geofence zones:', error);
+        return [];
+    }
+    return data || [];
+}

@@ -27,6 +27,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
+import OfflineBanner from "./components/OfflineBanner";
 
 // Lazy load heavy components
 const Chatbot = React.lazy(() => import("./components/Chatbot"));
@@ -315,6 +316,7 @@ function AppContent() {
   return (
     <SearchProvider>
       <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
+        <OfflineBanner />
         <main
           className={`flex-grow ${
             user && !isAdminRoute && !isPartnerRoute && !isDealDetailRoute

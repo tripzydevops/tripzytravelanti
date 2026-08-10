@@ -198,8 +198,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
     claimDeal,
     isDealOwned,
     hasRedeemed,
+    bufferSignal,
   } = useUserActivity();
   const navigate = useNavigate();
+
+  const hasFiredScrollRef = useRef(false);
 
   const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
@@ -376,19 +379,44 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
               setWalletItemInfo({
                 id: data.id,
                 redemptionCode: data.redemption_code,
-              });
-            }
-          });
-      }
-
-      // Phase 1: Log 'view' event
-      if (deal?.id) {
-        logEngagementEvent(user.id, "view", deal.id, {
-          source: "DealDetailView",
-        });
       }
     }
   }, [user, deal?.id]);
+
+  // Log 'view', 'dwell', and 'scroll' implicit signals
+  useEffect(() => {
+    if (!deal?.id) return;
+
+    bufferSignal("view", deal.id, { source: "DealDetailView" });
+
+    // Dwell tracking (5s)
+    const dwellTimer = setTimeout(() => {
+      bufferSignal("dwell", deal.id, { source: "DealDetailView", dwell_time_seconds: 5 });
+    }, 5000);
+
+    // Scroll depth tracking (>= 50%)
+    const handleScroll = () => {
+      if (hasFiredScrollRef.current) return;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight > 0) {
+        const scrollPercent = window.scrollY / scrollHeight;
+        if (scrollPercent >= 0.5) {
+          hasFiredScrollRef.current = true;
+          bufferSignal("scroll", deal.id, {
+            source: "DealDetailView",
+            scroll_depth: Math.round(scrollPercent * 100),
+          });
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      clearTimeout(dwellTimer);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [deal?.id, bufferSignal]);
 
   const handleActionClick = (action: "redeem" | "claim") => {
     if (!user) {

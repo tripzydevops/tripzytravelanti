@@ -8,6 +8,7 @@ export interface UserActivityContextType {
     savedDeals: string[];
     ownedDeals: string[];
     redemptions: any[];
+    sessionId: string;
     saveDeal: (dealId: string) => Promise<void>;
     unsaveDeal: (dealId: string) => Promise<void>;
     claimDeal: (dealId: string, couponCodeId?: string) => Promise<void>;
@@ -22,43 +23,68 @@ const UserActivityContext = createContext<UserActivityContextType | undefined>(u
 
 export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user } = useAuth();
+    const sessionId = useMemo(() => crypto.randomUUID(), []);
     const [savedDeals, setSavedDeals] = useState<string[]>([]);
     const [ownedDeals, setOwnedDeals] = useState<string[]>([]);
     const [redemptions, setRedemptions] = useState<any[]>([]);
 
     // Sync state with user object when it changes (initial load)
-    // Sync state with user object when it changes (initial load)
     useEffect(() => {
         if (user) {
-            // Fetch saved deals from Supabase
-            supabase
-                .from('user_deals')
-                .select('deal_id')
-                .eq('user_id', user.id)
-                .then(({ data }) => {
-                    if (data) {
-                        setSavedDeals(data.map(d => d.deal_id));
-                    }
-                });
+            if (navigator.onLine) {
+                const fetchSaved = supabase
+                    .from('user_deals')
+                    .select('deal_id')
+                    .eq('user_id', user.id)
+                    .then(({ data }) => data ? data.map(d => d.deal_id) : []);
 
-            // Fetch owned deals (wallet items) from Supabase
-            supabase
-                .from('wallet_items')
-                .select('deal_id')
-                .eq('user_id', user.id)
-                // We want ALL wallet items (active, redeemed, expired) to be considered "owned"
-                // so that we don't show "Add to Wallet" button for something already in history.
-                .then(({ data }) => {
-                    if (data) {
-                        setOwnedDeals(data.map(d => d.deal_id));
-                    }
-                });
+                const fetchOwned = supabase
+                    .from('wallet_items')
+                    .select('deal_id')
+                    .eq('user_id', user.id)
+                    .then(({ data }) => data ? data.map(d => d.deal_id) : []);
 
-            setRedemptions(user.redemptions || []);
+                Promise.all([fetchSaved, fetchOwned]).then(([saved, owned]) => {
+                    setSavedDeals(saved);
+                    setOwnedDeals(owned);
+                    const userRedemptions = user.redemptions || [];
+                    setRedemptions(userRedemptions);
+
+                    // Sync cache
+                    import('../lib/offlineStorage').then(({ saveWalletToOfflineCache }) => {
+                        saveWalletToOfflineCache([{
+                            id: 'wallet_state',
+                            savedDeals: saved,
+                            ownedDeals: owned,
+                            redemptions: userRedemptions
+                        }]).catch(err => console.error('Failed to cache wallet offline:', err));
+                    });
+                }).catch(err => {
+                    console.error('Error loading activity data, trying local cache fallback:', err);
+                    loadOfflineWallet();
+                });
+            } else {
+                loadOfflineWallet();
+            }
         } else {
             setSavedDeals([]);
             setOwnedDeals([]);
             setRedemptions([]);
+        }
+
+        async function loadOfflineWallet() {
+            try {
+                const { getCachedWallet } = await import('../lib/offlineStorage');
+                const cachedArray = await getCachedWallet();
+                const cachedState = cachedArray.find(item => item.id === 'wallet_state');
+                if (cachedState) {
+                    setSavedDeals(cachedState.savedDeals || []);
+                    setOwnedDeals(cachedState.ownedDeals || []);
+                    setRedemptions(cachedState.redemptions || []);
+                }
+            } catch (err) {
+                console.error('Failed to load offline wallet items:', err);
+            }
         }
     }, [user]);
 
@@ -96,28 +122,23 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
             'Authorization': `Bearer ${token}`
         };
 
-        const promises = signalsToSend.map(async (sig) => {
-            try {
-                const response = await fetch(`${apiUrl}/api/v1/signals`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({
-                        user_id: userId,
-                        signal_type: sig.signal_type,
-                        target_id: sig.target_id,
-                        metadata: sig.metadata
-                    })
-                });
-                if (!response.ok) {
-                    console.error(`Failed to flush signal ${sig.signal_type} for ${sig.target_id}:`, response.statusText);
-                }
-            } catch (err) {
-                console.error(`Error flushing signal ${sig.signal_type}:`, err);
+        try {
+            const response = await fetch(`${apiUrl}/api/v1/signals/batch`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    user_id: userId,
+                    session_id: sessionId,
+                    signals: signalsToSend
+                })
+            });
+            if (!response.ok) {
+                console.error('Failed to flush signals batch:', response.statusText);
             }
-        });
-
-        await Promise.all(promises);
-    }, []);
+        } catch (err) {
+            console.error('Error flushing signals batch:', err);
+        }
+    }, [sessionId]);
 
     useEffect(() => {
         const intervalId = setInterval(flushSignals, 5000);
@@ -197,6 +218,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         savedDeals,
         ownedDeals,
         redemptions,
+        sessionId,
         saveDeal: handleSaveDeal,
         unsaveDeal: handleUnsaveDeal,
         claimDeal: handleClaimDeal,
@@ -205,7 +227,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         isDealOwned,
         hasRedeemed,
         bufferSignal
-    }), [savedDeals, ownedDeals, redemptions, handleSaveDeal, handleUnsaveDeal, handleClaimDeal, handleRedeemDeal, isDealSaved, isDealOwned, hasRedeemed, bufferSignal]);
+    }), [savedDeals, ownedDeals, redemptions, sessionId, handleSaveDeal, handleUnsaveDeal, handleClaimDeal, handleRedeemDeal, isDealSaved, isDealOwned, hasRedeemed, bufferSignal]);
 
     return (
         <UserActivityContext.Provider value={contextValue}>
