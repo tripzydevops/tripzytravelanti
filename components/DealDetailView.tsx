@@ -379,6 +379,9 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
               setWalletItemInfo({
                 id: data.id,
                 redemptionCode: data.redemption_code,
+              });
+            }
+          });
       }
     }
   }, [user, deal?.id]);
