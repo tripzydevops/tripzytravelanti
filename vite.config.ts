@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1600,
       minify: 'esbuild', // Faster than terser
       rollupOptions: {
+        external: ['@capacitor/haptics'],
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],

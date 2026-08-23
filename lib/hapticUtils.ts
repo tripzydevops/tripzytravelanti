@@ -9,7 +9,7 @@ export async function triggerHapticFeedback(style: HapticStyle = 'light'): Promi
     try {
         // Attempt dynamically importing @capacitor/haptics if available on Capacitor platform
         if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
-            const { Haptics, ImpactStyle, NotificationType } = await import('@capacitor/haptics');
+            const { Haptics, ImpactStyle, NotificationType } = await import(/* @vite-ignore */ '@capacitor/haptics');
             if (style === 'success') {
                 await Haptics.notification({ type: NotificationType.Success });
             } else if (style === 'warning') {
