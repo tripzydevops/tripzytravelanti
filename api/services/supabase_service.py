@@ -27,36 +27,27 @@ def get_engagement_logs(user_id: UUID, limit: int = 50) -> List[Dict[str, Any]]:
 
 def get_candidate_deals(user_tier: str) -> List[Dict[str, Any]]:
     try:
-        # Get all approved deals
-        response = supabase.table("deals").select("*").eq("status", "approved").execute()
-        deals = response.data or []
-        
-        # Simple tier validation logic:
-        # VIP has access to all
-        # PREMIUM has access to PREMIUM, BASIC, FREE, NONE
-        # BASIC has access to BASIC, FREE, NONE
-        # FREE has access to FREE, NONE
-        # NONE has access to NONE
-        tier_hierarchy = {
-            "NONE": 0,
-            "FREE": 1,
-            "BASIC": 2,
-            "PREMIUM": 3,
-            "VIP": 4
+        tier_allowed_map = {
+            "NONE": ["NONE"],
+            "FREE": ["FREE", "NONE"],
+            "BASIC": ["BASIC", "FREE", "NONE"],
+            "PREMIUM": ["PREMIUM", "BASIC", "FREE", "NONE"],
+            "VIP": ["VIP", "PREMIUM", "BASIC", "FREE", "NONE"]
         }
+        allowed_tiers = tier_allowed_map.get(user_tier, ["FREE", "NONE"])
         
-        user_level = tier_hierarchy.get(user_tier, 1)
-        
-        valid_deals = []
-        for deal in deals:
-            req_tier = deal.get("required_tier") or "FREE"
-            req_level = tier_hierarchy.get(req_tier, 1)
-            if user_level >= req_level:
-                valid_deals.append(deal)
-        return valid_deals
+        # Query approved deals matching user's tier permissions directly in PostgreSQL
+        response = supabase.table("deals") \
+            .select("*") \
+            .eq("status", "approved") \
+            .in_("required_tier", allowed_tiers) \
+            .execute()
+            
+        return response.data or []
     except Exception as e:
         print(f"Error getting candidate deals: {e}")
         return []
+
 
 def get_linked_loyalty_mappings(user_id: UUID) -> List[Dict[str, Any]]:
     try:
