@@ -141,10 +141,30 @@ const LoginPage: React.FC = () => {
     fetchBackgrounds();
   }, []);
 
-  const handleQuickLogin = (quickEmail: string) => {
+  const handleQuickLogin = async (quickEmail: string) => {
     setEmail(quickEmail);
+    setPassword('123456');
     setIsSignup(false);
-    showSuccess(`Pre-filled ${quickEmail}`);
+    setError('');
+    setLoading(true);
+
+    try {
+      const loggedUser = await login(quickEmail, '123456');
+      showSuccess(t('loginSuccess') || `Logged in as ${quickEmail}`);
+
+      if (loggedUser?.role === 'partner') {
+        navigate('/partner/dashboard');
+      } else if (loggedUser?.role === 'admin' || loggedUser?.isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    } catch (err: any) {
+      console.error('Quick login error:', err);
+      showError(err.message || 'Failed to login with test credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
