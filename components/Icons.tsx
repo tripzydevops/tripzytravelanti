@@ -54,6 +54,7 @@ import {
   Utensils,
   Plane,
   ShoppingBag,
+  Copy,
   Terminal as LucideTerminal,
 } from "lucide-react";
 
@@ -175,6 +176,9 @@ export const TrendingUpIcon: React.FC<IconProps> = ({ className }) => (
 );
 export const EyeIcon: React.FC<IconProps> = ({ className }) => (
   <Eye className={className} />
+);
+export const CopyIcon: React.FC<IconProps> = ({ className }) => (
+  <Copy className={className} strokeWidth={1.5} />
 );
 export const ArrowRightIcon: React.FC<IconProps> = ({ className }) => (
   <ArrowRight className={className} />
