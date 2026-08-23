@@ -141,6 +141,12 @@ const LoginPage: React.FC = () => {
     fetchBackgrounds();
   }, []);
 
+  const handleQuickLogin = (quickEmail: string) => {
+    setEmail(quickEmail);
+    setIsSignup(false);
+    showSuccess(`Pre-filled ${quickEmail}`);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-body">
       {/* Background Image Carousel */}
@@ -273,37 +279,29 @@ const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative flex py-8 items-center">
+          {/* Dev Quick Login Shortcuts */}
+          <div className="relative flex py-6 items-center">
             <div className="flex-grow border-t border-white/10"></div>
-            <span className="flex-shrink mx-4 text-white/40 text-sm font-medium tracking-wider">
-              {t('orContinueWith') || 'Or continue with'}
+            <span className="flex-shrink mx-4 text-gold-400/80 text-xs font-bold uppercase tracking-wider">
+              ⚡ Quick Fill
             </span>
             <div className="flex-grow border-t border-white/10"></div>
           </div>
 
-          {/* Social Login */}
-          <div className="flex gap-4 justify-center">
+          <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={handleGoogleLogin}
-              className="flex-1 flex items-center justify-center py-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all duration-300 group backdrop-blur-md"
-              aria-label={t('signInWithGoogle') || "Sign in with Google"}
+              type="button"
+              onClick={() => handleQuickLogin('successofmentors@gmail.com')}
+              className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-gold-500/20 text-xs text-white/90 font-medium transition-all duration-200 text-center truncate"
             >
-              <GoogleLogo className="h-6 w-6 group-hover:scale-110 transition-transform" />
+              👤 User Account
             </button>
             <button
-              onClick={handleFacebookLogin}
-              className="flex-1 flex items-center justify-center py-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all duration-300 group backdrop-blur-md"
-              aria-label={t('signInWithFacebook') || "Sign in with Facebook"}
+              type="button"
+              onClick={() => handleQuickLogin('tripzydevops@gmail.com')}
+              className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-gold-500/20 text-xs text-gold-400 font-medium transition-all duration-200 text-center truncate"
             >
-              <FacebookLogo className="h-6 w-6 group-hover:scale-110 transition-transform" />
-            </button>
-            <button
-              onClick={handleAppleLogin}
-              className="flex-1 flex items-center justify-center py-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all duration-300 group backdrop-blur-md"
-              aria-label={t('signInWithApple') || "Sign in with Apple"}
-            >
-              <AppleLogo className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+              👑 Admin Account
             </button>
           </div>
 
