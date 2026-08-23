@@ -367,8 +367,23 @@ const HomePage: React.FC = () => {
               </Link>
             </div>
           ) : (
-            <div className="absolute top-6 right-6 z-20">
+            <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
               <NotificationBell />
+              <Link
+                to="/profile"
+                className="flex items-center gap-2.5 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-gold-500/30 rounded-full text-white font-medium transition-all shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:border-gold-400 group"
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-gold-400" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gold-500/20 border border-gold-400 flex items-center justify-center text-xs font-bold text-gold-400 uppercase">
+                    {(user.name || user.email || 'U')[0]}
+                  </div>
+                )}
+                <span className="text-sm font-bold text-white group-hover:text-gold-300">
+                  {user.name?.split(' ')[0] || 'Profile'}
+                </span>
+              </Link>
             </div>
           )}
 
