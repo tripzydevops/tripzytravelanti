@@ -20,6 +20,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LayoutProvider, useLayout } from "./contexts/LayoutContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import TopHeader from "./components/TopHeader";
 import BottomNav from "./components/BottomNav";
 import Footer from "./components/Footer";
 import PartnerLayout from "./components/layouts/PartnerLayout";
@@ -317,6 +318,7 @@ function AppContent() {
     <SearchProvider>
       <div className="flex flex-col min-h-screen bg-brand-bg text-brand-text-light">
         <OfflineBanner />
+        <TopHeader />
         <main
           className={`flex-grow ${
             user && !isAdminRoute && !isPartnerRoute && !isDealDetailRoute
