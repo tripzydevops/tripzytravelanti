@@ -308,20 +308,27 @@ const LoginPage: React.FC = () => {
             <div className="flex-grow border-t border-white/10"></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => handleQuickLogin('successofmentors@gmail.com')}
-              className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-gold-500/20 text-xs text-white/90 font-medium transition-all duration-200 text-center truncate"
+              className="py-2.5 px-2 rounded-xl bg-white/5 hover:bg-white/15 border border-gold-500/20 text-xs text-white/90 font-medium transition-all duration-200 text-center truncate"
             >
-              👤 User Account
+              👤 User
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('bispecialmeze@gmail.com')}
+              className="py-2.5 px-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/30 text-xs text-purple-300 font-medium transition-all duration-200 text-center truncate"
+            >
+              🏪 Partner
             </button>
             <button
               type="button"
               onClick={() => handleQuickLogin('tripzydevops@gmail.com')}
-              className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/15 border border-gold-500/20 text-xs text-gold-400 font-medium transition-all duration-200 text-center truncate"
+              className="py-2.5 px-2 rounded-xl bg-gold-500/10 hover:bg-gold-500/25 border border-gold-500/30 text-xs text-gold-400 font-medium transition-all duration-200 text-center truncate"
             >
-              👑 Admin Account
+              👑 Admin
             </button>
           </div>
 
