@@ -204,7 +204,6 @@ export async function getAIRecommendations(
         } catch (fallbackError) {
             console.error("Edge Function AI Recommendation fallback failed:", fallbackError);
         }
-    }
 
     // Fallback Logic
     let fallbackDeals = candidateDeals;
