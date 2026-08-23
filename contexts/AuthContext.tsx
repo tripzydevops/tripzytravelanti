@@ -61,8 +61,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               const { error: upsertError } = await supabase.from('profiles').upsert({
                 id: authUser.id,
                 email: authUser.email,
-                name: authUser.user_metadata?.full_name || authUser.email,
-                avatar_url: authUser.user_metadata?.avatar_url,
+                name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email,
+                avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture,
                 tier: 'FREE',
                 referred_by: authUser.user_metadata?.referred_by
               }, { onConflict: 'id' });
