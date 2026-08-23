@@ -53,37 +53,52 @@ const WalletPage: React.FC = () => {
     if (!user) return;
     try {
       setLoading(true);
-      const { data: userDeals, error } = await supabase
-        .from("wallet_items")
-        .select("deal_id, status, created_at, redemption_code")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const [walletRes, redemptionsRes] = await Promise.all([
+        supabase
+          .from("wallet_items")
+          .select("deal_id, status, created_at, redemption_code")
+          .eq("user_id", user.id),
+        supabase
+          .from("deal_redemptions")
+          .select("deal_id, redeemed_at, status")
+          .eq("user_id", user.id)
+      ]);
 
-      if (error) throw error;
+      const walletItems = walletRes.data || [];
+      const redemptions = redemptionsRes.data || [];
 
-      if (userDeals && userDeals.length > 0) {
-        const dealIds = userDeals.map((ud) => ud.deal_id);
+      const dealIdMap = new Map<string, { status: "active" | "redeemed" | "expired"; acquiredAt: string; redemptionCode?: string }>();
+
+      walletItems.forEach((item) => {
+        dealIdMap.set(item.deal_id, {
+          status: (item.status as any) || "active",
+          acquiredAt: item.created_at,
+          redemptionCode: item.redemption_code,
+        });
+      });
+
+      redemptions.forEach((r) => {
+        const existing = dealIdMap.get(r.deal_id);
+        dealIdMap.set(r.deal_id, {
+          status: "redeemed",
+          acquiredAt: r.redeemed_at || existing?.acquiredAt || new Date().toISOString(),
+          redemptionCode: existing?.redemptionCode,
+        });
+      });
+
+      const allDealIds = Array.from(dealIdMap.keys());
+
+      if (allDealIds.length > 0) {
         const { data: dealsData, error: dealsError } = await supabase
           .from("deals")
           .select("*")
-          .in("id", dealIds);
+          .in("id", allDealIds);
 
         if (dealsError) throw dealsError;
 
-        const statusMap = new Map(
-          userDeals.map((ud) => [
-            ud.deal_id,
-            {
-              status: ud.status,
-              acquiredAt: ud.created_at,
-              redemptionCode: ud.redemption_code,
-            },
-          ])
-        );
-
         const mappedDeals: WalletDeal[] =
           dealsData?.map((dbDeal: any) => {
-            const userDealInfo = statusMap.get(dbDeal.id);
+            const userDealInfo = dealIdMap.get(dbDeal.id);
             return {
               ...dbDeal,
               id: dbDeal.id,
@@ -104,7 +119,7 @@ const WalletPage: React.FC = () => {
               ratingCount: dbDeal.rating_count || 0,
               companyLogoUrl: dbDeal.company_logo_url,
               createdAt: dbDeal.created_at,
-              walletStatus: userDealInfo?.status || "active",
+              walletStatus: userDealInfo?.status || "redeemed",
               acquiredAt: userDealInfo?.acquiredAt || "",
               redemptionCode:
                 userDealInfo?.redemptionCode || dbDeal.redemption_code,
@@ -112,6 +127,14 @@ const WalletPage: React.FC = () => {
           }) || [];
 
         setWalletDeals(mappedDeals);
+
+        const hasActive = mappedDeals.some((d) => d.walletStatus === "active");
+        const hasHistory = mappedDeals.some(
+          (d) => d.walletStatus === "redeemed" || d.walletStatus === "expired"
+        );
+        if (!hasActive && hasHistory) {
+          setActiveMainTab("history");
+        }
       } else {
         setWalletDeals([]);
       }
