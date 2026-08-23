@@ -94,7 +94,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`relative overflow-auto ${className}`}
+            className={`relative w-full ${className}`}
             style={{ overscrollBehavior: 'contain' }}
         >
             {/* Pull indicator */}
