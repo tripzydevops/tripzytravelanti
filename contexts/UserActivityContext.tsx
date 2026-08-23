@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { saveDeal, unsaveDeal, redeemDeal, claimDeal } from '../lib/supabaseService';
+import { triggerHapticFeedback } from '../lib/hapticUtils';
 import { User } from '../types';
 
 export interface UserActivityContextType {
@@ -100,7 +101,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         });
     }, []);
 
-    const flushSignals = useCallback(async () => {
+    const flushSignals = useCallback(async (useBeacon: boolean = false) => {
         if (signalBuffer.current.length === 0) return;
 
         const session = (await supabase.auth.getSession()).data.session;
@@ -117,6 +118,19 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         signalBuffer.current = [];
 
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const payload = JSON.stringify({
+            user_id: userId,
+            session_id: sessionId,
+            signals: signalsToSend
+        });
+
+        // Use navigator.sendBeacon when page is unloading or backgrounded
+        if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+            const blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(`${apiUrl}/api/v1/signals/batch`, blob);
+            return;
+        }
+
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -126,11 +140,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
             const response = await fetch(`${apiUrl}/api/v1/signals/batch`, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({
-                    user_id: userId,
-                    session_id: sessionId,
-                    signals: signalsToSend
-                })
+                body: payload
             });
             if (!response.ok) {
                 console.error('Failed to flush signals batch:', response.statusText);
@@ -141,10 +151,24 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
     }, [sessionId]);
 
     useEffect(() => {
-        const intervalId = setInterval(flushSignals, 5000);
+        const intervalId = setInterval(() => flushSignals(false), 5000);
+
+        const handleVisibilityOrUnload = () => {
+            if (document.visibilityState === 'hidden') {
+                flushSignals(true);
+            }
+        };
+
+        window.addEventListener('visibilitychange', handleVisibilityOrUnload);
+        window.addEventListener('pagehide', handleVisibilityOrUnload);
+        window.addEventListener('beforeunload', handleVisibilityOrUnload);
+
         return () => {
             clearInterval(intervalId);
-            flushSignals();
+            window.removeEventListener('visibilitychange', handleVisibilityOrUnload);
+            window.removeEventListener('pagehide', handleVisibilityOrUnload);
+            window.removeEventListener('beforeunload', handleVisibilityOrUnload);
+            flushSignals(true);
         };
     }, [flushSignals]);
 
@@ -154,6 +178,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
             await saveDeal(user.id, dealId);
             setSavedDeals(prev => [...new Set([...prev, dealId])]);
             bufferSignal('save', dealId);
+            triggerHapticFeedback('light');
         } catch (error) {
             console.error('Error saving deal:', error);
             throw error;
@@ -166,6 +191,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
             await unsaveDeal(user.id, dealId);
             setSavedDeals(prev => prev.filter(id => id !== dealId));
             bufferSignal('favorite', dealId, { action: 'unsave' });
+            triggerHapticFeedback('light');
         } catch (error) {
             console.error('Error unsaving deal:', error);
             throw error;
@@ -178,6 +204,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
             await claimDeal(user.id, dealId, couponCodeId);
             setOwnedDeals(prev => [...new Set([...prev, dealId])]);
             bufferSignal('claim', dealId, { couponCodeId });
+            triggerHapticFeedback('medium');
         } catch (error) {
             console.error('Error claiming deal:', error);
             throw error;
@@ -196,6 +223,7 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
             };
             setRedemptions(prev => [...prev, newRedemption]);
             bufferSignal('redeem', dealId, { couponCodeId });
+            triggerHapticFeedback('success');
         } catch (error) {
             console.error('Error redeeming deal:', error);
             throw error;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { triggerHapticFeedback } from '../lib/hapticUtils';
 
 interface QRScannerProps {
     onScan: (decodedText: string) => void;
@@ -23,6 +24,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError }) => {
 
                 scanner.render(
                     (decodedText) => {
+                        triggerHapticFeedback('success');
                         onScan(decodedText);
                         // Optional: Stop scanning after successful scan
                         // scanner.clear(); 

@@ -109,14 +109,27 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
   .mb-safe {
     margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
   }
 
   .safe-bottom {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
+
+  .safe-top {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
 }
+
 
 @keyframes pulse-subtle {
 
