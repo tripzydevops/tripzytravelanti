@@ -7,13 +7,24 @@ import { User, UserNotificationPreferences } from '../../types';
 export async function getUserProfile(userId: string): Promise<User | null> {
     const { data, error } = await supabase
         .from('profiles')
-        .select('*, deal_redemptions(*)')
+        .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
     if (error || !data) {
         if (error) console.error('Error fetching user profile:', error);
         return null;
+    }
+
+    let redemptions: any[] = [];
+    try {
+        const { data: redData } = await supabase
+            .from('deal_redemptions')
+            .select('*')
+            .eq('user_id', userId);
+        if (redData) redemptions = redData;
+    } catch (e) {
+        // Silently ignore redemption list query error
     }
 
     return {
@@ -40,12 +51,12 @@ export async function getUserProfile(userId: string): Promise<User | null> {
         totalReferrals: data.total_referrals || 0,
         emailConfirmedAt: data.email_confirmed_at,
         geofenceEnforcementMode: data.geofence_enforcement_mode,
-        redemptions: data.deal_redemptions ? data.deal_redemptions.map((r: any) => ({
+        redemptions: redemptions.map((r: any) => ({
             id: r.id,
             dealId: r.deal_id,
             userId: r.user_id,
             redeemedAt: r.redeemed_at
-        })) : []
+        }))
     };
 }
 
