@@ -15,6 +15,7 @@ import {
 } from "../components/Icons";
 import { supabase } from "../lib/supabaseClient";
 import DealCard from "../components/DealCard";
+import RedeemedVoucherCard from "../components/RedeemedVoucherCard";
 import DealCardSkeleton from "../components/DealCardSkeleton";
 import PullToRefresh from "../components/PullToRefresh";
 import { Deal, SubscriptionTier } from "../types";
@@ -470,6 +471,18 @@ const WalletPage: React.FC = () => {
                   ? getExpiryWarning(deal.expiresAt)
                   : null;
 
+              if (walletStatus === "redeemed") {
+                return (
+                  <div
+                    key={deal.id}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                    className="relative group h-full animate-fade-in-up"
+                  >
+                    <RedeemedVoucherCard deal={deal as WalletDeal} />
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={deal.id}
@@ -535,11 +548,27 @@ const WalletPage: React.FC = () => {
                   : t("emptyWallet") || "Your collection is empty"}
               </h3>
 
-              <p className="text-white/40 mb-10 max-w-xs leading-relaxed">
+              <p className="text-white/40 mb-8 max-w-xs leading-relaxed">
                 {activeMainTab === "wishlist"
                   ? "Save deals you love to keep track of them and never miss a price drop."
                   : "Start claiming deals to see them here. Your saved and redeemed deals will appear in this hub."}
               </p>
+
+              {counts.history > 0 && activeMainTab === "active" && (
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab("history")}
+                  className="mb-8 px-6 py-3 rounded-2xl bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/40 text-gold-400 text-sm font-bold transition-all flex items-center gap-2 shadow-lg hover:scale-105"
+                >
+                  <span>🎟️</span>
+                  <span>
+                    {language === "tr"
+                      ? `Kullandığınız ${counts.history} Fırsatı Gör (Geçmiş)`
+                      : `View your ${counts.history} Used Offers & Receipts`}
+                  </span>
+                  <ArrowRightIcon className="w-4 h-4" />
+                </button>
+              )}
 
               <Link
                 to="/"

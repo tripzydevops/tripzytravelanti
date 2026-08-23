@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserRedemptions } from '../lib/supabaseService';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ChevronLeftIcon, CalendarIcon, LocationMarkerIcon } from '../components/Icons';
+import RedeemedVoucherCard from '../components/RedeemedVoucherCard';
 
 const RedemptionHistoryPage: React.FC = () => {
     const { user } = useAuth();
@@ -38,10 +38,10 @@ const RedemptionHistoryPage: React.FC = () => {
                 >
                     <ChevronLeftIcon className="w-6 h-6 text-gold-500" />
                 </button>
-                <h1 className="text-xl font-bold font-heading text-white">{t('redemptionHistory')}</h1>
+                <h1 className="text-xl font-bold font-heading text-white">{t('redemptionHistory') || 'Kullanılan Fırsatlar & Makbuzlar'}</h1>
             </div>
 
-            <div className="container mx-auto px-4 py-6">
+            <div className="container mx-auto px-4 py-6 max-w-4xl">
                 {loading ? (
                     <div className="flex justify-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500"></div>
@@ -49,51 +49,30 @@ const RedemptionHistoryPage: React.FC = () => {
                 ) : redemptions.length === 0 ? (
                     <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/5">
                         <div className="text-4xl mb-4">🎟️</div>
-                        <h3 className="text-lg font-bold text-white mb-2">{t('noRedemptions') || 'No Redemptions Yet'}</h3>
-                        <p className="text-white/50 text-sm">{t('startRedeeming') || 'Start using your deals to see them here!'}</p>
+                        <h3 className="text-lg font-bold text-white mb-2">{t('noRedemptions') || 'Henüz Kullanılan Fırsat Yok'}</h3>
+                        <p className="text-white/50 text-sm">{t('startRedeeming') || 'Fırsatlarınızı kullandığınızda dijital makbuzlarınız burada görünecektir.'}</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         {redemptions.map((redemption) => {
-                            const deal = redemption.deals; // Joined data
+                            const deal = redemption.deals;
                             if (!deal) return null;
 
+                            const formattedDeal = {
+                                ...deal,
+                                id: deal.id,
+                                title: deal.title,
+                                title_tr: deal.title_tr,
+                                imageUrl: deal.image_url,
+                                vendor: deal.vendor,
+                                originalPrice: deal.original_price,
+                                discountedPrice: deal.discounted_price,
+                                acquiredAt: redemption.redeemed_at,
+                                redemptionCode: deal.redemption_code || redemption.id.substring(0, 8).toUpperCase()
+                            };
+
                             return (
-                                <div key={redemption.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex shadow-lg hover:border-gold-500/30 transition-colors">
-                                    {/* Deal Image */}
-                                    <div className="w-24 h-24 flex-shrink-0 bg-gray-800">
-                                        <img
-                                            src={deal.image_url}
-                                            alt={deal.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-
-                                    {/* Details */}
-                                    <div className="flex-grow p-3 flex flex-col justify-between">
-                                        <div>
-                                            <h3 className="font-bold text-white text-sm line-clamp-1">
-                                                {language === 'tr' ? deal.title_tr : deal.title}
-                                            </h3>
-                                            <p className="text-xs text-white/60 mb-1">{deal.vendor}</p>
-                                        </div>
-
-                                        <div className="flex justify-between items-end">
-                                            <div className="flex items-center text-xs text-gold-500/80">
-                                                <CalendarIcon className="w-3 h-3 mr-1" />
-                                                {new Date(redemption.redeemed_at).toLocaleDateString()}
-                                                <span className="mx-1">•</span>
-                                                {new Date(redemption.redeemed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-
-                                            {deal.redemption_code && (
-                                                <div className="bg-gold-500/10 border border-gold-500/20 px-2 py-1 rounded text-xs text-gold-500 font-mono">
-                                                    {deal.redemption_code}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <RedeemedVoucherCard key={redemption.id} deal={formattedDeal} />
                             );
                         })}
                     </div>

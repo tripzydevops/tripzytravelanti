@@ -540,6 +540,20 @@ const ProfilePage: React.FC = () => {
         </SettingsSection>
       </div>
 
+      {/* Used Offers & Receipts Section */}
+      <div className="mb-6">
+        <SettingsSection title={language === 'tr' ? 'Kullanılan Fırsatlar & Makbuzlar' : 'Used Offers & Receipts'}>
+          <SettingsItem
+            icon={<DocumentTextIcon className="w-6 h-6 text-gold-500" />}
+            title={language === 'tr' ? 'Kullanılan Fırsat Geçmişi' : 'Redemption History & Used Vouchers'}
+            subtitle={language === 'tr' ? 'Tüm kullanılan fırsatlarınızı ve onay kuponlarınızı görüntüleyin' : 'View all your redeemed vouchers and verification stubs'}
+            action={<ChevronRightIcon className="w-5 h-5 text-white/40 group-hover:text-gold-400 group-hover:translate-x-1 transition-all" />}
+            onClick={() => navigate('/redemptions')}
+            isLast={true}
+          />
+        </SettingsSection>
+      </div>
+
       {/* Personal Info Section */}
       <div className="mb-6">
         <SettingsSection title={t('personalInfo') || 'Personal Information'}>
