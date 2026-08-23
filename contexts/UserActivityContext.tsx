@@ -117,7 +117,28 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         const signalsToSend = [...signalBuffer.current];
         signalBuffer.current = [];
 
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const { getBackendApiUrl } = await import('../lib/apiConfig');
+        const apiUrl = getBackendApiUrl();
+
+        if (!apiUrl) {
+            // In production without external API server, store user signals directly via Supabase if authenticated
+            if (userId && signalsToSend.length > 0) {
+                try {
+                    const rows = signalsToSend.map(s => ({
+                        user_id: userId,
+                        session_id: sessionId,
+                        signal_type: s.type,
+                        target_id: s.targetId || null,
+                        metadata: s.metadata || {}
+                    }));
+                    await supabase.from('user_signals').insert(rows);
+                } catch (e) {
+                    // Suppress signal insert error
+                }
+            }
+            return;
+        }
+
         const payload = JSON.stringify({
             user_id: userId,
             session_id: sessionId,
@@ -142,11 +163,8 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
                 headers,
                 body: payload
             });
-            if (!response.ok) {
-                console.error('Failed to flush signals batch:', response.statusText);
-            }
         } catch (err) {
-            console.error('Error flushing signals batch:', err);
+            // Suppress background signal batch error
         }
     }, [sessionId]);
 

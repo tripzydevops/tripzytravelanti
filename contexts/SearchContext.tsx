@@ -55,7 +55,10 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       if (!token || !userId) return;
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const { getBackendApiUrl } = await import('../lib/apiConfig');
+      const apiUrl = getBackendApiUrl();
+      if (!apiUrl) return;
+
       const response = await fetch(`${apiUrl}/api/v1/location-update`, {
         method: 'POST',
         headers: {
