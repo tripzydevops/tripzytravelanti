@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGamification } from '../../contexts/GamificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Flame, Sparkles, Gift, CheckCircle, Trophy } from 'lucide-react';
@@ -88,10 +89,10 @@ export const DailyStreakWidget: React.FC = () => {
         )}
       </div>
 
-      {/* Celebration Streak Modal */}
-      {isStreakModalOpen && (
-        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="w-full max-w-sm rounded-3xl bg-gradient-to-b from-zinc-900 to-black border border-amber-500/30 p-6 text-center space-y-5 shadow-2xl relative">
+      {/* Celebration Streak Modal (Rendered via Portal to always stay centered in viewport) */}
+      {isStreakModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-3xl bg-gradient-to-b from-zinc-900 to-black border border-amber-500/30 p-6 text-center space-y-5 shadow-2xl relative my-auto animate-scale-up">
             <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-white shadow-[0_0_30px_rgba(245,158,11,0.5)] animate-bounce">
               <Flame className="w-12 h-12 fill-current" />
             </div>
@@ -140,7 +141,8 @@ export const DailyStreakWidget: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

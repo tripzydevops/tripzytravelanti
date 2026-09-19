@@ -13,6 +13,7 @@ import {
 } from '../components/Icons';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import DeleteAccountModal from '../components/DeleteAccountModal';
+import InvoiceModal from '../components/InvoiceModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useSearch } from '../contexts/SearchContext';

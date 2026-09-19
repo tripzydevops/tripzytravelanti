@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useGamification } from '../../contexts/GamificationContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { X, Sparkles, Gift, CheckCircle, RefreshCw } from 'lucide-react';
@@ -158,9 +159,9 @@ export const MysteryScratchModal: React.FC = () => {
 
   if (!isScratchModalOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in">
-      <div className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-brand-primary/30 p-6 text-center space-y-5 shadow-2xl relative">
+  return typeof document !== 'undefined' ? createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in">
+      <div className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-brand-primary/30 p-6 text-center space-y-5 shadow-2xl relative my-auto animate-scale-up">
         {/* Close Button */}
         <button
           onClick={closeScratchModal}
@@ -239,8 +240,9 @@ export const MysteryScratchModal: React.FC = () => {
           </button>
         )}
       </div>
-    </div>
-  );
+    </div>,
+    document.body
+  ) : null;
 };
 
 export default MysteryScratchModal;
