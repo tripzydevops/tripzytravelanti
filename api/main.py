@@ -10,7 +10,16 @@ from api.models import (
     SignalRequest,
     BatchSignalRequest,
     LocationUpdateRequest,
-    LocationUpdateResponse
+    LocationUpdateResponse,
+    LotteryCampaignCreate,
+    LotteryCampaignResponse,
+    LotteryTicketClaimRequest,
+    LotteryTicketResponse,
+    StoryOCRVerificationRequest,
+    StoryOCRVerificationResponse,
+    LotteryDrawRequest,
+    LotteryDrawResponse,
+    LotteryDrawWinner
 )
 from api.services.supabase_service import (
     get_user_profile, 
@@ -24,8 +33,14 @@ from api.services.supabase_service import (
     insert_notification
 )
 from api.services.agents import run_cold_start_agent, run_recommendation_agent
+from api.services.lottery_engine import (
+    generate_ticket_number,
+    generate_provably_fair_seed,
+    execute_provably_fair_draw,
+    verify_story_screenshot_ocr
+)
 from api.config import SUPABASE_JWT_SECRET
-from uuid import UUID
+from uuid import UUID, uuid4
 
 app = FastAPI(
     title="Tripzy.travel Layer 2 Brain API",
@@ -317,3 +332,177 @@ def handle_location_update(req: LocationUpdateRequest, token_payload: dict = Dep
         notification_sent=notification_sent,
         message=message
     )
+
+# =====================================================
+# FLASH LOTTERY & INSTAGRAM STORY VERIFICATION ENDPOINTS
+# =====================================================
+
+# In-memory demo store for FastAPI standalone testing
+LOTTERY_CAMPAIGNS_STORE = [
+    {
+        "id": UUID("11111111-2222-3333-4444-555555555555"),
+        "title": "Cappadocia 2-Night Cave Hotel & Sunrise Balloon Flight",
+        "title_tr": "Kapadokya 2 Gece Mağara Otel & Gün Doğumu Balon Turu",
+        "description": "Share this deal on your Instagram Story tagging @tripzy.travel to win a free 2-night luxury getaway!",
+        "description_tr": "Bu fırsatı Instagram Hikayende @tripzy.travel etiketleyerek paylaş, lüks mağara otel konaklamasını ücretsiz kazan!",
+        "prize_description": "2-Night Luxury Cave Suite for 2 + Royal Balloon Flight Voucher (Value: ₺34,500)",
+        "prize_description_tr": "2 Kişilik Lüks Cave Suite Konaklama + Sıcak Hava Balon Turu (Değer: ₺34.500)",
+        "image_url": "https://images.unsplash.com/photo-1570939274717-7eda259b50ed?auto=format&fit=crop&w=1200&q=80",
+        "total_winners": 1,
+        "starts_at": "2026-09-18T00:00:00Z",
+        "ends_at": "2026-09-21T00:00:00Z",
+        "status": "active",
+        "total_tickets_minted": 142,
+        "winning_ticket_ids": []
+    }
+]
+
+LOTTERY_TICKETS_STORE = []
+
+@app.get("/api/v1/lottery/campaigns", response_model=List[LotteryCampaignResponse])
+def list_lottery_campaigns():
+    """Lists all active and upcoming flash lottery campaigns."""
+    return [LotteryCampaignResponse(**c) for c in LOTTERY_CAMPAIGNS_STORE]
+
+@app.post("/api/v1/lottery/campaigns", response_model=LotteryCampaignResponse, status_code=status.HTTP_201_CREATED)
+def create_lottery_campaign(payload: LotteryCampaignCreate):
+    """Creates a new merchant or admin-sponsored flash lottery campaign."""
+    new_campaign = {
+        "id": uuid4(),
+        "title": payload.title,
+        "title_tr": payload.title_tr,
+        "description": payload.description,
+        "description_tr": payload.description_tr,
+        "prize_description": payload.prize_description,
+        "prize_description_tr": payload.prize_description_tr,
+        "image_url": payload.image_url,
+        "total_winners": payload.total_winners,
+        "starts_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "ends_at": payload.ends_at,
+        "status": "active",
+        "total_tickets_minted": 0,
+        "winning_ticket_ids": []
+    }
+    LOTTERY_CAMPAIGNS_STORE.insert(0, new_campaign)
+    return LotteryCampaignResponse(**new_campaign)
+
+@app.post("/api/v1/lottery/claim-ticket", response_model=LotteryTicketResponse, status_code=status.HTTP_201_CREATED)
+def claim_lottery_ticket(payload: LotteryTicketClaimRequest):
+    """Mints a verified lottery ticket for a user."""
+    ticket_number = generate_ticket_number()
+    ticket_id = uuid4()
+    now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+    ticket_record = {
+        "id": ticket_id,
+        "campaign_id": payload.campaign_id,
+        "user_id": payload.user_id,
+        "ticket_number": ticket_number,
+        "verification_method": payload.verification_method,
+        "verified_at": now_iso,
+        "is_winner": False
+    }
+    LOTTERY_TICKETS_STORE.append(ticket_record)
+
+    # Increment campaign count
+    for c in LOTTERY_CAMPAIGNS_STORE:
+        if c["id"] == payload.campaign_id:
+            c["total_tickets_minted"] += 1
+            break
+
+    # Record implicit signal to cold-start recommendation engine
+    insert_user_signal(
+        user_id=payload.user_id,
+        session_id=None,
+        signal_type="lottery_ticket_mint",
+        target_id=str(payload.campaign_id),
+        metadata={"method": payload.verification_method, "ticket_number": ticket_number}
+    )
+
+    return LotteryTicketResponse(**ticket_record)
+
+@app.post("/api/v1/lottery/ocr-verify", response_model=StoryOCRVerificationResponse)
+def ocr_verify_story(payload: StoryOCRVerificationRequest):
+    """Analyzes uploaded Instagram story screenshot via AI Vision OCR and awards a ticket upon match."""
+    ocr_result = verify_story_screenshot_ocr(payload.image_base64, str(payload.campaign_id))
+    
+    if not ocr_result["verified"]:
+        return StoryOCRVerificationResponse(
+            success=False,
+            verified=False,
+            confidence=ocr_result["confidence"],
+            extracted_tags=[],
+            ticket_number=None,
+            message=ocr_result["message"]
+        )
+
+    # Claim ticket upon successful OCR
+    ticket_number = generate_ticket_number()
+    ticket_id = uuid4()
+    now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    
+    ticket_record = {
+        "id": ticket_id,
+        "campaign_id": payload.campaign_id,
+        "user_id": payload.user_id,
+        "ticket_number": ticket_number,
+        "verification_method": "ocr_screenshot",
+        "verified_at": now_iso,
+        "is_winner": False
+    }
+    LOTTERY_TICKETS_STORE.append(ticket_record)
+
+    for c in LOTTERY_CAMPAIGNS_STORE:
+        if c["id"] == payload.campaign_id:
+            c["total_tickets_minted"] += 1
+            break
+
+    return StoryOCRVerificationResponse(
+        success=True,
+        verified=True,
+        confidence=ocr_result["confidence"],
+        extracted_tags=ocr_result["extracted_tags"],
+        ticket_number=ticket_number,
+        message=ocr_result["message"]
+    )
+
+@app.post("/api/v1/lottery/draw", response_model=LotteryDrawResponse)
+def draw_lottery_winner(payload: LotteryDrawRequest):
+    """Executes a provably fair cryptographic draw for a lottery campaign."""
+    matching_tickets = [t for t in LOTTERY_TICKETS_STORE if t["campaign_id"] == payload.campaign_id]
+    
+    target_campaign = None
+    for c in LOTTERY_CAMPAIGNS_STORE:
+        if c["id"] == payload.campaign_id:
+            target_campaign = c
+            break
+
+    total_winners = target_campaign["total_winners"] if target_campaign else 1
+    winners, seed = execute_provably_fair_draw(
+        str(payload.campaign_id),
+        matching_tickets,
+        total_winners=total_winners
+    )
+
+    draw_winners = [
+        LotteryDrawWinner(
+            ticket_id=w["ticket_id"],
+            ticket_number=w["ticket_number"],
+            user_id=w["user_id"],
+            user_name=w["user_name"]
+        )
+        for w in winners
+    ]
+
+    if target_campaign:
+        target_campaign["status"] = "drawn"
+        target_campaign["winning_ticket_ids"] = [w.ticket_id for w in draw_winners]
+
+    return LotteryDrawResponse(
+        success=True,
+        campaign_id=payload.campaign_id,
+        winners=draw_winners,
+        draw_seed=seed,
+        drawn_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    )
+

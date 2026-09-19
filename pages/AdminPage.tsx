@@ -16,7 +16,8 @@ import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
 import AdminFraudSignalsTab from "../components/admin/AdminFraudSignalsTab";
 import AdminGamificationTab from "../components/admin/AdminGamificationTab";
 import AdminRafflesTab from "../components/admin/AdminRafflesTab";
-import { Sparkles, Gift } from "lucide-react";
+import { AdminLotteryTab } from "../components/admin/AdminLotteryTab";
+import { Sparkles, Gift, Ticket } from "lucide-react";
 import {
   BarChartIcon,
   TagIcon,
@@ -62,6 +63,7 @@ const AdminPage: React.FC = () => {
     | "fraud_signals"
     | "gamification"
     | "raffles"
+    | "flash_lottery"
   >("analytics");
   const [pendingCount, setPendingCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile toggle
@@ -213,6 +215,11 @@ const AdminPage: React.FC = () => {
           id: "raffles",
           label: "Social Raffles",
           icon: <Gift className="w-5 h-5 text-rose-400" />,
+        },
+        {
+          id: "flash_lottery",
+          label: "Flash Lotteries",
+          icon: <Ticket className="w-5 h-5 text-indigo-400" />,
         },
       ],
     },
@@ -506,6 +513,7 @@ const AdminPage: React.FC = () => {
             {activeTab === "fraud_signals" && <AdminFraudSignalsTab />}
             {activeTab === "gamification" && <AdminGamificationTab />}
             {activeTab === "raffles" && <AdminRafflesTab />}
+            {activeTab === "flash_lottery" && <AdminLotteryTab />}
           </div>
         </main>
       </div>

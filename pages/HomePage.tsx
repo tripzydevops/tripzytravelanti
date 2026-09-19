@@ -44,6 +44,9 @@ import StoriesBar from '../components/gamification/StoriesBar';
 import LiveSocialTicker from '../components/gamification/LiveSocialTicker';
 import DailyStreakWidget from '../components/gamification/DailyStreakWidget';
 import SocialRafflesCard from '../components/gamification/SocialRafflesCard';
+import { FlashLotteryBanner } from '../components/lottery/FlashLotteryBanner';
+import { FlashLotteryModal } from '../components/lottery/FlashLotteryModal';
+import { LotteryCampaign } from '../types';
 
 // Helper function to get time-based greeting
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
@@ -82,6 +85,7 @@ const HomePage: React.FC = () => {
   const [flashDeals, setFlashDeals] = React.useState<Deal[]>([]);
   const [timeOfDay, setTimeOfDay] = React.useState<'morning' | 'afternoon' | 'evening' | 'night'>(getTimeOfDay());
   const [activeMainTab, setActiveMainTab] = React.useState<'trending' | 'nearby' | 'foryou'>('trending');
+  const [selectedLotteryCampaign, setSelectedLotteryCampaign] = React.useState<LotteryCampaign | null>(null);
 
   // Pull-to-refresh handler
   const handleRefresh = React.useCallback(async () => {
@@ -526,6 +530,11 @@ const HomePage: React.FC = () => {
         {/* Main Content */}
         <div className="container mx-auto px-4 py-8 relative z-10">
 
+          {/* Flash Lottery Urgency Banner */}
+          <FlashLotteryBanner
+            onOpenModal={(camp) => setSelectedLotteryCampaign(camp)}
+          />
+
           {/* Social Media Raffles & Lucky Giveaways Hub */}
           <SocialRafflesCard />
 
@@ -729,6 +738,13 @@ const HomePage: React.FC = () => {
           </div>
 
         </div>
+
+        {/* Flash Lottery Modal */}
+        <FlashLotteryModal
+          isOpen={!!selectedLotteryCampaign}
+          onClose={() => setSelectedLotteryCampaign(null)}
+          campaign={selectedLotteryCampaign}
+        />
       </div>
     </PullToRefresh>
   );

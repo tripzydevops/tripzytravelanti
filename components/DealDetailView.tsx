@@ -40,6 +40,9 @@ import { canUserClaimDeal } from "../lib/redemptionLogic";
 import { Lock, Navigation, Phone, ExternalLink, MapPin, Ticket, X, Loader2 } from "lucide-react";
 import { useSearch } from "../contexts/SearchContext";
 import { calculateDistance, formatDistance } from "../lib/locationUtils";
+import { FlashLotteryModal } from "./lottery/FlashLotteryModal";
+import { lotteryService } from "../lib/services/lotteryService";
+import { LotteryCampaign } from "../types";
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.NONE]: 0,
@@ -243,6 +246,15 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
   } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [showCouponInput, setShowCouponInput] = useState(false);
+  const [isLotteryModalOpen, setIsLotteryModalOpen] = useState(false);
+  const [lotteryCampaign, setLotteryCampaign] = useState<LotteryCampaign | null>(null);
+
+  const handleOpenLotteryModal = async () => {
+    const campaigns = await lotteryService.getCampaigns(user?.id);
+    const active = campaigns.find(c => c.status === 'active') || campaigns[0] || null;
+    setLotteryCampaign(active);
+    setIsLotteryModalOpen(true);
+  };
 
   // Calculate coupon-adjusted price
   const couponAdjustedPrice = useMemo(() => {
@@ -1128,8 +1140,30 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
             </div>
           </div>
 
+          {/* Flash Lottery Promotion Banner */}
+          <div className="mt-12 p-5 rounded-3xl bg-gradient-to-r from-rose-500/20 via-amber-500/15 to-indigo-500/20 border border-rose-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="space-y-1 text-center sm:text-left">
+              <span className="inline-flex items-center gap-1 text-[11px] font-black text-rose-300 uppercase tracking-wide">
+                <SparklesIcon className="w-3.5 h-3.5 text-rose-400" />
+                {language === 'tr' ? 'Flaş Çekiliş Fırsatı' : 'Flash Giveaway Special'}
+              </span>
+              <p className="text-sm font-bold text-white leading-snug">
+                {language === 'tr'
+                  ? 'Bu fırsatı Instagram Hikayende paylaş, %100 ÜCRETSİZ çekiliş bileti kazan!'
+                  : 'Share this deal on your Instagram Story to earn a 100% FREE lottery ticket!'}
+              </p>
+            </div>
+            <button
+              onClick={handleOpenLotteryModal}
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-black text-xs shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+            >
+              <TicketIcon className="w-4 h-4" />
+              <span>{language === 'tr' ? 'Paylaş & Bilet Kazan' : 'Share & Win Ticket'}</span>
+            </button>
+          </div>
+
           {/* Trust Signals Banner */}
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
                 label: t("secureRedemption"),
@@ -1607,6 +1641,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({
           </div>
         </div>
       </Modal>
+
+      {/* Flash Lottery Modal */}
+      <FlashLotteryModal
+        isOpen={isLotteryModalOpen}
+        onClose={() => setIsLotteryModalOpen(false)}
+        campaign={lotteryCampaign}
+      />
     </div>
   );
 };

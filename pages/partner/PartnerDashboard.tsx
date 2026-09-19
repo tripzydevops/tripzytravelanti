@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PartnerStats, Deal } from '../../types';
 import { supabase } from '../../lib/supabaseClient';
 import { getDealsByPartnerPaginated, getPartnerRedemptionTrends } from '../../lib/supabaseService';
-import { BarChart3, Users, QrCode, TrendingUp, TrendingDown, Plus, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight, Minus } from 'lucide-react';
+import { BarChart3, Users, QrCode, TrendingUp, TrendingDown, Plus, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight, Minus, Sparkles, Ticket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
@@ -159,6 +159,32 @@ const PartnerDashboard: React.FC = () => {
                     <h3 className="text-brand-text-muted text-sm font-medium">Active Deals</h3>
                     <p className="text-3xl font-bold text-white mt-1">{totalDeals}</p>
                 </div>
+            </div>
+
+            {/* Merchant Viral Growth — Flash Lottery Sponsor Banner */}
+            <div className="rounded-3xl bg-gradient-to-r from-rose-600/30 via-amber-600/20 to-indigo-600/30 border border-rose-500/40 p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/30 border border-rose-400/40 text-rose-200 text-xs font-bold uppercase tracking-wider">
+                            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+                            Viral Instagram Growth Engine
+                        </span>
+                    </div>
+                    <h3 className="text-xl font-black text-white">
+                        Fırsatınızı Flaş Çekilişe Dönüştürün, 10x Daha Fazla Müşteriye Ulaşın
+                    </h3>
+                    <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                        Kullanıcıların Instagram Hikayelerinde fırsatınızı paylaşarak bilet kazandığı Flaş Çekilişler ile işletmenizin sosyal görünürlüğünü katlayın.
+                    </p>
+                </div>
+
+                <Link
+                    to="/admin"
+                    className="flex-shrink-0 flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs shadow-lg transition-all transform hover:scale-105"
+                >
+                    <Ticket className="w-4 h-4" />
+                    <span>Çekiliş Başlat</span>
+                </Link>
             </div>
 
             {/* Deals List */}

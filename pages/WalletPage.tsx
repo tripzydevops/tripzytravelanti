@@ -18,6 +18,8 @@ import DealCard from "../components/DealCard";
 import RedeemedVoucherCard from "../components/RedeemedVoucherCard";
 import DealCardSkeleton from "../components/DealCardSkeleton";
 import PullToRefresh from "../components/PullToRefresh";
+import { LotteryTicketsTab } from "../components/lottery/LotteryTicketsTab";
+import { Ticket } from "lucide-react";
 import { Deal, SubscriptionTier } from "../types";
 import {
   getWalletLimit,
@@ -32,7 +34,7 @@ interface WalletDeal extends Deal {
   acquiredAt: string;
 }
 
-type MainTabType = "active" | "wishlist" | "history";
+type MainTabType = "active" | "wishlist" | "history" | "lottery";
 type FilterType = "all" | "active" | "redeemed" | "expired";
 type SortType = "recent" | "expiring" | "value";
 
@@ -209,6 +211,7 @@ const WalletPage: React.FC = () => {
   const counts = useMemo(
     () => ({
       active: walletDeals.filter((d) => d.walletStatus === "active").length,
+      lottery: 3,
       wishlist: wishlistDeals.length,
       history: walletDeals.filter(
         (d) => d.walletStatus === "redeemed" || d.walletStatus === "expired"
@@ -272,9 +275,10 @@ const WalletPage: React.FC = () => {
   const mainTabs: {
     key: MainTabType;
     labelKey: string;
-    icon: React.FC<{ className?: string }>;
+    icon: any;
   }[] = [
     { key: "active", labelKey: "walletTabActive", icon: CustomBriefcaseIcon },
+    { key: "lottery", labelKey: "walletTabLottery", icon: Ticket },
     { key: "wishlist", labelKey: "bottomNavWishlist", icon: CustomHeartIcon }, // Reuse wishlist key
     { key: "history", labelKey: "walletTabHistory", icon: ClockIcon },
   ];
@@ -476,12 +480,21 @@ const WalletPage: React.FC = () => {
           </div>
         )}
 
-        {/* Content */}
-        {loading ? (
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
-            <DealCardSkeleton count={6} />
+        {/* Lottery Tab Content */}
+        {activeMainTab === "lottery" && (
+          <div className="animate-fade-in">
+            <LotteryTicketsTab />
           </div>
-        ) : currentDisplayDeals.length > 0 ? (
+        )}
+
+        {/* Content */}
+        {activeMainTab !== "lottery" && (
+          <>
+            {loading ? (
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
+                <DealCardSkeleton count={6} />
+              </div>
+            ) : currentDisplayDeals.length > 0 ? (
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 items-stretch animate-fade-in-up">
             {currentDisplayDeals.map((deal, index) => {
               // Check if deal is from wallet (has walletStatus) or from wishlist
@@ -601,6 +614,8 @@ const WalletPage: React.FC = () => {
               </Link>
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </PullToRefresh>

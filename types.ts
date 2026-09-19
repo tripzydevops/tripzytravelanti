@@ -449,4 +449,75 @@ export interface LeaderboardEntry {
   stampsUnlocked: number;
   level: number;
   tier: SubscriptionTier;
-}
+}
+
+// =====================================================
+// FLASH LOTTERY & INSTAGRAM SHARE VERIFICATION (FLAŞ ÇEKİLİŞ)
+// =====================================================
+export type LotteryVerificationMethod = 
+  | 'webhook_tag' 
+  | 'story_canvas' 
+  | 'referral_click' 
+  | 'ocr_screenshot' 
+  | 'points_exchange';
+
+export interface LotteryTicket {
+  id: string;
+  campaignId: string;
+  userId: string;
+  ticketNumber: string; // e.g. TRPZ-LOT-89210
+  verificationMethod: LotteryVerificationMethod;
+  verifiedAt: string;
+  isWinner: boolean;
+  proofUrl?: string;
+  createdAt: string;
+}
+
+export interface LotteryCampaign {
+  id: string;
+  dealId?: string;
+  merchantId?: string;
+  merchantName?: string;
+  title: string;
+  title_tr: string;
+  description: string;
+  description_tr: string;
+  prizeDescription: string;
+  prizeDescription_tr: string;
+  imageUrl: string;
+  totalWinners: number;
+  startsAt: string;
+  endsAt: string;
+  status: 'active' | 'drawn' | 'cancelled';
+  winningTicketIds?: string[];
+  totalTicketsMinted: number;
+  userTicketsCount?: number;
+  userTickets?: LotteryTicket[];
+  createdAt: string;
+  deal?: Deal;
+}
+
+export interface LotteryDraw {
+  id: string;
+  campaignId: string;
+  winningTicketId: string;
+  winningUserId: string;
+  winningTicketNumber: string;
+  winnerName?: string;
+  drawSeed: string; // Cryptographic SHA-256 seed for provable fairness
+  drawnAt: string;
+}
+
+export interface LotteryDrawResult {
+  success: boolean;
+  campaignId: string;
+  winners: {
+    ticketId: string;
+    ticketNumber: string;
+    userId: string;
+    userName: string;
+  }[];
+  seed: string;
+  drawnAt: string;
+}
+
