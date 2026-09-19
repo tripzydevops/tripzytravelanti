@@ -316,6 +316,21 @@ const HomePage: React.FC = () => {
   React.useEffect(() => {
     const fetchRecommendations = async () => {
       if (user && deals.length > 0) {
+        // Check session cache first (5-minute TTL) to minimize redundant AI calls
+        const cacheKey = `tripzy_recs_${user.id}_${deals.length}`;
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            const { recs, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 1000 * 60 * 5 && Array.isArray(recs) && recs.length > 0) {
+              setRecommendations(recs);
+              return;
+            }
+          }
+        } catch {
+          // fallback to fresh fetch
+        }
+
         setLoadingRecommendations(true);
         try {
           // Get stored preferences
@@ -324,6 +339,11 @@ const HomePage: React.FC = () => {
 
           const recs = await getAIRecommendations(user, deals, preferences);
           setRecommendations(recs);
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ recs, timestamp: Date.now() }));
+          } catch {
+            // ignore storage quota errors
+          }
         } catch (error) {
           console.error("Failed to fetch recommendations", error);
         } finally {
