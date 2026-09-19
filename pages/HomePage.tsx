@@ -187,9 +187,11 @@ const HomePage: React.FC = () => {
       }, false); // false = reset list
     };
 
+    // Immediate load on mount and category switch; debounce only when user types in search
+    const delay = searchQuery ? 300 : 0;
     const timeoutId = setTimeout(() => {
       fetchDeals();
-    }, 500);
+    }, delay);
 
     return () => clearTimeout(timeoutId);
   }, [categoryFilter, searchQuery, ratingFilter, isSmartSearch, loadDealsPaginated]);

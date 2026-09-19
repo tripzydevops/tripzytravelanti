@@ -99,11 +99,15 @@ function getStoredCampaigns(): LotteryCampaign[] {
     const data = localStorage.getItem(STORAGE_KEY_CAMPAIGNS);
     if (!data) {
       localStorage.setItem(STORAGE_KEY_CAMPAIGNS, JSON.stringify(DEFAULT_LOTTERY_CAMPAIGNS));
-      return DEFAULT_LOTTERY_CAMPAIGNS;
+      return [...DEFAULT_LOTTERY_CAMPAIGNS];
     }
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    const map = new Map<string, LotteryCampaign>();
+    DEFAULT_LOTTERY_CAMPAIGNS.forEach(c => map.set(c.id, c));
+    parsed.forEach((c: LotteryCampaign) => map.set(c.id, c));
+    return Array.from(map.values());
   } catch {
-    return DEFAULT_LOTTERY_CAMPAIGNS;
+    return [...DEFAULT_LOTTERY_CAMPAIGNS];
   }
 }
 
@@ -157,7 +161,8 @@ export const lotteryService = {
    * Fetch all lottery campaigns with user tickets count attached
    */
   async getCampaigns(userId?: string): Promise<LotteryCampaign[]> {
-    let campaigns: LotteryCampaign[] = [];
+    const local = getStoredCampaigns();
+    let campaigns: LotteryCampaign[] = local;
 
     // Try Supabase first
     try {
@@ -167,7 +172,7 @@ export const lotteryService = {
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        campaigns = data.map((row: any) => ({
+        const dbCampaigns: LotteryCampaign[] = data.map((row: any) => ({
           id: row.id,
           dealId: row.deal_id,
           merchantId: row.merchant_id,
@@ -187,11 +192,15 @@ export const lotteryService = {
           totalTicketsMinted: row.total_tickets_minted || 0,
           createdAt: row.created_at
         }));
-      } else {
-        campaigns = getStoredCampaigns();
+
+        const map = new Map<string, LotteryCampaign>();
+        DEFAULT_LOTTERY_CAMPAIGNS.forEach(c => map.set(c.id, c));
+        local.forEach(c => map.set(c.id, c));
+        dbCampaigns.forEach(c => map.set(c.id, c));
+        campaigns = Array.from(map.values());
       }
     } catch {
-      campaigns = getStoredCampaigns();
+      campaigns = local;
     }
 
     // Attach user tickets if user provided
@@ -398,6 +407,18 @@ export const lotteryService = {
     campaign.status = 'drawn';
     campaign.winningTicketIds = winningTicketIds;
     saveStoredCampaigns(campaigns);
+
+    try {
+      await supabase
+        .from('lottery_campaigns')
+        .update({
+          status: 'drawn',
+          winning_ticket_ids: winningTicketIds
+        })
+        .eq('id', campaignId);
+    } catch {
+      // offline/mock fallback
+    }
 
     // Record draw log
     const draws = getStoredDraws();

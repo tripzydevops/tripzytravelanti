@@ -120,6 +120,8 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
                         <img
                             src={getThumbnailUrl(deal.imageUrl)}
                             alt={title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-[2s] ease-out"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/60"></div>

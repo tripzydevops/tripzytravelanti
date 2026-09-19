@@ -38,11 +38,6 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}']
         }
       }),
-      visualizer({
-        open: false,
-        gzipSize: true,
-        brotliSize: true,
-      }),
     ],
     define: {
       'process.env': {},
@@ -54,21 +49,32 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 1600,
-      minify: 'esbuild', // Faster than terser
       rollupOptions: {
         external: ['@capacitor/haptics'],
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-ui': ['framer-motion'],
-            'vendor-supabase': ['@supabase/supabase-js'],
-            'vendor-charts': ['recharts'],
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('framer-motion') || id.includes('lucide-react')) {
+                return 'vendor-ui';
+              }
+              if (id.includes('@supabase')) {
+                return 'vendor-supabase';
+              }
+              if (id.includes('@tanstack')) {
+                return 'vendor-query';
+              }
+              if (id.includes('recharts')) {
+                return 'vendor-charts';
+              }
+            }
           }
         }
       },
-      // Improve build performance
-      sourcemap: false, // Disable sourcemaps for faster builds
-      reportCompressedSize: false, // Skip gzip size reporting
+      sourcemap: false,
+      reportCompressedSize: false,
     },
     test: {
       globals: true,

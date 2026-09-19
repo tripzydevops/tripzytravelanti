@@ -220,6 +220,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           src={getThumbnailUrl(deal.imageUrl, deal.category)}
           alt={title}
           loading="lazy"
+          decoding="async"
         />
         {/* Animated Shine Effect */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10 pointer-events-none"></div>
