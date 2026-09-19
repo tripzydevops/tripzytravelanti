@@ -146,10 +146,10 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto pt-safe pb-safe">
+      <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Header with image banner */}
-        <div className="relative h-44 sm:h-52 w-full overflow-hidden">
+        <div className="relative h-40 sm:h-52 w-full overflow-hidden">
           <img
             src={campaign.imageUrl}
             alt={campaign.title}
@@ -160,62 +160,62 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-950/70 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full bg-slate-950/70 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Badge & Title */}
-          <div className="absolute bottom-4 left-6 right-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/30 border border-rose-400/50 text-rose-200 text-xs font-bold uppercase mb-2 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-rose-300" />
-              {isTr ? 'Flaş Çekiliş & %100 Ücretsiz Ödül' : 'Flash Giveaway & 100% Free Prize'}
+          <div className="absolute bottom-3 left-4 right-4 sm:bottom-4 sm:left-6 sm:right-6">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-rose-500/30 border border-rose-400/50 text-rose-200 text-[10px] sm:text-xs font-bold uppercase mb-1.5 backdrop-blur-md">
+              <Sparkles className="w-3 h-3 text-rose-300" />
+              {isTr ? 'Flaş Çekiliş & %100 Ücretsiz' : 'Flash Giveaway & Free'}
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
+            <h2 className="text-lg sm:text-2xl font-black text-white leading-tight">
               {isTr ? campaign.title_tr : campaign.title}
             </h2>
-            <p className="text-xs sm:text-sm text-rose-300 font-semibold mt-0.5">
+            <p className="text-xs sm:text-sm text-rose-300 font-semibold mt-0.5 truncate">
               🏆 {isTr ? campaign.prizeDescription_tr : campaign.prizeDescription}
             </p>
           </div>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* Tabs */}
-          <div className="flex rounded-2xl bg-slate-950 p-1 border border-slate-800">
+          <div className="flex rounded-2xl bg-slate-950 p-1 border border-slate-800 gap-1">
             <button
               onClick={() => setActiveTab('share')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'share'
                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Instagram className="w-4 h-4" />
-              {isTr ? 'Story Canvas Paylaş' : 'Share Story Canvas'}
+              <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">{isTr ? 'Story Paylaş' : 'Share Story'}</span>
             </button>
             <button
               onClick={() => setActiveTab('ocr')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'ocr'
                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <UploadCloud className="w-4 h-4" />
-              {isTr ? 'AI Vision OCR Yükle' : 'AI Vision OCR'}
+              <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">{isTr ? 'OCR Yükle' : 'AI OCR'}</span>
             </button>
             <button
               onClick={() => setActiveTab('points')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'points'
                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Coins className="w-4 h-4 text-amber-400" />
-              {isTr ? 'Puanla Bilet Al' : 'Use Points'}
+              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+              <span className="truncate">{isTr ? 'Puanla Al' : 'Use Points'}</span>
             </button>
           </div>
 

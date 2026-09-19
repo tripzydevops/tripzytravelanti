@@ -15,8 +15,8 @@ interface CategoryBarProps {
 
 const CategoryBar: React.FC<CategoryBarProps> = ({ categories, selectedCategoryId, onSelectCategory }) => {
     return (
-        <div className="sticky top-0 z-30 bg-transparent overflow-x-auto no-scrollbar py-2">
-            <div className="flex items-center space-x-10 px-4 min-w-max mx-auto max-w-7xl justify-center">
+        <div className="sticky top-0 z-30 bg-transparent overflow-x-auto no-scrollbar py-2 touch-pan-x select-none">
+            <div className="flex items-center space-x-6 sm:space-x-10 px-4 min-w-max mx-auto max-w-7xl justify-start sm:justify-center">
                 {categories.map((category) => (
                     <button
                         key={category.id}

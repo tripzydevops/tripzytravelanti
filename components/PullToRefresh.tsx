@@ -22,8 +22,10 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
     const isDragging = useRef(false);
 
     const handleTouchStart = useCallback((e: TouchEvent) => {
-        // Only enable pull-to-refresh when scrolled to top
-        if (containerRef.current && containerRef.current.scrollTop === 0) {
+        // Only enable pull-to-refresh when scrolled to the very top of window and container
+        const isAtTop = (window.scrollY || document.documentElement.scrollTop || 0) === 0 &&
+                        (!containerRef.current || containerRef.current.scrollTop === 0);
+        if (isAtTop && e.touches.length === 1) {
             startY.current = e.touches[0].clientY;
             isDragging.current = true;
         }
@@ -31,6 +33,14 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
 
     const handleTouchMove = useCallback((e: TouchEvent) => {
         if (!isDragging.current || isRefreshing) return;
+
+        const isAtTop = (window.scrollY || document.documentElement.scrollTop || 0) === 0;
+        if (!isAtTop) {
+            isDragging.current = false;
+            setIsPulling(false);
+            setPullDistance(0);
+            return;
+        }
 
         const currentY = e.touches[0].clientY;
         const diff = currentY - startY.current;
@@ -44,7 +54,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
             setIsPulling(true);
 
             // Prevent scroll while pulling
-            if (distance > 10) {
+            if (distance > 10 && e.cancelable) {
                 e.preventDefault();
             }
         }

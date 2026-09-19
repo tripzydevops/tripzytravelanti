@@ -108,7 +108,7 @@ export const StoryViewerModal: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/90 z-10 pointer-events-none" />
 
         {/* Top Header & Progress Bars */}
-        <div className="relative z-20 pt-4 px-4 pb-2">
+        <div className="relative z-20 pt-4 px-4 pb-2 pt-safe">
           {/* Segmented Progress Bars */}
           <div className="flex gap-1.5 mb-3">
             {activeStoryGroup.slides.map((slide, idx) => {
@@ -185,7 +185,7 @@ export const StoryViewerModal: React.FC = () => {
         </div>
 
         {/* Bottom Story Content & CTA */}
-        <div className="relative z-20 p-6 space-y-4">
+        <div className="relative z-20 p-6 pb-8 pb-safe space-y-4">
           <div className="space-y-1">
             <h2 className="text-2xl font-extrabold text-white leading-tight drop-shadow-md">
               {slideTitle}

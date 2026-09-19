@@ -324,7 +324,7 @@ function AppContent() {
         <TopHeader />
         <main
           className={`flex-grow ${
-            user && !isAdminRoute && !isPartnerRoute && !isDealDetailRoute
+            !isAdminRoute && !isPartnerRoute && !isDealDetailRoute
               ? "pb-24"
               : ""
           }`}
@@ -336,7 +336,7 @@ function AppContent() {
             <Chatbot />
           </Suspense>
         )}
-        {user && !isAdminRoute && !isPartnerRoute && !isDealDetailRoute && (
+        {!isAdminRoute && !isPartnerRoute && !isDealDetailRoute && (
           <BottomNav />
         )}
         {!isAdminRoute && !user && <Footer />}
