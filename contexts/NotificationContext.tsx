@@ -1,7 +1,15 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { Announcement, Notification as AppNotification } from '../types';
-import { getActiveAnnouncements, getUserNotifications, markNotificationAsRead, savePushSubscription } from '../lib/supabaseService';
+import {
+  getActiveAnnouncements,
+  getUserNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead as apiMarkAllAsRead,
+  deleteNotification as apiDeleteNotification,
+  deleteAllNotifications as apiDeleteAllNotifications,
+  savePushSubscription
+} from '../lib/supabaseService';
 import { supabase } from '../lib/supabaseClient';
 
 // VAPID Public Key - Ideally this should be in env vars
@@ -18,6 +26,9 @@ interface NotificationContextType {
   unreadCount: number;
   readAnnouncementIds: string[];
   markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  deleteAllNotifications: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
 }
 
@@ -25,7 +36,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [permissionStatus, setPermissionStatus] = useState<PermissionStatus>('default');
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [rawAnnouncements, setRawAnnouncements] = useState<Announcement[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const { user } = useAuth();
 
@@ -33,6 +44,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const saved = localStorage.getItem('readAnnouncementIds');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const [dismissedAnnouncementIds, setDismissedAnnouncementIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('dismissedAnnouncementIds');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Filter out dismissed announcements
+  const announcements = rawAnnouncements.filter(a => !dismissedAnnouncementIds.includes(a.id));
 
   const isSubscribed = permissionStatus === 'granted';
 
@@ -51,11 +70,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     localStorage.setItem('readAnnouncementIds', JSON.stringify(readAnnouncementIds));
   }, [readAnnouncementIds]);
 
+  // Persist dismissed announcements
+  useEffect(() => {
+    localStorage.setItem('dismissedAnnouncementIds', JSON.stringify(dismissedAnnouncementIds));
+  }, [dismissedAnnouncementIds]);
+
   // Fetch data on load and when user changes
   const fetchData = useCallback(async () => {
     // Fetch announcements (public)
     const activeAnnouncements = await getActiveAnnouncements();
-    setAnnouncements(activeAnnouncements);
+    setRawAnnouncements(activeAnnouncements);
 
     // Fetch notifications (if logged in)
     if (user) {
@@ -126,7 +150,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           endAt: newAnnouncement.expires_at
         };
 
-        setAnnouncements(prev => [mappedAnnouncement, ...prev]);
+        setRawAnnouncements(prev => [mappedAnnouncement, ...prev]);
 
         // Show desktop notification if subscribed
         if (isSubscribed) {
@@ -194,8 +218,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, [user]);
 
   const markAsRead = useCallback(async (id: string) => {
-    // Check if it's an announcement (by checking if it exists in announcements array)
-    const isAnnouncement = announcements.some(a => a.id === id);
+    // Check if it's an announcement (by checking if it exists in raw announcements array)
+    const isAnnouncement = rawAnnouncements.some(a => a.id === id);
 
     if (isAnnouncement) {
       if (!readAnnouncementIds.includes(id)) {
@@ -206,7 +230,49 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       await markNotificationAsRead(id);
     }
-  }, [announcements, readAnnouncementIds]);
+  }, [rawAnnouncements, readAnnouncementIds]);
+
+  const markAllAsRead = useCallback(async () => {
+    // Mark all announcements as read
+    const allAnnouncementIds = rawAnnouncements.map(a => a.id);
+    setReadAnnouncementIds(prev => Array.from(new Set([...prev, ...allAnnouncementIds])));
+
+    // Mark all notifications as read
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    if (user) {
+      await apiMarkAllAsRead(user.id);
+    }
+  }, [rawAnnouncements, user]);
+
+  const deleteNotification = useCallback(async (id: string) => {
+    const isAnnouncement = rawAnnouncements.some(a => a.id === id);
+    if (isAnnouncement) {
+      setDismissedAnnouncementIds(prev => {
+        const next = Array.from(new Set([...prev, id]));
+        localStorage.setItem('dismissedAnnouncementIds', JSON.stringify(next));
+        return next;
+      });
+    } else {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      await apiDeleteNotification(id);
+    }
+  }, [rawAnnouncements]);
+
+  const deleteAllNotifications = useCallback(async () => {
+    // Dismiss all announcements
+    const allAnnouncementIds = rawAnnouncements.map(a => a.id);
+    setDismissedAnnouncementIds(prev => {
+      const next = Array.from(new Set([...prev, ...allAnnouncementIds]));
+      localStorage.setItem('dismissedAnnouncementIds', JSON.stringify(next));
+      return next;
+    });
+
+    // Clear notifications
+    setNotifications([]);
+    if (user) {
+      await apiDeleteAllNotifications(user.id);
+    }
+  }, [rawAnnouncements, user]);
 
   return (
     <NotificationContext.Provider value={{
@@ -218,6 +284,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       unreadCount,
       readAnnouncementIds,
       markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      deleteAllNotifications,
       refreshNotifications: fetchData
     }}>
       {children}

@@ -345,6 +345,33 @@ export async function markNotificationAsRead(notificationId: string) {
     if (error) console.error('Error marking notification read:', error);
 }
 
+export async function markAllNotificationsAsRead(userId: string) {
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', userId);
+
+    if (error) console.error('Error marking all notifications read:', error);
+}
+
+export async function deleteNotification(notificationId: string) {
+    const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+    if (error) console.error('Error deleting notification:', error);
+}
+
+export async function deleteAllNotifications(userId: string) {
+    const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', userId);
+
+    if (error) console.error('Error deleting all notifications:', error);
+}
+
 export async function createNotification(notification: { userId: string; title: string; message: string; type: string; link?: string }) {
     const { error } = await supabase
         .from('notifications')
