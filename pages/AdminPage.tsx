@@ -12,10 +12,11 @@ import AdminCategoryTab from "../components/admin/AdminCategoryTab";
 import AdminContentTab from "../components/admin/AdminContentTab";
 import AdminFlightRoutesTab from "../components/admin/AdminFlightRoutesTab";
 import AdminBackgroundsTab from "../components/admin/AdminBackgroundsTab";
-import { AdminAnnouncementsTab } from "../components/admin/AdminAnnouncementsTab";
-import AdminPromoCodesTab from "../components/admin/AdminPromoCodesTab";
 import AdminAuditLogsTab from "../components/admin/AdminAuditLogsTab";
 import AdminFraudSignalsTab from "../components/admin/AdminFraudSignalsTab";
+import AdminGamificationTab from "../components/admin/AdminGamificationTab";
+import AdminRafflesTab from "../components/admin/AdminRafflesTab";
+import { Sparkles, Gift } from "lucide-react";
 import {
   BarChartIcon,
   TagIcon,
@@ -59,6 +60,8 @@ const AdminPage: React.FC = () => {
     | "promo_codes"
     | "audit_logs"
     | "fraud_signals"
+    | "gamification"
+    | "raffles"
   >("analytics");
   const [pendingCount, setPendingCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile toggle
@@ -195,6 +198,21 @@ const AdminPage: React.FC = () => {
           id: "fraud_signals",
           label: "Security Warnings",
           icon: <ShieldAlert className="w-5 h-5 text-orange-500" />,
+        },
+      ],
+    },
+    {
+      title: "Gamification & Social",
+      items: [
+        {
+          id: "gamification",
+          label: "Stories & Badges",
+          icon: <Sparkles className="w-5 h-5 text-amber-400" />,
+        },
+        {
+          id: "raffles",
+          label: "Social Raffles",
+          icon: <Gift className="w-5 h-5 text-rose-400" />,
         },
       ],
     },
@@ -486,6 +504,8 @@ const AdminPage: React.FC = () => {
             {activeTab === "promo_codes" && <AdminPromoCodesTab />}
             {activeTab === "audit_logs" && <AdminAuditLogsTab />}
             {activeTab === "fraud_signals" && <AdminFraudSignalsTab />}
+            {activeTab === "gamification" && <AdminGamificationTab />}
+            {activeTab === "raffles" && <AdminRafflesTab />}
           </div>
         </main>
       </div>

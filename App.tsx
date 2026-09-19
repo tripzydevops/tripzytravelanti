@@ -20,6 +20,9 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LayoutProvider, useLayout } from "./contexts/LayoutContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import { GamificationProvider } from "./contexts/GamificationContext";
+import StoryViewerModal from "./components/gamification/StoryViewerModal";
+import MysteryScratchModal from "./components/gamification/MysteryScratchModal";
 import TopHeader from "./components/TopHeader";
 import BottomNav from "./components/BottomNav";
 import Footer from "./components/Footer";
@@ -351,26 +354,30 @@ function App() {
         <LanguageProvider>
           <AuthProvider>
             <UserActivityProvider>
-              <AdminProvider>
-                <DealProvider>
-                  <SubscriptionProvider>
-                    <ContentProvider>
-                      <ThemeProvider>
-                        <LayoutProvider>
-                          <NotificationProvider>
-                            <ToastProvider>
-                              <BrowserRouter>
-                                <ScrollToTop />
-                                <AppContent />
-                              </BrowserRouter>
-                            </ToastProvider>
-                          </NotificationProvider>
-                        </LayoutProvider>
-                      </ThemeProvider>
-                    </ContentProvider>
-                  </SubscriptionProvider>
-                </DealProvider>
-              </AdminProvider>
+              <GamificationProvider>
+                <AdminProvider>
+                  <DealProvider>
+                    <SubscriptionProvider>
+                      <ContentProvider>
+                        <ThemeProvider>
+                          <LayoutProvider>
+                            <NotificationProvider>
+                              <ToastProvider>
+                                <BrowserRouter>
+                                  <ScrollToTop />
+                                  <StoryViewerModal />
+                                  <MysteryScratchModal />
+                                  <AppContent />
+                                </BrowserRouter>
+                              </ToastProvider>
+                            </NotificationProvider>
+                          </LayoutProvider>
+                        </ThemeProvider>
+                      </ContentProvider>
+                    </SubscriptionProvider>
+                  </DealProvider>
+                </AdminProvider>
+              </GamificationProvider>
             </UserActivityProvider>
           </AuthProvider>
         </LanguageProvider>

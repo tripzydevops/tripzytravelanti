@@ -337,3 +337,116 @@ export interface FraudSignal {
   resolvedAt?: string;
   createdAt: string;
 }
+
+// =====================================================
+// INSTAGRAM STORIES & SOCIAL DISCOVERY
+// =====================================================
+export interface StorySlide {
+  id: string;
+  title: string;
+  title_tr?: string;
+  subtitle?: string;
+  subtitle_tr?: string;
+  imageUrl: string;
+  dealId?: string;
+  ctaText?: string;
+  ctaText_tr?: string;
+  tag?: string;
+  location?: string;
+}
+
+export interface StoryGroup {
+  id: string;
+  partnerId?: string;
+  title: string;
+  title_tr?: string;
+  avatarUrl: string;
+  category: string;
+  isLive?: boolean;
+  slides: StorySlide[];
+  isSeen?: boolean;
+  createdAt?: string;
+}
+
+// =====================================================
+// TRAVEL PASSPORT & QUESTS GAMIFICATION
+// =====================================================
+export interface TravelPassportStamp {
+  id: string;
+  slug: string;
+  city?: string;
+  category?: string;
+  name: string;
+  name_tr: string;
+  description: string;
+  description_tr: string;
+  icon: string;
+  xpReward: number;
+  pointsReward?: number;
+  requiredCount: number;
+  currentCount: number;
+  isUnlocked: boolean;
+  unlockedAt?: string;
+}
+
+export interface UserGamificationState {
+  level: number;
+  levelTitle: string;
+  levelTitle_tr: string;
+  xp: number;
+  xpForNextLevel: number;
+  streakDays: number;
+  lastStreakClaimDate: string | null;
+  canClaimDailyStreak: boolean;
+  canScratchCard: boolean;
+  stamps: TravelPassportStamp[];
+  totalSavedAmount: number;
+}
+
+// =====================================================
+// SOCIAL MEDIA RAFFLES & GIVEAWAYS (ÇEKİLİŞLER)
+// =====================================================
+export interface RaffleEntryQuest {
+  id: string;
+  title: string;
+  title_tr: string;
+  description: string;
+  description_tr: string;
+  ticketsReward: number;
+  actionType: 'instagram_follow' | 'instagram_story' | 'referral' | 'redeem_deal' | 'points_exchange';
+  pointsCost?: number;
+  actionUrl?: string;
+  isCompleted: boolean;
+}
+
+export interface Raffle {
+  id: string;
+  title: string;
+  title_tr: string;
+  description: string;
+  description_tr: string;
+  imageUrl: string;
+  prizeValue: string;
+  sponsorName?: string;
+  sponsorLogoUrl?: string;
+  endDate: string;
+  drawDate: string;
+  totalTickets: number;
+  userTickets: number;
+  status: 'active' | 'drawn' | 'upcoming';
+  winnerName?: string;
+  winnerAvatar?: string;
+  quests: RaffleEntryQuest[];
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  avatarUrl?: string;
+  city?: string;
+  totalSaved: number;
+  stampsUnlocked: number;
+  level: number;
+  tier: SubscriptionTier;
+}

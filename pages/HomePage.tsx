@@ -40,6 +40,10 @@ import FlashDealCard from '../components/FlashDealCard';
 import SimilarDeals from '../components/SimilarDeals';
 import CategoryBar from '../components/CategoryBar';
 import { NotificationBell } from '../components/NotificationBell';
+import StoriesBar from '../components/gamification/StoriesBar';
+import LiveSocialTicker from '../components/gamification/LiveSocialTicker';
+import DailyStreakWidget from '../components/gamification/DailyStreakWidget';
+import SocialRafflesCard from '../components/gamification/SocialRafflesCard';
 
 // Helper function to get time-based greeting
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
@@ -508,8 +512,22 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
+        {/* Instagram Stories Tray (Top Discovery Bar) */}
+        <div className="bg-zinc-950/60 border-b border-white/5 py-1">
+          <StoriesBar />
+        </div>
+
+        {/* Live Social Proof Ticker */}
+        <LiveSocialTicker />
+
+        {/* Daily Streak & Mystery Card Widget */}
+        <DailyStreakWidget />
+
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-12 relative z-10">
+        <div className="container mx-auto px-4 py-8 relative z-10">
+
+          {/* Social Media Raffles & Lucky Giveaways Hub */}
+          <SocialRafflesCard />
 
           {/* Flash Deals Section - Horizontal Scroll Carousel */}
           {flashDeals.length > 0 && (

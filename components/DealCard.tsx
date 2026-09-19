@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Deal, SubscriptionTier } from "../types";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,8 +11,11 @@ import {
   LocationMarkerIcon as LocationIcon,
   CheckCircle,
 } from "./Icons";
+import { Share2, Sparkles, Flame } from "lucide-react";
 import { getThumbnailUrl } from "../lib/imageUtils";
 import { logEngagementEvent } from "../lib/supabaseService";
+import { triggerHapticFeedback } from "../lib/hapticUtils";
+import { SocialShareModal } from "./gamification/SocialShareModal";
 
 interface DealCardProps {
   deal: Deal;
@@ -64,7 +67,10 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
 
-  const hoverTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const lastTapRef = useRef<number>(0);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
     hoverTimerRef.current = setTimeout(() => {
@@ -79,13 +85,42 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (hoverTimerRef.current) {
         clearTimeout(hoverTimerRef.current);
       }
     };
   }, []);
+
+  const isSaved = isDealSaved(deal.id);
+
+  // Instagram Double-Tap to Heart
+  const handleImageTap = (e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Trigger burst animation & haptics
+      setShowHeartBurst(true);
+      triggerHapticFeedback('medium');
+      setTimeout(() => setShowHeartBurst(false), 900);
+
+      // Save deal if not already saved
+      if (user && !isSaved) {
+        saveDeal(deal.id);
+      }
+
+      // Buffer implicit like signal for recommendation engine
+      bufferSignal("deal_double_tap_like", deal.id, {
+        source: "DealCard_DoubleTap",
+        category: deal.category
+      });
+    }
+    lastTapRef.current = now;
+  };
 
   const userTierLevel = user
     ? TIER_LEVELS[user.tier]
@@ -97,8 +132,6 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   if (!user && deal.requiredTier === SubscriptionTier.FREE) {
     isLocked = false;
   }
-
-  const isSaved = isDealSaved(deal.id);
 
   const title = language === "tr" ? deal.title_tr : deal.title;
   const description =
@@ -176,8 +209,11 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
 
   const CardContent = () => (
     <>
-      {/* Image Container with refined aspects */}
-      <div className="relative aspect-[16/10] overflow-hidden group/img">
+      {/* Image Container with refined aspects and Double Tap Support */}
+      <div
+        className="relative aspect-[16/10] overflow-hidden group/img select-none cursor-pointer"
+        onClick={handleImageTap}
+      >
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
         <img
           className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
@@ -188,22 +224,47 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
         {/* Animated Shine Effect */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out z-10 pointer-events-none"></div>
 
-        {/* Floating Heart Button (Top Right) - Industry Standard */}
-        {user && !isLocked && (
-          <button
-            onClick={handleSaveToggle}
-            className="absolute top-3 right-3 z-30 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40 transition-all duration-300 group/heart active:scale-90"
-            aria-label={isSaved ? t("unsaveDealAction") : t("saveDealAction")}
-          >
-            <HeartIcon
-              className={`w-5 h-5 transition-all duration-500 ${
-                isSaved
-                  ? "text-red-500 fill-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
-                  : "text-white group-hover/heart:scale-110 group-hover/heart:text-red-400"
-              }`}
-            />
-          </button>
+        {/* Instagram-Style Double-Tap Heart Burst Particle */}
+        {showHeartBurst && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none animate-ping">
+            <div className="p-4 rounded-full bg-red-500/30 backdrop-blur-sm shadow-[0_0_40px_rgba(239,68,68,0.8)] animate-bounce">
+              <HeartIcon className="w-16 h-16 text-red-500 fill-red-500 drop-shadow-2xl" />
+            </div>
+          </div>
         )}
+
+        {/* Floating Top Right Buttons (Heart + Share) */}
+        <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5">
+          {/* Share to Instagram Story / WhatsApp */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsShareModalOpen(true);
+            }}
+            className="p-2.5 rounded-full bg-black/30 backdrop-blur-md border border-white/20 hover:bg-black/60 text-white transition-all active:scale-90"
+            title="Share Deal"
+          >
+            <Share2 className="w-4 h-4 text-white hover:text-brand-primary" />
+          </button>
+
+          {/* Save Heart Button */}
+          {user && !isLocked && (
+            <button
+              onClick={handleSaveToggle}
+              className="p-2.5 rounded-full bg-black/30 backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all duration-300 group/heart active:scale-90"
+              aria-label={isSaved ? t("unsaveDealAction") : t("saveDealAction")}
+            >
+              <HeartIcon
+                className={`w-4 h-4 transition-all duration-500 ${
+                  isSaved
+                    ? "text-red-500 fill-red-500 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                    : "text-white group-hover/heart:scale-110 group-hover/heart:text-red-400"
+                }`}
+              />
+            </button>
+          )}
+        </div>
 
         {/* Dynamic Badges (Bottom Left) */}
         <div className="absolute bottom-3 left-3 z-20 flex flex-col gap-1.5 items-start">
@@ -341,24 +402,39 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   );
 
   return (
-    <div
-      className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Link
-        to={`/deals/${deal.id}`}
-        className="flex flex-col flex-grow cursor-pointer"
-        onClick={() =>
-          bufferSignal("click", deal.id, {
-            source: "DealCard",
-            state: isLocked ? "locked" : "unlocked",
-          })
-        }
+    <>
+      <div
+        className="relative flex flex-col h-full rounded-2xl overflow-hidden glass-premium transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group h-full"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        <CardContent />
-      </Link>
-    </div>
+        <Link
+          to={`/deals/${deal.id}`}
+          className="flex flex-col flex-grow cursor-pointer"
+          onClick={() =>
+            bufferSignal("click", deal.id, {
+              source: "DealCard",
+              state: isLocked ? "locked" : "unlocked",
+            })
+          }
+        >
+          <CardContent />
+        </Link>
+      </div>
+
+      {isShareModalOpen && (
+        <SocialShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          shareType="deal"
+          title={title}
+          subtitle={`${deal.vendor} • ${discount > 0 ? `%${discount} İndirim` : ''}`}
+          discountPercentage={discount}
+          dealImageUrl={deal.imageUrl}
+          referralCode={user?.referralCode}
+        />
+      )}
+    </>
   );
 };
 

@@ -16,9 +16,12 @@ import DeleteAccountModal from '../components/DeleteAccountModal';
 import { calculateRemainingRedemptions, getNextRenewalDate } from '../lib/redemptionLogic';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useSearch } from '../contexts/SearchContext';
-import InvoiceModal from '../components/InvoiceModal';
 import { getUserTransactions, uploadUserAvatar, handleReferralCode, getUserLoyaltyTransactions } from '../lib/supabaseService';
 import { PaymentTransaction } from '../types';
+import TripzyPassport from '../components/gamification/TripzyPassport';
+import CityLeaderboard from '../components/gamification/CityLeaderboard';
+import SocialRafflesCard from '../components/gamification/SocialRafflesCard';
+import { Compass, Trophy, Gift, Settings } from 'lucide-react';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-6">
@@ -193,6 +196,7 @@ const ProfilePage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState('');
   const [copied, setCopied] = useState(false);
   const [manualReferralCode, setManualReferralCode] = useState('');
+  const [activeProfileTab, setActiveProfileTab] = useState<'passport' | 'leaderboard' | 'settings'>('passport');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
@@ -449,11 +453,68 @@ const ProfilePage: React.FC = () => {
             </button>
           )}
         </div>
+
+        {/* Profile Navigation Segmented Tabs */}
+        <div className="flex items-center justify-center mt-6">
+          <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl max-w-md w-full">
+            <button
+              onClick={() => setActiveProfileTab('passport')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                activeProfileTab === 'passport'
+                  ? 'bg-gradient-to-r from-brand-primary to-amber-500 text-black shadow-lg shadow-brand-primary/20'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Compass className="w-4 h-4" />
+              <span>{language === 'tr' ? 'Pasaport' : 'Passport'}</span>
+            </button>
+
+            <button
+              onClick={() => setActiveProfileTab('leaderboard')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                activeProfileTab === 'leaderboard'
+                  ? 'bg-gradient-to-r from-brand-primary to-amber-500 text-black shadow-lg shadow-brand-primary/20'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Trophy className="w-4 h-4" />
+              <span>{language === 'tr' ? 'Liderler' : 'Leaders'}</span>
+            </button>
+
+            <button
+              onClick={() => setActiveProfileTab('settings')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                activeProfileTab === 'settings'
+                  ? 'bg-gradient-to-r from-brand-primary to-amber-500 text-black shadow-lg shadow-brand-primary/20'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>{language === 'tr' ? 'Ayarlar' : 'Settings'}</span>
+            </button>
+          </div>
+        </div>
       </header>
 
-      {/* Subscription Info Card */}
-      <div className="mb-6">
-        <SettingsSection title={t('subscriptionInfo')}>
+      {/* Tab 1: Travel Passport Stamps & XP */}
+      {activeProfileTab === 'passport' && (
+        <div className="space-y-6 animate-fade-in">
+          <TripzyPassport />
+        </div>
+      )}
+
+      {/* Tab 2: Weekly Leaderboard */}
+      {activeProfileTab === 'leaderboard' && (
+        <div className="space-y-6 animate-fade-in">
+          <CityLeaderboard />
+        </div>
+      )}
+
+      {/* Tab 3: Account & Subscription Settings */}
+      {activeProfileTab === 'settings' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="mb-6">
+            <SettingsSection title={t('subscriptionInfo')}>
           <div className="p-1">
             {/* Glass Credit Card */}
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 shadow-2xl group">
@@ -815,6 +876,8 @@ const ProfilePage: React.FC = () => {
         </div>
 
       </div>
+    </div>
+    )}
 
       {showSuccess && (
         <div className="fixed bottom-28 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50">
