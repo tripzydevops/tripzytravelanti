@@ -370,8 +370,13 @@ const HomePage: React.FC = () => {
         {/* Ambient Background Glows */}
         {/* ... */}
 
+        {/* Instagram Stories Tray (Top Discovery Bar - Always Visible) */}
+        <div className="bg-brand-bg/95 border-b border-white/10 py-1 sticky top-[57px] z-30 backdrop-blur-md shadow-md">
+          <StoriesBar />
+        </div>
+
         {/* Hero Section */}
-        <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center overflow-hidden z-10">
+        <section className="relative py-12 md:py-16 min-h-[380px] md:min-h-[440px] flex items-center justify-center overflow-hidden z-10">
           {/* Background Image Carousel */}
           {backgroundImages.map((img, index) => (
             <div
@@ -386,54 +391,23 @@ const HomePage: React.FC = () => {
             </div>
           ))}
 
-          {/* Login Button for Unauthenticated Users / Notification Bell for Authenticated Users */}
-          {!user ? (
-            <div className="absolute top-6 right-6 z-20">
-              <Link
-                to="/login"
-                className="px-8 py-2.5 bg-white/10 hover:bg-gold-500 hover:text-white backdrop-blur-md border border-white/20 rounded-full text-white font-semibold transition-all shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]"
-              >
-                {t('login') || 'Login'}
-              </Link>
-            </div>
-          ) : (
-            <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
-              <NotificationBell />
-              <Link
-                to="/profile"
-                className="flex items-center gap-2.5 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-gold-500/30 rounded-full text-white font-medium transition-all shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:border-gold-400 group"
-              >
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-gold-400" />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-gold-500/20 border border-gold-400 flex items-center justify-center text-xs font-bold text-gold-400 uppercase">
-                    {(user.name || user.email || 'U')[0]}
-                  </div>
-                )}
-                <span className="text-sm font-bold text-white group-hover:text-gold-300">
-                  {user.name?.split(' ')[0] || 'Profile'}
-                </span>
-              </Link>
-            </div>
-          )}
-
           {/* Hero Content */}
           <div className="relative z-10 container mx-auto px-4 text-center animate-fade-in">
             {/* Personalized Greeting for logged-in users */}
             {user && (
-              <div className="mb-6 animate-fade-in">
-                <h2 className="text-2xl md:text-3xl font-heading font-bold text-gold-400 drop-shadow-lg">
+              <div className="mb-4 animate-fade-in">
+                <h2 className="text-xl md:text-2xl font-heading font-bold text-gold-400 drop-shadow-lg">
                   {t(greetingKey)}, {user.name?.split(' ')[0] || t('welcome')}! 👋
                 </h2>
-                <p className="text-sm md:text-base text-white/70 mt-1">
+                <p className="text-xs md:text-sm text-white/70 mt-0.5">
                   {t(greetingSubtitleKey)}
                 </p>
               </div>
             )}
-            <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white mb-6 drop-shadow-2xl tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-heading font-extrabold text-white mb-4 drop-shadow-2xl tracking-tight">
               {displayTitle || t('heroTitle') || 'Discover the World for Less'}
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-10 drop-shadow-lg font-light max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-white/90 mb-8 drop-shadow-lg font-light max-w-3xl mx-auto leading-relaxed">
               {displaySubtitle || t('heroSubtitle') || 'Exclusive travel deals and discounts at your fingertips'}
             </p>
 
@@ -538,11 +512,6 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Instagram Stories Tray (Top Discovery Bar) */}
-        <div className="bg-zinc-950/60 border-b border-white/5 py-1">
-          <StoriesBar />
-        </div>
-
         {/* Live Social Proof Ticker */}
         <LiveSocialTicker />
 
@@ -550,7 +519,7 @@ const HomePage: React.FC = () => {
         <DailyStreakWidget />
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="container mx-auto px-4 py-6 relative z-10">
 
           {/* Flash Lottery Urgency Banner */}
           <FlashLotteryBanner

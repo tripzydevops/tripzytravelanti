@@ -18,11 +18,6 @@ const TopHeader: React.FC = () => {
     return null;
   }
 
-  // On HomePage, the Hero banner already renders header elements inside the banner
-  if (location.pathname === '/') {
-    return null;
-  }
-
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-brand-bg/85 border-b border-white/10 px-4 py-3 shadow-lg transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
