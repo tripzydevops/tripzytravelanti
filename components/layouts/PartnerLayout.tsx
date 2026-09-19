@@ -16,6 +16,17 @@ const PartnerLayout: React.FC = () => {
         setIsSidebarOpen(false);
     }, [location.pathname]);
 
+    // Redirect non-partners
+    React.useEffect(() => {
+        if (!loading) {
+            if (user && user.role !== 'partner') {
+                navigate('/');
+            } else if (!user) {
+                navigate('/login');
+            }
+        }
+    }, [user, loading, navigate]);
+
     const handleLogout = async () => {
         try {
             await logout();
@@ -34,17 +45,6 @@ const PartnerLayout: React.FC = () => {
     }
 
     if (!user || user.role !== 'partner') {
-        // Redirect non-partners
-        // In a real app, you might want to show a "Not Authorized" page or redirect to home
-        // For now, we'll redirect to home if they somehow got here
-        React.useEffect(() => {
-            if (user && user.role !== 'partner') {
-                navigate('/');
-            } else if (!user) {
-                navigate('/login');
-            }
-        }, [user, navigate]);
-
         return null;
     }
 

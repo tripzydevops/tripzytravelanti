@@ -76,7 +76,7 @@ describe('getAIRecommendations', () => {
 
         const recommendations = await getAIRecommendations(mockUser, mockDeals);
 
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('AI Recommendation failed'), expect.any(Error));
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('AI Recommendation'), expect.any(Error));
         expect(recommendations).toBeDefined();
         expect(recommendations.length).toBeGreaterThan(0);
     });

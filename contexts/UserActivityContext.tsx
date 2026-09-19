@@ -127,8 +127,8 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
                     const rows = signalsToSend.map(s => ({
                         user_id: userId,
                         session_id: sessionId,
-                        signal_type: s.type,
-                        target_id: s.targetId || null,
+                        signal_type: s.signal_type,
+                        target_id: s.target_id || null,
                         metadata: s.metadata || {}
                     }));
                     await supabase.from('user_signals').insert(rows);

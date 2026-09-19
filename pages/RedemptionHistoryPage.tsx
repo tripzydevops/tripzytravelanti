@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getUserRedemptions } from '../lib/supabaseService';
 import { useLanguage } from '../contexts/LanguageContext';
 import RedeemedVoucherCard from '../components/RedeemedVoucherCard';
+import { ChevronLeftIcon } from '../components/Icons';
 
 const RedemptionHistoryPage: React.FC = () => {
     const { user } = useAuth();

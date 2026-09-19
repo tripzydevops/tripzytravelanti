@@ -26,13 +26,18 @@ describe('checkMonthlyLimit', () => {
     const profileChain = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: mockUser, error: null })
+      single: vi.fn().mockResolvedValue({ data: mockUser, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: mockUser, error: null })
     };
 
     const planChain = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
+        data: { redemptions_per_period: 120, billing_period: 'yearly' },
+        error: null
+      }),
+      maybeSingle: vi.fn().mockResolvedValue({
         data: { redemptions_per_period: 120, billing_period: 'yearly' },
         error: null
       })

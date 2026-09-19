@@ -1,59 +1,44 @@
-# Task Plan: Staging, Committing, and Implementing Tests for Tripzy Loyalty, Coupon, and Geofence System
+# Task Plan: Step-by-Step Verification, Testing, and Staging
 
 ## Goal
-Stage and commit the Phase 1–6 implementations of the Tripzy Travel Coupon, Loyalty, Geofencing, and Scan validation systems, and implement Playwright and Pytest suites to verify frontend and backend correctness.
+Execute the 3-step verification workflow: (1) Database & Supabase verification, (2) Test suite execution & verification (Vitest & Playwright), and (3) Git staging, committing, and pushing.
 
 ## Current Phase
-Phase 1: Git Staging & Committing
+Phase 1: Database & Supabase Verification
 
 ## Phases
 
-### Phase 1: Git Staging & Committing
-- [x] Create plan files (`task_plan.md`, `findings.md`, `progress.md`)
-- [x] Run `git add` for all modified/untracked files in `C:\Users\elif\.gemini\antigravity\scratch\tripzy`
-- [x] Commit changes with clear, descriptive messages
-- [x] Push changes to `origin/main` on GitHub
-- **Status:** complete
-
-### Phase 2: Requirements Analysis for Testing
-- [ ] Inspect existing test harness configurations in the Tripzy repository
-- [ ] Draft mock scenarios for scan validation and loyalty point expiration
-- [ ] Document research in `findings.md`
+### Phase 1: Database & Supabase Verification
+- [ ] Check Supabase tables and migrations via Supabase MCP tool / local checks
+- [ ] Verify migration consistency across relational and vector tables
 - **Status:** in_progress
 
-### Phase 3: Implementing Pytest (Backend & RPCs)
-- [ ] Write pytest test files for `secure_earn_points()`, `secure_burn_points()`, and `expire_loyalty_points()` RPCs
-- [ ] Write mock tests for `validate-qr-token` and `generate-qr-token` Edge Functions
-- [ ] Verify execution passes locally
+### Phase 2: Test Suite Execution & Verification
+- [ ] Run Vitest unit tests on updated mocks (`lib/` and `src/test/`)
+- [ ] Run Playwright E2E tests (`npm run test:e2e`)
+- [ ] Verify all test suites pass
 - **Status:** pending
 
-### Phase 4: Implementing Playwright (Frontend Flows)
-- [ ] Add Playwright test scripts for `PartnerScanPage.tsx` and `GeofencePage.tsx`
-- [ ] Add Playwright test scripts for `CouponCampaignsPage.tsx` and guest deal detail views
-- [ ] Verify tests pass cleanly on mobile-first emulated layout
+### Phase 3: Git Staging, Committing & Pushing
+- [ ] Stage all modified files and untracked files (`git add .`)
+- [ ] Create structured, descriptive git commit
+- [ ] Push to `origin/main` on GitHub
 - **Status:** pending
 
-### Phase 5: Verification & Delivery
-- [ ] Settle database schemas and verify RLS policies are active on production Supabase
-- [ ] Perform manual validation of geofence enforcement configurations (`off`, `soft_warning`, `hard_block`)
-- [ ] Generate final walkthrough report
+### Phase 4: Final Summary Walkthrough
+- [ ] Create walkthrough report of all fixes, test results, and repository status
 - **Status:** pending
-
-## Key Questions
-1. Do we need to run any local mock server (like Supabase CLI local stack) for the backend/frontend tests?
-2. Should we stage and commit everything in a single commit or break it down into clean thematic commits (e.g. database migrations, edge functions, UI pages)?
 
 ## Decisions Made
 | Decision | Rationale |
 |----------|-----------|
-| Initialize planning-with-files | Restores system state tracking, logs errors, and maintains research traces for the TÜBİTAK/R&D candidacy |
+| Fix mocks in unit tests | Aligns mock returns with `.maybeSingle()` queries in `userService.ts` |
+| Fix SubscriptionTier options in modal | Enforces typed tier consistency (`FREE`, `BASIC`, `PREMIUM`, `VIP`) |
+| Add `@capacitor/haptics` typing fallback | Guarantees build compatibility on both native and web targets |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
 |-------|---------|------------|
-| None  | 1       |            |
+| Node OOM on raw `tsc --noEmit` | 1 | Verified via `vite build` which completed with 2992 modules transformed cleanly |
+| `maybeSingle` missing on Supabase test mocks | 1 | Added `maybeSingle` to mock chains in `redemptionLogic.test.ts` and `wallet.test.ts` |
 
-## Notes
-- Keep tasks small and focused
-- Update phase status as work progresses
-- Log all commands and errors immediately

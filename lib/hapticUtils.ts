@@ -9,21 +9,23 @@ export async function triggerHapticFeedback(style: HapticStyle = 'light'): Promi
     try {
         // Attempt dynamically importing @capacitor/haptics if available on Capacitor platform
         if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
-            const { Haptics, ImpactStyle, NotificationType } = await import(/* @vite-ignore */ '@capacitor/haptics');
-            if (style === 'success') {
-                await Haptics.notification({ type: NotificationType.Success });
-            } else if (style === 'warning') {
-                await Haptics.notification({ type: NotificationType.Warning });
-            } else if (style === 'error') {
-                await Haptics.notification({ type: NotificationType.Error });
-            } else if (style === 'medium') {
-                await Haptics.impact({ style: ImpactStyle.Medium });
-            } else if (style === 'heavy') {
-                await Haptics.impact({ style: ImpactStyle.Heavy });
-            } else {
-                await Haptics.impact({ style: ImpactStyle.Light });
+            const haptics = (window as any).Capacitor?.Plugins?.Haptics;
+            if (haptics) {
+                if (style === 'success') {
+                    await haptics.notification({ type: 'SUCCESS' });
+                } else if (style === 'warning') {
+                    await haptics.notification({ type: 'WARNING' });
+                } else if (style === 'error') {
+                    await haptics.notification({ type: 'ERROR' });
+                } else if (style === 'medium') {
+                    await haptics.impact({ style: 'MEDIUM' });
+                } else if (style === 'heavy') {
+                    await haptics.impact({ style: 'HEAVY' });
+                } else {
+                    await haptics.impact({ style: 'LIGHT' });
+                }
+                return;
             }
-            return;
         }
     } catch (e) {
         // Suppress native error and fallback to Web Vibration API

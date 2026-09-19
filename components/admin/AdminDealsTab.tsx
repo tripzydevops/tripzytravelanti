@@ -5,8 +5,9 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { Deal, SubscriptionTier } from "../../types";
 
 import { SpinnerIcon, EyeIcon } from "../Icons";
-import { Save } from "lucide-react";
+import { Save, Download, Plus, SlidersHorizontal, Sparkles } from "lucide-react";
 import ImageUpload from "../ImageUpload";
+import QuickAddDealModal from "./QuickAddDealModal";
 import StoreLocationFields from "../StoreLocationFields";
 import { useToast } from "../../contexts/ToastContext";
 import CountrySelector from "../CountrySelector";
@@ -134,6 +135,25 @@ const AdminDealsTab: React.FC = () => {
 
   // Selection State
   const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [quickEditDeal, setQuickEditDeal] = useState<Deal | null>(null);
+
+  const handleDownloadCsvTemplate = () => {
+    const csvContent =
+      "title,title_tr,description,description_tr,vendor,category,category_tr,originalPrice,discountedPrice,requiredTier,usageLimit,usageLimit_tr,validity,validity_tr,termsUrl,redemptionCode,isExternal,isTeasable\n" +
+      '"20% Off Weekend Brunch","Hafta Sonu Brunchında %20 İndirim","Enjoy a delicious brunch with 20% off every weekend","Her hafta sonu lezzetli brunch keyfinde %20 indirim","Luna Bistro","Dining","Yemek",250,200,"FREE","Unlimited","Sınırsız","Valid weekends only","Sadece hafta sonları geçerli","","LUNA-BRUNCH20","false","true"\n' +
+      '"15% Off Cappadocia Balloon Tour","Kapadokya Balon Turunda %15 İndirim","Early morning hot air balloon flight with spectacular views","Muhteşem manzaralar eşliğinde sabah erken saatte sıcak hava balonu uçuşu","Skyline Travel","Travel","Seyahat",2000,1700,"FREE","One per booking","Rezervasyon başı bir adet","Valid until season end","Sezon sonuna kadar geçerli","https://example.com/terms","SKY-BALLOON15","false","true"';
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "tripzy_deals_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showSuccessToast("Template CSV downloaded");
+  };
 
   const dealTypeConfig = getDiscountTypeConfig(
     dealFormData.dealTypeKey || "percentage_off"
@@ -866,11 +886,11 @@ const AdminDealsTab: React.FC = () => {
       {!isDealFormVisible && (
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">{t("manageDeals")}</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={handleSyncAllDeals}
               disabled={isSyncing}
-              className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+              className="bg-purple-600 text-white font-semibold py-2 px-3.5 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1.5 text-xs sm:text-sm"
             >
               {isSyncing ? (
                 <>
@@ -878,11 +898,19 @@ const AdminDealsTab: React.FC = () => {
                   {syncProgress.current}/{syncProgress.total})...
                 </>
               ) : (
-                "Sync to Pinecone"
+                "Sync Pinecone"
               )}
             </button>
-            <label className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors cursor-pointer flex items-center">
-              Import CSV
+            <button
+              type="button"
+              onClick={handleDownloadCsvTemplate}
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 text-xs sm:text-sm"
+              title="Download CSV Template with sample deals"
+            >
+              <Download className="w-4 h-4" /> Template CSV
+            </button>
+            <label className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-3 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm">
+              <Download className="w-4 h-4 rotate-180" /> Import CSV
               <input
                 type="file"
                 accept=".csv"
@@ -892,15 +920,25 @@ const AdminDealsTab: React.FC = () => {
             </label>
             <button
               onClick={() => {
+                setQuickEditDeal(null);
+                setIsQuickAddModalOpen(true);
+              }}
+              className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-all flex items-center gap-1.5 shadow-md shadow-brand-primary/20 text-xs sm:text-sm"
+            >
+              <Plus className="w-4 h-4" /> {t("addDeal") || "Yeni Fırsat Ekle"}
+            </button>
+            <button
+              onClick={() => {
                 setEditingDeal(null);
                 setDealFormData(EMPTY_DEAL);
                 setExpiresInDays("");
                 setNeverExpires(false);
                 setIsDealFormVisible(true);
               }}
-              className="bg-brand-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-colors"
+              className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs flex items-center gap-1"
+              title="Open full 4-tab advanced editor"
             >
-              {t("addDeal")}
+              <SlidersHorizontal className="w-3.5 h-3.5" /> Gelişmiş Editör
             </button>
           </div>
         </div>
@@ -1787,10 +1825,19 @@ const AdminDealsTab: React.FC = () => {
                         Clone
                       </button>
                       <button
+                        onClick={() => {
+                          setQuickEditDeal(deal);
+                          setIsQuickAddModalOpen(true);
+                        }}
+                        className="font-medium text-brand-primary hover:underline"
+                      >
+                        Quick Edit
+                      </button>
+                      <button
                         onClick={() => handleEditDealClick(deal)}
                         className="font-medium text-brand-secondary hover:underline"
                       >
-                        Edit
+                        Full Edit
                       </button>
                       <button
                         onClick={() => handleDeleteDealClick(deal.id)}
@@ -1830,6 +1877,19 @@ const AdminDealsTab: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Quick Add / Quick Edit Modal */}
+      {isQuickAddModalOpen && (
+        <QuickAddDealModal
+          isOpen={isQuickAddModalOpen}
+          onClose={() => {
+            setIsQuickAddModalOpen(false);
+            setQuickEditDeal(null);
+          }}
+          onDealCreated={() => loadAdminDeals(adminPage)}
+          editDeal={quickEditDeal}
+        />
+      )}
     </>
   );
 };

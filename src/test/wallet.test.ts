@@ -104,8 +104,8 @@ describe('Wallet Logic', () => {
 
             // Re-override implementation for this test
             (supabase.from as any).mockImplementation((table: string) => {
-                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
-                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
+                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
+                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
                 if (table === 'wallet_items') return walletChain; // Returns chain
                 return { select: vi.fn() };
             });
@@ -140,8 +140,8 @@ describe('Wallet Logic', () => {
             };
 
             (supabase.from as any).mockImplementation((table: string) => {
-                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
-                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
+                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
+                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
                 if (table === 'wallet_items') return walletChain;
                 return { select: vi.fn() };
             });
@@ -169,8 +169,8 @@ describe('Wallet Logic', () => {
             };
 
             (supabase.from as any).mockImplementation((table: string) => {
-                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
-                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
+                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
+                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
                 if (table === 'wallet_items') return walletChain;
                 return { select: vi.fn() };
             });
@@ -197,8 +197,8 @@ describe('Wallet Logic', () => {
             };
 
             (supabase.from as any).mockImplementation((table: string) => {
-                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
-                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
+                if (table === 'profiles') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockUser, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockUser, error: null }) };
+                if (table === 'subscription_plans') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: mockPlan, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: mockPlan, error: null }) };
                 if (table === 'wallet_items') return walletChain;
                 return { select: vi.fn() };
             });
