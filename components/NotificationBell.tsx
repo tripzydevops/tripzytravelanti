@@ -213,12 +213,12 @@ export const NotificationBell: React.FC = () => {
                                         <div className="absolute top-4 right-10 w-2 h-2 rounded-full bg-gold-400 shadow-[0_0_8px_rgba(212,175,55,0.8)]" />
                                     )}
 
-                                    {/* Individual Delete Button */}
+                                    {/* Individual Delete Button (One-by-One Deletion) */}
                                     <button
                                         onClick={(e) => handleDeleteSingle(e, item.id)}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-rose-500/20 text-white/40 hover:text-rose-300 absolute top-3 right-3 focus:opacity-100"
-                                        title={t('deleteNotification') || 'Delete'}
-                                        aria-label="Delete notification"
+                                        className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-all p-1.5 rounded-lg bg-white/5 sm:bg-transparent hover:bg-rose-500/20 text-white/50 hover:text-rose-300 absolute top-3 right-3 focus:opacity-100 shadow-sm"
+                                        title={t('deleteNotification') || 'Delete this notification'}
+                                        aria-label="Delete this notification"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
