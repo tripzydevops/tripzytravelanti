@@ -165,7 +165,7 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-4 mb-1">
                                     <span className="text-5xl font-black text-white">
-                                        ₺{deal.discountedPrice.toLocaleString()}
+                                        ₺{(Number(deal.discountedPrice) || 0).toLocaleString()}
                                     </span>
                                     {deal.discountPercentage && (
                                         <span className="bg-red-500/10 border border-red-500/20 text-red-500 px-2 py-1 rounded text-xs font-black">
@@ -174,7 +174,7 @@ const FlashDealCard: React.FC<FlashDealCardProps> = ({ deal }) => {
                                     )}
                                 </div>
                                 <span className="text-white/30 text-lg line-through font-medium">
-                                    ₺{deal.originalPrice.toLocaleString()}
+                                    ₺{(Number(deal.originalPrice) || 0).toLocaleString()}
                                 </span>
                             </div>
 

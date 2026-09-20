@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}']
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
         }
       }),
     ],
@@ -58,14 +58,9 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
+      isolate: false,
       setupFiles: ['./src/test/setup.ts'],
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'lib/**/*.test.ts'],
-      pool: 'threads',
-      poolOptions: {
-        threads: {
-          singleThread: true,
-        },
-      },
       fileParallelism: false,
       coverage: {
         provider: 'v8',
