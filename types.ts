@@ -111,6 +111,12 @@ export interface Deal {
   maxRedemptionsUser?: number | null; // Limit per user (e.g. 1)
   redemptionsCount?: number;
   isSoldOut?: boolean;
+  galleryUrls?: string[];
+  aiMatchScore?: number;
+  aiMatchReason?: string;
+  aiMatchReason_tr?: string;
+  neighborhood?: string;
+  neighborhood_tr?: string;
 }
 
 export interface SubscriptionPlan {

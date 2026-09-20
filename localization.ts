@@ -536,6 +536,14 @@ export const translations = {
     secureRedemption: 'Secure Redemption',
     noHiddenFees: 'No Hidden Fees',
     guaranteedAccess: 'Guaranteed Access',
+    savings: 'Savings',
+    savingsAmount: '₺{amount} Savings',
+    aiMatch: 'AI Match',
+    aiWhyRecommended: 'Why AI recommended this?',
+    perNight: 'per night',
+    perPerson: 'per person',
+    photos: 'Photos',
+    claimDealButton: 'Claim Offer',
   },
   tr: {
     // Header
@@ -1071,5 +1079,13 @@ export const translations = {
     secureRedemption: 'Güvenli Kullanım',
     noHiddenFees: 'Gizli Ücret Yok',
     guaranteedAccess: 'Garantili Erişim',
+    savings: 'Kazanç',
+    savingsAmount: '₺{amount} Kazanç',
+    aiMatch: 'AI Eşleşme',
+    aiWhyRecommended: 'AI Neden Önerdi?',
+    perNight: 'gecelik',
+    perPerson: 'kişi başı',
+    photos: 'Fotoğraf',
+    claimDealButton: 'Fırsatı Yakala',
   },
 };

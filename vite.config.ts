@@ -60,12 +60,13 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'lib/**/*.test.ts'],
-      pool: 'forks',
+      pool: 'threads',
       poolOptions: {
-        forks: {
-          singleFork: true,
+        threads: {
+          singleThread: true,
         },
       },
+      fileParallelism: false,
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
