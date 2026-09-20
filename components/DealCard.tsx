@@ -71,7 +71,6 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [showAiTooltip, setShowAiTooltip] = useState(false);
   const lastTapRef = useRef<number>(0);
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -104,7 +103,6 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
       clearTimeout(hoverTimerRef.current);
       hoverTimerRef.current = null;
     }
-    setShowAiTooltip(false);
   };
 
   useEffect(() => {
@@ -433,42 +431,18 @@ const DealCard: React.FC<DealCardProps> = ({ deal }) => {
           {title}
         </h3>
 
-        {/* AI Match Pill & Rating Row */}
+        {/* Rating & Category Row */}
         <div className="flex items-center justify-between gap-2 mb-3 pt-1 border-t border-slate-800/80">
-          <div className="relative group/ai">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowAiTooltip(!showAiTooltip);
-              }}
-              onMouseEnter={() => setShowAiTooltip(true)}
-              onMouseLeave={() => setShowAiTooltip(false)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-gold-500/15 to-purple-500/15 border border-gold-500/30 text-gold-300 text-[10px] font-extrabold uppercase tracking-wide hover:border-gold-500/60 transition-all cursor-help"
-            >
-              <Sparkles className="w-3 h-3 text-gold-400 animate-pulse" />
-              <span>%{aiMatchScore} {t("aiMatch") || "AI Eşleşme"}</span>
-            </button>
-
-            {/* AI Tooltip */}
-            {showAiTooltip && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 p-3 rounded-xl bg-slate-900/98 border border-gold-500/40 text-xs text-slate-200 shadow-2xl z-40 animate-fade-in pointer-events-none">
-                <p className="font-bold text-gold-400 mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  {t("aiWhyRecommended") || "AI Neden Önerdi?"}
-                </p>
-                <p className="text-[11px] leading-relaxed text-slate-300">
-                  {aiMatchReason}
-                </p>
-              </div>
-            )}
-          </div>
-
           <StarRating
             rating={rating}
             ratingCount={ratingCount}
             t={t}
           />
+          {deal.category && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400/80">
+              {language === 'tr' ? (deal.category_tr || deal.category) : deal.category}
+            </span>
+          )}
         </div>
 
         {/* Price & Expiry Footer Row */}

@@ -1729,6 +1729,9 @@ const AdminDealsTab: React.FC = () => {
                     Status
                   </th>
                   <th scope="col" className="px-6 py-3">
+                    AI Match
+                  </th>
+                  <th scope="col" className="px-6 py-3">
                     Expires
                   </th>
                   <th scope="col" className="px-6 py-3 text-right">
@@ -1794,6 +1797,12 @@ const AdminDealsTab: React.FC = () => {
                         }`}
                       >
                         {deal.status || "pending"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/30">
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        %{deal.aiMatchScore || ((Number(deal.rating) || 0) >= 4.0 ? 96 : 92)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-xs">
