@@ -1,7 +1,7 @@
 import { supabase } from '../supabaseClient';
 import { Deal } from '../../types';
 import { transformDealFromDB } from './helpers';
-import { upsertDealVector } from '../vectorService';
+import { upsertDealVector, deleteDealVector } from '../vectorService';
 
 export interface Category {
     id: string;
@@ -142,7 +142,6 @@ export async function deleteDeal(dealId: string) {
     }
 
     // Index update in vector database (async)
-    const { deleteDealVector } = await import('../vectorService');
     deleteDealVector(dealId).catch(err => console.error('Failed to delete deal from vector index:', err));
 
     return { success: true };

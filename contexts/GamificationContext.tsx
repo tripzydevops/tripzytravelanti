@@ -16,6 +16,7 @@ import {
   saveLocalGamificationState,
   claimDailyStreakReward,
   fetchRaffles,
+  calculateLevelFromXP,
   DEFAULT_STAMPS
 } from '../lib/services/gamificationService';
 import { addUserPoints, burnUserPoints } from '../lib/services/loyaltyService';
@@ -199,7 +200,6 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const claimScratchReward = useCallback(async (rewardType: 'xp' | 'points' | 'discount', amount: number) => {
     const userId = user?.id || 'guest-user';
     const newXP = rewardType === 'xp' ? gamificationState.xp + amount : gamificationState.xp + 10;
-    const { calculateLevelFromXP } = await import('../lib/services/gamificationService');
     const levelInfo = calculateLevelFromXP(newXP);
 
     const updatedState: UserGamificationState = {
@@ -252,21 +252,19 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     const addedXP = targetStamp?.xpReward || 50;
 
     const newTotalXP = gamificationState.xp + addedXP;
-    import('../lib/services/gamificationService').then(({ calculateLevelFromXP }) => {
-      const levelInfo = calculateLevelFromXP(newTotalXP);
-      const updatedState: UserGamificationState = {
-        ...gamificationState,
-        stamps: updatedStamps,
-        xp: newTotalXP,
-        level: levelInfo.level,
-        levelTitle: levelInfo.levelTitle,
-        levelTitle_tr: levelInfo.levelTitle_tr,
-        xpForNextLevel: levelInfo.xpForNextLevel
-      };
-      setGamificationState(updatedState);
-      saveLocalGamificationState(userId, updatedState);
-      triggerHapticFeedback('heavy');
-    });
+    const levelInfo = calculateLevelFromXP(newTotalXP);
+    const updatedState: UserGamificationState = {
+      ...gamificationState,
+      stamps: updatedStamps,
+      xp: newTotalXP,
+      level: levelInfo.level,
+      levelTitle: levelInfo.levelTitle,
+      levelTitle_tr: levelInfo.levelTitle_tr,
+      xpForNextLevel: levelInfo.xpForNextLevel
+    };
+    setGamificationState(updatedState);
+    saveLocalGamificationState(userId, updatedState);
+    triggerHapticFeedback('heavy');
 
     bufferSignal('passport_stamp_unlocked', stampSlug, { stampSlug });
   }, [gamificationState, user, bufferSignal]);

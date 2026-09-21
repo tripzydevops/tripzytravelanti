@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { saveDeal, unsaveDeal, redeemDeal, claimDeal } from '../lib/supabaseService';
 import { triggerHapticFeedback } from '../lib/hapticUtils';
+import { getBackendApiUrl } from '../lib/apiConfig';
 import { User } from '../types';
 
 export interface UserActivityContextType {
@@ -117,7 +118,6 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         const signalsToSend = [...signalBuffer.current];
         signalBuffer.current = [];
 
-        const { getBackendApiUrl } = await import('../lib/apiConfig');
         const apiUrl = getBackendApiUrl();
 
         if (!apiUrl) {
