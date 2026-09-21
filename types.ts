@@ -465,7 +465,8 @@ export type LotteryVerificationMethod =
   | 'story_canvas' 
   | 'referral_click' 
   | 'ocr_screenshot' 
-  | 'points_exchange';
+  | 'points_exchange'
+  | 'rewarded_ad';
 
 export interface LotteryTicket {
   id: string;

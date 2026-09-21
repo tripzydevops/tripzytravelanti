@@ -14,7 +14,11 @@ import {
   ShieldCheck,
   AlertCircle,
   QrCode,
-  Download
+  Download,
+  PlayCircle,
+  Film,
+  Video,
+  Eye
 } from 'lucide-react';
 import { LotteryCampaign, LotteryTicket } from '../../types';
 import { lotteryService } from '../../lib/services/lotteryService';
@@ -40,7 +44,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
   const { language } = useLanguage();
   const isTr = language === 'tr';
 
-  const [activeTab, setActiveTab] = useState<'share' | 'ocr' | 'points'>('share');
+  const [activeTab, setActiveTab] = useState<'share' | 'ocr' | 'ads' | 'points'>('share');
   const [copied, setCopied] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
   const [isScanningOCR, setIsScanningOCR] = useState(false);
@@ -48,6 +52,20 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
   const [ocrErrorMsg, setOcrErrorMsg] = useState<string | null>(null);
   const [userTickets, setUserTickets] = useState<LotteryTicket[]>(campaign?.userTickets || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Rewarded Video Ads State
+  const [isWatchingAd, setIsWatchingAd] = useState(false);
+  const [adProgress, setAdProgress] = useState(0);
+  const [adSecondsLeft, setAdSecondsLeft] = useState(5);
+  const [dailyAdsWatched, setDailyAdsWatched] = useState<number>(() => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const val = localStorage.getItem(`tripzy_daily_ads_${today}`);
+      return val ? parseInt(val, 10) : 0;
+    } catch {
+      return 0;
+    }
+  });
 
   if (!isOpen || !campaign) return null;
 
@@ -145,6 +163,46 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
     }
   };
 
+  const handleStartRewardedAd = () => {
+    if (dailyAdsWatched >= 3) return;
+    setIsWatchingAd(true);
+    setAdProgress(0);
+    setAdSecondsLeft(5);
+
+    const totalSeconds = 5;
+    let elapsed = 0;
+
+    const interval = setInterval(() => {
+      elapsed += 1;
+      setAdSecondsLeft(totalSeconds - elapsed);
+      setAdProgress(Math.round((elapsed / totalSeconds) * 100));
+
+      if (elapsed >= totalSeconds) {
+        clearInterval(interval);
+        setTimeout(async () => {
+          setIsWatchingAd(false);
+          // Mint verified ticket from rewarded ad
+          const res = await lotteryService.claimTicket(
+            campaign.id,
+            user?.id || 'demo-user',
+            'rewarded_ad'
+          );
+          if (res.success && res.ticket) {
+            setUserTickets(prev => [res.ticket!, ...prev]);
+            const newCount = dailyAdsWatched + 1;
+            setDailyAdsWatched(newCount);
+            try {
+              const today = new Date().toISOString().slice(0, 10);
+              localStorage.setItem(`tripzy_daily_ads_${today}`, newCount.toString());
+            } catch {}
+            addXp(50);
+            if (onTicketMinted) onTicketMinted(res.ticket);
+          }
+        }, 500);
+      }
+    }, 1000);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto pt-safe pb-safe">
       <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
@@ -182,11 +240,11 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
 
         {/* Content Body */}
         <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
-          {/* Tabs */}
-          <div className="flex rounded-2xl bg-slate-950 p-1 border border-slate-800 gap-1">
+          {/* 4 Tabs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl bg-slate-950 p-1 border border-slate-800 gap-1">
             <button
               onClick={() => setActiveTab('share')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'share'
                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -197,7 +255,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('ocr')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'ocr'
                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -207,8 +265,19 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
               <span className="truncate">{isTr ? 'OCR Yükle' : 'AI OCR'}</span>
             </button>
             <button
+              onClick={() => setActiveTab('ads')}
+              className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === 'ads'
+                  ? 'bg-gradient-to-r from-indigo-500 to-rose-500 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <PlayCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-300 shrink-0" />
+              <span className="truncate">{isTr ? 'Reklam İzle' : 'Watch Ad'}</span>
+            </button>
+            <button
               onClick={() => setActiveTab('points')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === 'points'
                   ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -327,7 +396,94 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: POINTS EXCHANGE */}
+          {/* TAB 3: GOOGLE REWARDED ADS (ÖDÜLLÜ REKLAM) */}
+          {activeTab === 'ads' && (
+            <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-5 space-y-4 text-center">
+              {!isWatchingAd ? (
+                <>
+                  <div className="w-12 h-12 mx-auto rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                    <Film className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 text-[10px] font-mono border border-indigo-500/20">
+                      Google AdMob / Partner Sponsor
+                    </div>
+                    <h4 className="text-sm font-bold text-white">
+                      {isTr ? 'Kısa Sponsor Video İzle, Anında Bilet Kazan' : 'Watch Short Sponsor Video, Win Instant Ticket'}
+                    </h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                      {isTr
+                        ? '15-30 saniyelik sponsor videosunu izleyerek ek çekiliş bileti kazanın. Günlük 3 video izleyebilirsiniz.'
+                        : 'Watch a 15-30s sponsor video to earn an extra lottery ticket. Up to 3 videos per day.'}
+                    </p>
+                  </div>
+
+                  {/* Daily Quota Counter */}
+                  <div className="flex items-center justify-center gap-4 py-2 text-xs font-mono">
+                    <span className="text-slate-400">
+                      {isTr ? 'Bugün Kalan Hak:' : 'Remaining Today:'}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-800 text-amber-400 font-bold">
+                      {Math.max(0, 3 - dailyAdsWatched)} / 3
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={handleStartRewardedAd}
+                    disabled={dailyAdsWatched >= 3}
+                    className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer ${
+                      dailyAdsWatched >= 3
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 text-white'
+                    }`}
+                  >
+                    <PlayCircle className="w-4 h-4" />
+                    <span>
+                      {dailyAdsWatched >= 3
+                        ? (isTr ? 'Günlük Limit Doldu (Yarın Tekrar Gel)' : 'Daily Limit Reached')
+                        : (isTr ? 'Sponsor Videoyu Başlat & +1 Bilet Al' : 'Watch Sponsor Video & Get Ticket')}
+                    </span>
+                  </button>
+                </>
+              ) : (
+                /* LIVE REWARDED VIDEO PLAYER OVERLAY */
+                <div className="space-y-4 py-3 animate-in fade-in">
+                  <div className="relative rounded-2xl bg-black border border-indigo-500/40 p-6 overflow-hidden shadow-2xl">
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-600/60 text-white text-[10px] font-mono backdrop-blur-md">
+                      <Eye className="w-3 h-3" />
+                      <span>{isTr ? 'Sponsor Reklamı Oynatılıyor' : 'Playing Sponsor Video'}</span>
+                    </div>
+
+                    <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/70 border border-white/20 text-amber-400 text-xs font-mono font-bold">
+                      ⏳ {adSecondsLeft}s
+                    </div>
+
+                    <div className="py-8 space-y-3">
+                      <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-600 to-pink-500 flex items-center justify-center text-white shadow-lg animate-pulse">
+                        <Video className="w-7 h-7" />
+                      </div>
+                      <h5 className="text-base font-bold text-white">
+                        Tripzy Partner Deals & Travel Perks
+                      </h5>
+                      <p className="text-xs text-slate-400">
+                        {isTr ? 'Ödül kazanmak için lütfen videonun tamamlanmasını bekleyin...' : 'Please wait for the video to complete to claim your ticket...'}
+                      </p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-indigo-500 to-rose-500 h-full transition-all duration-1000 ease-linear"
+                        style={{ width: `${adProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: POINTS EXCHANGE */}
           {activeTab === 'points' && (
             <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-5 space-y-4 text-center">
               <div className="w-12 h-12 mx-auto rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
