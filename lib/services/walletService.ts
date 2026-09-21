@@ -6,9 +6,6 @@ import { transformDealFromDB } from './helpers';
 // =====================================================
 // REDEMPTION OPERATIONS
 // =====================================================
-// =====================================================
-// REDEMPTION OPERATIONS
-// =====================================================
 export async function checkMonthlyLimit(userId: string): Promise<{ allowed: boolean; remaining: number; limit: number }> {
     // 1. Get User Profile to check Tier
     const user = await getUserProfile(userId);
@@ -98,10 +95,6 @@ export async function saveDeal(userId: string, dealId: string) {
     }
 }
 
-export async function assignDealToUser(userId: string, dealId: string) {
-    return saveDeal(userId, dealId);
-}
-
 export async function unsaveDeal(userId: string, dealId: string) {
     const { error } = await supabase
         .from('user_deals')
@@ -110,10 +103,6 @@ export async function unsaveDeal(userId: string, dealId: string) {
         .eq('deal_id', dealId);
 
     if (error) throw error;
-}
-
-export async function removeDealFromUser(userId: string, dealId: string) {
-    return unsaveDeal(userId, dealId);
 }
 
 export async function removeWalletItemFromUser(userId: string, dealId: string) {
@@ -144,7 +133,6 @@ export async function checkDealSavedStatus(userId: string, dealId: string): Prom
         .from('user_deals')
         .select('id')
         .eq('user_id', userId)
-        .eq('deal_id', dealId)
         .eq('deal_id', dealId)
         .maybeSingle();
 

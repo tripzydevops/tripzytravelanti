@@ -176,10 +176,6 @@ export const redeemDeal = async (userId: string, dealId: string, couponCodeId?: 
     };
 };
 
-export async function redeemImmediate(userId: string, dealId: string, couponCodeId?: string) {
-    return redeemDeal(userId, dealId, couponCodeId);
-}
-
 export async function getUserRedemptions(userId: string): Promise<any[]> {
     const { data, error } = await supabase
         .from('deal_redemptions')
@@ -199,22 +195,6 @@ export async function getUserRedemptions(userId: string): Promise<any[]> {
 // SECURE WALLET OPERATIONS (Fraud-Resistant)
 // =====================================================
 
-/**
- * Generate a unique, short redemption code (e.g., "XA7B2K")
- */
-export function generateRedemptionCode(): string {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing chars (0, O, 1, I)
-    let code = '';
-    for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-/**
- * Redeem a wallet item (called by vendor)
- * Returns { success, requiresConfirmation, confirmationToken } for high-value deals
- */
 /**
  * Redeem a wallet item (called by vendor)
  * Use secure RPC to bypass RLS
@@ -245,55 +225,5 @@ export async function redeemWalletItem(
         console.error('Redemption Exception:', err);
         return { success: false, message: err.message };
     }
-}
-
-/**
- * Confirm a high-value redemption (called by user from app)
- */
-export async function confirmRedemption(walletItemId: string, confirmationToken: string): Promise<{ success: boolean; message: string }> {
-    const { data: walletItem, error } = await supabase
-        .from('wallet_items')
-        .select('id, confirmation_token, confirmation_expires_at, status, user_id, deal_id')
-        .eq('id', walletItemId)
-        .single();
-
-    if (error || !walletItem) {
-        return { success: false, message: 'Wallet item not found' };
-    }
-
-    if (walletItem.confirmation_token !== confirmationToken) {
-        return { success: false, message: 'Invalid confirmation token' };
-    }
-
-    if (new Date(walletItem.confirmation_expires_at) < new Date()) {
-        return { success: false, message: 'Confirmation expired. Please try again.' };
-    }
-
-    // Complete redemption
-    const { error: updateError } = await supabase
-        .from('wallet_items')
-        .update({
-            status: 'redeemed',
-            redeemed_at: new Date().toISOString(),
-            confirmation_token: null,
-            confirmation_expires_at: null
-        })
-        .eq('id', walletItemId);
-
-    if (updateError) {
-        return { success: false, message: 'Failed to confirm redemption' };
-    }
-
-    // Log redemption
-    await supabase.from('redemption_logs').insert({
-        wallet_item_id: walletItemId,
-        user_id: walletItem.user_id,
-        deal_id: walletItem.deal_id
-    });
-
-    // Increment global redemption count
-    await supabase.rpc('increment_deal_redemption', { deal_id_input: walletItem.deal_id });
-
-    return { success: true, message: 'Redemption confirmed!' };
 }
 

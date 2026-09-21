@@ -14,6 +14,7 @@ import {
   redeemDeal as redeemDealService,
   handleReferralCode,
 } from '../lib/supabaseService';
+import { initPushNotifications, cleanupPushNotifications } from '../lib/pushNotificationService';
 
 interface AuthContextType {
   user: User | null;
@@ -118,6 +119,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         import('../lib/offlineStorage').then(({ saveProfileToOfflineCache }) => {
           saveProfileToOfflineCache(fullProfile).catch(err => console.error('Failed to cache profile offline:', err));
         });
+
+        // Initialize native push notifications (Capacitor)
+        initPushNotifications(authUser.id).catch(err => console.warn('Push init error:', err));
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -259,6 +263,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Logout user
   const logout = useCallback(async () => {
     try {
+      await cleanupPushNotifications().catch(() => {});
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);

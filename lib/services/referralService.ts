@@ -17,17 +17,6 @@ export async function handleReferralCode(referrerCode: string, userId: string) {
     return data;
 }
 
-export async function createReferral(referrerId: string, referredId: string) {
-    const { error } = await supabase
-        .from('referrals')
-        .insert({ referrer_id: referrerId, referred_id: referredId });
-
-    if (error) {
-        console.error('Error creating referral:', error);
-        throw error;
-    }
-}
-
 export async function getReferralNetwork(userId: string): Promise<string[]> {
     const { data, error } = await supabase
         .rpc('get_referral_network', { user_uuid: userId });

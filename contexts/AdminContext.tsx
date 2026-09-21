@@ -7,9 +7,7 @@ import {
     deleteUserProfile,
     updateAllUsersNotificationPreferences as updateAllUsersNotificationPreferencesService,
     saveDeal,
-    unsaveDeal,
-    assignDealToUser,
-    removeDealFromUser
+    unsaveDeal
 } from '../lib/supabaseService';
 
 interface AdminContextType {
@@ -77,12 +75,12 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
                 // Process additions
                 for (const dealId of dealsToAdd) {
-                    await assignDealToUser(updatedUser.id, dealId);
+                    await saveDeal(updatedUser.id, dealId);
                 }
 
                 // Process removals 
                 for (const dealId of dealsToRemove) {
-                    await removeDealFromUser(updatedUser.id, dealId);
+                    await unsaveDeal(updatedUser.id, dealId);
                 }
             }
 

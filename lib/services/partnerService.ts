@@ -29,21 +29,6 @@ export async function submitPartnerLead(lead: {
     return { success: true };
 }
 
-export async function getDealsByPartner(partnerId: string): Promise<Deal[]> {
-    const { data, error } = await supabase
-        .from('deals')
-        .select('*')
-        .eq('partner_id', partnerId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Error fetching partner deals:', error);
-        return [];
-    }
-
-    return data.map(transformDealFromDB);
-}
-
 export async function getDealsByPartnerPaginated(partnerId: string, page: number, limit: number): Promise<{ deals: Deal[], total: number }> {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
