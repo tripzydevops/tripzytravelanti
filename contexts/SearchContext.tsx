@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { getSearchSuggestions } from '../lib/vectorService';
 import { useAuth } from './AuthContext';
 import { useUserActivity } from './UserActivityContext';
+import { supabase } from '../lib/supabaseClient';
+import { getBackendApiUrl } from '../lib/apiConfig';
+import { getAllActiveGeofenceZones } from '../lib/supabaseService';
+import { calculateDistance } from '../lib/locationUtils';
 
 import { CategoryFilter } from '../shared/dealTypes';
 export type { CategoryFilter };
@@ -48,14 +52,12 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const triggerGeofenceNotification = useCallback(async (zoneId: string, lat: number, lng: number) => {
     try {
-      const { supabase } = await import('../lib/supabaseClient');
       const session = (await supabase.auth.getSession()).data.session;
       const token = session?.access_token;
       const userId = session?.user?.id;
 
       if (!token || !userId) return;
 
-      const { getBackendApiUrl } = await import('../lib/apiConfig');
       const apiUrl = getBackendApiUrl();
       if (!apiUrl) return;
 
@@ -89,7 +91,6 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     let activeZones: any[] = [];
     try {
-      const { getAllActiveGeofenceZones } = await import('../lib/supabaseService');
       activeZones = await getAllActiveGeofenceZones();
     } catch (err) {
       console.error('Failed to fetch geofence zones:', err);
@@ -109,7 +110,6 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         if (activeZones.length === 0) return;
 
-        const { calculateDistance } = await import('../lib/locationUtils');
         const currentBreaches: string[] = [];
 
         for (const zone of activeZones) {

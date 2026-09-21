@@ -1,8 +1,8 @@
 import { User, Deal } from '../types';
 import { querySimilarDeals, rankDeals } from './vectorService';
 import { getEngagementLogs } from './supabaseService';
-
-// Initialize Gemini lazily inside the function
+import { supabase } from './supabaseClient';
+import { getBackendApiUrl } from './apiConfig';
 
 interface UserAnalysis {
     favoriteCategories: string[];
@@ -147,12 +147,10 @@ export async function getAIRecommendations(
   `;
 
     // 4. Call FastAPI Backend Recommendation Engine if configured/available
-    const { getBackendApiUrl } = await import('./apiConfig');
     const apiUrl = getBackendApiUrl();
 
     if (apiUrl) {
         try {
-            const { supabase } = await import('./supabaseClient');
             const session = (await supabase.auth.getSession()).data.session;
             const token = session?.access_token;
             
