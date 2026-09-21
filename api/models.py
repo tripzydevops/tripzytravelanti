@@ -153,3 +153,13 @@ class LotteryDrawResponse(BaseModel):
     draw_seed: str
     drawn_at: str
 
+class MetaStoryMentionWebhookPayload(BaseModel):
+    object: str = "instagram"
+    entry: Optional[List[Dict[str, Any]]] = []
+
+class MetaWebhookResponse(BaseModel):
+    status: str
+    processed_mentions: int = 0
+    tickets_minted: List[str] = []
+    message: str
+

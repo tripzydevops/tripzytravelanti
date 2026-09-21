@@ -11,7 +11,11 @@ import {
   QrCode,
   Users,
   Image as ImageIcon,
-  AlertCircle
+  AlertCircle,
+  Instagram,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { LotteryCampaign, LotteryDrawResult } from '../../types';
@@ -27,6 +31,9 @@ export const AdminLotteryTab: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawResult, setDrawResult] = useState<LotteryDrawResult | null>(null);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
+  const [showWebhookGuide, setShowWebhookGuide] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -123,6 +130,98 @@ export const AdminLotteryTab: React.FC = () => {
           <Plus className="w-4 h-4" />
           <span>{isAdding ? (isTr ? 'Formu Kapat' : 'Close Form') : (isTr ? 'Yeni Flaş Çekiliş Başlat' : 'New Flash Lottery')}</span>
         </button>
+      </div>
+
+      {/* META GRAPH WEBHOOK & INSTAGRAM AUTOMATION SETUP CARD */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-indigo-500/30 p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-500 flex items-center justify-center text-white shadow-md">
+              <Instagram className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                {isTr ? 'Meta Graph API & Instagram Story Webhook' : 'Meta Graph API & Instagram Story Webhook'}
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold">
+                  {isTr ? 'Standby / Hazır' : 'Standby / Ready'}
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                {isTr
+                  ? 'Kullanıcılar @tripzy.travel hesabını etiketlediğinde bilet anında üretilir ve otomatik DM tetiklenir.'
+                  : 'Real-time story mention ingestion and automated DM ticket delivery via Meta Webhooks.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowWebhookGuide(!showWebhookGuide)}
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>{showWebhookGuide ? (isTr ? 'Rehberi Gizle' : 'Hide Guide') : (isTr ? 'Kurulum Rehberi' : 'Setup Guide')}</span>
+          </button>
+        </div>
+
+        {/* Credentials / Endpoints */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+            <span className="text-[10px] font-mono text-slate-400 block uppercase">
+              {isTr ? 'Webhook Callback URL (Meta Portalına Yapıştırın)' : 'Webhook Callback URL (Paste in Meta Portal)'}
+            </span>
+            <div className="flex items-center justify-between gap-2">
+              <code className="font-mono text-indigo-300 text-[11px] truncate">
+                https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention');
+                  setCopiedUrl(true);
+                  setTimeout(() => setCopiedUrl(false), 2000);
+                }}
+                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                title="Copy URL"
+              >
+                {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+            <span className="text-[10px] font-mono text-slate-400 block uppercase">
+              {isTr ? 'Doğrulama Belirteci (Verify Token)' : 'Verify Token'}
+            </span>
+            <div className="flex items-center justify-between gap-2">
+              <code className="font-mono text-amber-300 text-[11px]">
+                tripzy_verify_token_secure
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('tripzy_verify_token_secure');
+                  setCopiedToken(true);
+                  setTimeout(() => setCopiedToken(false), 2000);
+                }}
+                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                title="Copy Token"
+              >
+                {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Step-by-Step Guide Accordion */}
+        {showWebhookGuide && (
+          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2 animate-in fade-in">
+            <h4 className="font-bold text-white">
+              {isTr ? 'Sosyal Medya Sayfanızı Açtığınızda Yapılacak 3 Adım:' : '3 Steps to connect when social accounts are created:'}
+            </h4>
+            <ol className="list-decimal list-inside space-y-1 text-slate-400 leading-relaxed">
+              <li>{isTr ? 'Instagram Profesyonel/İçerik Üretici hesabınızı (@tripzy.travel) açın ve Facebook Sayfanıza bağlayın.' : 'Create your @tripzy.travel Instagram Professional account and link to a Facebook Page.'}</li>
+              <li>{isTr ? 'developers.facebook.com adresinde "Instagram Graph API" ürünü ekleyin ve yukarıdaki Callback URL ile Verify Token bilgisini girin.' : 'Add Instagram Graph API in developers.facebook.com and paste the Callback URL and Verify Token.'}</li>
+              <li>{isTr ? 'Webhook abonelik alanlarından "mentions" ve "messages" kutucuklarını aktif edin. Sistem otomatik çalışmaya başlayacaktır.' : 'Subscribe to "mentions" and "messages" fields. Real-time automatic DM delivery will activate instantly.'}</li>
+            </ol>
+          </div>
+        )}
       </div>
 
       {/* DRAW RESULT MODAL / BANNER */}

@@ -100,3 +100,47 @@ def test_lottery_engine_provably_fair_reproducibility():
     winners1, seed1 = execute_provably_fair_draw(campaign_id, tickets, total_winners=1)
     assert len(winners1) == 1
     assert winners1[0]["ticket_number"] in [t["ticket_number"] for t in tickets]
+
+def test_meta_webhook_verification_handshake():
+    # Valid subscription handshake
+    params = {
+        "hub.mode": "subscribe",
+        "hub.verify_token": "tripzy_verify_token_secure",
+        "hub.challenge": "1158201244"
+    }
+    response = client.get("/api/v1/lottery/webhook/instagram-mention", params=params)
+    assert response.status_code == 200
+    assert response.text == "1158201244"
+
+    # Standby check when parameters are missing
+    standby_response = client.get("/api/v1/lottery/webhook/instagram-mention")
+    assert standby_response.status_code == 200
+    assert standby_response.json()["status"] == "standby"
+
+def test_meta_story_mention_webhook_receive():
+    payload = {
+        "object": "instagram",
+        "entry": [
+            {
+                "id": "17841400000000000",
+                "time": 1726918230,
+                "changes": [
+                    {
+                        "field": "mentions",
+                        "value": {
+                            "comment_id": "17891234567890",
+                            "media_id": "17928374829",
+                            "sender_id": "17841401234567"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+    response = client.post("/api/v1/lottery/webhook/instagram-mention", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "processed"
+    assert data["processed_mentions"] >= 1
+    assert len(data["tickets_minted"]) >= 1
+    assert data["tickets_minted"][0].startswith("TRPZ-LOT-")
