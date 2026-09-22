@@ -25,7 +25,7 @@ Due to Meta API privacy constraints on consumer Instagram accounts, verification
          ▼                                    ▼                                    ▼
 ┌──────────────────┐               ┌──────────────────┐               ┌──────────────────┐
 │ METHOD 1: TAG    │               │ METHOD 2: REFER  │               │ METHOD 3: AI OCR │
-│ @tripzy.travel   │               │ Unique QR / Link │               │ Upload Screenshot│
+│ @tripzydeal      │               │ Unique QR / Link │               │ Upload Screenshot│
 │ Webhook Event    │               │ Friends Click    │               │ Vision OCR Check │
 └────────┬─────────┘               └────────┬─────────┘               └────────┬─────────┘
          │                                    │                                    │
@@ -39,7 +39,7 @@ Due to Meta API privacy constraints on consumer Instagram accounts, verification
 ```
 
 1. **Method 1 - Meta Webhook Integration:** 
-   Tripzy listens to Instagram Graph API Webhook events whenever `@tripzy.travel` is tagged in a user's story or post, automatically awarding a ticket.
+   Tripzy listens to Instagram Graph API Webhook events whenever `@tripzydeal` is tagged in a user's story or post, automatically awarding a ticket.
 2. **Method 2 - Viral Deep-Link / QR Sticker:** 
    A custom Instagram Story Canvas is generated with a unique referral link/QR code. Every friend who taps or scans the link awards **+1 Bonus Ticket** to the user.
 3. **Method 3 - AI Vision OCR Fallback:** 

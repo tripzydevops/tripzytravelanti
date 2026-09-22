@@ -59,8 +59,8 @@ This system directly solves the **"Cold Start" problem** (Layer 1 $\rightarrow$ 
 
 ### 2.6 Social Media Raffles & Giveaways (`SocialRafflesCard.tsx`)
 - **Viral Quests:** Users complete viral actions to earn raffle tickets:
-  1. **Instagram Follow:** Follow `@tripzy.travel` (+1 bilet).
-  2. **Instagram Story Share:** Share deal to story and tag `@tripzy.travel` (+2 bilet).
+  1. **Instagram Follow:** Follow `@tripzydeal` (+1 bilet).
+  2. **Instagram Story Share:** Share deal to story and tag `@tripzydeal` (+2 bilet).
   3. **Friend Referral:** Invite travel buddies (+3 bilet per friend).
   4. **Points Exchange:** Redeem 50 Tripzy Points for +1 raffle ticket.
 - **Verified Winner Drawings:** Provably fair random winner selection with countdown timers and certified transparency.

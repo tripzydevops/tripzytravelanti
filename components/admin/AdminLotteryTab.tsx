@@ -15,10 +15,18 @@ import {
   Instagram,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  Edit2,
+  Trash2,
+  Eye,
+  X,
+  Search,
+  Filter,
+  CheckCircle2,
+  FileCheck
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { LotteryCampaign, LotteryDrawResult } from '../../types';
+import { LotteryCampaign, LotteryDrawResult, LotteryTicket } from '../../types';
 import { lotteryService } from '../../lib/services/lotteryService';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -35,7 +43,22 @@ export const AdminLotteryTab: React.FC = () => {
   const [copiedToken, setCopiedToken] = useState(false);
   const [showWebhookGuide, setShowWebhookGuide] = useState(false);
 
-  // Form State
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'drawn' | 'cancelled'>('all');
+
+  // Edit State
+  const [editingCampaign, setEditingCampaign] = useState<LotteryCampaign | null>(null);
+
+  // Ticket Audit Drawer State
+  const [auditingCampaign, setAuditingCampaign] = useState<LotteryCampaign | null>(null);
+  const [campaignTickets, setCampaignTickets] = useState<LotteryTicket[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
+
+  // Delete State
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Create Form State
   const [title, setTitle] = useState('');
   const [titleTr, setTitleTr] = useState('');
   const [prizeDesc, setPrizeDesc] = useState('');
@@ -85,6 +108,46 @@ export const AdminLotteryTab: React.FC = () => {
     await fetchCampaigns();
   };
 
+  const handleUpdateCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCampaign) return;
+
+    await lotteryService.updateCampaign(editingCampaign.id, {
+      title: editingCampaign.title,
+      title_tr: editingCampaign.title_tr,
+      prizeDescription: editingCampaign.prizeDescription,
+      prizeDescription_tr: editingCampaign.prizeDescription_tr,
+      imageUrl: editingCampaign.imageUrl,
+      totalWinners: editingCampaign.totalWinners,
+      status: editingCampaign.status,
+      endsAt: editingCampaign.endsAt
+    });
+
+    setEditingCampaign(null);
+    await fetchCampaigns();
+  };
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    if (!window.confirm(isTr ? 'Bu çekilişi silmek istediğinizden emin misiniz? Tüm biletler silinecektir.' : 'Are you sure you want to delete this lottery campaign? All tickets will be removed.')) {
+      return;
+    }
+
+    await lotteryService.deleteCampaign(campaignId);
+    setDeletingId(null);
+    await fetchCampaigns();
+  };
+
+  const handleOpenAuditTickets = async (campaign: LotteryCampaign) => {
+    setAuditingCampaign(campaign);
+    setLoadingTickets(true);
+    try {
+      const tickets = await lotteryService.getCampaignTickets(campaign.id);
+      setCampaignTickets(tickets);
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
   const handleDrawWinner = async (campaignId: string) => {
     setIsDrawing(true);
     try {
@@ -105,6 +168,15 @@ export const AdminLotteryTab: React.FC = () => {
     }
   };
 
+  const filteredCampaigns = campaigns.filter(c => {
+    const matchesQuery =
+      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.title_tr && c.title_tr.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (c.merchantName && c.merchantName.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus = statusFilter === 'all' ? true : c.status === statusFilter;
+    return matchesQuery && matchesStatus;
+  });
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -118,8 +190,8 @@ export const AdminLotteryTab: React.FC = () => {
           </div>
           <p className="text-xs text-slate-400">
             {isTr
-              ? 'Instagram Story paylaşımlarını, OCR doğrulamalarını ve kriptografik rastgele çekilişleri yönetin.'
-              : 'Manage Instagram Story shares, OCR verifications, and provably fair cryptographic winner draws.'}
+              ? 'Flaş çekilişleri ekleyin, düzenleyin, izleyin, biletlerini denetleyin ve kriptografik kazananları belirleyin.'
+              : 'Add, edit, monitor, audit tickets, and execute provably fair cryptographic winner draws.'}
           </p>
         </div>
 
@@ -148,141 +220,108 @@ export const AdminLotteryTab: React.FC = () => {
               </h3>
               <p className="text-[11px] text-slate-400">
                 {isTr
-                  ? 'Kullanıcılar @tripzy.travel hesabını etiketlediğinde bilet anında üretilir ve otomatik DM tetiklenir.'
-                  : 'Real-time story mention ingestion and automated DM ticket delivery via Meta Webhooks.'}
+                  ? 'Kullanıcılar @tripzydeal etiketli Instagram Hikayesi paylaştığında anında bilet tanımlanır.'
+                  : 'Automatically mints tickets when users tag @tripzydeal on their Instagram Stories.'}
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setShowWebhookGuide(!showWebhookGuide)}
-            className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+            className="flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
           >
-            <span>{showWebhookGuide ? (isTr ? 'Rehberi Gizle' : 'Hide Guide') : (isTr ? 'Kurulum Rehberi' : 'Setup Guide')}</span>
+            <span>{showWebhookGuide ? (isTr ? 'Rehberi Gizle' : 'Hide Guide') : (isTr ? 'Meta Kurulum Rehberi' : 'Meta Setup Guide')}</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Credentials / Endpoints */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-            <span className="text-[10px] font-mono text-slate-400 block uppercase">
-              {isTr ? 'Webhook Callback URL (Meta Portalına Yapıştırın)' : 'Webhook Callback URL (Paste in Meta Portal)'}
-            </span>
-            <div className="flex items-center justify-between gap-2">
-              <code className="font-mono text-indigo-300 text-[11px] truncate">
-                https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention
-              </code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText('https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention');
-                  setCopiedUrl(true);
-                  setTimeout(() => setCopiedUrl(false), 2000);
-                }}
-                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
-                title="Copy URL"
-              >
-                {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-            <span className="text-[10px] font-mono text-slate-400 block uppercase">
-              {isTr ? 'Doğrulama Belirteci (Verify Token)' : 'Verify Token'}
-            </span>
-            <div className="flex items-center justify-between gap-2">
-              <code className="font-mono text-amber-300 text-[11px]">
-                tripzy_verify_token_secure
-              </code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText('tripzy_verify_token_secure');
-                  setCopiedToken(true);
-                  setTimeout(() => setCopiedToken(false), 2000);
-                }}
-                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
-                title="Copy Token"
-              >
-                {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Step-by-Step Guide Accordion */}
         {showWebhookGuide && (
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2 animate-in fade-in">
-            <h4 className="font-bold text-white">
-              {isTr ? 'Sosyal Medya Sayfanızı Açtığınızda Yapılacak 3 Adım:' : '3 Steps to connect when social accounts are created:'}
-            </h4>
-            <ol className="list-decimal list-inside space-y-1 text-slate-400 leading-relaxed">
-              <li>{isTr ? 'Instagram Profesyonel/İçerik Üretici hesabınızı (@tripzy.travel) açın ve Facebook Sayfanıza bağlayın.' : 'Create your @tripzy.travel Instagram Professional account and link to a Facebook Page.'}</li>
-              <li>{isTr ? 'developers.facebook.com adresinde "Instagram Graph API" ürünü ekleyin ve yukarıdaki Callback URL ile Verify Token bilgisini girin.' : 'Add Instagram Graph API in developers.facebook.com and paste the Callback URL and Verify Token.'}</li>
-              <li>{isTr ? 'Webhook abonelik alanlarından "mentions" ve "messages" kutucuklarını aktif edin. Sistem otomatik çalışmaya başlayacaktır.' : 'Subscribe to "mentions" and "messages" fields. Real-time automatic DM delivery will activate instantly.'}</li>
-            </ol>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-1">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+              <div className="text-slate-400 font-medium">{isTr ? '1. Webhook Callback URL' : '1. Webhook Callback URL'}</div>
+              <div className="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800 font-mono text-[11px] text-sky-400">
+                <span className="truncate">https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention');
+                    setCopiedUrl(true);
+                    setTimeout(() => setCopiedUrl(false), 2000);
+                  }}
+                  className="p-1 hover:text-white"
+                >
+                  {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+              <div className="text-slate-400 font-medium">{isTr ? '2. Verify Token' : '2. Verify Token'}</div>
+              <div className="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800 font-mono text-[11px] text-amber-400">
+                <span>tripzy_verify_token_secure</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('tripzy_verify_token_secure');
+                    setCopiedToken(true);
+                    setTimeout(() => setCopiedToken(false), 2000);
+                  }}
+                  className="p-1 hover:text-white"
+                >
+                  {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* DRAW RESULT MODAL / BANNER */}
-      {drawResult && (
-        <div className="rounded-2xl bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-indigo-500/20 border-2 border-amber-400/60 p-6 space-y-4 shadow-xl animate-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-amber-400" />
-              <h3 className="text-base font-black text-white">
-                {isTr ? '🎉 Çekiliş Başarıyla Tamamlandı!' : '🎉 Draw Executed Successfully!'}
-              </h3>
-            </div>
-            <button
-              onClick={() => setDrawResult(null)}
-              className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-900 rounded-lg cursor-pointer"
-            >
-              {isTr ? 'Kapat' : 'Close'}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {drawResult.winners.map((w, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1"
-              >
-                <span className="text-[10px] text-amber-400 font-bold block uppercase">
-                  🏆 KAZANAN #{idx + 1}
-                </span>
-                <span className="text-sm font-bold text-white block">
-                  {w.userName}
-                </span>
-                <span className="font-mono text-xs font-semibold text-rose-400 block">
-                  Bilet No: {w.ticketNumber}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Seed: {drawResult.seed}
-            </span>
-            <span>{new Date(drawResult.drawnAt).toLocaleTimeString()}</span>
-          </div>
+      {/* SEARCH AND STATUS FILTER CONTROLS */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={isTr ? 'Çekiliş veya işletme adı ara...' : 'Search giveaways or partners...'}
+            className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-rose-500 outline-none"
+          />
         </div>
-      )}
 
-      {/* CREATE CAMPAIGN FORM */}
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+          {(['all', 'active', 'drawn', 'cancelled'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setStatusFilter(tab)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all whitespace-nowrap cursor-pointer ${
+                statusFilter === tab
+                  ? 'bg-rose-500 text-white shadow-md'
+                  : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              {tab === 'all'
+                ? isTr ? 'Tümü' : 'All'
+                : tab === 'active'
+                ? isTr ? 'Aktif' : 'Active'
+                : tab === 'drawn'
+                ? isTr ? 'Sonuçlanan' : 'Drawn'
+                : isTr ? 'İptal' : 'Cancelled'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* CREATE NEW LOTTERY FORM */}
       {isAdding && (
         <form
           onSubmit={handleCreateCampaign}
-          className="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-4 shadow-xl animate-in fade-in duration-200"
+          className="p-6 rounded-2xl bg-slate-900 border border-rose-500/30 space-y-4 animate-fade-in shadow-xl"
         >
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            {isTr ? 'Yeni Flaş Çekiliş Kampanyası Oluştur' : 'Create New Flash Giveaway Campaign'}
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Plus className="w-5 h-5 text-rose-500" />
+            <span>{isTr ? 'Yeni Flaş Çekiliş Kampanyası Oluştur' : 'Create New Flash Lottery Campaign'}</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-400">Başlık (TR)</label>
               <input
@@ -386,9 +425,211 @@ export const AdminLotteryTab: React.FC = () => {
         </form>
       )}
 
+      {/* EDIT CAMPAIGN MODAL */}
+      {editingCampaign && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <form
+            onSubmit={handleUpdateCampaign}
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-fade-in"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Edit2 className="w-5 h-5 text-amber-400" />
+                <span>{isTr ? 'Flaş Çekilişi Düzenle' : 'Edit Flash Lottery'}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingCampaign(null)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Başlık (TR)</label>
+                <input
+                  type="text"
+                  value={editingCampaign.title_tr || ''}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, title_tr: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Title (EN)</label>
+                <input
+                  type="text"
+                  value={editingCampaign.title}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, title: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Ödül Açıklaması (TR)</label>
+                <input
+                  type="text"
+                  value={editingCampaign.prizeDescription_tr || ''}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, prizeDescription_tr: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Prize Description (EN)</label>
+                <input
+                  type="text"
+                  value={editingCampaign.prizeDescription}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, prizeDescription: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Görsel URL</label>
+                <input
+                  type="text"
+                  value={editingCampaign.imageUrl}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, imageUrl: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-400">Durum</label>
+                  <select
+                    value={editingCampaign.status}
+                    onChange={e => setEditingCampaign({ ...editingCampaign, status: e.target.value as any })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                  >
+                    <option value="active">Aktif (Active)</option>
+                    <option value="drawn">Sonuçlandı (Drawn)</option>
+                    <option value="cancelled">İptal Edildi (Cancelled)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-400">Kazanan Sayısı</label>
+                  <input
+                    type="number"
+                    value={editingCampaign.totalWinners || 1}
+                    onChange={e => setEditingCampaign({ ...editingCampaign, totalWinners: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
+                    min={1}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingCampaign(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700"
+              >
+                {isTr ? 'İptal' : 'Cancel'}
+              </button>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold shadow-md"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isTr ? 'Değişiklikleri Kaydet' : 'Save Changes'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* TICKET AUDIT DRAWER / MODAL */}
+      {auditingCampaign && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl animate-fade-in max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Ticket className="w-5 h-5 text-rose-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    {isTr ? 'Bilet Denetimi & Katılımcılar' : 'Ticket Audit & Participants'}
+                  </h3>
+                  <p className="text-xs text-slate-400 line-clamp-1">
+                    {isTr ? auditingCampaign.title_tr : auditingCampaign.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAuditingCampaign(null)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 py-2">
+              {loadingTickets ? (
+                <div className="text-center py-8 text-slate-400 text-xs">Biletler yükleniyor...</div>
+              ) : campaignTickets.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  {isTr ? 'Bu kampanyaya henüz bilet basılmamış.' : 'No tickets minted for this campaign yet.'}
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-800 border border-slate-800 rounded-2xl overflow-hidden">
+                  {campaignTickets.map((t, idx) => (
+                    <div key={t.id} className="p-3 bg-slate-950/60 flex items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono font-bold text-sky-400">{t.ticketNumber}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          t.verificationMethod === 'story_canvas'
+                            ? 'bg-rose-500/20 text-rose-300'
+                            : t.verificationMethod === 'ocr_screenshot'
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-indigo-500/20 text-indigo-300'
+                        }`}>
+                          {t.verificationMethod}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(t.verifiedAt || t.createdAt).toLocaleDateString()}
+                        </span>
+                        {t.isWinner && (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                            <Trophy className="w-3 h-3" /> Kazanan
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800 text-xs text-slate-400">
+              <span>Toplam: <b>{campaignTickets.length}</b> Bilet</span>
+              <button
+                onClick={() => setAuditingCampaign(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CAMPAIGNS LIST */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {campaigns.map(camp => (
+        {filteredCampaigns.map(camp => (
           <div
             key={camp.id}
             className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden flex flex-col justify-between shadow-md hover:border-slate-700 transition-all"
@@ -401,15 +642,41 @@ export const AdminLotteryTab: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+                
+                {/* Status Badge */}
                 <span
                   className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                     camp.status === 'active'
                       ? 'bg-rose-500/90 text-white animate-pulse'
+                      : camp.status === 'drawn'
+                      ? 'bg-emerald-500/90 text-white'
                       : 'bg-slate-800/90 text-slate-300'
                   }`}
                 >
-                  {camp.status === 'active' ? (isTr ? 'Aktif Çekiliş' : 'Active') : (isTr ? 'Sonuçlandı' : 'Drawn')}
+                  {camp.status === 'active'
+                    ? isTr ? 'Aktif Çekiliş' : 'Active'
+                    : camp.status === 'drawn'
+                    ? isTr ? 'Sonuçlandı' : 'Drawn'
+                    : isTr ? 'İptal' : 'Cancelled'}
                 </span>
+
+                {/* Edit and Delete Action Icons */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                  <button
+                    onClick={() => setEditingCampaign(camp)}
+                    className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-amber-500 text-slate-300 hover:text-black transition-all shadow"
+                    title={isTr ? 'Düzenle' : 'Edit'}
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCampaign(camp.id)}
+                    className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-rose-600 text-slate-300 hover:text-white transition-all shadow"
+                    title={isTr ? 'Sil' : 'Delete'}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               <div className="p-4 space-y-2">
@@ -421,10 +688,13 @@ export const AdminLotteryTab: React.FC = () => {
                 </p>
 
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
-                  <span className="flex items-center gap-1">
-                    <Ticket className="w-3.5 h-3.5 text-rose-400" />
-                    {camp.totalTicketsMinted} {isTr ? 'Bilet' : 'Tickets'}
-                  </span>
+                  <button
+                    onClick={() => handleOpenAuditTickets(camp)}
+                    className="flex items-center gap-1 hover:text-sky-400 text-rose-400 font-bold transition-colors cursor-pointer"
+                  >
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>{camp.totalTicketsMinted || 0} {isTr ? 'Bilet (Görüntüle)' : 'Tickets (View)'}</span>
+                  </button>
                   <span className="flex items-center gap-1">
                     <Users className="w-3.5 h-3.5 text-amber-400" />
                     {camp.totalWinners} {isTr ? 'Kazanan' : 'Winners'}
@@ -444,8 +714,9 @@ export const AdminLotteryTab: React.FC = () => {
                   <span>{isDrawing ? (isTr ? 'Çekiliş Yapılıyor...' : 'Drawing...') : (isTr ? 'Kazananı Çek (Provably Fair)' : 'Draw Winner (Provably Fair)')}</span>
                 </button>
               ) : (
-                <div className="py-2 rounded-xl bg-slate-950 text-center text-xs font-bold text-emerald-400 border border-slate-800">
-                  ✓ {isTr ? 'Kazanan Belirlendi' : 'Winner Drawn'}
+                <div className="py-2 rounded-xl bg-slate-950 text-center text-xs font-bold text-emerald-400 border border-slate-800 flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>{isTr ? 'Kazanan Belirlendi' : 'Winner Drawn'}</span>
                 </div>
               )}
             </div>
@@ -455,3 +726,5 @@ export const AdminLotteryTab: React.FC = () => {
     </div>
   );
 };
+
+export default AdminLotteryTab;

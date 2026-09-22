@@ -346,8 +346,8 @@ LOTTERY_CAMPAIGNS_STORE = [
         "id": UUID("11111111-2222-3333-4444-555555555555"),
         "title": "Cappadocia 2-Night Cave Hotel & Sunrise Balloon Flight",
         "title_tr": "Kapadokya 2 Gece Mağara Otel & Gün Doğumu Balon Turu",
-        "description": "Share this deal on your Instagram Story tagging @tripzy.travel to win a free 2-night luxury getaway!",
-        "description_tr": "Bu fırsatı Instagram Hikayende @tripzy.travel etiketleyerek paylaş, lüks mağara otel konaklamasını ücretsiz kazan!",
+        "description": "Share this deal on your Instagram Story tagging @tripzydeal to win a free 2-night luxury getaway!",
+        "description_tr": "Bu fırsatı Instagram Hikayende @tripzydeal etiketleyerek paylaş, lüks mağara otel konaklamasını ücretsiz kazan!",
         "prize_description": "2-Night Luxury Cave Suite for 2 + Royal Balloon Flight Voucher (Value: ₺34,500)",
         "prize_description_tr": "2 Kişilik Lüks Cave Suite Konaklama + Sıcak Hava Balon Turu (Değer: ₺34.500)",
         "image_url": "https://images.unsplash.com/photo-1570939274717-7eda259b50ed?auto=format&fit=crop&w=1200&q=80",
@@ -515,7 +515,7 @@ def meta_webhook_verification(
 ):
     """
     Handles Meta Graph API Webhook Verification handshake (Hub Mode + Verify Token).
-    Used when connecting @tripzy.travel Instagram Business Account in Meta Developer Portal.
+    Used when connecting @tripzydeal Instagram Business Account in Meta Developer Portal.
     """
     params = request.query_params
     mode = params.get("hub.mode")
@@ -543,7 +543,7 @@ def handle_instagram_story_mention_webhook(
     request: Request
 ):
     """
-    Real-time webhook triggered by Meta when a user posts an Instagram Story tagging @tripzy.travel.
+    Real-time webhook triggered by Meta when a user posts an Instagram Story tagging @tripzydeal.
     Automatically parses the story mention, mints a verified ticket, and dispatches the DM response.
     """
     entries = payload.entry or []

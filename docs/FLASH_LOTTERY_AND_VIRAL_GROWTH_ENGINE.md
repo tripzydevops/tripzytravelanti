@@ -18,7 +18,7 @@ The **Flash Lottery Engine (Flaş Çekiliş Sistemi)** is a core viral growth an
 │               LAYER 2: AUTONOMOUS BRAIN & FASTAPI API                   │
 │  • FastAPI Endpoints (`/api/v1/lottery/*`)                              │
 │  • Provably Fair SHA-256 Seed Calculation & Deterministic Selection     │
-│  • AI Vision OCR Tag Parser (`@tripzy.travel`, merchant tags)           │
+│  • AI Vision OCR Tag Parser (`@tripzydeal`, merchant tags)           │
 │  • Cold-Start Latent Signal Injection for Zero-History Users            │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │
@@ -38,12 +38,12 @@ The **Flash Lottery Engine (Flaş Çekiliş Sistemi)** is a core viral growth an
 Due to Meta API privacy constraints on consumer Instagram accounts, verification uses a 3-tier hybrid mechanism:
 
 ### 2.1 Story Canvas Sharing & Deep Link Tracking (`story_canvas` / `referral_click`)
-- Generates a branded 9:16 Instagram Story Canvas with deal banner, `@tripzy.travel` tag sticker, and the user's referral QR code (`#TRPZ-XXXXXX`).
+- Generates a branded 9:16 Instagram Story Canvas with deal banner, `@tripzydeal` tag sticker, and the user's referral QR code (`#TRPZ-XXXXXX`).
 - Emits Web Share API intent and automatically mints an active lottery ticket (`TRPZ-LOT-XXXXX`).
 
 ### 2.2 AI Vision OCR Screenshot Verification (`ocr_screenshot`)
 - Users upload a quick screenshot of their posted Instagram Story.
-- The OCR service analyzes the image for `@tripzy.travel` tag presence, partner handle, and deal badge, awarding a verified ticket in $<2$ seconds.
+- The OCR service analyzes the image for `@tripzydeal` tag presence, partner handle, and deal badge, awarding a verified ticket in $<2$ seconds.
 
 ### 2.3 Points Exchange (`points_exchange`)
 - Allows users to convert 50 Tripzy loyalty points into +1 additional lottery ticket.

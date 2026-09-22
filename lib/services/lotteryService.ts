@@ -20,8 +20,8 @@ export const DEFAULT_LOTTERY_CAMPAIGNS: LotteryCampaign[] = [
     id: 'lottery-cappadocia-balloon-2026',
     title: 'Cappadocia 2-Night Cave Hotel & Sunrise Balloon Flight',
     title_tr: 'Kapadokya 2 Gece Mağara Otel & Gün Doğumu Balon Turu',
-    description: 'Share this deal on your Instagram Story tagging @tripzy.travel to win a completely free 2-night luxury getaway and balloon tour!',
-    description_tr: 'Bu fırsatı Instagram Hikayende @tripzy.travel etiketleyerek paylaş, 2 gece lüks mağara otel konaklaması ve balon turunu 100% ÜCRETSİZ kazan!',
+    description: 'Share this deal on your Instagram Story tagging @tripzydeal to win a completely free 2-night luxury getaway and balloon tour!',
+    description_tr: 'Bu fırsatı Instagram Hikayende @tripzydeal etiketleyerek paylaş, 2 gece lüks mağara otel konaklaması ve balon turunu 100% ÜCRETSİZ kazan!',
     prizeDescription: '2-Night Luxury Cave Suite for 2 + Royal Balloon Flight Voucher (Value: ₺34,500)',
     prizeDescription_tr: '2 Kişilik Lüks Cave Suite Konaklama + Sıcak Hava Balon Turu (Değer: ₺34.500)',
     imageUrl: 'https://images.unsplash.com/photo-1570939274717-7eda259b50ed?auto=format&fit=crop&w=1200&q=80',
@@ -501,5 +501,109 @@ export const lotteryService = {
     }
 
     return newCampaign;
+  },
+
+  /**
+   * Update / Modify an existing flash lottery campaign
+   */
+  async updateCampaign(
+    campaignId: string,
+    updates: Partial<LotteryCampaign>
+  ): Promise<LotteryCampaign | null> {
+    const campaigns = getStoredCampaigns();
+    const index = campaigns.findIndex(c => c.id === campaignId);
+    if (index === -1) return null;
+
+    campaigns[index] = {
+      ...campaigns[index],
+      ...updates
+    };
+    saveStoredCampaigns(campaigns);
+
+    try {
+      const dbUpdates: any = {};
+      if (updates.title) dbUpdates.title = updates.title;
+      if (updates.title_tr) dbUpdates.title_tr = updates.title_tr;
+      if (updates.prizeDescription) dbUpdates.prize_description = updates.prizeDescription;
+      if (updates.prizeDescription_tr) dbUpdates.prize_description_tr = updates.prizeDescription_tr;
+      if (updates.imageUrl) dbUpdates.image_url = updates.imageUrl;
+      if (updates.endsAt) dbUpdates.ends_at = updates.endsAt;
+      if (updates.status) dbUpdates.status = updates.status;
+      if (updates.totalWinners) dbUpdates.total_winners = updates.totalWinners;
+
+      await supabase
+        .from('lottery_campaigns')
+        .update(dbUpdates)
+        .eq('id', campaignId);
+    } catch {
+      // offline fallback
+    }
+
+    return campaigns[index];
+  },
+
+  /**
+   * Delete a flash lottery campaign and associated tickets
+   */
+  async deleteCampaign(campaignId: string): Promise<boolean> {
+    // 1. Remove from stored campaigns
+    let campaigns = getStoredCampaigns();
+    campaigns = campaigns.filter(c => c.id !== campaignId);
+    saveStoredCampaigns(campaigns);
+
+    // 2. Remove associated stored tickets
+    let tickets = getStoredTickets();
+    tickets = tickets.filter(t => t.campaignId !== campaignId);
+    saveStoredTickets(tickets);
+
+    // 3. Delete from Supabase
+    try {
+      await supabase
+        .from('lottery_tickets')
+        .delete()
+        .eq('campaign_id', campaignId);
+
+      await supabase
+        .from('lottery_campaigns')
+        .delete()
+        .eq('id', campaignId);
+    } catch {
+      // fallback handled
+    }
+
+    return true;
+  },
+
+  /**
+   * Get all minted tickets for a specific campaign (for Admin monitoring and auditing)
+   */
+  async getCampaignTickets(campaignId: string): Promise<LotteryTicket[]> {
+    try {
+      const { data, error } = await supabase
+        .from('lottery_tickets')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        return data.map((t: any) => ({
+          id: t.id,
+          campaignId: t.campaign_id,
+          userId: t.user_id,
+          ticketNumber: t.ticket_number,
+          verificationMethod: t.verification_method,
+          verifiedAt: t.verified_at,
+          isWinner: t.is_winner,
+          proofUrl: t.proof_url,
+          createdAt: t.created_at
+        }));
+      }
+    } catch {
+      // fallback
+    }
+
+    const allTickets = getStoredTickets();
+    return allTickets.filter(t => t.campaignId === campaignId);
   }
 };
+

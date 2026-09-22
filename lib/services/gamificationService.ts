@@ -410,21 +410,21 @@ export const DEFAULT_RAFFLES: Raffle[] = [
     quests: [
       {
         id: 'q-ig-follow',
-        title: 'Follow @tripzy.travel on Instagram',
-        title_tr: 'Instagram\'da @tripzy.travel hesabını takip et',
+        title: 'Follow @tripzydeal on Instagram',
+        title_tr: 'Instagram\'da @tripzydeal hesabını takip et',
         description: 'Earn 1 instant raffle ticket',
         description_tr: '1 anında çekiliş bileti kazan',
         ticketsReward: 1,
         actionType: 'instagram_follow',
-        actionUrl: 'https://instagram.com/tripzy.travel',
+        actionUrl: 'https://instagram.com/tripzydeal',
         isCompleted: false
       },
       {
         id: 'q-ig-story',
         title: 'Share your Tripzy Passport to IG Story',
         title_tr: 'Tripzy Pasaportunu Instagram Hikayende Paylaş',
-        description: 'Tag @tripzy.travel for 2 bonus tickets',
-        description_tr: '@tripzy.travel etiketleyerek 2 çekiliş hakkı kazan',
+        description: 'Tag @tripzydeal for 2 bonus tickets',
+        description_tr: '@tripzydeal etiketleyerek 2 çekiliş hakkı kazan',
         ticketsReward: 2,
         actionType: 'instagram_story',
         isCompleted: false
@@ -469,13 +469,13 @@ export const DEFAULT_RAFFLES: Raffle[] = [
     quests: [
       {
         id: 'q-ig-follow-cap',
-        title: 'Follow @tripzy.travel on Instagram',
-        title_tr: 'Instagram\'da @tripzy.travel hesabını takip et',
+        title: 'Follow @tripzydeal on Instagram',
+        title_tr: 'Instagram\'da @tripzydeal hesabını takip et',
         description: 'Earn 1 instant raffle ticket',
         description_tr: '1 anında çekiliş bileti kazan',
         ticketsReward: 1,
         actionType: 'instagram_follow',
-        actionUrl: 'https://instagram.com/tripzy.travel',
+        actionUrl: 'https://instagram.com/tripzydeal',
         isCompleted: false
       },
       {

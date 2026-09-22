@@ -130,7 +130,7 @@ Every user entering a lottery is required to tag and follow Tripzy across channe
 | Channel | Growth Hook | Primary Monetization Mechanism | Projected Revenue |
 | :--- | :--- | :--- | :--- |
 | **Telegram / WhatsApp VIP Channels** | *“Join for +2 Bonus Lottery Tickets”* | • Instant Flash Deal Sellouts (10-15% commission)<br>• Pinned Sponsor Banners (Car rentals, eSIMs)<br>• Mistake/Error Fare Affiliate Drops | ₺30,000 – ₺75,000 / mo |
-| **Instagram (`@tripzy.travel`)** | Mandatory Story OCR tag (`@tripzy.travel`) | • Sponsored "Hotel of the Week" Reels (₺10k–₺25k/post)<br>• Story Link Sticker Flash Deals<br>• IG VIP Close Friends Subscriptions (₺49/mo) | ₺50,000 – ₺120,000 / mo |
+| **Instagram (`@tripzydeal`)** | Mandatory Story OCR tag (`@tripzydeal`) | • Sponsored "Hotel of the Week" Reels (₺10k–₺25k/post)<br>• Story Link Sticker Flash Deals<br>• IG VIP Close Friends Subscriptions (₺49/mo) | ₺50,000 – ₺120,000 / mo |
 | **YouTube & YouTube Shorts** | *“Watch Provably Fair Live Draws”* | • High-CPM Travel AdSense ($5–$15 RPM)<br>• Sponsored Turkish Tourism Board docuseries<br>• Affiliate links in pinned comments | ₺20,000 – ₺60,000 / mo |
 | **TikTok & Creator Collabs** | Influencer giveaway co-branding | • 10–15% Rev-share on referred bookings<br>• Meta/TikTok Lookalike (LAL 1%) ad retargeting | ₺40,000 – ₺100,000 / mo |
 

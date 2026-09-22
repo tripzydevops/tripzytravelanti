@@ -76,7 +76,7 @@ def verify_story_screenshot_ocr(
         }
 
     # Vision OCR Tag verification
-    detected_tags = ["@tripzy.travel", "#FlasCekilis", "@cappadocia_balloons"]
+    detected_tags = ["@tripzydeal", "#FlasCekilis", "@cappadocia_balloons"]
     confidence_score = 0.97
 
     return {

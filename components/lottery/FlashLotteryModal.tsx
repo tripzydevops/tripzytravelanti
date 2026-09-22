@@ -84,7 +84,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
       if (navigator.share) {
         await navigator.share({
           title: campaign.title_tr,
-          text: `Tripzy ile ${campaign.prizeDescription_tr} çekilişine katıl! @tripzy.travel`,
+          text: `Tripzy ile ${campaign.prizeDescription_tr} çekilişine katıl! @tripzydeal`,
           url: shareUrl
         });
       } else {
@@ -313,7 +313,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                   </div>
 
                   <div className="text-[8px] text-center font-bold text-slate-300 bg-black/40 py-1 rounded">
-                    @tripzy.travel
+                    @tripzydeal
                   </div>
                 </div>
 
@@ -324,8 +324,8 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                   </h4>
                   <p className="text-xs text-slate-400 leading-relaxed">
                     {isTr
-                      ? 'Yukarıdaki Story Canvas görselini Instagram Hikayende @tripzy.travel etiketleyerek paylaş. Paylaşım tamamlandığında çekiliş biletin hesabına otomatik eklenir.'
-                      : 'Share this Story Canvas to your Instagram Story tagging @tripzy.travel. Your lottery ticket will be automatically minted.'}
+                      ? 'Yukarıdaki Story Canvas görselini Instagram Hikayende @tripzydeal etiketleyerek paylaş. Paylaşım tamamlandığında çekiliş biletin hesabına otomatik eklenir.'
+                      : 'Share this Story Canvas to your Instagram Story tagging @tripzydeal. Your lottery ticket will be automatically minted.'}
                   </p>
 
                   <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -375,8 +375,8 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                 </h4>
                 <p className="text-xs text-slate-400 max-w-sm">
                   {isTr
-                    ? '@tripzy.travel etiketli Instagram Hikayenizin ekran görüntüsünü seçin. Vision OCR 2 saniyede doğrulayacaktır.'
-                    : 'Select a screenshot of your Instagram Story tagging @tripzy.travel. Vision OCR verifies in <2 seconds.'}
+                    ? '@tripzydeal etiketli Instagram Hikayenizin ekran görüntüsünü seçin. Vision OCR 2 saniyede doğrulayacaktır.'
+                    : 'Select a screenshot of your Instagram Story tagging @tripzydeal. Vision OCR verifies in <2 seconds.'}
                 </p>
               </div>
 
