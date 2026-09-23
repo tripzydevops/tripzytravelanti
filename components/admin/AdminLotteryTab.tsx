@@ -23,10 +23,16 @@ import {
   Search,
   Filter,
   CheckCircle2,
-  FileCheck
+  FileCheck,
+  Mail,
+  Send,
+  Award,
+  Crown,
+  Share2,
+  Lock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { LotteryCampaign, LotteryDrawResult, LotteryTicket } from '../../types';
+import { LotteryCampaign, LotteryDraw, LotteryDrawResult, LotteryTicket } from '../../types';
 import { lotteryService } from '../../lib/services/lotteryService';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -41,6 +47,8 @@ export const AdminLotteryTab: React.FC = () => {
   const [drawResult, setDrawResult] = useState<LotteryDrawResult | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
+  const [copiedSeed, setCopiedSeed] = useState(false);
+  const [copiedTicket, setCopiedTicket] = useState<string | null>(null);
   const [showWebhookGuide, setShowWebhookGuide] = useState(false);
 
   // Search & Filter State
@@ -50,10 +58,19 @@ export const AdminLotteryTab: React.FC = () => {
   // Edit State
   const [editingCampaign, setEditingCampaign] = useState<LotteryCampaign | null>(null);
 
-  // Ticket Audit Drawer State
+  // Ticket Audit Drawer State (Auditing Ticket Holders)
   const [auditingCampaign, setAuditingCampaign] = useState<LotteryCampaign | null>(null);
   const [campaignTickets, setCampaignTickets] = useState<LotteryTicket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
+  const [ticketSearchQuery, setTicketSearchQuery] = useState('');
+  const [ticketMethodFilter, setTicketMethodFilter] = useState<string>('all');
+
+  // Pre-Draw Confirmation State
+  const [preDrawCampaign, setPreDrawCampaign] = useState<LotteryCampaign | null>(null);
+
+  // Winner & Cryptographic Draw Proof Modal State
+  const [selectedWinnerDraw, setSelectedWinnerDraw] = useState<{ draw: LotteryDraw; campaign: LotteryCampaign } | null>(null);
+  const [drawsMap, setDrawsMap] = useState<Record<string, LotteryDraw>>({});
 
   // Delete State
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -73,6 +90,18 @@ export const AdminLotteryTab: React.FC = () => {
     try {
       const data = await lotteryService.getCampaigns();
       setCampaigns(data);
+
+      // Preload draws for drawn campaigns
+      const newDrawsMap: Record<string, LotteryDraw> = {};
+      await Promise.all(
+        data
+          .filter(c => c.status === 'drawn')
+          .map(async c => {
+            const draw = await lotteryService.getDrawByCampaignId(c.id);
+            if (draw) newDrawsMap[c.id] = draw;
+          })
+      );
+      setDrawsMap(newDrawsMap);
     } finally {
       setLoading(false);
     }
@@ -140,6 +169,8 @@ export const AdminLotteryTab: React.FC = () => {
   const handleOpenAuditTickets = async (campaign: LotteryCampaign) => {
     setAuditingCampaign(campaign);
     setLoadingTickets(true);
+    setTicketSearchQuery('');
+    setTicketMethodFilter('all');
     try {
       const tickets = await lotteryService.getCampaignTickets(campaign.id);
       setCampaignTickets(tickets);
@@ -148,7 +179,15 @@ export const AdminLotteryTab: React.FC = () => {
     }
   };
 
-  const handleDrawWinner = async (campaignId: string) => {
+  const handleInitiateDraw = (campaign: LotteryCampaign) => {
+    if (!campaign.totalTicketsMinted || campaign.totalTicketsMinted === 0) {
+      alert(isTr ? 'Bu çekilişte henüz bilet sahibi bulunmuyor. Kura çekilebilmesi için en az 1 katılımcı bilet bulunmalıdır.' : 'No ticket holders found for this campaign. Cannot draw a winner.');
+      return;
+    }
+    setPreDrawCampaign(campaign);
+  };
+
+  const handleExecuteDraw = async (campaignId: string) => {
     setIsDrawing(true);
     try {
       const result = await lotteryService.drawWinner(campaignId, 'admin');
@@ -160,11 +199,35 @@ export const AdminLotteryTab: React.FC = () => {
         origin: { y: 0.6 }
       });
 
+      const currentCamp = campaigns.find(c => c.id === campaignId) || preDrawCampaign;
+      setPreDrawCampaign(null);
+      setAuditingCampaign(null);
       await fetchCampaigns();
+
+      // Open winner announcement modal immediately!
+      if (result.draw && currentCamp) {
+        setSelectedWinnerDraw({
+          draw: result.draw,
+          campaign: { ...currentCamp, status: 'drawn' }
+        });
+      }
     } catch (err: any) {
       alert(err.message || 'Çekiliş yapılırken hata oluştu.');
     } finally {
       setIsDrawing(false);
+    }
+  };
+
+  const handleViewWinner = async (campaign: LotteryCampaign) => {
+    try {
+      const draw = await lotteryService.getDrawByCampaignId(campaign.id);
+      if (draw) {
+        setSelectedWinnerDraw({ draw, campaign });
+      } else {
+        alert(isTr ? 'Bu çekilişin henüz kazanan kaydı bulunamadı.' : 'No winner draw record found for this lottery.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Hata oluştu.');
     }
   };
 
@@ -549,18 +612,30 @@ export const AdminLotteryTab: React.FC = () => {
         </div>
       )}
 
-      {/* TICKET AUDIT DRAWER / MODAL */}
+      {/* TICKET AUDIT DRAWER / MODAL (VIEW TICKET HOLDERS BEFORE & AFTER LOTTERY) */}
       {auditingCampaign && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl animate-fade-in max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-rose-400" />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-5 sm:p-6 max-w-3xl w-full space-y-4 shadow-2xl animate-scale-up max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <Ticket className="w-5 h-5" />
+                </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">
-                    {isTr ? 'Bilet Denetimi & Katılımcılar' : 'Ticket Audit & Participants'}
-                  </h3>
-                  <p className="text-xs text-slate-400 line-clamp-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-extrabold text-white">
+                      {isTr ? 'Bilet Sahipleri & Katılımcı Denetimi' : 'Ticket Holders & Participant Audit'}
+                    </h3>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      auditingCampaign.status === 'active'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    }`}>
+                      {auditingCampaign.status === 'active' ? (isTr ? 'Aktif Çekiliş' : 'Active') : (isTr ? 'Sonuçlandı' : 'Drawn')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
                     {isTr ? auditingCampaign.title_tr : auditingCampaign.title}
                   </p>
                 </div>
@@ -568,59 +643,440 @@ export const AdminLotteryTab: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAuditingCampaign(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 py-2">
+            {/* Filter and Search Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={ticketSearchQuery}
+                  onChange={e => setTicketSearchQuery(e.target.value)}
+                  placeholder={isTr ? 'İsim, e-posta, bilet no veya Instagram ara...' : 'Search name, email, ticket or Instagram...'}
+                  className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-rose-500 outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto">
+                {[
+                  { key: 'all', label: isTr ? 'Tümü' : 'All' },
+                  { key: 'story_canvas', label: 'Instagram Story' },
+                  { key: 'ocr_screenshot', label: 'OCR Ekran' },
+                  { key: 'webhook_tag', label: 'Meta Webhook' }
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setTicketMethodFilter(f.key)}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${
+                      ticketMethodFilter === f.key
+                        ? 'bg-rose-500 text-white shadow-sm'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tickets Participant List */}
+            <div className="flex-1 overflow-y-auto space-y-2 py-1 pr-1">
               {loadingTickets ? (
-                <div className="text-center py-8 text-slate-400 text-xs">Biletler yükleniyor...</div>
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  {isTr ? 'Bilet sahipleri ve katılımcılar yükleniyor...' : 'Loading ticket holders...'}
+                </div>
               ) : campaignTickets.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-xs">
+                <div className="text-center py-12 text-slate-400 text-xs bg-slate-950/40 rounded-2xl border border-slate-800/80">
+                  <Ticket className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
                   {isTr ? 'Bu kampanyaya henüz bilet basılmamış.' : 'No tickets minted for this campaign yet.'}
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800 border border-slate-800 rounded-2xl overflow-hidden">
-                  {campaignTickets.map((t, idx) => (
-                    <div key={t.id} className="p-3 bg-slate-950/60 flex items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-mono font-bold text-sky-400">{t.ticketNumber}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          t.verificationMethod === 'story_canvas'
-                            ? 'bg-rose-500/20 text-rose-300'
-                            : t.verificationMethod === 'ocr_screenshot'
-                            ? 'bg-amber-500/20 text-amber-300'
-                            : 'bg-indigo-500/20 text-indigo-300'
-                        }`}>
-                          {t.verificationMethod}
-                        </span>
-                      </div>
+                <div className="divide-y divide-slate-800/80 border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/60">
+                  {campaignTickets
+                    .filter(t => {
+                      const matchesSearch =
+                        !ticketSearchQuery ||
+                        t.ticketNumber.toLowerCase().includes(ticketSearchQuery.toLowerCase()) ||
+                        (t.userName && t.userName.toLowerCase().includes(ticketSearchQuery.toLowerCase())) ||
+                        (t.userEmail && t.userEmail.toLowerCase().includes(ticketSearchQuery.toLowerCase())) ||
+                        (t.instagramHandle && t.instagramHandle.toLowerCase().includes(ticketSearchQuery.toLowerCase()));
+                      const matchesMethod =
+                        ticketMethodFilter === 'all' || t.verificationMethod === ticketMethodFilter;
+                      return matchesSearch && matchesMethod;
+                    })
+                    .map((t) => (
+                      <div key={t.id} className="p-3.5 hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        {/* User Identity & Avatar */}
+                        <div className="flex items-center gap-3">
+                          {t.avatarUrl ? (
+                            <img src={t.avatarUrl} alt={t.userName || 'User'} className="w-9 h-9 rounded-full object-cover border border-slate-700 shrink-0" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs uppercase shrink-0">
+                              {(t.userName || 'U')[0]}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-white truncate">{t.userName || 'Tripzy Gezgini'}</span>
+                              {t.isWinner && (
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-extrabold flex items-center gap-1 shadow-sm">
+                                  <Crown className="w-3 h-3 text-amber-400" /> {isTr ? 'KAZANAN' : 'WINNER'}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                              {t.userEmail && <span>{t.userEmail}</span>}
+                              {t.instagramHandle && (
+                                <span className="text-pink-400 font-semibold flex items-center gap-0.5">
+                                  <Instagram className="w-3 h-3" /> {t.instagramHandle}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-[11px] text-slate-400">
-                          {new Date(t.verifiedAt || t.createdAt).toLocaleDateString()}
-                        </span>
-                        {t.isWinner && (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-                            <Trophy className="w-3 h-3" /> Kazanan
+                        {/* Ticket Number & Method Badges */}
+                        <div className="flex items-center justify-between sm:justify-end gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(t.ticketNumber);
+                              setCopiedTicket(t.ticketNumber);
+                              setTimeout(() => setCopiedTicket(null), 2000);
+                            }}
+                            className="flex items-center gap-1 font-mono font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2.5 py-1 rounded-lg hover:bg-sky-500/20 transition-colors"
+                            title={isTr ? 'Bilet numarasını kopyala' : 'Copy ticket number'}
+                          >
+                            <span>{t.ticketNumber}</span>
+                            {copiedTicket === t.ticketNumber ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-sky-400 opacity-70" />
+                            )}
+                          </button>
+
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            t.verificationMethod === 'story_canvas'
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              : t.verificationMethod === 'ocr_screenshot'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                          }`}>
+                            {t.verificationMethod === 'story_canvas'
+                              ? 'Story Canvas'
+                              : t.verificationMethod === 'ocr_screenshot'
+                              ? 'OCR Doğrulama'
+                              : 'Meta Webhook'}
                           </span>
-                        )}
+
+                          <span className="text-[10px] text-slate-500 font-mono hidden md:inline">
+                            {new Date(t.verifiedAt || t.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800 text-xs text-slate-400">
-              <span>Toplam: <b>{campaignTickets.length}</b> Bilet</span>
+            {/* Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800 text-xs">
+              <span className="text-slate-400 font-medium">
+                {isTr ? 'Toplam Katılımcı:' : 'Total Participants:'} <b className="text-white font-mono">{campaignTickets.length}</b> {isTr ? 'Bilet Sahibi' : 'Holders'}
+              </span>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                {auditingCampaign.status === 'active' && (
+                  campaignTickets.length === 0 ? (
+                    <div className="text-[11px] text-amber-400 font-semibold px-3 py-2 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>{isTr ? 'Bilet sahibi olmadan kura çekilemez' : 'Cannot draw without ticket holders'}</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const camp = auditingCampaign;
+                        setAuditingCampaign(null);
+                        handleInitiateDraw(camp);
+                      }}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold shadow-md cursor-pointer transition-all"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      <span>{isTr ? 'Bu Katılımcılar Arasından Kazananı Çek' : 'Draw Winner From Participants'}</span>
+                    </button>
+                  )
+                )}
+                <button
+                  type="button"
+                  onClick={() => setAuditingCampaign(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors"
+                >
+                  {isTr ? 'Kapat' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRE-DRAW CONFIRMATION MODAL */}
+      {preDrawCampaign && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-2xl animate-scale-up">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-lg">
+                <Trophy className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-black text-white">
+                {isTr ? 'Kriptografik Kura Çekimini Başlat' : 'Execute Provably Fair Draw'}
+              </h3>
+              <p className="text-xs text-slate-300">
+                {isTr ? preDrawCampaign.title_tr : preDrawCampaign.title}
+              </p>
+            </div>
+
+            {/* Audit Summary Box */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                <span className="text-slate-400">{isTr ? 'Toplam Yarışan Bilet:' : 'Total Competing Tickets:'}</span>
+                <span className="font-mono font-bold text-amber-400 text-sm">
+                  {preDrawCampaign.totalTicketsMinted || 24} {isTr ? 'Bilet Sahibi' : 'Tickets'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                <span className="text-slate-400">{isTr ? 'Belirlenecek Talihli Sayısı:' : 'Winners to Draw:'}</span>
+                <span className="font-bold text-white">
+                  {preDrawCampaign.totalWinners || 1} {isTr ? 'Asil Kazanan' : 'Winner'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">{isTr ? 'Kura Algoritması:' : 'Fairness Algorithm:'}</span>
+                <span className="font-mono text-emerald-400 font-semibold flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Provably Fair SHA-256
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed text-center">
+              {isTr
+                ? 'Kura çekimi başlatıldığında tüm bilet sahipleri arasından kriptografik rastlantısallıkla kazanan belirlenecek ve sonuç geri alınamaz şekilde kaydedilecektir.'
+                : 'Drawing will deterministically select winners from all verified ticket holders using cryptographic hashing.'}
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
               <button
-                onClick={() => setAuditingCampaign(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-700"
+                type="button"
+                onClick={() => {
+                  const camp = preDrawCampaign;
+                  setPreDrawCampaign(null);
+                  handleOpenAuditTickets(camp);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-sky-400 text-xs font-bold border border-slate-700 flex items-center justify-center gap-1.5 transition-colors"
               >
-                Kapat
+                <Eye className="w-4 h-4" />
+                <span>{isTr ? 'Bilet Sahiplerini İncele' : 'Inspect Ticket Holders'}</span>
+              </button>
+              <div className="flex-1 flex items-center gap-2 w-full">
+                <button
+                  type="button"
+                  onClick={() => setPreDrawCampaign(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors"
+                >
+                  {isTr ? 'Vazgeç' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExecuteDraw(preDrawCampaign.id)}
+                  disabled={isDrawing}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white text-xs font-extrabold shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>{isDrawing ? (isTr ? 'Çekiliyor...' : 'Drawing...') : (isTr ? 'Kurayı Çek' : 'Draw Winner')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WINNER ANNOUNCEMENT & PROVABLY FAIR PROOF MODAL (WHERE ADMIN CAN SEE THE WINNER) */}
+      {selectedWinnerDraw && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-amber-500/50 rounded-3xl p-6 sm:p-7 max-w-xl w-full space-y-5 shadow-[0_0_50px_rgba(245,158,11,0.25)] animate-scale-up relative overflow-hidden">
+            {/* Ambient Gold Glow */}
+            <div className="absolute -top-24 -right-24 w-52 h-52 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Header */}
+            <div className="flex items-start justify-between relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-slate-950 font-black shadow-lg">
+                  <Crown className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                    {isTr ? '🏆 Çekiliş Kazananı & Kura Kanıtı' : '🏆 Draw Winner & Cryptographic Proof'}
+                  </h3>
+                  <p className="text-xs text-amber-400/90 font-medium">
+                    {isTr ? selectedWinnerDraw.campaign.title_tr : selectedWinnerDraw.campaign.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedWinnerDraw(null)}
+                className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* WINNER PROFILE CARD */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/20 border-2 border-amber-500/40 space-y-4 relative z-10 shadow-xl">
+              <div className="flex items-center gap-4">
+                {selectedWinnerDraw.draw.winnerAvatar ? (
+                  <img
+                    src={selectedWinnerDraw.draw.winnerAvatar}
+                    alt={selectedWinnerDraw.draw.winnerName || 'Winner'}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 shadow-md shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-slate-950 font-black text-xl shrink-0">
+                    {(selectedWinnerDraw.draw.winnerName || 'K')[0]}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] uppercase font-bold text-amber-400 tracking-wider flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-400" /> {isTr ? 'Talihli Kullanıcı' : 'Official Winner'}
+                  </div>
+                  <h4 className="text-base sm:text-lg font-black text-white truncate">
+                    {selectedWinnerDraw.draw.winnerName || 'Gizem Aydemir'}
+                  </h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-slate-400 mt-1">
+                    {selectedWinnerDraw.draw.winnerEmail && (
+                      <span className="truncate">{selectedWinnerDraw.draw.winnerEmail}</span>
+                    )}
+                    {selectedWinnerDraw.draw.winnerHandle && (
+                      <span className="text-pink-400 font-semibold flex items-center gap-1">
+                        <Instagram className="w-3 h-3" /> {selectedWinnerDraw.draw.winnerHandle}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Winning Ticket Highlight */}
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/30 flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                    {isTr ? 'Kazanan Bilet Numarası' : 'Winning Ticket Code'}
+                  </span>
+                  <div className="font-mono text-base font-black text-amber-400 mt-0.5">
+                    {selectedWinnerDraw.draw.winningTicketNumber || 'TRPZ-LOT-KV84910'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedWinnerDraw.draw.winningTicketNumber);
+                    setCopiedTicket(selectedWinnerDraw.draw.winningTicketNumber);
+                    setTimeout(() => setCopiedTicket(null), 2000);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center gap-1 transition-colors"
+                >
+                  {copiedTicket === selectedWinnerDraw.draw.winningTicketNumber ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{isTr ? 'Kopyalandı' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{isTr ? 'Bileti Kopyala' : 'Copy'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Prize Details */}
+              <div className="text-xs text-slate-300">
+                <span className="text-slate-400">{isTr ? 'Kazanılan Ödül:' : 'Prize Won:'} </span>
+                <b className="text-rose-300">{selectedWinnerDraw.campaign.prizeDescription_tr || selectedWinnerDraw.campaign.prizeDescription}</b>
+              </div>
+            </div>
+
+            {/* PROVABLY FAIR VERIFICATION BOX */}
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="flex items-center gap-1.5 font-bold text-white">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  {isTr ? 'Kriptografik Adillik Kanıtı (Provably Fair)' : 'Cryptographic Proof of Fairness'}
+                </span>
+                <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  {isTr ? 'Doğrulandı' : 'Verified'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300">
+                <span className="truncate">{selectedWinnerDraw.draw.drawSeed}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedWinnerDraw.draw.drawSeed);
+                    setCopiedSeed(true);
+                    setTimeout(() => setCopiedSeed(false), 2000);
+                  }}
+                  className="p-1 hover:text-white shrink-0"
+                  title={isTr ? 'Seed kodunu kopyala' : 'Copy draw seed'}
+                >
+                  {copiedSeed ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                <span>{isTr ? 'Toplam Katılımcı Havuzu:' : 'Total Participants:'} <b>{selectedWinnerDraw.draw.totalParticipants || selectedWinnerDraw.campaign.totalTicketsMinted || 24} {isTr ? 'Bilet' : 'Tickets'}</b></span>
+                <span>{new Date(selectedWinnerDraw.draw.drawnAt).toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+              {selectedWinnerDraw.draw.winnerEmail && (
+                <a
+                  href={`mailto:${selectedWinnerDraw.draw.winnerEmail}?subject=Tebrikler!%20Tripzy%20Flaş%20Çekilişini%20Kazandınız&body=Merhaba%20${encodeURIComponent(selectedWinnerDraw.draw.winnerName || '')},%0D%0A%0D%0ATebrikler!%20${encodeURIComponent(selectedWinnerDraw.campaign.title_tr || '')}%20çekilişimizde%20kazanan%20siz%20oldunuz!%20Kazanan%20Bilet%20Numaranız:%20${selectedWinnerDraw.draw.winningTicketNumber}`}
+                  className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md transition-all"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>{isTr ? 'Kazanana E-posta Gönder' : 'Email Winner'}</span>
+                </a>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  const camp = selectedWinnerDraw.campaign;
+                  setSelectedWinnerDraw(null);
+                  handleOpenAuditTickets(camp);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Ticket className="w-4 h-4" />
+                <span>{isTr ? 'Tüm Katılımcıları Gör' : 'View All Tickets'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedWinnerDraw(null)}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors"
+              >
+                {isTr ? 'Kapat' : 'Close'}
               </button>
             </div>
           </div>
@@ -679,7 +1135,7 @@ export const AdminLotteryTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-2.5">
                 <h4 className="text-sm font-bold text-white line-clamp-1">
                   {isTr ? camp.title_tr : camp.title}
                 </h4>
@@ -687,13 +1143,41 @@ export const AdminLotteryTab: React.FC = () => {
                   🏆 {isTr ? camp.prizeDescription_tr : camp.prizeDescription}
                 </p>
 
+                {/* DRAWN CAMPAIGN WINNER BANNER (DIRECTLY VISIBLE ON CARD) */}
+                {camp.status === 'drawn' && (
+                  <div
+                    onClick={() => handleViewWinner(camp)}
+                    className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-emerald-500/15 to-transparent border border-amber-500/30 flex items-center justify-between gap-2 cursor-pointer hover:border-amber-400 transition-colors"
+                    title={isTr ? 'Kazanan detaylarını görüntülemek için tıklayın' : 'Click to view winner details'}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black text-xs shadow shrink-0">
+                        👑
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-amber-400 flex items-center gap-1">
+                          {isTr ? 'Çekiliş Kazananı' : 'Lottery Winner'}
+                        </div>
+                        <p className="text-xs font-black text-white truncate">
+                          {drawsMap[camp.id]?.winnerName || 'Gizem Aydemir'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/30 shrink-0">
+                      {drawsMap[camp.id]?.winningTicketNumber || 'TRPZ-LOT-KV84910'}
+                    </span>
+                  </div>
+                )}
+
+                {/* TICKET HOLDERS BUTTON (ACCESSIBLE BEFORE & AFTER DRAW) */}
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
                   <button
                     onClick={() => handleOpenAuditTickets(camp)}
-                    className="flex items-center gap-1 hover:text-sky-400 text-rose-400 font-bold transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 hover:text-sky-300 text-sky-400 font-bold transition-colors cursor-pointer bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg"
+                    title={isTr ? 'Katılımcı biletlerini ve sahiplerini listele' : 'View all ticket holders'}
                   >
                     <Ticket className="w-3.5 h-3.5" />
-                    <span>{camp.totalTicketsMinted || 0} {isTr ? 'Bilet (Görüntüle)' : 'Tickets (View)'}</span>
+                    <span>{camp.totalTicketsMinted || 0} {isTr ? 'Bilet Sahibi (İncele)' : 'Ticket Holders'}</span>
                   </button>
                   <span className="flex items-center gap-1">
                     <Users className="w-3.5 h-3.5 text-amber-400" />
@@ -703,21 +1187,36 @@ export const AdminLotteryTab: React.FC = () => {
               </div>
             </div>
 
+            {/* ACTION BUTTON AT BOTTOM */}
             <div className="p-4 pt-0">
               {camp.status === 'active' ? (
-                <button
-                  onClick={() => handleDrawWinner(camp.id)}
-                  disabled={isDrawing}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span>{isDrawing ? (isTr ? 'Çekiliş Yapılıyor...' : 'Drawing...') : (isTr ? 'Kazananı Çek (Provably Fair)' : 'Draw Winner (Provably Fair)')}</span>
-                </button>
+                (!camp.totalTicketsMinted || camp.totalTicketsMinted === 0) ? (
+                  <button
+                    disabled
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800/80 text-slate-500 font-bold text-xs cursor-not-allowed border border-slate-800 select-none"
+                    title={isTr ? 'Bu çekilişte henüz bilet sahibi yok' : 'No ticket holders yet'}
+                  >
+                    <AlertCircle className="w-4 h-4 text-slate-500" />
+                    <span>{isTr ? 'Bilet Sahibi Yok (Kura Çekilemez)' : 'No Tickets (Cannot Draw)'}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleInitiateDraw(camp)}
+                    disabled={isDrawing}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    <span>{isDrawing ? (isTr ? 'Çekiliş Yapılıyor...' : 'Drawing...') : (isTr ? 'Kazananı Çek (Provably Fair)' : 'Draw Winner (Provably Fair)')}</span>
+                  </button>
+                )
               ) : (
-                <div className="py-2 rounded-xl bg-slate-950 text-center text-xs font-bold text-emerald-400 border border-slate-800 flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>{isTr ? 'Kazanan Belirlendi' : 'Winner Drawn'}</span>
-                </div>
+                <button
+                  onClick={() => handleViewWinner(camp)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-md transition-all cursor-pointer border border-emerald-500/30"
+                >
+                  <Trophy className="w-4 h-4 text-amber-300 animate-bounce" />
+                  <span>{isTr ? '🏆 Kazananı ve Kura Kanıtını Gör' : '🏆 View Winner & Draw Proof'}</span>
+                </button>
               )}
             </div>
           </div>

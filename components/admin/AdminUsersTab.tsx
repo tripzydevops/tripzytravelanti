@@ -330,7 +330,7 @@ const AdminUsersTab: React.FC = () => {
       if (!window.confirm("Remove this deal from user wallet?")) return;
       try {
         const { removeDealFromUser, removeWalletItemFromUser } = await import(
-          "../../lib/supabaseService"
+          "../../lib/services/walletService"
         );
 
         // Remove from favorites AND wallet items

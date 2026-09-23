@@ -47,7 +47,7 @@ const TopHeader: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-brand-bg/90 border-b border-white/10 px-4 py-3 shadow-lg transition-all">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-brand-bg/90 border-b border-white/10 px-4 py-3 shadow-lg transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo & Name */}
         <Link to="/" className="flex items-center gap-2.5 group">
@@ -61,7 +61,7 @@ const TopHeader: React.FC = () => {
         {!user ? (
           <Link
             to="/login"
-            className="px-6 py-2 bg-gold-500/20 hover:bg-gold-500 border border-gold-500/40 text-gold-400 hover:text-white rounded-full text-xs font-bold transition-all shadow-md"
+            className="inline-flex items-center justify-center px-6 py-2 bg-gold-500/20 hover:bg-gold-500 border border-gold-500/40 text-gold-400 hover:text-white rounded-full text-xs font-bold transition-all shadow-md cursor-pointer select-none active:scale-95"
           >
             {t('login') || 'Login'}
           </Link>

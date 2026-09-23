@@ -109,7 +109,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
         >
             {/* Pull indicator */}
             <div
-                className={`absolute left-0 right-0 flex justify-center items-center transition-opacity duration-200 z-50 ${showIndicator ? 'opacity-100' : 'opacity-0'}`}
+                className={`pointer-events-none absolute left-0 right-0 flex justify-center items-center transition-opacity duration-200 z-30 ${showIndicator ? 'opacity-100' : 'opacity-0'}`}
                 style={{
                     top: -50,
                     height: 50,

@@ -473,6 +473,10 @@ export interface LotteryTicket {
   campaignId: string;
   userId: string;
   ticketNumber: string; // e.g. TRPZ-LOT-89210
+  userName?: string;
+  userEmail?: string;
+  instagramHandle?: string;
+  avatarUrl?: string;
   verificationMethod: LotteryVerificationMethod;
   verifiedAt: string;
   isWinner: boolean;
@@ -511,6 +515,11 @@ export interface LotteryDraw {
   winningUserId: string;
   winningTicketNumber: string;
   winnerName?: string;
+  winnerEmail?: string;
+  winnerHandle?: string;
+  winnerAvatar?: string;
+  prizeDescription?: string;
+  totalParticipants?: number;
   drawSeed: string; // Cryptographic SHA-256 seed for provable fairness
   drawnAt: string;
 }
@@ -523,8 +532,12 @@ export interface LotteryDrawResult {
     ticketNumber: string;
     userId: string;
     userName: string;
+    userEmail?: string;
+    instagramHandle?: string;
+    avatarUrl?: string;
   }[];
   seed: string;
   drawnAt: string;
+  draw?: LotteryDraw;
 }
 

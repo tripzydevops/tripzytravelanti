@@ -379,6 +379,19 @@ test.describe('Authentication and Redirect Flows', () => {
     await registerCommonMocks(page);
   });
 
+  test('should navigate to login page when clicking Giriş Yap button from home page', async ({ page }) => {
+    await page.goto('/');
+
+    const loginButton = page.getByRole('link', { name: /Giriş Yap|Login/i }).first();
+    await expect(loginButton).toBeVisible();
+
+    // Click without force to guarantee no overlays intercept pointer events
+    await loginButton.click();
+
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.locator('h1').first()).toContainText(/Tekrar Hoşgeldiniz|Welcome Back/i);
+  });
+
   test('should display login form and perform login', async ({ page }) => {
     await page.goto('/login');
 

@@ -35,6 +35,8 @@ export interface GamificationContextType {
 
   // Gamification Profile & Passport
   gamificationState: UserGamificationState;
+  state: UserGamificationState;
+  addXp: (amount: number) => void;
   claimStreak: () => Promise<{ xpEarned: number; pointsEarned: number } | null>;
   claimScratchReward: (rewardType: 'xp' | 'points' | 'discount', amount: number) => Promise<void>;
   unlockStamp: (stampSlug: string) => void;
@@ -235,6 +237,26 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     bufferSignal('scratch_reward_claimed', `scratch-${rewardType}`, { rewardType, amount });
   }, [gamificationState, user, bufferSignal]);
 
+  const addXp = useCallback((amount: number) => {
+    const userId = user?.id || 'guest-user';
+    const newXP = (gamificationState.xp || 0) + amount;
+    const levelInfo = calculateLevelFromXP(newXP);
+
+    const updatedState: UserGamificationState = {
+      ...gamificationState,
+      xp: newXP,
+      level: levelInfo.level,
+      levelTitle: levelInfo.levelTitle,
+      levelTitle_tr: levelInfo.levelTitle_tr,
+      xpForNextLevel: levelInfo.xpForNextLevel
+    };
+
+    setGamificationState(updatedState);
+    saveLocalGamificationState(userId, updatedState);
+    triggerHapticFeedback('medium');
+    bufferSignal('xp_earned', 'activity', { amount, totalXp: newXP });
+  }, [gamificationState, user, bufferSignal]);
+
   const unlockStamp = useCallback((stampSlug: string) => {
     const userId = user?.id || 'guest-user';
     const updatedStamps = gamificationState.stamps.map((s) => {
@@ -372,6 +394,8 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         prevSlide,
         markGroupSeen,
         gamificationState,
+        state: gamificationState,
+        addXp,
         claimStreak,
         claimScratchReward,
         unlockStamp,

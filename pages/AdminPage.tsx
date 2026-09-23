@@ -17,6 +17,8 @@ import AdminFraudSignalsTab from "../components/admin/AdminFraudSignalsTab";
 import AdminGamificationTab from "../components/admin/AdminGamificationTab";
 import AdminRafflesTab from "../components/admin/AdminRafflesTab";
 import { AdminLotteryTab } from "../components/admin/AdminLotteryTab";
+import { AdminAnnouncementsTab } from "../components/admin/AdminAnnouncementsTab";
+import AdminPromoCodesTab from "../components/admin/AdminPromoCodesTab";
 import { Sparkles, Gift, Ticket } from "lucide-react";
 import {
   BarChartIcon,

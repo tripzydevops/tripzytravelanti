@@ -105,6 +105,8 @@ export async function unsaveDeal(userId: string, dealId: string) {
     if (error) throw error;
 }
 
+export const removeDealFromUser = unsaveDeal;
+
 export async function removeWalletItemFromUser(userId: string, dealId: string) {
     // 1. Find the wallet item first (to get ID for logs)
     const { data: item } = await supabase
