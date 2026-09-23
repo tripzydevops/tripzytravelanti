@@ -89,14 +89,14 @@ export async function querySimilarDeals(queryText: string, topK: number = 10): P
         });
 
         if (error || !data?.success) {
-            console.error('[VectorService] Query error:', error || data?.error);
+            console.warn('[VectorService] Query fallback:', error?.message || data?.error || 'No vector matches');
             return [];
         }
 
         const matches = data.results || [];
         return matches.map((m: any) => m.id);
-    } catch (error) {
-        console.error('[VectorService] querySimilarDeals failed:', error);
+    } catch (error: any) {
+        console.warn('[VectorService] querySimilarDeals fallback:', error?.message || error);
         return [];
     }
 }
@@ -165,7 +165,7 @@ export async function rankDeals(prompt: string): Promise<string[]> {
         });
 
         if (error || !data?.success) {
-            console.error('[VectorService] Rank error:', error || data?.error);
+            console.warn('[VectorService] Rank fallback:', error?.message || data?.error || 'AI ranking unavailable');
             return [];
         }
 
@@ -174,8 +174,8 @@ export async function rankDeals(prompt: string): Promise<string[]> {
         }
 
         return data.results || [];
-    } catch (error) {
-        console.error('[VectorService] rankDeals failed:', error);
+    } catch (error: any) {
+        console.warn('[VectorService] rankDeals fallback:', error?.message || error);
         return [];
     }
 }

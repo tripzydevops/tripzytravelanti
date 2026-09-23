@@ -106,36 +106,51 @@ serve(async (req) => {
         }
 
         if (action === 'query') {
-            const topK = body.query?.topK || 5;
-            let embedding: number[] = [];
+            try {
+                const topK = body.query?.topK || 5;
+                let embedding: number[] = [];
 
-            if (body.query?.text) {
-                embedding = await generateEmbedding(body.query.text);
-            } else if (body.query?.dealId) {
-                // Fetch deal to generate embedding
-                const { data: deal } = await supabaseClient.from('deals').select('*').eq('id', body.query.dealId).single();
-                if (!deal) throw new Error('Deal not found for similarity query');
+                if (body.query?.text) {
+                    embedding = await generateEmbedding(body.query.text);
+                } else if (body.query?.dealId) {
+                    // Fetch deal to generate embedding
+                    const { data: deal } = await supabaseClient.from('deals').select('*').eq('id', body.query.dealId).single();
+                    if (!deal) throw new Error('Deal not found for similarity query');
 
-                const text = `Title: ${deal.title} Vendor: ${deal.vendor} Category: ${deal.category} Description: ${deal.description}`.trim();
-                embedding = await generateEmbedding(text);
-            } else {
-                throw new Error('Missing query text or dealId');
+                    const text = `Title: ${deal.title} Vendor: ${deal.vendor} Category: ${deal.category} Description: ${deal.description}`.trim();
+                    embedding = await generateEmbedding(text);
+                } else {
+                    throw new Error('Missing query text or dealId');
+                }
+
+                const results = await queryPinecone(embedding, topK, body.query?.dealId);
+                return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            } catch (queryErr: any) {
+                console.warn('[vector-sync] Query fallback triggered:', queryErr?.message || queryErr);
+                return new Response(JSON.stringify({ success: false, fallback: true, results: [], error: queryErr?.message || 'Query failed' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
             }
-
-            const results = await queryPinecone(embedding, topK, body.query?.dealId);
-            return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
 
         if (action === 'rank') {
-            if (!body.ranking?.prompt) throw new Error('Missing ranking prompt');
-            const results = await rankDealsWithGemini(body.ranking.prompt);
-            return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            try {
+                if (!body.ranking?.prompt) throw new Error('Missing ranking prompt');
+                const results = await rankDealsWithGemini(body.ranking.prompt);
+                return new Response(JSON.stringify({ success: true, results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            } catch (rankErr: any) {
+                console.warn('[vector-sync] Rank fallback triggered:', rankErr?.message || rankErr);
+                return new Response(JSON.stringify({ success: false, fallback: true, results: [], error: rankErr?.message || 'Rank failed' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
         }
 
         if (action === 'generate') {
-            if (!body.generation?.prompt) throw new Error('Missing generation prompt');
-            const text = await generateTextWithGemini(body.generation.prompt);
-            return new Response(JSON.stringify({ success: true, text }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            try {
+                if (!body.generation?.prompt) throw new Error('Missing generation prompt');
+                const text = await generateTextWithGemini(body.generation.prompt);
+                return new Response(JSON.stringify({ success: true, text }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            } catch (genErr: any) {
+                console.warn('[vector-sync] Generate fallback triggered:', genErr?.message || genErr);
+                return new Response(JSON.stringify({ success: false, fallback: true, text: '', error: genErr?.message || 'Generation failed' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
         }
 
         if (action === 'chat') {
@@ -145,9 +160,14 @@ serve(async (req) => {
         }
 
         if (action === 'suggest') {
-            if (!body.query?.text) throw new Error('Missing query text for suggestions');
-            const suggestions = await suggestWithGemini(body.query.text);
-            return new Response(JSON.stringify({ success: true, suggestions }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            try {
+                if (!body.query?.text) throw new Error('Missing query text for suggestions');
+                const suggestions = await suggestWithGemini(body.query.text);
+                return new Response(JSON.stringify({ success: true, suggestions }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            } catch (sugErr: any) {
+                console.warn('[vector-sync] Suggest fallback triggered:', sugErr?.message || sugErr);
+                return new Response(JSON.stringify({ success: false, fallback: true, suggestions: [], error: sugErr?.message || 'Suggest failed' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            }
         }
 
         return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -162,7 +182,7 @@ async function suggestWithGemini(query: string): Promise<string[]> {
     const apiKey = Deno.env.get('GOOGLE_AI_KEY');
     if (!apiKey) throw new Error('Missing AI Configuration');
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `You are a helpful travel deal search assistant for "Tripzy". 
     The user is searching for: "${query}".
@@ -198,7 +218,7 @@ async function chatWithGemini(message: string, history: any[], systemInstruction
         throw new Error('Missing AI Configuration');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const contents = [...history, { role: 'user', parts: [{ text: message }] }];
 
@@ -247,7 +267,7 @@ async function generateTextWithGemini(prompt: string): Promise<string> {
         throw new Error('Missing AI Configuration');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
         method: 'POST',
@@ -273,7 +293,7 @@ async function rankDealsWithGemini(prompt: string): Promise<string[]> {
         throw new Error('Missing AI Configuration');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
         method: 'POST',
@@ -311,13 +331,13 @@ async function generateEmbedding(text: string): Promise<number[]> {
         throw new Error('Missing AI Configuration');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            model: "models/gemini-embedding-001",
+            model: "models/text-embedding-004",
             content: { parts: [{ text }] },
             outputDimensionality: 768
         })
