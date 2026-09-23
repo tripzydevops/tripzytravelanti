@@ -10,14 +10,21 @@ export async function addUserPoints(
     expiresAt?: string,
     metadata: any = {}
 ) {
+    const isValidUUID = typeof referenceId === 'string' && 
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(referenceId);
+
+    const safeMetadata = isValidUUID || !referenceId
+        ? metadata
+        : { ...metadata, reference_custom_id: referenceId };
+
     const { data, error } = await supabase.rpc('secure_earn_points', {
         p_user_id: userId,
         p_amount: pointsToAdd,
         p_type: type,
         p_reference_type: referenceType || null,
-        p_reference_id: referenceId || null,
+        p_reference_id: isValidUUID ? referenceId : null,
         p_expires_at: expiresAt || null,
-        p_metadata: metadata
+        p_metadata: safeMetadata
     });
 
     if (error) {

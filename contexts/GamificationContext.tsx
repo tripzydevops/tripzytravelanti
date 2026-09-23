@@ -181,7 +181,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           pointsEarned,
           'earn_streak',
           'streak_day',
-          String(updatedState.streakDays),
+          undefined,
           undefined,
           { streakDays: updatedState.streakDays }
         );
@@ -225,9 +225,9 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           amount,
           'earn_campaign',
           'mystery_scratch',
-          new Date().toISOString(),
           undefined,
-          { rewardType, amount }
+          undefined,
+          { rewardType, amount, claimedAt: new Date().toISOString() }
         );
       } catch (e) {
         console.warn('Failed to sync scratch points:', e);
