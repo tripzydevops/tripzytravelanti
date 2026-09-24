@@ -303,10 +303,10 @@ export const AdminLotteryTab: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
               <div className="text-slate-400 font-medium">{isTr ? '1. Webhook Callback URL' : '1. Webhook Callback URL'}</div>
               <div className="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800 font-mono text-[11px] text-sky-400">
-                <span className="truncate">https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention</span>
+                <span className="truncate">https://cwmerdoqeokuufotsvmd.supabase.co/functions/v1/instagram-webhook</span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('https://api.tripzy.travel/api/v1/lottery/webhook/instagram-mention');
+                    navigator.clipboard.writeText('https://cwmerdoqeokuufotsvmd.supabase.co/functions/v1/instagram-webhook');
                     setCopiedUrl(true);
                     setTimeout(() => setCopiedUrl(false), 2000);
                   }}
