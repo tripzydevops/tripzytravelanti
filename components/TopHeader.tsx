@@ -16,14 +16,22 @@ const TopHeader: React.FC = () => {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    if (!isDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setIsDropdownOpen(false);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   // Close dropdown on route change
   useEffect(() => {
@@ -50,7 +58,7 @@ const TopHeader: React.FC = () => {
     <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-brand-bg/90 border-b border-white/10 px-4 py-3 shadow-lg transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo & Name */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to="/" className="flex items-center gap-2.5 group cursor-pointer">
           <img src="/favicon.png" alt="Tripzy" className="w-8 h-8 object-contain transition-transform group-hover:scale-110" />
           <span className="text-xl font-black italic uppercase tracking-wider text-white">
             Tripzy
@@ -70,32 +78,35 @@ const TopHeader: React.FC = () => {
             <NotificationBell />
 
             {/* Profile Dropdown Trigger */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative z-50" ref={dropdownRef}>
               <button
-                onClick={() => {
-                  setIsDropdownOpen(!isDropdownOpen);
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen((prev) => !prev);
                   triggerHapticFeedback('light');
                 }}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/15 border border-gold-500/30 rounded-full text-white font-medium transition-all hover:border-gold-400 group focus:outline-none"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/15 border border-gold-500/30 rounded-full text-white font-medium transition-all hover:border-gold-400 group focus:outline-none cursor-pointer select-none active:scale-95"
                 aria-expanded={isDropdownOpen}
+                aria-haspopup="menu"
                 aria-label="User profile menu"
               >
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-gold-400" />
+                  <img src={user.avatarUrl} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-gold-400 pointer-events-none" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-gold-500/20 border border-gold-400 flex items-center justify-center text-xs font-bold text-gold-400 uppercase">
+                  <div className="w-7 h-7 rounded-full bg-gold-500/20 border border-gold-400 flex items-center justify-center text-xs font-bold text-gold-400 uppercase pointer-events-none">
                     {(user.name || user.email || 'U')[0]}
                   </div>
                 )}
-                <span className="text-xs font-bold text-white group-hover:text-gold-300 max-w-[100px] truncate">
+                <span className="text-xs font-bold text-white group-hover:text-gold-300 max-w-[100px] truncate pointer-events-none">
                   {user.name?.split(' ')[0] || 'Profile'}
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 text-white/50 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-gold-400' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-white/50 transition-transform duration-200 pointer-events-none ${isDropdownOpen ? 'rotate-180 text-gold-400' : ''}`} />
               </button>
 
               {/* Profile Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-72 bg-[#0f172a]/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 overflow-hidden z-50 animate-scale-up">
+                <div className="absolute right-0 mt-2.5 w-72 max-w-[calc(100vw-2rem)] bg-[#0f172a]/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 overflow-hidden z-[100] animate-scale-up origin-top-right">
                   {/* User Info Header */}
                   <div className="p-4 border-b border-white/10 bg-white/[0.02]">
                     <div className="flex items-center gap-3">
@@ -126,7 +137,7 @@ const TopHeader: React.FC = () => {
                     <Link
                       to="/profile"
                       onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors group"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors group cursor-pointer"
                     >
                       <User className="w-4 h-4 text-gold-400" />
                       <span className="font-medium">{language === 'tr' ? 'Profilim & Seyahat Pasaportu' : 'My Profile & Passport'}</span>
@@ -135,7 +146,7 @@ const TopHeader: React.FC = () => {
                     <Link
                       to="/wallet"
                       onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors group"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors group cursor-pointer"
                     >
                       <Wallet className="w-4 h-4 text-emerald-400" />
                       <span className="font-medium">{language === 'tr' ? 'Cüzdanım & Fırsatlarım' : 'My Wallet & Deals'}</span>
@@ -144,7 +155,7 @@ const TopHeader: React.FC = () => {
                     <Link
                       to="/subscriptions"
                       onClick={() => setIsDropdownOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors group"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors group cursor-pointer"
                     >
                       <Sparkles className="w-4 h-4 text-amber-400" />
                       <span className="font-medium">{language === 'tr' ? 'Abonelik Planları' : 'Subscription Plans'}</span>
@@ -154,7 +165,7 @@ const TopHeader: React.FC = () => {
                       <Link
                         to="/admin"
                         onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gold-400 hover:text-gold-300 hover:bg-gold-500/10 transition-colors group border-t border-white/5 mt-1 pt-2"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gold-400 hover:text-gold-300 hover:bg-gold-500/10 transition-colors group border-t border-white/5 mt-1 pt-2 cursor-pointer"
                       >
                         <Shield className="w-4 h-4 text-gold-400" />
                         <span className="font-bold">{language === 'tr' ? 'Yönetim Paneli' : 'Admin Portal'}</span>
@@ -165,8 +176,9 @@ const TopHeader: React.FC = () => {
                   {/* Sign Out Button */}
                   <div className="p-2 border-t border-white/10 bg-white/[0.01]">
                     <button
+                      type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer select-none active:scale-[0.98]"
                     >
                       <LogOut className="w-4 h-4 text-rose-400" />
                       <span>{t('signOut') || (language === 'tr' ? 'Çıkış Yap' : 'Sign Out')}</span>
