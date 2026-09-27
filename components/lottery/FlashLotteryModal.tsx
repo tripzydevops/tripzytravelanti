@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Sparkles,
@@ -67,7 +68,28 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
     }
   });
 
+  // Lock body scroll and listen for Escape key while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen || !campaign) return null;
+  if (typeof document === 'undefined') return null;
 
   const referralCode = user?.id ? `TRPZ-${user.id.slice(0, 6).toUpperCase()}` : 'TRPZ-VIP';
   const shareUrl = `${window.location.origin}/#/deal/${campaign.dealId || 'featured'}?ref=${referralCode}&lottery=${campaign.id}`;
@@ -203,8 +225,13 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
     }, 1000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto pt-safe pb-safe">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto pt-safe pb-safe"
+    >
       <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Header with image banner */}
         <div className="relative h-40 sm:h-52 w-full overflow-hidden">
@@ -553,6 +580,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

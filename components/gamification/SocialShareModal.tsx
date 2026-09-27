@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -40,7 +41,28 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
+  // Lock body scroll and listen for Escape key while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
   const code = referralCode || user?.referralCode || 'TRIPZY';
   const shareUrl = `${window.location.origin}/?ref=${code}`;
@@ -72,8 +94,13 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[130] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in"
+    >
       <div className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-brand-primary/30 p-6 space-y-5 shadow-2xl relative">
         {/* Close Button */}
         <button
@@ -158,7 +185,8 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
