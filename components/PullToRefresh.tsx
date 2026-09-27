@@ -130,10 +130,14 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
 
             {/* Content with pull effect */}
             <div
-                style={{
-                    transform: `translateY(${pullDistance}px)`,
-                    transition: isPulling ? 'none' : 'transform 0.3s ease-out'
-                }}
+                style={
+                    pullDistance > 0
+                        ? {
+                            transform: `translateY(${pullDistance}px)`,
+                            transition: isPulling ? 'none' : 'transform 0.3s ease-out'
+                        }
+                        : undefined
+                }
             >
                 {children}
             </div>

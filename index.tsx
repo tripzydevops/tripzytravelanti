@@ -22,13 +22,34 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
-// Register Service Worker
+// Register Service Worker with automatic update detection
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then((registration) => {
-      console.log('SW registered:', registration);
+      // Force check for updates on every page load
+      registration.update();
+
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Automatically reload to get fresh assets
+              window.location.reload();
+            }
+          };
+        }
+      };
     }).catch((error) => {
       console.log('SW registration failed:', error);
     });
+  });
+
+  let isRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      window.location.reload();
+    }
   });
 }
