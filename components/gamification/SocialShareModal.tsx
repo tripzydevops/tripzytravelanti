@@ -99,9 +99,10 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in"
+      className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain bg-black/85 backdrop-blur-md p-2 sm:p-4 pt-safe pb-safe"
     >
-      <div className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-brand-primary/30 p-6 space-y-5 shadow-2xl relative">
+      <div className="min-h-full flex items-center justify-center py-2 sm:py-6">
+        <div className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-brand-primary/30 p-5 sm:p-6 space-y-5 shadow-2xl relative select-none animate-fade-in">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -184,6 +185,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({
             <span>{copied ? (language === 'tr' ? 'Bağlantı Kopyalandı!' : 'Link Copied!') : (language === 'tr' ? 'Davet Bağlantısını Kopyala' : 'Copy Referral Link')}</span>
           </button>
         </div>
+      </div>
       </div>
     </div>,
     document.body

@@ -230,25 +230,27 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto pt-safe pb-safe"
+      className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain bg-slate-950/85 backdrop-blur-md p-2 sm:p-4 pt-safe pb-safe"
     >
-      <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        {/* Header with image banner */}
-        <div className="relative h-40 sm:h-52 w-full overflow-hidden">
-          <img
-            src={campaign.imageUrl}
-            alt={campaign.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+      <div className="min-h-full flex items-center justify-center py-2 sm:py-6">
+        <div className="relative w-full max-w-2xl rounded-2xl sm:rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          {/* Header with image banner */}
+          <div className="relative h-36 sm:h-52 w-full overflow-hidden">
+            <img
+              src={campaign.imageUrl}
+              alt={campaign.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
 
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full bg-slate-950/70 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              aria-label="Close modal"
+              className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950/70 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90 z-20"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
           {/* Badge & Title */}
           <div className="absolute bottom-3 left-4 right-4 sm:bottom-4 sm:left-6 sm:right-6">
@@ -318,9 +320,9 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
           {/* TAB 1: STORY CANVAS SHARING */}
           {activeTab === 'share' && (
             <div className="space-y-4">
-              <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-4 flex flex-col sm:flex-row items-center gap-4">
+              <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-4">
                 {/* Simulated 9:16 Story Canvas Preview Card */}
-                <div className="w-36 h-56 rounded-2xl bg-gradient-to-b from-indigo-900 via-rose-950 to-slate-950 p-2 border-2 border-rose-500/50 shadow-xl flex flex-col justify-between flex-shrink-0 relative overflow-hidden">
+                <div className="w-32 h-52 sm:w-36 sm:h-56 rounded-2xl bg-gradient-to-b from-indigo-900 via-rose-950 to-slate-950 p-2 border-2 border-rose-500/50 shadow-xl flex flex-col justify-between flex-shrink-0 relative overflow-hidden">
                   <div className="space-y-1">
                     <span className="text-[8px] bg-rose-500 text-white font-black px-1.5 py-0.5 rounded-full uppercase">
                       TRIPZY FLASH
@@ -345,7 +347,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                 </div>
 
                 {/* Instructions & CTA */}
-                <div className="flex-1 space-y-3 text-center sm:text-left">
+                <div className="flex-1 space-y-3 text-center sm:text-left w-full">
                   <h4 className="text-sm font-bold text-white">
                     {isTr ? '1. Hikayende Paylaş, Anında Bilet Kazan' : '1. Share on Story, Mint Instant Ticket'}
                   </h4>
@@ -355,11 +357,11 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                       : 'Share this Story Canvas to your Instagram Story tagging @tripzydeal. Your lottery ticket will be automatically minted.'}
                   </p>
 
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2 w-full">
                     <button
                       onClick={handleShareToInstagramStory}
                       disabled={isMinting}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs shadow-lg cursor-pointer transition-all"
+                      className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs shadow-lg cursor-pointer transition-all active:scale-[0.98]"
                     >
                       <Share2 className="w-4 h-4" />
                       <span>{isMinting ? (isTr ? 'Bilet Üretiliyor...' : 'Minting Ticket...') : (isTr ? 'Hikayede Paylaş & Bilet Kazan' : 'Share & Mint Ticket')}</span>
@@ -367,7 +369,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
 
                     <button
                       onClick={handleCopyLink}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-colors cursor-pointer"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-colors cursor-pointer active:scale-[0.98]"
                     >
                       <Copy className="w-4 h-4" />
                       <span>{copied ? (isTr ? 'Kopyalandı!' : 'Copied!') : (isTr ? 'Linki Kopyala' : 'Copy Link')}</span>
@@ -577,6 +579,7 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                 ))}
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>
