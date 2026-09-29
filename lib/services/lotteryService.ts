@@ -373,7 +373,7 @@ export const lotteryService = {
     campaignId: string,
     userId: string,
     count: number = 1,
-    adminNotes: string = 'Admin Issued'
+    adminNotes: string = 'Various Social Media Tasks'
   ): Promise<{ success: boolean; tickets: LotteryTicket[]; count: number; error?: string }> {
     if (count < 1) {
       return { success: false, tickets: [], count: 0, error: 'Bilet sayısı en az 1 olmalıdır.' };

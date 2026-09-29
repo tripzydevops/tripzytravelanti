@@ -44,7 +44,7 @@ export const AdminGrantTicketModal: React.FC<AdminGrantTicketModalProps> = ({
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [ticketCount, setTicketCount] = useState<number>(1);
-  const [adminNote, setAdminNote] = useState<string>('Admin Özel Tanımlama / Admin Grant');
+  const [adminNote, setAdminNote] = useState<string>('Çeşitli Sosyal Medya Görevleri / Various Social Media Tasks');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mintedResult, setMintedResult] = useState<LotteryTicket[] | null>(null);
 
@@ -217,7 +217,7 @@ export const AdminGrantTicketModal: React.FC<AdminGrantTicketModalProps> = ({
                   >
                     <span className="font-bold text-rose-400">{t.ticketNumber}</span>
                     <span className="text-[10px] text-emerald-400 font-sans font-semibold">
-                      {isTr ? 'Doğrulandı (Admin)' : 'Verified (Admin)'}
+                      {isTr ? 'Doğrulandı (Sosyal Medya Görevi)' : 'Verified (Social Media Task)'}
                     </span>
                   </div>
                 ))}
@@ -383,14 +383,14 @@ export const AdminGrantTicketModal: React.FC<AdminGrantTicketModalProps> = ({
               {/* 4. OPTIONAL NOTE */}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-300">
-                  {isTr ? '4. Özel Yönetici Notu (İsteğe Bağlı)' : '4. Admin Note (Optional)'}
+                  {isTr ? '4. Görev / Doğrulama Notu (İsteğe Bağlı)' : '4. Task / Verification Note (Optional)'}
                 </label>
                 <input
                   type="text"
                   value={adminNote}
                   onChange={e => setAdminNote(e.target.value)}
-                  placeholder={isTr ? 'Örn: VIP Sadakat Bonusu, Özel Kampanya Hediyesi' : 'e.g. VIP Bonus, Loyalty Gift'}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-rose-500 outline-none"
+                  placeholder={isTr ? 'Örn: Çeşitli Sosyal Medya Görevleri, Etkileşim Ödülü' : 'e.g. Various Social Media Tasks, Engagement Reward'}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-rose-500 outline-none"
                 />
               </div>
 

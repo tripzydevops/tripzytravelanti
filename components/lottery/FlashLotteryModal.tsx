@@ -568,7 +568,19 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
                         {ticket.ticketNumber}
                       </span>
                       <p className="text-[10px] text-slate-400">
-                        {isTr ? 'Doğrulandı' : 'Verified'} • {ticket.verificationMethod}
+                        {isTr ? 'Doğrulandı' : 'Verified'} • {
+                          ticket.verificationMethod === 'admin_grant'
+                            ? (isTr ? 'Çeşitli Sosyal Medya Görevleri' : 'Various Social Media Tasks')
+                            : ticket.verificationMethod === 'story_canvas'
+                            ? (isTr ? 'Hikaye Paylaşımı' : 'Story Share')
+                            : ticket.verificationMethod === 'ocr_screenshot'
+                            ? (isTr ? 'Ekran Görüntüsü Doğrulandı' : 'Screenshot Verified')
+                            : ticket.verificationMethod === 'webhook_tag'
+                            ? (isTr ? 'Sosyal Medya Etiketi' : 'Social Mention')
+                            : ticket.verificationMethod === 'points_exchange'
+                            ? (isTr ? 'Puan Takası' : 'Points Exchange')
+                            : (isTr ? 'Sosyal Medya Görevleri' : 'Various Social Media Tasks')
+                        }
                       </p>
                     </div>
 

@@ -679,7 +679,8 @@ export const AdminLotteryTab: React.FC = () => {
                   { key: 'all', label: isTr ? 'Tümü' : 'All' },
                   { key: 'story_canvas', label: 'Instagram Story' },
                   { key: 'ocr_screenshot', label: 'OCR Ekran' },
-                  { key: 'webhook_tag', label: 'Meta Webhook' }
+                  { key: 'webhook_tag', label: 'Meta Webhook' },
+                  { key: 'admin_grant', label: isTr ? 'Sosyal Medya Görevleri' : 'Social Media Tasks' }
                 ].map(f => (
                   <button
                     key={f.key}
@@ -779,12 +780,16 @@ export const AdminLotteryTab: React.FC = () => {
                               ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                               : t.verificationMethod === 'ocr_screenshot'
                               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              : t.verificationMethod === 'admin_grant'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                               : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                           }`}>
                             {t.verificationMethod === 'story_canvas'
                               ? 'Story Canvas'
                               : t.verificationMethod === 'ocr_screenshot'
                               ? 'OCR Doğrulama'
+                              : t.verificationMethod === 'admin_grant'
+                              ? (isTr ? 'Sosyal Medya Görevleri' : 'Social Media Tasks')
                               : 'Meta Webhook'}
                           </span>
 
