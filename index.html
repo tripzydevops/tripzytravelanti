@@ -57,6 +57,25 @@
       document.documentElement.classList.add('dark');
       localStorage.setItem('color-theme', 'dark');
     } catch (_) {}
+
+    // Auto-purge stale PWA Service Worker caches on new release
+    const CURRENT_RELEASE_TAG = 'tripzy-release-v2026.09.29-admin-fix';
+    try {
+      const activeRelease = localStorage.getItem('tripzy_release_tag');
+      if (activeRelease !== CURRENT_RELEASE_TAG) {
+        localStorage.setItem('tripzy_release_tag', CURRENT_RELEASE_TAG);
+        if ('caches' in window) {
+          caches.keys().then((keys) => {
+            keys.forEach((key) => caches.delete(key));
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((r) => r.unregister());
+          });
+        }
+      }
+    } catch (_) {}
   </script>
 
   <link rel="stylesheet" href="/index.css">
