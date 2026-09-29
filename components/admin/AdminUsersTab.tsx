@@ -11,6 +11,7 @@ import {
   getNextRenewalDate,
 } from "../../lib/redemptionLogic";
 import * as supabaseService from "../../lib/supabaseService";
+import { AdminGrantTicketModal } from "./AdminGrantTicketModal";
 
 const EMPTY_USER: User = {
   id: "",
@@ -56,6 +57,8 @@ const AdminUsersTab: React.FC = () => {
   const [viewingPaymentsForUser, setViewingPaymentsForUser] =
     useState<User | null>(null);
   const [viewingActivityForUser, setViewingActivityForUser] =
+    useState<User | null>(null);
+  const [grantingTicketUser, setGrantingTicketUser] =
     useState<User | null>(null);
   const [userActivityLog, setUserActivityLog] = useState<supabaseService.ActivityLogItem[]>([]);
   const [userPayments, setUserPayments] = useState<PaymentTransaction[]>([]);
@@ -482,7 +485,7 @@ const AdminUsersTab: React.FC = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t("usersManagement")}
+            {t("manageUsers")}
           </h2>
         </div>
 
@@ -1215,6 +1218,15 @@ const AdminUsersTab: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() =>
+                                    setGrantingTicketUser(user)
+                                  }
+                                  className="w-full text-left px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                >
+                                  <span className="w-5 text-center">🎟️</span>{" "}
+                                  {language === "tr" ? "Çekiliş Bileti Tanımla" : "Grant Lottery Tickets"}
+                                </button>
+                                <button
+                                  onClick={() =>
                                     setViewingRedemptionsForUser(user)
                                   }
                                   className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
@@ -1535,6 +1547,14 @@ const AdminUsersTab: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* ADMIN GRANT LOTTERY TICKET MODAL */}
+      <AdminGrantTicketModal
+        isOpen={!!grantingTicketUser}
+        preselectedUser={grantingTicketUser}
+        onClose={() => setGrantingTicketUser(null)}
+        onSuccess={() => fetchUsersData()}
+      />
     </>
   );
 };

@@ -208,7 +208,7 @@ export async function getAllUsers(): Promise<User[]> {
 export async function getUsersPaginated(page: number, limit: number, filters?: any): Promise<{ users: User[], total: number }> {
     let query = supabase
         .from('profiles')
-        .select('*, deal_redemptions(*)', { count: 'exact' });
+        .select('*, deal_redemptions!deal_redemptions_user_id_fkey(*)', { count: 'exact' });
 
     if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
@@ -230,14 +230,35 @@ export async function getUsersPaginated(page: number, limit: number, filters?: a
 
     query = query.range(from, to).order(sortBy, { ascending: sortOrder === 'asc' });
 
-    const { data, count, error } = await query;
+    let { data, count, error } = await query;
 
     if (error) {
-        console.error('Error fetching paginated users:', error);
-        return { users: [], total: 0 };
+        console.warn('Error fetching paginated users with join, falling back to base profiles query:', error);
+        let fallbackQuery = supabase
+            .from('profiles')
+            .select('*', { count: 'exact' });
+
+        if (filters?.search) {
+            fallbackQuery = fallbackQuery.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+        }
+        if (filters?.tier && filters.tier !== 'All') {
+            fallbackQuery = fallbackQuery.eq('tier', filters.tier);
+        }
+        if (filters?.status && filters.status !== 'All') {
+            fallbackQuery = fallbackQuery.eq('status', filters.status);
+        }
+        fallbackQuery = fallbackQuery.range(from, to).order(sortBy, { ascending: sortOrder === 'asc' });
+
+        const fallbackRes = await fallbackQuery;
+        if (fallbackRes.error) {
+            console.error('Fatal error fetching paginated users:', fallbackRes.error);
+            return { users: [], total: 0 };
+        }
+        data = fallbackRes.data;
+        count = fallbackRes.count;
     }
 
-    const users = data.map((d: any) => ({
+    const users = (data || []).map((d: any) => ({
         id: d.id,
         email: d.email,
         name: d.name,

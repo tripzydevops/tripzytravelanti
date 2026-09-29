@@ -367,6 +367,101 @@ export const lotteryService = {
   },
 
   /**
+   * Admin: Grant any number of lottery tickets for any user to any campaign
+   */
+  async grantAdminTickets(
+    campaignId: string,
+    userId: string,
+    count: number = 1,
+    adminNotes: string = 'Admin Issued'
+  ): Promise<{ success: boolean; tickets: LotteryTicket[]; count: number; error?: string }> {
+    if (count < 1) {
+      return { success: false, tickets: [], count: 0, error: 'Bilet sayısı en az 1 olmalıdır.' };
+    }
+
+    const mintedTickets: LotteryTicket[] = [];
+
+    // 1. Try RPC grant_admin_lottery_tickets in Supabase
+    try {
+      const { data, error } = await supabase.rpc('grant_admin_lottery_tickets', {
+        p_campaign_id: campaignId,
+        p_user_id: userId,
+        p_count: count,
+        p_note: adminNotes
+      });
+
+      if (!error && data?.tickets) {
+        const serverTickets: LotteryTicket[] = (data.tickets as any[]).map((t: any) => ({
+          id: `ticket-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          campaignId,
+          userId,
+          ticketNumber: t.ticket_number,
+          verificationMethod: 'admin_grant' as LotteryVerificationMethod,
+          verifiedAt: new Date().toISOString(),
+          isWinner: false,
+          proofUrl: adminNotes,
+          createdAt: new Date().toISOString()
+        }));
+        mintedTickets.push(...serverTickets);
+      } else if (error) {
+        console.warn('RPC grant_admin_lottery_tickets failed, attempting direct insert:', error);
+      }
+    } catch (err) {
+      console.warn('Failed calling grant_admin_lottery_tickets RPC:', err);
+    }
+
+    // Fallback if RPC didn't populate mintedTickets
+    if (mintedTickets.length === 0) {
+      const dbInserts = [];
+      for (let i = 0; i < count; i++) {
+        const ticketNumber = generateTicketNumber();
+        const t: LotteryTicket = {
+          id: `ticket-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 7)}`,
+          campaignId,
+          userId,
+          ticketNumber,
+          verificationMethod: 'admin_grant',
+          verifiedAt: new Date().toISOString(),
+          isWinner: false,
+          proofUrl: adminNotes,
+          createdAt: new Date().toISOString()
+        };
+        mintedTickets.push(t);
+        dbInserts.push({
+          campaign_id: campaignId,
+          user_id: userId,
+          ticket_number: ticketNumber,
+          verification_method: 'admin_grant',
+          verified_at: t.verifiedAt,
+          is_winner: false,
+          proof_url: adminNotes
+        });
+      }
+
+      try {
+        await supabase.from('lottery_tickets').insert(dbInserts);
+        await supabase.rpc('increment_lottery_tickets', { p_campaign_id: campaignId, p_count: count });
+      } catch (err) {
+        console.warn('Direct ticket insert warning:', err);
+      }
+    }
+
+    // 2. Local Storage Sync (instant UI feedback)
+    const storedTickets = getStoredTickets();
+    storedTickets.unshift(...mintedTickets);
+    saveStoredTickets(storedTickets);
+
+    const storedCampaigns = getStoredCampaigns();
+    const campIdx = storedCampaigns.findIndex(c => c.id === campaignId);
+    if (campIdx !== -1) {
+      storedCampaigns[campIdx].totalTicketsMinted = (storedCampaigns[campIdx].totalTicketsMinted || 0) + count;
+      saveStoredCampaigns(storedCampaigns);
+    }
+
+    return { success: true, tickets: mintedTickets, count: mintedTickets.length };
+  },
+
+  /**
    * AI OCR Story Verification (Simulated client & API verification)
    */
   async verifyStoryOCR(

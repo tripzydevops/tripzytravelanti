@@ -35,6 +35,7 @@ import confetti from 'canvas-confetti';
 import { LotteryCampaign, LotteryDraw, LotteryDrawResult, LotteryTicket } from '../../types';
 import { lotteryService } from '../../lib/services/lotteryService';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { AdminGrantTicketModal } from './AdminGrantTicketModal';
 
 export const AdminLotteryTab: React.FC = () => {
   const { language } = useLanguage();
@@ -43,6 +44,7 @@ export const AdminLotteryTab: React.FC = () => {
   const [campaigns, setCampaigns] = useState<LotteryCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawResult, setDrawResult] = useState<LotteryDrawResult | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -258,13 +260,23 @@ export const AdminLotteryTab: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{isAdding ? (isTr ? 'Formu Kapat' : 'Close Form') : (isTr ? 'Yeni Flaş Çekiliş Başlat' : 'New Flash Lottery')}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setIsGrantModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
+          >
+            <Ticket className="w-4 h-4" />
+            <span>{isTr ? 'Kullanıcıya Bilet Tanımla' : 'Grant Tickets to User'}</span>
+          </button>
+
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{isAdding ? (isTr ? 'Formu Kapat' : 'Close Form') : (isTr ? 'Yeni Flaş Çekiliş Başlat' : 'New Flash Lottery')}</span>
+          </button>
+        </div>
       </div>
 
       {/* META GRAPH WEBHOOK & INSTAGRAM AUTOMATION SETUP CARD */}
@@ -1222,6 +1234,13 @@ export const AdminLotteryTab: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* ADMIN GRANT TICKET MODAL */}
+      <AdminGrantTicketModal
+        isOpen={isGrantModalOpen}
+        onClose={() => setIsGrantModalOpen(false)}
+        onSuccess={fetchCampaigns}
+      />
     </div>
   );
 };

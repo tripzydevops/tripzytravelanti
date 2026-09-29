@@ -466,7 +466,8 @@ export type LotteryVerificationMethod =
   | 'referral_click' 
   | 'ocr_screenshot' 
   | 'points_exchange'
-  | 'rewarded_ad';
+  | 'rewarded_ad'
+  | 'admin_grant';
 
 export interface LotteryTicket {
   id: string;
