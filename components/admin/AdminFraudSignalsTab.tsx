@@ -11,7 +11,11 @@ import {
     User, 
     Clock, 
     Check, 
-    ShieldCheck
+    ShieldCheck,
+    SlidersHorizontal,
+    Bell,
+    DollarSign,
+    Save
 } from 'lucide-react';
 
 interface FraudSignal {
@@ -47,8 +51,34 @@ const AdminFraudSignalsTab: React.FC = () => {
     const { t } = useLanguage();
     const { user } = useAuth();
     const [signals, setSignals] = useState<FraudSignal[]>([]);
-    const [loading, setLoading] = useState(true);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+    // Live Geofence & Recommendation Engine Governance State
+    const [matchThreshold, setMatchThreshold] = useState<number>(() => {
+        const saved = localStorage.getItem('tripzy_geofence_threshold');
+        return saved ? parseFloat(saved) : 0.85;
+    });
+    const [geofenceRadius, setGeofenceRadius] = useState<number>(() => {
+        const saved = localStorage.getItem('tripzy_geofence_radius');
+        return saved ? parseInt(saved, 10) : 500;
+    });
+    const [cooldownHours, setCooldownHours] = useState<number>(() => {
+        const saved = localStorage.getItem('tripzy_cooldown_hours');
+        return saved ? parseInt(saved, 10) : 24;
+    });
+    const [adminCurrency, setAdminCurrency] = useState<'TRY' | 'USD'>(() => {
+        return (localStorage.getItem('tripzy_admin_currency') as 'TRY' | 'USD') || 'TRY';
+    });
+    const [saveSuccess, setSaveSuccess] = useState(false);
+
+    const handleSaveSettings = () => {
+        localStorage.setItem('tripzy_geofence_threshold', matchThreshold.toString());
+        localStorage.setItem('tripzy_geofence_radius', geofenceRadius.toString());
+        localStorage.setItem('tripzy_cooldown_hours', cooldownHours.toString());
+        localStorage.setItem('tripzy_admin_currency', adminCurrency);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2500);
+    };
 
     useEffect(() => {
         fetchSignals();
@@ -168,6 +198,108 @@ const AdminFraudSignalsTab: React.FC = () => {
                 >
                     Refresh Alerts
                 </button>
+            </div>
+
+            {/* Live Recommendation Engine & Geofence Governance */}
+            <div className="p-5 bg-gradient-to-br from-gray-900 to-slate-900 border border-white/10 rounded-2xl shadow-xl text-white">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                        <SlidersHorizontal className="w-5 h-5 text-amber-400" />
+                        <div>
+                            <h3 className="font-bold text-sm text-white">Recommendation & Geofence Governance Controls</h3>
+                            <p className="text-xs text-gray-400">Live configuration for push notification match thresholds, radius, and currency</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {/* Currency Toggle */}
+                        <div className="flex items-center bg-black/40 border border-white/10 rounded-lg p-1 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setAdminCurrency('TRY')}
+                                className={`px-2.5 py-1 rounded-md font-bold transition-all ${adminCurrency === 'TRY' ? 'bg-amber-500 text-black shadow' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                ₺ TRY
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAdminCurrency('USD')}
+                                className={`px-2.5 py-1 rounded-md font-bold transition-all ${adminCurrency === 'USD' ? 'bg-amber-500 text-black shadow' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                $ USD
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleSaveSettings}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition-all shadow-md"
+                        >
+                            <Save className="w-3.5 h-3.5" />
+                            {saveSuccess ? 'Saved!' : 'Apply Settings'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-1">
+                    {/* 1. Match Score Threshold */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-gray-300">Push Match Threshold ($P \ge 0.85$)</span>
+                            <span className="font-mono font-bold text-amber-400 text-sm">{matchThreshold.toFixed(2)}</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0.50"
+                            max="0.99"
+                            step="0.01"
+                            value={matchThreshold}
+                            onChange={(e) => setMatchThreshold(parseFloat(e.target.value))}
+                            className="w-full accent-amber-500 cursor-pointer h-1.5 bg-gray-700 rounded-lg"
+                        />
+                        <p className="text-[11px] text-gray-400">
+                            Formula: <span className="font-mono text-gray-300">P = 0.4·Ccat + 0.3·boost + 0.3·rating</span>
+                        </p>
+                    </div>
+
+                    {/* 2. Geofence Radius */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-gray-300">Geofence Trigger Radius</span>
+                            <span className="font-mono font-bold text-cyan-400 text-sm">{geofenceRadius} m</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="100"
+                            max="3000"
+                            step="50"
+                            value={geofenceRadius}
+                            onChange={(e) => setGeofenceRadius(parseInt(e.target.value, 10))}
+                            className="w-full accent-cyan-500 cursor-pointer h-1.5 bg-gray-700 rounded-lg"
+                        />
+                        <p className="text-[11px] text-gray-400">
+                            Client-side Haversine breach distance detection zone.
+                        </p>
+                    </div>
+
+                    {/* 3. Push Notification Cooldown */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-gray-300">Push Cooldown Policy</span>
+                            <span className="font-mono font-bold text-rose-400 text-sm">{cooldownHours} Hours</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="6"
+                            max="72"
+                            step="6"
+                            value={cooldownHours}
+                            onChange={(e) => setCooldownHours(parseInt(e.target.value, 10))}
+                            className="w-full accent-rose-500 cursor-pointer h-1.5 bg-gray-700 rounded-lg"
+                        />
+                        <p className="text-[11px] text-gray-400">
+                            Prevents duplicate notifications for the same zone.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Metrics Bar */}

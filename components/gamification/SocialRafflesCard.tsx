@@ -26,6 +26,7 @@ export const SocialRafflesCard: React.FC = () => {
   const [activeRaffleIndex, setActiveRaffleIndex] = useState(0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [loadingQuestId, setLoadingQuestId] = useState<string | null>(null);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   if (!raffles || raffles.length === 0) return null;
 
@@ -40,22 +41,45 @@ export const SocialRafflesCard: React.FC = () => {
         window.open(actionUrl, '_blank');
         setTimeout(async () => {
           await completeRaffleQuest(currentRaffle.id, questId);
+          setFeedbackMsg({
+            text: language === 'tr' ? 'Görev tamamlandı, bilet eklendi! 🎉' : 'Quest completed, ticket added! 🎉',
+            type: 'success'
+          });
+          setTimeout(() => setFeedbackMsg(null), 3000);
         }, 1200);
       } else if (actionType === 'instagram_story' || actionType === 'referral') {
         setIsShareModalOpen(true);
         setTimeout(async () => {
           await completeRaffleQuest(currentRaffle.id, questId);
+          setFeedbackMsg({
+            text: language === 'tr' ? 'Bilet hesabınıza tanımlandı! 🎉' : 'Ticket added to your wallet! 🎉',
+            type: 'success'
+          });
+          setTimeout(() => setFeedbackMsg(null), 3000);
         }, 2000);
       } else if (actionType === 'points_exchange' && pointsCost) {
         if (!user) {
-          alert(language === 'tr' ? 'Lütfen önce giriş yapın.' : 'Please log in first.');
+          setFeedbackMsg({
+            text: language === 'tr' ? 'Lütfen önce giriş yapın.' : 'Please log in first.',
+            type: 'error'
+          });
+          setTimeout(() => setFeedbackMsg(null), 3000);
           return;
         }
         if ((user.points || 0) < pointsCost) {
-          alert(language === 'tr' ? 'Yetersiz Tripzy puanı.' : 'Insufficient Tripzy points.');
+          setFeedbackMsg({
+            text: language === 'tr' ? 'Yetersiz Tripzy puanı. Fırsat kullanarak puan kazanabilirsiniz!' : 'Insufficient Tripzy points. Redeem deals to earn more!',
+            type: 'error'
+          });
+          setTimeout(() => setFeedbackMsg(null), 3500);
           return;
         }
         await buyRaffleTicketWithPoints(currentRaffle.id, questId, pointsCost);
+        setFeedbackMsg({
+          text: language === 'tr' ? 'Puan dönüştürüldü ve bilet eklendi! 🎉' : 'Points exchanged for raffle ticket! 🎉',
+          type: 'success'
+        });
+        setTimeout(() => setFeedbackMsg(null), 3000);
       } else {
         await completeRaffleQuest(currentRaffle.id, questId);
       }
@@ -88,6 +112,19 @@ export const SocialRafflesCard: React.FC = () => {
           <span>{currentRaffle.userTickets} {language === 'tr' ? 'Biletin Var' : 'Tickets'}</span>
         </div>
       </div>
+
+      {/* Floating feedback message toast */}
+      {feedbackMsg && (
+        <div
+          className={`p-3 rounded-xl text-xs font-bold text-center border animate-fade-in ${
+            feedbackMsg.type === 'success'
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+              : 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-lg shadow-rose-500/10'
+          }`}
+        >
+          {feedbackMsg.text}
+        </div>
+      )}
 
       {/* Featured Raffle Card */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border-2 border-brand-primary/30 shadow-2xl p-5 sm:p-6 space-y-5">

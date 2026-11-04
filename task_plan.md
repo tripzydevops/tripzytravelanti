@@ -1,51 +1,45 @@
-# Task Plan: Step-by-Step Verification, Testing, and Staging
+# Task Plan: Tripzy Production & Architecture Improvements
 
 ## Goal
-Execute the 3-step verification workflow: (1) Database & Supabase verification, (2) Test suite execution & verification (Vitest & Playwright), and (3) Git staging, committing, and pushing.
-
-# Task Plan: Step-by-Step Verification, Testing, and Staging
-
-## Goal
-Execute the 3-step verification workflow: (1) Database & Supabase verification, (2) Test suite execution & verification (Vitest & Playwright), and (3) Git staging, committing, and pushing.
+Implement the 5 architectural & product improvements for Tripzy.travel (Turkey launch, 100k scale efficiency, cold-start optimization, offline resilience, and full admin control), thoroughly test them, and document the changes.
 
 ## Current Phase
-Phase 4: Complete & Verified
+Phase 6: Complete & Verified
 
 ## Phases
 
-### Phase 1: Database & Supabase Verification
-- [x] Check Supabase tables and migrations via Supabase MCP tool / local checks (45 tables verified on `cwmerdoqeokuufotsvmd`)
-- [x] Verify migration consistency across relational and vector tables
+### Phase 1: Client-Side User Signal Collection Module (Layer 1)
+- [x] Create `lib/signalCollector.ts` (buffers card impressions, dwell times, category clicks, deal bookmarks; flushes to backend `/api/v1/signals/batch` or Supabase batch insert with 15s debounce and unload handler)
+- [x] Wire `signalCollector` into `components/DealCard.tsx`, `contexts/UserActivityContext.tsx`, and `pages/HomePage.tsx`
+- [x] Add unit test suite `src/test/signalCollector.test.ts` (5/5 passed)
 - **Status:** completed
 
-### Phase 2: Test Suite Execution & Verification
-- [x] Run Vitest unit tests on updated mocks (`lib/` and `src/test/` - 20/20 passed)
-- [x] Run Playwright E2E tests (14/14 passed across Desktop and Mobile)
-- [x] Verify all test suites and production build (`npm run build`) pass cleanly
+### Phase 2: Turkey-First 5-Second Vibe Picker (Cold-Start Solution)
+- [x] Create `components/home/VibePicker.tsx` (Turkish vibes: ☕ Gurme & Kahve, 🏖️ Ege & Akdeniz, 🎈 Kapadokya & Macera, 🏛️ Tarih & Kültür, 💆 Spa & Termal, 🛍️ Çarşı & Alışveriş)
+- [x] Connect Vibe selection directly to `signalCollector` and dynamically re-rank local deals in `HomePage.tsx`
+- [x] Add localization keys in `localization.ts` (TR/EN)
 - **Status:** completed
 
-### Phase 3: Git Staging, Committing & Pushing
-- [x] Stage all modified files and untracked files (`git add .`)
-- [x] Create structured, descriptive git commit
-- [x] Push to `origin/main` on GitHub (`bdde215` pushed)
+### Phase 3: Feed Query & Image Bandwidth Optimization (100k Monthly Scale)
+- [x] Add image URL optimization helper in `utils/imageHelpers.ts` for Supabase Storage transform parameters (`width=450&quality=75&format=webp`)
+- [x] Optimize image delivery across feed cards and modals
 - **Status:** completed
 
-### Phase 4: Final Summary Walkthrough
-- [x] Create walkthrough report of all fixes, test results, and repository status
+### Phase 4: Offline Wallet QR Guarantee & Low-Connectivity Fallback
+- [x] Enhance `lib/offlineStorage.ts` to pre-cache wallet items with dynamic QR payloads and 6-digit redemption codes
+- [x] Add offline status banner and cached redemption code view in `pages/WalletPage.tsx`
+- [x] Verify offline caching and fallback
 - **Status:** completed
 
-## Decisions Made
-| Decision | Rationale |
-|----------|-----------|
-| Fix mocks in unit tests | Aligns mock returns with `.maybeSingle()` queries in `userService.ts` |
-| Fix SubscriptionTier options in modal | Enforces typed tier consistency (`FREE`, `BASIC`, `PREMIUM`, `VIP`) |
-| Add `@capacitor/haptics` typing fallback | Guarantees build compatibility on both native and web targets |
-| Move `useEffect` to top level in PartnerLayout | Adheres to React Rules of Hooks and prevents render-phase routing bugs |
+### Phase 5: Admin Live Controls (Geofence Slider, $P \ge 0.85$ Match Threshold, & Deal Kill-Switch)
+- [x] Enhance Admin UI in `components/admin/AdminFraudSignalsTab.tsx` with live geofence radius adjustment slider and recommendation match score threshold ($P \ge 0.85$)
+- [x] Verified deal status toggle (pause/unpublish/kill-switch) in `AdminDealsTab.tsx`
+- [x] Added TRY (₺) / USD toggle for revenue & admin analytics
+- **Status:** completed
 
-## Errors Encountered & Resolved
-| Error | Attempt | Resolution |
-|-------|---------|------------|
-| Node OOM on raw `tsc --noEmit` | 1 | Verified via `vite build` which completed with 2,992 modules transformed cleanly |
-| `maybeSingle` missing on Supabase test mocks | 1 | Added `maybeSingle` to mock chains in `redemptionLogic.test.ts` and `wallet.test.ts` |
-| Conditional hook order in `PartnerLayout.tsx` | 1 | Lifted `useEffect` to top level prior to conditional returns |
-
+### Phase 6: Testing, Build Verification & Documentation
+- [x] Run full Vitest unit test suite (`npm test` - 8/8 test files, 44/44 tests passed)
+- [x] Run Python backend test suite (`py -m pytest api/tests` - 20/20 tests passed)
+- [x] Verify production build (`npm run build` - succeeded in 1m 15s)
+- [x] Create detailed documentation artifact and update repository guides
+- **Status:** completed

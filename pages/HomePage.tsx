@@ -43,6 +43,7 @@ import { NotificationBell } from '../components/NotificationBell';
 import StoriesBar from '../components/gamification/StoriesBar';
 import LiveSocialTicker from '../components/gamification/LiveSocialTicker';
 import DailyStreakWidget from '../components/gamification/DailyStreakWidget';
+import { VibePicker } from '../components/home/VibePicker';
 import SocialRafflesCard from '../components/gamification/SocialRafflesCard';
 import { FlashLotteryBanner } from '../components/lottery/FlashLotteryBanner';
 import { FlashLotteryModal } from '../components/lottery/FlashLotteryModal';
@@ -86,6 +87,7 @@ const HomePage: React.FC = () => {
   const [timeOfDay, setTimeOfDay] = React.useState<'morning' | 'afternoon' | 'evening' | 'night'>(getTimeOfDay());
   const [activeMainTab, setActiveMainTab] = React.useState<'trending' | 'nearby' | 'foryou'>('trending');
   const [selectedLotteryCampaign, setSelectedLotteryCampaign] = React.useState<LotteryCampaign | null>(null);
+  const [activeGiveawayTab, setActiveGiveawayTab] = React.useState<'lottery' | 'raffles'>('lottery');
 
   // Pull-to-refresh handler
   const handleRefresh = React.useCallback(async () => {
@@ -512,6 +514,20 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
+        {/* Category Filters - Airbnb Style Category Bar (Immediate discovery right under search) */}
+        <div className="container mx-auto px-4 mt-6 mb-2 transition-all duration-300">
+          <CategoryBar
+            categories={categoryBarData}
+            selectedCategoryId={categoryFilter}
+            onSelectCategory={(id) => setCategoryFilter(id as any)}
+          />
+          {/* Turkey-First 5-Second Cold Start Vibe Picker */}
+          <VibePicker
+            selectedCategory={categoryFilter}
+            onVibeChange={(cat) => setCategoryFilter(cat as any)}
+          />
+        </div>
+
         {/* Live Social Proof Ticker */}
         <LiveSocialTicker />
 
@@ -519,25 +535,17 @@ const HomePage: React.FC = () => {
         <DailyStreakWidget />
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-6 relative z-10">
-
-          {/* Flash Lottery Urgency Banner */}
-          <FlashLotteryBanner
-            onOpenModal={(camp) => setSelectedLotteryCampaign(camp)}
-          />
-
-          {/* Social Media Raffles & Lucky Giveaways Hub */}
-          <SocialRafflesCard />
+        <div className="container mx-auto px-4 py-4 relative z-10">
 
           {/* Flash Deals Section - Horizontal Scroll Carousel */}
           {flashDeals.length > 0 && (
-            <div className="mb-16 animate-fade-in-up">
-              <div className="flex items-center justify-between mb-8">
+            <div className="mb-10 animate-fade-in-up">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl border border-red-500/30 backdrop-blur-md">
                     <FireIcon className="w-6 h-6 text-red-500 animate-pulse" />
                   </div>
-                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
+                  <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight drop-shadow-lg">
                     {t('flashDeals') || 'Flash Deals'}
                   </h2>
                 </div>
@@ -549,7 +557,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-6 overflow-x-auto pb-8 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
+              <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
                 {flashDeals.map(deal => (
                   <div key={deal.id} className="shrink-0 w-[88vw] md:w-full max-w-4xl snap-center">
                     <FlashDealCard deal={deal} />
@@ -559,13 +567,57 @@ const HomePage: React.FC = () => {
             </div>
           )}
 
-          {/* Category Filters - Airbnb Style Category Bar */}
-          <div className="mb-8 transition-all duration-300">
-            <CategoryBar
-              categories={categoryBarData}
-              selectedCategoryId={categoryFilter}
-              onSelectCategory={(id) => setCategoryFilter(id as any)}
-            />
+          {/* Lucky Draws & Giveaways Hub (Unified tabbed switcher to avoid visual clutter) */}
+          <div className="mb-10 bg-white/[0.03] border border-white/10 rounded-3xl p-4 sm:p-5 backdrop-blur-sm shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-rose-600 flex items-center justify-center text-white shadow-md shadow-rose-500/20 font-bold">
+                  🎁
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                    {language === 'tr' ? 'Şans & Sosyal Çekilişler' : 'Lucky Draws & Social Giveaways'}
+                  </h3>
+                  <p className="text-white/50 text-xs">
+                    {language === 'tr'
+                      ? 'Ücretsiz bilet kazan, çekilişlere katıl ve %100 hediye fırsatları yakala!'
+                      : 'Win free tickets, enter draws, and claim 100% free vacation perks!'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Segmented Switcher */}
+              <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
+                <button
+                  onClick={() => setActiveGiveawayTab('lottery')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeGiveawayTab === 'lottery'
+                      ? 'bg-gradient-to-r from-brand-primary to-amber-500 text-black shadow'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <span>⚡</span>
+                  <span>{language === 'tr' ? 'Flaş Piyango' : 'Flash Lottery'}</span>
+                </button>
+                <button
+                  onClick={() => setActiveGiveawayTab('raffles')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeGiveawayTab === 'raffles'
+                      ? 'bg-gradient-to-r from-brand-primary to-amber-500 text-black shadow'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <span>🎟️</span>
+                  <span>{language === 'tr' ? 'Büyük Çekiliş' : 'Grand Raffles'}</span>
+                </button>
+              </div>
+            </div>
+
+            {activeGiveawayTab === 'lottery' ? (
+              <FlashLotteryBanner onOpenModal={(camp) => setSelectedLotteryCampaign(camp)} />
+            ) : (
+              <SocialRafflesCard />
+            )}
           </div>
 
           {/* Main Deal Tabs */}

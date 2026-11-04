@@ -1,13 +1,52 @@
-// @ts-nocheck
 // supabase/functions/instagram-webhook/index.ts
 // Handles Meta Instagram Story Mentions & Tag Webhook for Tripzy Flash Lottery
+// Includes Meta X-Hub-Signature-256 HMAC verification & strict handshake checking
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hub-signature-256',
+}
+
+/**
+ * Validates Meta's SHA-256 HMAC signature against the raw request body.
+ * Header format: sha256=<hex-digest>
+ */
+async function verifyMetaHmacSignature(rawBody: string, signatureHeader: string | null, appSecret: string): Promise<boolean> {
+    if (!signatureHeader || !signatureHeader.startsWith('sha256=')) {
+        return false;
+    }
+    const signatureHex = signatureHeader.substring(7);
+    if (!signatureHex || signatureHex.length !== 64) {
+        return false;
+    }
+
+    try {
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode(appSecret),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['verify']
+        );
+
+        const sigBytes = new Uint8Array(
+            signatureHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+        );
+
+        return await crypto.subtle.verify(
+            'HMAC',
+            key,
+            sigBytes,
+            encoder.encode(rawBody)
+        );
+    } catch (e) {
+        console.error('[Instagram Webhook] Signature verification error:', e);
+        return false;
+    }
 }
 
 serve(async (req: Request) => {
@@ -24,9 +63,16 @@ serve(async (req: Request) => {
         const token = url.searchParams.get('hub.verify_token')
         const challenge = url.searchParams.get('hub.challenge')
 
-        const expectedToken = Deno.env.get('META_WEBHOOK_VERIFY_TOKEN') || 'tripzy_verify_token_secure'
+        const expectedToken = Deno.env.get('META_WEBHOOK_VERIFY_TOKEN')
+        if (!expectedToken) {
+            console.error('[Instagram Webhook Handshake] META_WEBHOOK_VERIFY_TOKEN is not configured in environment.');
+            return new Response('Server configuration error: verify token missing', {
+                status: 500,
+                headers: { 'Content-Type': 'text/plain' }
+            })
+        }
 
-        console.log(`[Instagram Webhook Handshake] mode=${mode}, token=${token}, challenge=${challenge}`)
+        console.log(`[Instagram Webhook Handshake] mode=${mode}, token=${token ? '***' : 'none'}, challenge=${challenge}`)
 
         if (mode === 'subscribe' && token === expectedToken) {
             console.log('[Instagram Webhook Handshake] Verified successfully! Responding with challenge.');
@@ -46,12 +92,30 @@ serve(async (req: Request) => {
     // 3. Handle Live Event Notifications from Meta (POST)
     if (req.method === 'POST') {
         try {
+            const rawBody = await req.text()
+            const appSecret = Deno.env.get('META_APP_SECRET')
+            const signatureHeader = req.headers.get('x-hub-signature-256')
+
+            // Enforce HMAC signature check when secret is configured
+            if (appSecret) {
+                const isValid = await verifyMetaHmacSignature(rawBody, signatureHeader, appSecret)
+                if (!isValid) {
+                    console.warn('[Instagram Webhook] Unauthorized: Invalid or missing X-Hub-Signature-256 header.')
+                    return new Response(JSON.stringify({ status: 'unauthorized', message: 'Signature verification failed' }), {
+                        status: 401,
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    })
+                }
+            } else {
+                console.warn('[Instagram Webhook] WARNING: META_APP_SECRET is not configured; running without signature verification.')
+            }
+
             const supabaseClient = createClient(
                 Deno.env.get('SUPABASE_URL') ?? '',
                 Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
             )
 
-            const body = await req.json()
+            const body = JSON.parse(rawBody)
             console.log('[Instagram Webhook Event Received]:', JSON.stringify(body))
 
             const entries = body.entry || []
@@ -68,7 +132,6 @@ serve(async (req: Request) => {
                         processedMentions++
 
                         // Extract sender / media info
-                        const senderId = value.sender_id || value.from?.id || 'ig-user'
                         const senderUsername = value.sender_username || value.from?.username || null
                         const mediaId = value.media_id || value.id || `media-${Date.now()}`
 
@@ -135,10 +198,11 @@ serve(async (req: Request) => {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
 
-        } catch (err: any) {
-            console.error('[Instagram Webhook] Error processing event:', err)
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            console.error('[Instagram Webhook] Error processing event:', errorMessage)
             // Meta expects 200 to avoid retrying in loops
-            return new Response(JSON.stringify({ status: 'error', message: err?.message }), {
+            return new Response(JSON.stringify({ status: 'error', message: errorMessage }), {
                 status: 200,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })

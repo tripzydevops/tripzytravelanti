@@ -306,6 +306,32 @@ export const AdminRafflesTab: React.FC = () => {
                 className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-sm focus:border-brand-primary outline-none"
               />
             </div>
+
+            <div>
+              <label className="text-xs font-medium text-white/70 block mb-1">
+                {isTr ? 'Açıklama / Katılım Detayı (TR)' : 'Description (TR)'}
+              </label>
+              <textarea
+                rows={2}
+                value={descTr}
+                onChange={(e) => setDescTr(e.target.value)}
+                placeholder={isTr ? 'Örn: Görevleri tamamlayarak çekiliş bileti toplayın, 3 günlük Bodrum tatilini kazanma şansı yakalayın.' : 'Turkish explanation...'}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-sm focus:border-brand-primary outline-none resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-white/70 block mb-1">
+                {isTr ? 'Açıklama (EN)' : 'Description / Rules (EN)'}
+              </label>
+              <textarea
+                rows={2}
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                placeholder="e.g. Complete Instagram quests to earn raffle tickets and win a luxury 3-day getaway."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-sm focus:border-brand-primary outline-none resize-none"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -403,6 +429,32 @@ export const AdminRafflesTab: React.FC = () => {
                   <option value="active">Aktif (Active)</option>
                   <option value="drawn">Sonuçlandı (Drawn)</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">
+                  {isTr ? 'Açıklama / Katılım Detayı (TR)' : 'Description (TR)'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingRaffle.description_tr || ''}
+                  onChange={(e) => setEditingRaffle({ ...editingRaffle, description_tr: e.target.value })}
+                  placeholder="TR açıklama..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-brand-primary outline-none resize-none"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-slate-400 block mb-1">
+                  {isTr ? 'Açıklama (EN)' : 'Description / Rules (EN)'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingRaffle.description || ''}
+                  onChange={(e) => setEditingRaffle({ ...editingRaffle, description: e.target.value })}
+                  placeholder="EN description..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-brand-primary outline-none resize-none"
+                />
               </div>
             </div>
 

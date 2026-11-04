@@ -82,9 +82,14 @@ export const FlashLotteryBanner: React.FC<FlashLotteryBannerProps> = ({ onOpenMo
               <h3 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight">
                 {isTr ? campaign.title_tr : campaign.title}
               </h3>
-              <p className="text-xs md:text-sm text-slate-300 mt-1 line-clamp-2">
-                {isTr ? campaign.prizeDescription_tr : campaign.prizeDescription}
+              <p className="text-xs md:text-sm text-rose-300 font-semibold mt-1">
+                🏆 {isTr ? campaign.prizeDescription_tr : campaign.prizeDescription}
               </p>
+              {(campaign.description || campaign.description_tr) && (
+                <p className="text-xs md:text-sm text-slate-300 mt-1 line-clamp-2">
+                  {isTr ? campaign.description_tr || campaign.description : campaign.description}
+                </p>
+              )}
             </div>
 
             {/* Countdown & Stats row */}

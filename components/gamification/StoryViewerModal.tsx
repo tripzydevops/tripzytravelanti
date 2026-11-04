@@ -81,7 +81,7 @@ export const StoryViewerModal: React.FC = () => {
     triggerHapticFeedback('medium');
     closeStoryViewer();
     if (activeSlide.dealId) {
-      navigate(`/deal/${activeSlide.dealId}`);
+      navigate(`/deals/${activeSlide.dealId}`);
     } else {
       navigate('/');
     }

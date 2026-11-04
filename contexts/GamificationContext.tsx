@@ -17,7 +17,8 @@ import {
   claimDailyStreakReward,
   fetchRaffles,
   calculateLevelFromXP,
-  DEFAULT_STAMPS
+  DEFAULT_STAMPS,
+  fetchPassportStamps
 } from '../lib/services/gamificationService';
 import { addUserPoints, burnUserPoints } from '../lib/services/loyaltyService';
 
@@ -40,6 +41,7 @@ export interface GamificationContextType {
   claimStreak: () => Promise<{ xpEarned: number; pointsEarned: number } | null>;
   claimScratchReward: (rewardType: 'xp' | 'points' | 'discount', amount: number) => Promise<void>;
   unlockStamp: (stampSlug: string) => void;
+  refreshStamps: () => Promise<void>;
 
   // Social Raffles State
   raffles: Raffle[];
@@ -79,17 +81,42 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [isScratchModalOpen, setIsScratchModalOpen] = useState(false);
   const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
 
+  // Refresh passport stamps catalog
+  const refreshStamps = useCallback(async () => {
+    try {
+      const stamps = await fetchPassportStamps();
+      setGamificationState((prev) => {
+        const updatedStamps = stamps.map((catalogStamp) => {
+          const existing = prev.stamps?.find((s) => s.id === catalogStamp.id || s.slug === catalogStamp.slug);
+          return {
+            ...catalogStamp,
+            isUnlocked: existing ? existing.isUnlocked : false,
+            currentCount: existing ? existing.currentCount : 0,
+            unlockedAt: existing ? existing.unlockedAt : undefined
+          };
+        });
+        const newState = { ...prev, stamps: updatedStamps };
+        saveLocalGamificationState(user?.id || 'guest-user', newState);
+        return newState;
+      });
+    } catch (e) {
+      console.error('Failed to refresh stamps', e);
+    }
+  }, [user]);
+
   // Load initial data
   useEffect(() => {
     fetchStories([]).then(setStoryGroups).catch(console.error);
     fetchRaffles().then(setRaffles).catch(console.error);
-  }, []);
+    refreshStamps();
+  }, [refreshStamps]);
 
   // Sync state when user changes
   useEffect(() => {
     const state = getLocalGamificationState(user?.id || 'guest-user');
     setGamificationState(state);
-  }, [user]);
+    refreshStamps();
+  }, [user, refreshStamps]);
 
   // =====================================================
   // STORIES ACTIONS
@@ -399,6 +426,7 @@ export const GamificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         claimStreak,
         claimScratchReward,
         unlockStamp,
+        refreshStamps,
         raffles,
         completeRaffleQuest,
         buyRaffleTicketWithPoints,

@@ -19,9 +19,23 @@ The system is built on a 3-layer Agentic Workflow managed by **Google Antigravit
 * **Algorithm:** SVD++ & Cross-Domain Transfer Learning
 
 ## 📂 Repository Structure
-* `/src`: Frontend source codes (React/Vite).
-* `/api`: (Planned) Python backend agents and Gemini wrappers.
-* `/docs`: Architecture diagrams and R&D documentation.
+* `/src`: Frontend web and mobile application source code (React 19 / Vite 6).
+* `/api`: Layer 2 Autonomous Brain (Python FastAPI microservice, Gemini autonomous cold-start reasoning, SVD++ training pipeline, and provably fair lottery engine).
+* `/supabase`: Edge functions, database schema migrations, and pgvector embeddings.
+* `/e2e`: Playwright end-to-end integration test suites.
+* `/docs`: Architecture diagrams and TÜBİTAK 1507 R&D documentation.
+
+## 🧪 Testing & Verification
+```bash
+# Frontend Unit & Component Tests (Vitest)
+npm test
+
+# Layer 2 Backend Microservice Tests (Pytest)
+py -m pytest api/tests
+
+# End-to-End Integration Tests (Playwright)
+npm run test:e2e
+```
 
 ---
 *© 2025 Tripzy DevOps Team - Confidential R&D Project*

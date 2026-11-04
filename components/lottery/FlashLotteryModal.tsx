@@ -269,6 +269,21 @@ export const FlashLotteryModal: React.FC<FlashLotteryModalProps> = ({
 
         {/* Content Body */}
         <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+          {/* Campaign Explanation / Description */}
+          {(campaign.description || campaign.description_tr) && (
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-slate-300 leading-relaxed flex items-start gap-3">
+              <span className="text-lg select-none shrink-0 mt-0.5">ℹ️</span>
+              <div className="min-w-0">
+                <span className="font-bold text-amber-400 block mb-0.5 text-xs uppercase tracking-wider">
+                  {isTr ? 'Çekiliş Açıklaması & Katılım Bilgisi' : 'Giveaway Explanation & Info'}
+                </span>
+                <p className="text-slate-300 text-xs sm:text-sm">
+                  {isTr ? campaign.description_tr || campaign.description : campaign.description}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 4 Tabs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl bg-slate-950 p-1 border border-slate-800 gap-1">
             <button

@@ -97,6 +97,94 @@ export const DEFAULT_STAMPS: TravelPassportStamp[] = [
 ];
 
 // =====================================================
+// PASSPORT STAMPS SERVICE
+// =====================================================
+export async function seedDefaultStampsIfNeeded(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('page_content')
+      .select('content_key')
+      .eq('page_key', 'passport_stamps')
+      .eq('section_key', 'catalog');
+
+    if (!error && (!data || data.length === 0)) {
+      const seedRows = DEFAULT_STAMPS.map((stamp) => ({
+        page_key: 'passport_stamps',
+        section_key: 'catalog',
+        content_key: stamp.id,
+        content_value: JSON.stringify(stamp),
+        content_type: 'rich_text'
+      }));
+      await supabase.from('page_content').insert(seedRows);
+    }
+  } catch (e) {
+    console.warn('Could not seed default stamps to Supabase:', e);
+  }
+}
+
+export async function fetchPassportStamps(): Promise<TravelPassportStamp[]> {
+  try {
+    const { data, error } = await supabase
+      .from('page_content')
+      .select('*')
+      .eq('page_key', 'passport_stamps')
+      .eq('section_key', 'catalog')
+      .eq('content_type', 'rich_text');
+
+    if (!error && data && data.length > 0) {
+      const parsed: TravelPassportStamp[] = data.map((item) => {
+        try {
+          return JSON.parse(item.content_value);
+        } catch {
+          return null;
+        }
+      }).filter(Boolean);
+
+      if (parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Passport stamps table query fallback:', e);
+  }
+  return DEFAULT_STAMPS;
+}
+
+export async function savePassportStamp(stamp: TravelPassportStamp): Promise<void> {
+  await seedDefaultStampsIfNeeded();
+
+  const { error } = await supabase.from('page_content').upsert(
+    {
+      page_key: 'passport_stamps',
+      section_key: 'catalog',
+      content_key: stamp.id,
+      content_value: JSON.stringify(stamp),
+      content_type: 'rich_text'
+    },
+    { onConflict: 'page_key,section_key,content_key' }
+  );
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function deletePassportStamp(stampId: string): Promise<void> {
+  await seedDefaultStampsIfNeeded();
+
+  const { error } = await supabase
+    .from('page_content')
+    .delete()
+    .eq('page_key', 'passport_stamps')
+    .eq('section_key', 'catalog')
+    .eq('content_key', stampId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+// =====================================================
 // LEVEL CALCULATION HELPERS
 // =====================================================
 export function calculateLevelFromXP(xp: number): {

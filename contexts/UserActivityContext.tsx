@@ -5,6 +5,7 @@ import { saveDeal, unsaveDeal, redeemDeal, claimDeal } from '../lib/supabaseServ
 import { triggerHapticFeedback } from '../lib/hapticUtils';
 import { getBackendApiUrl } from '../lib/apiConfig';
 import { User } from '../types';
+import { signalCollector } from '../lib/signalCollector';
 
 export interface UserActivityContextType {
     savedDeals: string[];
@@ -90,14 +91,18 @@ export const UserActivityProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     }, [user]);
 
+    // Sync with central Layer 1 SignalCollector
+    useEffect(() => {
+        signalCollector.setUserId(user?.id || null);
+    }, [user]);
+
     const signalBuffer = useRef<{ signal_type: string; target_id: string; metadata?: any }[]>([]);
 
     const bufferSignal = useCallback((type: string, targetId?: string, metadata?: any) => {
         if (!targetId) return;
-        console.log(`[Signal Buffered] Type: ${type}, Target: ${targetId}`, metadata);
-        signalBuffer.current.push({
-            signal_type: type,
-            target_id: targetId,
+        signalCollector.recordSignal({
+            signalType: type as any,
+            targetId,
             metadata
         });
     }, []);

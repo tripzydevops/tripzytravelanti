@@ -80,6 +80,8 @@ export const AdminLotteryTab: React.FC = () => {
   // Create Form State
   const [title, setTitle] = useState('');
   const [titleTr, setTitleTr] = useState('');
+  const [description, setDescription] = useState('');
+  const [descriptionTr, setDescriptionTr] = useState('');
   const [prizeDesc, setPrizeDesc] = useState('');
   const [prizeDescTr, setPrizeDescTr] = useState('');
   const [imageUrl, setImageUrl] = useState('https://images.unsplash.com/photo-1570939274717-7eda259b50ed?auto=format&fit=crop&w=1200&q=80');
@@ -121,8 +123,8 @@ export const AdminLotteryTab: React.FC = () => {
     await lotteryService.createCampaign({
       title,
       title_tr: titleTr || title,
-      description: 'Share on Instagram Story to enter this flash lottery',
-      description_tr: 'Instagram Hikayende paylaş, bu flaş çekilişe anında katıl',
+      description: description || 'Share on Instagram Story to enter this flash lottery',
+      description_tr: descriptionTr || description || 'Instagram Hikayende paylaş, bu flaş çekilişe anında katıl',
       prizeDescription: prizeDesc,
       prizeDescription_tr: prizeDescTr || prizeDesc,
       imageUrl,
@@ -134,6 +136,8 @@ export const AdminLotteryTab: React.FC = () => {
     setIsAdding(false);
     setTitle('');
     setTitleTr('');
+    setDescription('');
+    setDescriptionTr('');
     setPrizeDesc('');
     setPrizeDescTr('');
     await fetchCampaigns();
@@ -146,6 +150,8 @@ export const AdminLotteryTab: React.FC = () => {
     await lotteryService.updateCampaign(editingCampaign.id, {
       title: editingCampaign.title,
       title_tr: editingCampaign.title_tr,
+      description: editingCampaign.description,
+      description_tr: editingCampaign.description_tr,
       prizeDescription: editingCampaign.prizeDescription,
       prizeDescription_tr: editingCampaign.prizeDescription_tr,
       imageUrl: editingCampaign.imageUrl,
@@ -446,6 +452,32 @@ export const AdminLotteryTab: React.FC = () => {
             </div>
 
             <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-400">
+                {isTr ? 'Açıklama / Katılım Detayı (TR)' : 'Description (TR)'}
+              </label>
+              <textarea
+                rows={2}
+                value={descriptionTr}
+                onChange={e => setDescriptionTr(e.target.value)}
+                placeholder={isTr ? 'Örn: Instagram Hikayende paylaş veya arkadaşını davet et, çekilişe katıl!' : 'Turkish explanation...'}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-rose-500 outline-none resize-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-400">
+                {isTr ? 'Açıklama (EN)' : 'Description / Rules (EN)'}
+              </label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="e.g. Share on your Instagram Story or invite friends to enter the flash giveaway!"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-rose-500 outline-none resize-none"
+              />
+            </div>
+
+            <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-400">Görsel URL</label>
               <input
                 type="text"
@@ -563,6 +595,32 @@ export const AdminLotteryTab: React.FC = () => {
                   onChange={e => setEditingCampaign({ ...editingCampaign, prizeDescription: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none"
                   required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">
+                  {isTr ? 'Açıklama / Katılım Detayı (TR)' : 'Description (TR)'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingCampaign.description_tr || ''}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, description_tr: e.target.value })}
+                  placeholder="TR açıklama..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">
+                  {isTr ? 'Açıklama (EN)' : 'Description / Rules (EN)'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingCampaign.description || ''}
+                  onChange={e => setEditingCampaign({ ...editingCampaign, description: e.target.value })}
+                  placeholder="EN description..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:border-amber-400 outline-none resize-none"
                 />
               </div>
 
@@ -1159,6 +1217,11 @@ export const AdminLotteryTab: React.FC = () => {
                 <p className="text-xs text-rose-300 font-semibold line-clamp-1">
                   🏆 {isTr ? camp.prizeDescription_tr : camp.prizeDescription}
                 </p>
+                {(camp.description || camp.description_tr) && (
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    {isTr ? camp.description_tr || camp.description : camp.description}
+                  </p>
+                )}
 
                 {/* DRAWN CAMPAIGN WINNER BANNER (DIRECTLY VISIBLE ON CARD) */}
                 {camp.status === 'drawn' && (

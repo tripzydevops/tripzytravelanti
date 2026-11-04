@@ -19,7 +19,8 @@ import RedeemedVoucherCard from "../components/RedeemedVoucherCard";
 import DealCardSkeleton from "../components/DealCardSkeleton";
 import PullToRefresh from "../components/PullToRefresh";
 import { LotteryTicketsTab } from "../components/lottery/LotteryTicketsTab";
-import { Ticket } from "lucide-react";
+import { Ticket, WifiOff } from "lucide-react";
+import { getCachedWallet, saveWalletToOfflineCache } from "../lib/offlineStorage";
 import { Deal, SubscriptionTier } from "../types";
 import {
   getWalletLimit,
@@ -50,6 +51,7 @@ const WalletPage: React.FC = () => {
   const [activeMainTab, setActiveMainTab] = useState<MainTabType>("active");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortType>("recent");
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
 
   const fetchWalletDeals = useCallback(async () => {
     if (!user) return;
@@ -129,6 +131,12 @@ const WalletPage: React.FC = () => {
           }) || [];
 
         setWalletDeals(mappedDeals);
+        setIsOffline(false);
+
+        // Pre-cache wallet items for offline redemption guarantee
+        if (mappedDeals.length > 0) {
+          saveWalletToOfflineCache(mappedDeals).catch(() => {});
+        }
 
         const hasActive = mappedDeals.some((d) => d.walletStatus === "active");
         const hasHistory = mappedDeals.some(
@@ -141,11 +149,35 @@ const WalletPage: React.FC = () => {
         setWalletDeals([]);
       }
     } catch (err) {
-      console.error("Error fetching wallet deals:", err);
+      console.error("Error fetching wallet deals, attempting offline cache:", err);
+      try {
+        const cached = await getCachedWallet();
+        if (cached && cached.length > 0) {
+          setWalletDeals(cached);
+          setIsOffline(true);
+        }
+      } catch (cacheErr) {
+        console.error("Offline wallet cache lookup failed:", cacheErr);
+      }
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      fetchWalletDeals();
+    };
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [fetchWalletDeals]);
 
   useEffect(() => {
     fetchWalletDeals();
@@ -296,6 +328,19 @@ const WalletPage: React.FC = () => {
               "Your personal hub for active deals and wishlist"}
           </p>
         </header>
+
+        {/* Offline Mode Indicator Banner */}
+        {isOffline && (
+          <div className="max-w-2xl mx-auto mb-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3 text-amber-300 text-xs shadow-lg animate-fade-in">
+            <WifiOff className="w-5 h-5 flex-shrink-0 text-amber-400" />
+            <div className="flex-1">
+              <span className="font-bold">{language === 'tr' ? 'Çevrimdışı Mod' : 'Offline Mode'}:</span>{' '}
+              {language === 'tr' 
+                ? 'İnternet bağlantısı yok. Cihazınızda önbelleğe alınan kuponlar ve doğrulama kodları gösteriliyor.'
+                : 'No internet connection. Displaying cached vouchers and redemption codes available for offline verification.'}
+            </div>
+          </div>
+        )}
 
         {/* Main Collection Tabs */}
         <div className="flex p-1.5 bg-white/5 border border-white/10 rounded-2xl mb-8 max-w-2xl mx-auto shadow-inner">
