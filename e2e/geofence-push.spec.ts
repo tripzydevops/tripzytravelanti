@@ -201,6 +201,11 @@ test.describe('Geofence breach and push notifications flow', () => {
     // Go to profile page to enable location watch
     await page.goto('/profile');
 
+    // Switch to Settings tab in Profile
+    const settingsTab = page.locator('button', { hasText: /Ayarlar|Settings/i });
+    await settingsTab.waitFor({ state: 'visible' });
+    await settingsTab.click();
+
     // Enable location via the toggle
     const toggleButton = page.locator('p', { hasText: /Location Services|Konum Servisleri/ }).first().locator('xpath=../..//button[@role="switch"]');
     await toggleButton.waitFor({ state: 'visible' });
